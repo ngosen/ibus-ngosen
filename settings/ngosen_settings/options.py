@@ -88,7 +88,8 @@ HINTS = {
     "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
     "DoubleHyphenToEmDash": N_("a--b → a—b."),
     "UnderlinePreedit": N_(
-        "Off: the word looks already typed until Space or punctuation commits it."
+        "Off: the word looks already typed until Space or punctuation commits it. "
+        "Only for X11 apps: Wayland apps draw their own underline."
     ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
