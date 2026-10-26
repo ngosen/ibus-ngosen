@@ -7,8 +7,10 @@
 #include "ngosen-ibus-config.h"
 #include "ngosen-ibus-engine.h"
 
+#include <clocale>
 #include <cstdio>
 #include <cstring>
+#include <glib/gi18n-lib.h>
 #include <ibus.h>
 #include <syslog.h>
 
@@ -44,6 +46,10 @@ int main(int argc, char** argv) {
         if (const int status = runSettingsCommand(argv[1]); status >= 0)
             return status;
     }
+    // For the menu items, which GNOME shows as the engine gives them.
+    std::setlocale(LC_ALL, "");
+    bindtextdomain(GETTEXT_PACKAGE, NGOSEN_LOCALEDIR);
+    bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
     ibus_init();
     IBusBus* bus = ibus_bus_new();
     if (!ibus_bus_is_connected(bus)) {

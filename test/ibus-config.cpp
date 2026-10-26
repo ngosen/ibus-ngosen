@@ -5,6 +5,7 @@
  */
 #include "bamboo-core.h"
 #include "ngosen-ibus-config.h"
+#include "ngosen-ibus-menu.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -103,6 +104,59 @@ namespace {
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
 
+    void testOneSetting() {
+        const std::string mine = "# my note\nInputMethod=Telex\nSpellCheck=True\n";
+        check(withSetting(mine, "SpellCheck", "False") == "# my note\nInputMethod=Telex\nSpellCheck=False\n", "one key changes, the rest stays");
+        check(withSetting(mine, "EnableMacro", "True") == mine + "EnableMacro=True\n", "a missing key is added");
+        check(withSetting("#SpellCheck=True\n", "SpellCheck", "False") == "#SpellCheck=True\nSpellCheck=False\n", "a commented key is left alone");
+        check(readSettings(parseIni(withSetting("SpellCheck=True\nSpellCheck=True\n", "SpellCheck", "False"))).options.spellCheck == false, "every copy of the key changes");
+        check(withSetting("A=1\n[Macro/0]\nKey=x\n", "SpellCheck", "False") == "A=1\nSpellCheck=False\n[Macro/0]\nKey=x\n", "a new key goes before the first section");
+        check(withSetting("[S]\nSpellCheck=True\n", "SpellCheck", "False") == "SpellCheck=False\n[S]\nSpellCheck=True\n", "a key inside a section is not the setting");
+        check(parseIni(withSetting("", "OutputCharset", "TCVN3 (ABC)")).top.at("OutputCharset") == "TCVN3 (ABC)", "a value with spaces is quoted");
+    }
+
+    IBusProperty* findItem(IBusPropList* list, const std::string& key) {
+        for (guint i = 0; IBusProperty* item = ibus_prop_list_get(list, i); ++i) {
+            if (key == ibus_property_get_key(item))
+                return item;
+            if (IBusProperty* inner = findItem(ibus_property_get_sub_props(item), key))
+                return inner;
+        }
+        return nullptr;
+    }
+
+    bool isChecked(IBusPropList* menu, const std::string& key) {
+        IBusProperty* item = findItem(menu, key);
+        return item != nullptr && ibus_property_get_state(item) == PROP_STATE_CHECKED;
+    }
+
+    void testMenu() {
+        IBusSettings settings                           = defaultSettings();
+        settings.options.inputMethod                    = "VNI";
+        settings.options.spellCheck                     = false;
+        settings.options.capitalizeStartOfText          = true;
+        settings.options.autoCapitalizeAfterPunctuation = false;
+        IBusPropList* menu                              = newSettingsMenu(settings);
+        g_object_ref_sink(menu);
+        check(isChecked(menu, "InputMethod/VNI") && !isChecked(menu, "InputMethod/Telex"), "the menu checks the input method in use");
+        check(isChecked(menu, "OutputCharset/Unicode"), "the menu checks the charset in use");
+        check(!isChecked(menu, "SpellCheck") && findItem(menu, "SpellCheck") != nullptr, "the menu shows spell check off");
+        check(isChecked(menu, "CapitalizeStartOfText") && !isChecked(menu, "AutoCapitalizeAfterPunctuation"), "the capitalize items show their own settings");
+        check(findItem(menu, SettingsWindowItem) != nullptr, "the menu opens the settings window");
+        g_object_unref(menu);
+
+        std::string key;
+        std::string value;
+        check(settingForClick("InputMethod/Telex", true, key, value) && key == "InputMethod" && value == "Telex", "choosing Telex");
+        check(!settingForClick("InputMethod/Telex", false, key, value), "a radio item being unchecked changes nothing");
+        check(!settingForClick("InputMethod/Custom", true, key, value), "a method the menu does not offer");
+        check(settingForClick("OutputCharset/TCVN3 (ABC)", true, key, value) && key == "OutputCharset" && value == "TCVN3 (ABC)", "choosing a charset");
+        check(!settingForClick("OutputCharset/Nope", true, key, value), "an unknown charset");
+        check(settingForClick("SpellCheck", false, key, value) && key == "SpellCheck" && value == "False", "turning spell check off");
+        check(settingForClick("EnableDictionary", true, key, value) && value == "True", "turning the dictionary on");
+        check(!settingForClick("Mode", true, key, value) && !settingForClick(SettingsWindowItem, true, key, value), "items that are not settings");
+    }
+
     void testImport(const fs::path& root) {
         const SettingsPaths paths = pathsIn(root);
         write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
@@ -176,6 +230,8 @@ int main() {
     testValues();
     testLists();
     testSettings();
+    testOneSetting();
+    testMenu();
     testImport(root / "import");
     testNoOverwrite(root / "keep");
     testDefaults(root / "defaults");

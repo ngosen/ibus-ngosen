@@ -321,6 +321,46 @@ with open(log_path) as f:
         user_dictionary,
     )
 
+
+def checked_items(props):
+    found = set()
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        if prop.get_state() == IBus.PropState.CHECKED:
+            found.add(prop.get_key())
+        found |= checked_items(prop.get_sub_props())
+        i += 1
+    return found
+
+
+# A click in the GNOME input source menu, which the panel sends as a property activation.
+menus = []
+app = App("menu")
+app.ic.set_capabilities(
+    IBus.Capabilite.FOCUS
+    | IBus.Capabilite.PREEDIT_TEXT
+    | IBus.Capabilite.SURROUNDING_TEXT
+    | IBus.Capabilite.PROPERTY
+)
+app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
+app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
+pump(1000)
+with open(settings_path) as f:
+    saved = f.read()
+check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
+check(
+    bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
+    "menu: shows the new choice",
+    menus,
+)
+app.type("vie65t ")
+check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
+app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+pump(1000)
+with open(settings_path) as f:
+    check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
+app.close()
+
 if failures == 0:
     print("all IBus daemon checks passed")
 sys.exit(1 if failures else 0)

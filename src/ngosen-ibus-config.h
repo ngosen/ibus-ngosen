@@ -42,6 +42,8 @@ namespace ngosen {
     IBusSettings readSettings(const IniFile& ini);
     // Writes every key readSettings() reads, so the settings window finds them all in the file.
     std::string settingsText(const IBusSettings& settings);
+    // Sets one key and keeps the rest of the file as the user or the settings window wrote it.
+    std::string withSetting(const std::string& text, const std::string& key, const std::string& value);
 
     struct SettingsPaths {
         std::string          configDir;      // ~/.config/ngosen

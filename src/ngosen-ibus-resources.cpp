@@ -81,6 +81,18 @@ namespace ngosen {
         NGOSEN_INFO("Settings reloaded");
     }
 
+    bool IBusResources::saveSetting(const std::string& key, const std::string& value, IBusSettings& saved) const {
+        std::string text;
+        // A deleted file comes back whole, so the settings window still finds every key.
+        if (!readFile(paths_.settingsFile(), text))
+            text = settingsText(settings_);
+        text = withSetting(text, key, value);
+        if (!writeFileAtomically(paths_.settingsFile(), text))
+            return false;
+        saved = readSettings(parseIni(text));
+        return true;
+    }
+
     void IBusResources::load() {
         std::string text;
         settings_ = readFile(paths_.settingsFile(), text) ? readSettings(parseIni(text)) : defaultSettings();

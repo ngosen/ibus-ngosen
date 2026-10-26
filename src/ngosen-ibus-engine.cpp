@@ -7,6 +7,7 @@
 
 #include "ngosen-globals.h"
 #include "ngosen-ibus-host.h"
+#include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-resources.h"
 #include "ngosen-log.h"
 #include "ngosen-state.h"
@@ -85,11 +86,38 @@ namespace {
         return FALSE;
     }
 
+    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings) {
+        IBusPropList* menu = ngosen::newSettingsMenu(settings);
+        g_object_ref_sink(menu);
+        ibus_engine_register_properties(engine, menu);
+        g_object_unref(menu);
+    }
+
     void focusIn(IBusEngine* engine) {
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
             session->applyNewSettings();
         }
+        showMenu(engine, resources().settings());
+    }
+
+    void propertyActivate(IBusEngine* engine, const gchar* name, guint state) {
+        if (g_strcmp0(name, ngosen::SettingsWindowItem) == 0) {
+            gchar*  argv[] = {const_cast<gchar*>(NGOSEN_SETUP_EXEC), nullptr}; //NOLINT
+            GError* error  = nullptr;
+            if (!g_spawn_async(nullptr, argv, nullptr, G_SPAWN_DEFAULT, nullptr, nullptr, nullptr, &error)) {
+                NGOSEN_WARN("Cannot open the settings window: " << error->message);
+                g_error_free(error);
+            }
+            return;
+        }
+        std::string key;
+        std::string value;
+        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, key, value))
+            return;
+        ngosen::IBusSettings saved;
+        // A failed write shows the old state again, so the menu never claims a setting that is not saved.
+        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().settings());
     }
 
     void focusOut(IBusEngine* engine) {
@@ -165,6 +193,7 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->set_content_type     = setContentType;
     engineClass->focus_in_id          = focusInId;
     engineClass->focus_out_id         = focusOutId;
+    engineClass->property_activate    = propertyActivate;
     IBUS_OBJECT_CLASS(klass)->destroy = destroy;
 }
 

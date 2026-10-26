@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fails when a string of the settings window has no Vietnamese, or when a string both editions
+"""Fails when a string of the settings window or the engine's menu has no Vietnamese, or when a string both editions
 use is translated differently here than in the fcitx5 edition.
 
     misc/check-translations.py [--print-missing]
@@ -12,6 +12,8 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCES = sorted((ROOT / "settings" / "ngosen_settings").glob("*.py"))
+ENGINE_SOURCES = sorted((ROOT / "src").glob("*.cpp"))
+CPP_STRING = re.compile(r'\bN?_\("((?:[^"\\]|\\.)*)"\)')
 OURS = ROOT / "po" / "vi.po"
 FULL_EDITION = ROOT / "ngosen" / "po" / "vi.po"
 
@@ -29,6 +31,11 @@ def used_strings():
                 and isinstance(node.args[0].value, str)
             ):
                 found.setdefault(node.args[0].value, f"{path.relative_to(ROOT)}:{node.lineno}")
+    for path in ENGINE_SOURCES:
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            for match in CPP_STRING.finditer(line):
+                text = ast.literal_eval(f'"{match.group(1)}"')
+                found.setdefault(text, f"{path.relative_to(ROOT)}:{number}")
     return found
 
 

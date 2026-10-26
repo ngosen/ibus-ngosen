@@ -246,6 +246,34 @@ namespace ngosen {
         return out.str();
     }
 
+    std::string withSetting(const std::string& text, const std::string& key, const std::string& value) {
+        const std::string  setting = key + '=' + escapeIniValue(value);
+        std::istringstream lines(text);
+        std::ostringstream out;
+        std::string        line;
+        bool               top = true;
+        bool               set = false;
+        while (std::getline(lines, line)) {
+            const std::string trimmed = trim(line);
+            const auto        equal   = trimmed.find('=');
+            if (!trimmed.empty() && trimmed.front() == '[' && trimmed.back() == ']') {
+                // A key after a section header would belong to that section.
+                if (top && !set)
+                    out << setting << '\n';
+                top = false;
+                set = true;
+            } else if (top && equal != std::string::npos && trimmed[0] != '#' && trimmed.substr(0, equal) == key) {
+                // Every copy, since parseIni() keeps the last one.
+                line = setting;
+                set  = true;
+            }
+            out << line << '\n';
+        }
+        if (!set)
+            out << setting << '\n';
+        return out.str();
+    }
+
     SettingsPaths SettingsPaths::fromEnvironment() {
         const std::string config = g_get_user_config_dir();
         const std::string data   = g_get_user_data_dir();
