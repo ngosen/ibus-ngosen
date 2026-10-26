@@ -70,13 +70,47 @@ namespace ngosen {
         GSourceFuncs GlibTimer::funcs_ = {nullptr, nullptr, &GlibTimer::dispatch, nullptr, nullptr, nullptr};
     } // namespace
 
-    void IBusHost::commitText(const std::string& text) {
+    void IBusHost::commitText(const std::string& committed) {
+        std::string text = committed;
+        if (!keep_.empty() && g_str_has_suffix(text.c_str(), keep_.c_str())) {
+            text.resize(text.size() - keep_.size());
+            kept_ = true;
+            if (text.empty())
+                return;
+        }
         if (typed_.empty()) {
             ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
             return;
         }
         replaceTypedWord(text);
         typed_.clear();
+    }
+
+    bool IBusHost::holdKept() {
+        const bool kept = kept_;
+        if (kept)
+            hold(keep_);
+        keep_.clear();
+        kept_ = false;
+        return kept;
+    }
+
+    void IBusHost::hold(const std::string& text) {
+        held_           = text;
+        IBusText* shown = ibus_text_new_from_string(text.c_str());
+        ibus_text_append_attribute(shown, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, 1);
+        ibus_engine_update_preedit_text_with_mode(engine_, shown, 1, TRUE, IBUS_ENGINE_PREEDIT_COMMIT);
+        preeditVisible_ = true;
+    }
+
+    std::string IBusHost::takeHeld() {
+        std::string held = std::move(held_);
+        held_.clear();
+        if (!held.empty()) {
+            ibus_engine_update_preedit_text_with_mode(engine_, ibus_text_new_from_string(""), 0, FALSE, IBUS_ENGINE_PREEDIT_CLEAR);
+            preeditVisible_ = false;
+        }
+        return held;
     }
 
     // Only the end that changed, so most keys add a character and delete nothing.

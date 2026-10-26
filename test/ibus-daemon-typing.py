@@ -59,6 +59,7 @@ class App:
         self.reported = ""
         self.deleted = False
         self.deleting_keys = 0
+        self.deletions = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
@@ -69,6 +70,7 @@ class App:
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
         self.ic.connect("delete-surrounding-text", self.on_delete)
+        self.ic.connect("forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -100,6 +102,7 @@ class App:
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
+        self.deletions += 1
         if self.qt_through_shell:
             if not self.deleted:
                 self.deleting_keys += 1
@@ -111,6 +114,13 @@ class App:
         start = len(self.text) + offset
         self.text = self.text[:start] + self.text[start + count :]
         self.report()
+
+    # A forwarded BackSpace deletes like a typed one, as in a terminal.
+    def on_forward(self, _ic, keyval, _keycode, state):
+        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
+            self.deletions += 1
+            self.text = self.text[:-1]
+            self.report()
 
     def on_preedit(self, _ic, text, _cursor, visible):
         self.preedit = text.get_text() if visible else ""
@@ -382,6 +392,27 @@ app.type("a ")
 app.close()
 with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
+
+set_setting("DoubleSpaceToPeriod", "True")
+set_setting("DoubleHyphenToEmDash", "True")
+for surrounding, app_commits, who in (
+    (True, False, "that reports surrounding text"),
+    (False, False, "that cannot delete around the cursor"),
+    (True, True, "that commits the preedit itself"),
+):
+    app = App("doubled keys", surrounding=surrounding, app_commits=app_commits)
+    app.type("xin  a--b c -")
+    app.close()
+    check(app.text == "xin. a—b c -", f"doubled keys: a field {who}", app.text)
+    check(app.deletions == 0, f"doubled keys: nothing deleted in a field {who}", app.deletions)
+set_setting("AutoCapitalizeAfterPunctuation", "True")
+app = App("doubled keys")
+app.type("xin  chaof")
+app.close()
+check(app.text == "xin. Chào", "doubled keys: capitalized after the period", app.text)
+set_setting("AutoCapitalizeAfterPunctuation", "False")
+set_setting("DoubleSpaceToPeriod", "False")
+set_setting("DoubleHyphenToEmDash", "False")
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")

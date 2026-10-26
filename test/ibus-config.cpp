@@ -81,7 +81,7 @@ namespace {
         const IBusSettings read = readSettings(parseIni(FcitxSettings));
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
-        check(!read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod stays off");
+        check(read.doubleSpaceToPeriod && !read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod is read, the core's version stays off");
         check(!read.options.retypeAfterSwitch && !read.options.retoneSelection, "retyping stays off");
 
         const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nSpellCheck=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
@@ -98,9 +98,10 @@ namespace {
         changed.enableDictionary         = true;
         changed.enableCustomKeymap       = true;
         changed.directTyping             = true;
+        changed.doubleHyphenToEmDash     = true;
         const std::string text           = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 20, "the file has every key");
+        check(parseIni(text).top.size() == 22, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
