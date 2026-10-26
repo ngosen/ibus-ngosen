@@ -46,8 +46,6 @@ LABELS = {
         "Auto capitalize after sentence-ending punctuation (. ! ? Enter)"
     ),
     "CapitalizeStartOfText": N_("Capitalize the first letter of the text or of a line"),
-    "DoubleSpaceToPeriod": N_("Double Space to Period"),
-    "DoubleHyphenToEmDash": N_("Double Hyphen to Em-Dash (--)"),
     "EnableMacro": N_("Enable Macro"),
     "CapitalizeMacro": N_("Capitalize Macro"),
     "TimeFormat": N_("Time Format ($TIME in macro)"),
@@ -84,8 +82,6 @@ HINTS = {
     "CapitalizeStartOfText": N_(
         "xin → Xin in an empty field or on a new line. Not in address bars or some apps; on GNOME 47 and later, Chrome and similar apps skip an empty field."
     ),
-    "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
-    "DoubleHyphenToEmDash": N_("a--b → a—b."),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
 
@@ -115,15 +111,7 @@ TYPING_GROUPS = [
             "BracketTransform",
         ],
     ),
-    (
-        N_("Quick typing"),
-        [
-            "AutoCapitalizeAfterPunctuation",
-            "CapitalizeStartOfText",
-            "DoubleSpaceToPeriod",
-            "DoubleHyphenToEmDash",
-        ],
-    ),
+    (N_("Quick typing"), ["AutoCapitalizeAfterPunctuation", "CapitalizeStartOfText"]),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]
 

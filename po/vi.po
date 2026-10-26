@@ -178,6 +178,9 @@ msgid "Cứu chữ and Cứu dấu"
 msgstr "Cứu chữ, Cứu dấu"
 
 #: settings/ngosen_settings/pages.py
+msgid "Two spaces to a period, -- to —"
+msgstr "Hai dấu cách ra dấu chấm, -- ra —"
+
 #: settings/ngosen_settings/pages.py
 msgid "The emoji picker and rules for each app"
 msgstr "Bảng chọn emoji và luật theo app"
@@ -346,15 +349,3 @@ msgstr "Không tìm thấy từ nào."
 
 msgid "Showing {} of {} words found."
 msgstr "Đang hiện {} trên {} từ tìm thấy."
-
-msgid "Double Space to Period"
-msgstr "Hai dấu cách thành dấu chấm (thử nghiệm)"
-
-msgid "Double Hyphen to Em-Dash (--)"
-msgstr "Hai gạch nối thành gạch dài"
-
-msgid "ban and Space twice gives “ban. ”."
-msgstr "Gõ ban rồi hai dấu cách ra “ban. ”."
-
-msgid "a--b → a—b."
-msgstr "a--b → a—b."
