@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.0.0-1] — 26/10/2026
+
+Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1`. Tải gói ở
+[release ibus-ngosen-1.0.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.0.0-1).
+
 ### Thêm
 
 - Bộ gõ IBus "Tiếng Việt (Ngó Sen)": gõ gạch chân, chữ được chốt khi gõ cách, dấu câu, Enter, nhấp Ctrl hay
