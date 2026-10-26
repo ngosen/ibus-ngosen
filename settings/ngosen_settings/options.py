@@ -62,7 +62,7 @@ HINTS = {
     "EnableCustomKeymap": N_("The keys set in the full edition, used by the Custom input method."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
     "EnableDictionary": N_(
-        "The word list from the full edition. Off: the one that comes with Ngó Sen."
+        "Check spelling against the list below. Off: the list that comes with Ngó Sen."
     ),
     "AutoNonVnRestore": N_("Typing windows still gives windows."),
     "LockWordModifier": N_(
@@ -101,7 +101,6 @@ TYPING_GROUPS = [
         N_("Tone marks"),
         [
             "SpellCheck",
-            "EnableDictionary",
             "AutoNonVnRestore",
             "LockWordModifier",
             "DdFreeStyle",

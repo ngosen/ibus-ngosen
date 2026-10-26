@@ -98,8 +98,8 @@ msgid "Words that are not Vietnamese get no tone marks."
 msgstr "Từ không phải tiếng Việt thì không thêm dấu."
 
 #: settings/ngosen_settings/options.py
-msgid "The word list from the full edition. Off: the one that comes with Ngó Sen."
-msgstr "Từ điển của bạn ở bản đầy đủ. Tắt: dùng từ điển có sẵn của Ngó Sen."
+msgid "Check spelling against the list below. Off: the list that comes with Ngó Sen."
+msgstr "Kiểm chính tả theo danh sách bên dưới. Tắt: dùng danh sách có sẵn của Ngó Sen."
 
 #: settings/ngosen_settings/options.py
 msgid "Typing windows still gives windows."
@@ -182,8 +182,8 @@ msgid "Two spaces to a period, -- to —"
 msgstr "Hai dấu cách ra dấu chấm, -- ra —"
 
 #: settings/ngosen_settings/pages.py
-msgid "The emoji picker, rules for each app and the dictionary editor"
-msgstr "Bảng chọn emoji, luật theo app và trình sửa từ điển"
+msgid "The emoji picker and rules for each app"
+msgstr "Bảng chọn emoji và luật theo app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Not in the GNOME edition"
@@ -328,3 +328,24 @@ msgid ""
 msgstr ""
 "Chữ hiện thẳng vào ô, không gạch chân, ở ô báo được chữ quanh con trỏ. "
 "Terminal và game vẫn gạch chân."
+
+msgid "Dictionary"
+msgstr "Từ điển"
+
+msgid "Word (e.g. ngoãy)"
+msgstr "Từ (ví dụ: ngoãy)"
+
+msgid "Search words..."
+msgstr "Tìm từ..."
+
+msgid "One word, without spaces."
+msgstr "Mỗi lần một từ, không có dấu cách."
+
+msgid "{} words. Search to see them."
+msgstr "{} từ. Gõ vào ô tìm để xem."
+
+msgid "No words found."
+msgstr "Không tìm thấy từ nào."
+
+msgid "Showing {} of {} words found."
+msgstr "Đang hiện {} trên {} từ tìm thấy."

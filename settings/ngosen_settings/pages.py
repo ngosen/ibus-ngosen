@@ -208,11 +208,112 @@ class MacroPage:
         return row
 
 
+class DictionaryPage:
+    """The custom dictionary switch and its word list, saved on every add and removal."""
+
+    # Thousands of rows make GTK slow, so the list shows search results only.
+    SHOWN = 100
+
+    def __init__(self, store, rows, on_list_change):
+        self.store = store
+        self.on_list_change = on_list_change
+        self.page = Adw.PreferencesPage(
+            title=_("Dictionary"), icon_name="accessories-dictionary-symbolic"
+        )
+        group = preferences_group()
+        self.switch = rows.build("EnableDictionary")
+        group.add(self.switch)
+        self.page.add(group)
+        self.editor = preferences_group()
+        self.word_row = Adw.EntryRow(title=_("Word (e.g. ngoãy)"))
+        self.word_row.add_css_class("typed")
+        self.add_button = Gtk.Button(label=_("Add"), valign=Gtk.Align.CENTER)
+        self.add_button.add_css_class("suggested-action")
+        self.add_button.connect("clicked", lambda _b: self._add())
+        self.word_row.add_suffix(self.add_button)
+        self.word_row.connect("changed", lambda _r: self._check())
+        self.word_row.connect("entry-activated", lambda _r: self._add())
+        self.editor.add(self.word_row)
+        self.page.add(self.editor)
+        self.page.add(self._list())
+        self.switch.connect("notify::active", lambda _r, _p: self._enable())
+
+    def _list(self):
+        self.list_group = preferences_group()
+        self.search = Gtk.SearchEntry(placeholder_text=_("Search words..."))
+        self.search.connect("search-changed", lambda _s: self._show())
+        self.list_group.set_header_suffix(self.search)
+        self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.add_css_class("boxed-list")
+        self.list_group.add(self.list)
+        return self.list_group
+
+    def _check(self):
+        word = self.word_row.get_text().strip()
+        bad = any(c.isspace() for c in word)
+        if bad:
+            self.word_row.add_css_class("error")
+        else:
+            self.word_row.remove_css_class("error")
+        self.word_row.set_tooltip_text(_("One word, without spaces.") if bad else None)
+        self.add_button.set_sensitive(bool(word) and not bad and word not in self.store.words)
+
+    def _add(self):
+        if not self.add_button.get_sensitive():
+            return
+        word = self.word_row.get_text().strip()
+        if self.on_list_change(self.store.words + [word]):
+            self.word_row.set_text("")
+            self.search.set_text(word)
+            self._show()  # The search entry reports the change only after a delay.
+
+    def _remove(self, word):
+        self.on_list_change([w for w in self.store.words if w != word])
+
+    def _enable(self):
+        on = self.switch.get_active()
+        self.editor.set_sensitive(on)
+        self.list_group.set_sensitive(on)
+
+    def _show(self):
+        self.list.remove_all()
+        needle = self.search.get_text().strip().casefold()
+        if not needle:
+            count = len(self.store.words)
+            self.list_group.set_description(_("{} words. Search to see them.").format(count))
+            return
+        found = [w for w in self.store.words if needle in w.casefold()]
+        for word in found[: self.SHOWN]:
+            self.list.append(self._word_row(word))
+        if not found:
+            text = _("No words found.")
+        elif len(found) > self.SHOWN:
+            text = _("Showing {} of {} words found.").format(self.SHOWN, len(found))
+        else:
+            text = None
+        self.list_group.set_description(text)
+
+    def refresh(self):
+        self._show()
+        self._check()
+        self._enable()
+
+    def _word_row(self, word):
+        row = Adw.ActionRow(use_markup=False, title=word)
+        remove = Gtk.Button(
+            icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER, tooltip_text=_("Remove")
+        )
+        remove.add_css_class("flat")
+        remove.connect("clicked", lambda _b: self._remove(word))
+        row.add_suffix(remove)
+        return row
+
+
 MISSING = [
     N_("Sen, which types straight into the app, and its fixes for each app"),
     N_("Cứu chữ and Cứu dấu"),
     N_("Two spaces to a period, -- to —"),
-    N_("The emoji picker, rules for each app and the dictionary editor"),
+    N_("The emoji picker and rules for each app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
 PROJECT_URL = "https://github.com/ngosen/ibus-ngosen"

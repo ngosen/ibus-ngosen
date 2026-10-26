@@ -6,6 +6,7 @@
 #include "bamboo-core.h"
 #include "ngosen-ibus-config.h"
 #include "ngosen-ibus-engine.h"
+#include "ngosen-ibus-resources.h"
 
 #include <clocale>
 #include <cstdio>
@@ -20,6 +21,10 @@ namespace {
     int runSettingsCommand(const char* command) {
         const bool methods = std::strcmp(command, "--list-input-methods") == 0;
         const bool print   = std::strcmp(command, "--print-settings") == 0;
+        if (std::strcmp(command, "--print-dictionary-paths") == 0) {
+            std::printf("%s\n%s\n", ngosen::SettingsPaths::fromEnvironment().dictionaryFile().c_str(), ngosen::bundledDictionaryFile().c_str());
+            return 0;
+        }
         if (!methods && !print && std::strcmp(command, "--list-charsets") != 0)
             return -1;
         Init();

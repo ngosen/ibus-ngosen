@@ -22,14 +22,20 @@ APP_ID = "io.github.ngosen.IBusNgoSen"
 
 class Window(Adw.ApplicationWindow):
     def __init__(self, app, store, names, version):
-        super().__init__(application=app, title="Ngó Sen", default_width=720, default_height=720)
+        super().__init__(application=app, title="Ngó Sen", default_width=800, default_height=720)
         self.store = store
         self.toast = None
         self.rows = pages.SettingRows(store, names, self.save)
         self.macros = pages.MacroPage(store, self.rows, self.save_macros)
+        self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)
 
         stack = Adw.ViewStack()
-        for page in (pages.typing_page(self.rows), self.macros.page, pages.about_page(version)):
+        for page in (
+            pages.typing_page(self.rows),
+            self.macros.page,
+            self.dictionary.page,
+            pages.about_page(version),
+        ):
             stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
         switcher = Adw.ViewSwitcher(stack=stack, policy=Adw.ViewSwitcherPolicy.WIDE)
         header = Adw.HeaderBar(title_widget=switcher)
@@ -51,6 +57,7 @@ class Window(Adw.ApplicationWindow):
     def refresh(self):
         self.rows.refresh()
         self.macros.refresh()
+        self.dictionary.refresh()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
@@ -58,6 +65,11 @@ class Window(Adw.ApplicationWindow):
     def save_macros(self, macros, _key):
         saved = self._write(lambda: self.store.set_macros(macros) or True, _("Macro"))
         self.macros.refresh()
+        return saved
+
+    def save_words(self, words):
+        saved = self._write(lambda: self.store.set_words(words) or True, _("Dictionary"))
+        self.dictionary.refresh()
         return saved
 
     def _write(self, write, label):

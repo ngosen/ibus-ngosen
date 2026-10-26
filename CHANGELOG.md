@@ -26,3 +26,5 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   sổ cài đặt (#9).
 - Tuỳ chọn "Gõ Sen ở app cho phép" (mặc định tắt): chữ hiện thẳng vào ô, không gạch chân, ở app báo được chữ
   quanh con trỏ (app GTK, Qt, Firefox, Chrome, VS Code, LibreOffice); terminal và game vẫn gạch chân (#10).
+- Trang "Từ điển" trong cửa sổ cài đặt: thêm, tìm và xoá từ trong từ điển riêng, lưu ngay, có Hoàn tác; sửa
+  từ điển thì bộ gõ dùng ngay từ chữ tiếp theo (#11).
