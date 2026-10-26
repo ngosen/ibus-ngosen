@@ -71,8 +71,6 @@ namespace ngosen {
 
     void IBusHost::commitText(const std::string& text) {
         ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
-        if (onCommit_)
-            onCommit_(text);
     }
 
     void IBusHost::forwardKey(EditKey key, bool release, uint32_t /*time*/) {

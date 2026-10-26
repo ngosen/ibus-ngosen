@@ -31,8 +31,12 @@ namespace ngosen {
             purpose_ = purpose;
             hints_   = hints;
         }
-        void setOnCommit(std::function<void(const std::string&)> onCommit) {
-            onCommit_ = std::move(onCommit);
+        // Not a field marked private: Firefox marks every field of a private window that way.
+        bool takesPassword() const {
+            return purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
+        }
+        bool hasPreedit() const {
+            return !preedit_.empty();
         }
 
         void                         commitText(const std::string& text) override;
@@ -65,14 +69,13 @@ namespace ngosen {
         std::string                  keyText(uint32_t sym) const override;
 
       private:
-        IBusEngine*                             engine_;
-        bool                                    focus_   = false;
-        guint                                   purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
-        guint                                   hints_   = IBUS_INPUT_HINT_NONE;
-        std::string                             client_;
-        std::string                             preedit_;
-        std::string                             status_;
-        std::function<void(const std::string&)> onCommit_;
+        IBusEngine* engine_;
+        bool        focus_   = false;
+        guint       purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
+        guint       hints_   = IBUS_INPUT_HINT_NONE;
+        std::string client_;
+        std::string preedit_;
+        std::string status_;
     };
 
     class IBusKeyPress final : public KeyPress {

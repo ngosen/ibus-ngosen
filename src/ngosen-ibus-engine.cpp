@@ -53,9 +53,12 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return FALSE;
+        // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
+        if (session->host->takesPassword())
+            return FALSE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
-        if (isPlainEnter(keyval, state))
+        if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
@@ -82,7 +85,6 @@ namespace {
         session->host->setFocus(false);
     }
 
-#if IBUS_CHECK_VERSION(1, 5, 27)
     void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
         if (Session* session = sessionOf(engine))
             session->host->setClient(client != nullptr ? client : "");
@@ -93,7 +95,6 @@ namespace {
     void focusOutId(IBusEngine* engine, const gchar* /*objectPath*/) {
         focusOut(engine);
     }
-#endif
 
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
@@ -126,7 +127,6 @@ namespace {
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
     }
 
-#if IBUS_CHECK_VERSION(1, 5, 27)
     // The factory's own engines never get focus_in_id, which names the app.
     IBusEngine* createEngine(IBusFactory* factory, const gchar* name, gpointer /*data*/) {
         static guint id     = 0;
@@ -136,7 +136,6 @@ namespace {
         g_free(path);
         return engine;
     }
-#endif
 
 } // namespace
 
@@ -149,10 +148,8 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->disable              = disable;
     engineClass->set_surrounding_text = setSurroundingText;
     engineClass->set_content_type     = setContentType;
-#if IBUS_CHECK_VERSION(1, 5, 27)
-    engineClass->focus_in_id  = focusInId;
-    engineClass->focus_out_id = focusOutId;
-#endif
+    engineClass->focus_in_id          = focusInId;
+    engineClass->focus_out_id         = focusOutId;
     IBUS_OBJECT_CLASS(klass)->destroy = destroy;
 }
 
@@ -161,8 +158,7 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     auto* session  = new Session;
     session->host  = host.get();
     session->state = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
-    session->host->setOnCommit([state = session->state.get()](const std::string& text) { state->noteCommit(text); });
-    self->session = session;
+    self->session  = session;
 }
 
 namespace ngosen {
@@ -171,9 +167,7 @@ namespace ngosen {
         // The IBus edition only types into the preedit, which the app commits itself.
         realMode = Mode::Preedit;
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
-#if IBUS_CHECK_VERSION(1, 5, 27)
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
-#endif
     }
 
 } // namespace ngosen

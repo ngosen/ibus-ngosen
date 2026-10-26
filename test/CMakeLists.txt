@@ -23,6 +23,6 @@ configure_file(${PROJECT_SOURCE_DIR}/data/ngosen.xml.in ${CMAKE_CURRENT_BINARY_D
 file(GENERATE OUTPUT ${component_dir}/ngosen.xml INPUT ${CMAKE_CURRENT_BINARY_DIR}/ngosen.xml.in)
 
 add_test(NAME ibus_daemon_typing
-         COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${component_dir}
+         COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${Python3_EXECUTABLE} ${component_dir}
                  ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict ${CMAKE_CURRENT_SOURCE_DIR}/ibus-daemon-typing.py)
 set_tests_properties(ibus_daemon_typing PROPERTIES LABELS "integration;ibus" TIMEOUT 120)

@@ -25,7 +25,10 @@ namespace ngosen {
 
     // NGOSEN_DEBUG=1 in the engine's environment turns on the debug and info lines.
     bool logEnabled(LogLevel level) {
-        static const bool verbose = std::getenv("NGOSEN_DEBUG") != nullptr;
+        static const bool verbose = [] {
+            const char* value = std::getenv("NGOSEN_DEBUG");
+            return value != nullptr && *value != '\0' && std::strcmp(value, "0") != 0;
+        }();
         return verbose || level == LogLevel::Warn || level == LogLevel::Error;
     }
 

@@ -38,7 +38,7 @@ bus = connect()
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
-    def __init__(self, name, purpose=IBus.InputPurpose.FREE_FORM, app_commits=False):
+    def __init__(self, name, purpose=IBus.InputPurpose.FREE_FORM, app_commits=False, hints=0):
         self.text = ""
         self.commits = []
         self.preedit = ""
@@ -55,7 +55,7 @@ class App:
         else:
             self.ic.connect("update-preedit-text", self.on_preedit)
         self.ic.connect("hide-preedit-text", self.on_hide_preedit)
-        self.ic.set_content_type(purpose, 0)
+        self.ic.set_content_type(purpose, hints)
         self.ic.focus_in()
         # An input context of a plain client cannot pick its own engine.
         bus.set_global_engine("ngosen")
@@ -108,8 +108,8 @@ class App:
                 char = IBus.keyval_to_unicode(keyval)
                 if keyval in (IBus.KEY_Return, IBus.KEY_KP_Enter):
                     self.text += "\n"
-                elif char:
-                    self.text += chr(char)
+                elif char and char != "\0":
+                    self.text += char
                 self.report()
 
         self.ic.process_key_event_async(keyval, 0, state, -1, None, done)
@@ -183,24 +183,41 @@ check(app.passed == ["Return"], "enter: keys the app got", app.passed)
 check(app.text == "viê\n", "enter: the word comes before the new line", app.text)
 app.close()
 
+# A password is sent as typed: "aa" and "dd" would otherwise become "â" and "đ".
+for purpose in (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN):
+    app = App("password", purpose)
+    app.type("aa dd ")
+    check(app.text == "aa dd ", f"{purpose.value_nick}: the keys reach the app unchanged", (app.text, app.passed))
+    check(app.commits == [] and app.preedit == "", f"{purpose.value_nick}: nothing typed by the engine", (app.commits, app.preedit))
+    app.close()
+
+# ibus-daemon commits the preedit itself before it switches the engine away.
+for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
+    app = App("switch", app_commits=app_commits)
+    app.type("viee")
+    bus.set_global_engine("xkb:us::eng")
+    pump(500)
+    check(app.commits == ["viê"], f"engine switch ({who}): the word stays", app.commits)
+    app.close()
+
 log_path = os.environ["NGOSEN_IBUS_LOG_FILE"]
 
 
-def typed_log(purpose):
+def typed_log(hints):
     open(log_path, "w").close()
-    app = App("log", purpose)
+    app = App("log", hints=hints)
     app.type("vieetj ")
     app.close()
+    check(app.commits == ["việt "], f"log: hints {hints} still type Vietnamese", app.commits)
     with open(log_path) as f:
         return f.read()
 
 
-plain = typed_log(IBus.InputPurpose.FREE_FORM)
+plain = typed_log(0)
 check("việt" in plain, "log: a plain field logs what was typed", plain)
-for purpose in (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN):
-    hidden = typed_log(purpose)
-    leaked = [w for w in ("việt", "viê") if w in hidden]
-    check(not leaked, f"log: {purpose.value_nick} field keeps no typed text", leaked)
+hidden = typed_log(IBus.InputHints.PRIVATE)
+leaked = [w for w in ("việt", "viê") if w in hidden]
+check(not leaked, "log: a private field keeps no typed text", leaked)
 
 if failures == 0:
     print("all IBus daemon checks passed")
