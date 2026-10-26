@@ -91,6 +91,15 @@ jobs:
           buildpackage-opts: >-
             --build=binary --no-sign
 
+      # Debian derivatives such as MX skip Recommends, so the GTK modules must be hard dependencies.
+      - name: Check that the package pulls in the GTK modules
+        run: |
+          deps=$(dpkg-deb -f debian/artifacts/ibus-ngosen_*.deb Depends)
+          echo "$deps"
+          for module in ibus-gtk3 ibus-gtk4; do
+            grep -qw "$module" <<<"$deps" || { echo "missing $module"; exit 1; }
+          done
+
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v7
         with:
