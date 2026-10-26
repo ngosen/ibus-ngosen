@@ -6,22 +6,25 @@
 #pragma once
 
 #include "ngosen-engine-resources.h"
+#include "ngosen-ibus-config.h"
+
+#include <gio/gio.h>
 
 namespace ngosen {
 
     // Settings and tables every field shares. No emoji list: the IBus edition has no emoji picker.
     class IBusResources final : public EngineResources {
       public:
-        IBusResources();
+        explicit IBusResources(SettingsPaths paths);
         ~IBusResources() override;
         IBusResources(const IBusResources&)            = delete;
         IBusResources& operator=(const IBusResources&) = delete;
 
         const Options& options() const override {
-            return options_;
+            return settings_.options;
         }
         std::vector<KeymapEntry> customKeymap() const override {
-            return {};
+            return settings_.enableCustomKeymap ? keymap_ : std::vector<KeymapEntry>{};
         }
         uintptr_t dictionary() const override {
             return dictionary_;
@@ -40,11 +43,26 @@ namespace ngosen {
             return recorder_;
         }
 
+        // Counts reloads, so a field knows its engine was built from older settings.
+        unsigned generation() const {
+            return generation_;
+        }
+        // Called between words only, as a field's engine is rebuilt after it.
+        void reloadIfChanged();
+
       private:
-        Options   options_;
-        uintptr_t dictionary_ = 0;
-        uintptr_t macroTable_ = 0;
-        Recorder  recorder_;
+        void                     load();
+        uintptr_t                openDictionary() const;
+
+        SettingsPaths            paths_;
+        IBusSettings             settings_;
+        std::vector<KeymapEntry> keymap_;
+        uintptr_t                dictionary_ = 0;
+        uintptr_t                macroTable_ = 0;
+        unsigned                 generation_ = 0;
+        bool                     changed_    = false;
+        GFileMonitor*            monitor_    = nullptr;
+        Recorder                 recorder_;
     };
 
 } // namespace ngosen

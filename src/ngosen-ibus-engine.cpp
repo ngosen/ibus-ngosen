@@ -15,15 +15,27 @@
 
 namespace {
 
+    ngosen::IBusResources& resources() {
+        static ngosen::IBusResources instance(ngosen::SettingsPaths::fromEnvironment());
+        return instance;
+    }
+
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
         std::unique_ptr<ngosen::TypingState> state;
-    };
+        unsigned                             generation = 0;
 
-    ngosen::IBusResources& resources() {
-        static ngosen::IBusResources instance;
-        return instance;
-    }
+        // Only between words: a new engine would drop the word being typed.
+        void applyNewSettings() {
+            if (host->hasPreedit())
+                return;
+            resources().reloadIfChanged();
+            if (generation == resources().generation())
+                return;
+            state->setEngine();
+            generation = resources().generation();
+        }
+    };
 
 } // namespace
 
@@ -53,6 +65,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return FALSE;
+        session->applyNewSettings();
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
         if (session->host->takesPassword())
             return FALSE;
@@ -73,8 +86,10 @@ namespace {
     }
 
     void focusIn(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
+            session->applyNewSettings();
+        }
     }
 
     void focusOut(IBusEngine* engine) {
@@ -154,11 +169,12 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
 }
 
 static void ngosen_engine_init(NgoSenEngine* self) {
-    auto  host     = std::make_unique<ngosen::IBusHost>(IBUS_ENGINE(self));
-    auto* session  = new Session;
-    session->host  = host.get();
-    session->state = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
-    self->session  = session;
+    auto  host          = std::make_unique<ngosen::IBusHost>(IBUS_ENGINE(self));
+    auto* session       = new Session;
+    session->host       = host.get();
+    session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
+    session->generation = resources().generation();
+    self->session       = session;
 }
 
 namespace ngosen {

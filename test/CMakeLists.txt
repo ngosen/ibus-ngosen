@@ -1,3 +1,8 @@
+add_executable(ibus-config-test ibus-config.cpp)
+target_link_libraries(ibus-config-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_config COMMAND ibus-config-test)
+set_tests_properties(ibus_config PROPERTIES LABELS "unit;ibus")
+
 # The engine runs in its own process under ibus-daemon, so it is tested through a real daemon.
 option(NGOSEN_IBUS_DAEMON_TESTS "Test the engine through ibus-daemon" ON)
 if (NOT NGOSEN_IBUS_DAEMON_TESTS)
