@@ -10,11 +10,15 @@ from ngosen_settings.store import Engine, Store, read_text, write_text
 
 
 class FakeEngine:
-    def __init__(self, values):
+    def __init__(self, values, folder):
         self.values = values
+        self.folder = folder
 
     def settings(self):
         return dict(self.values)
+
+    def dictionary_paths(self):
+        return os.path.join(self.folder, "own.dict"), os.path.join(self.folder, "bundled.dict")
 
 
 class IniTest(unittest.TestCase):
@@ -82,7 +86,7 @@ class StoreTest(unittest.TestCase):
         write_text(self.settings, "InputMethod=Telex\nFutureKey=kept\n")
 
     def store(self):
-        return Store(FakeEngine({"InputMethod": "Telex"}), self.folder)
+        return Store(FakeEngine({"InputMethod": "Telex"}, self.folder), self.folder)
 
     def test_set_keeps_unknown_keys_and_undoes(self):
         store = self.store()
@@ -131,6 +135,34 @@ class StoreTest(unittest.TestCase):
         store.undo()
         self.assertFalse(os.path.exists(self.macros))
 
+    def test_words(self):
+        own, bundled = (
+            os.path.join(self.folder, "own.dict"),
+            os.path.join(self.folder, "bundled.dict"),
+        )
+        write_text(bundled, "việt\n\nnam\n")
+        store = self.store()
+        self.assertEqual(store.words, ["việt", "nam"])
+        store.set_words(["việt", "nam", "ngoãy"])
+        self.assertEqual(read_text(own), "việt\nnam\nngoãy\n")
+        self.assertEqual(self.store().words, ["việt", "nam", "ngoãy"])
+        store.undo()
+        self.assertFalse(os.path.exists(own))
+        self.assertEqual(store.words, ["việt", "nam"])
+
+    def test_words_back_to_the_bundled_list_remove_the_own_file(self):
+        own, bundled = (
+            os.path.join(self.folder, "own.dict"),
+            os.path.join(self.folder, "bundled.dict"),
+        )
+        write_text(bundled, "việt\nnam\n")
+        write_text(own, "việt\nnam\nngoãy\n")
+        store = self.store()
+        store.set_words(["nam", "việt"])
+        self.assertFalse(os.path.exists(own))
+        store.undo()
+        self.assertEqual(read_text(own), "việt\nnam\nngoãy\n")
+
 
 @unittest.skipUnless(os.environ.get("NGOSEN_IBUS_ENGINE"), "needs the built engine")
 class EngineTest(unittest.TestCase):
@@ -162,6 +194,12 @@ class EngineTest(unittest.TestCase):
             store.set("InputMethod", name)
             self.assertEqual(self.engine.settings()["InputMethod"], name)
         self.assertIn("Unicode", self.engine.charsets())
+
+    def test_dictionary_paths(self):
+        own, bundled = self.engine.dictionary_paths()
+        self.assertEqual(own, os.path.join(self.home, "data", "ngosen", "vietnamese.cm.dict"))
+        self.assertEqual(bundled, os.environ["NGOSEN_IBUS_DICTIONARY"])
+        self.assertIn("việt", Store(self.engine).words)
 
 
 if __name__ == "__main__":

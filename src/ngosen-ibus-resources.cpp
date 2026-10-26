@@ -42,7 +42,8 @@ namespace ngosen {
             if (file == nullptr)
                 return false;
             gchar*     name  = g_file_get_basename(file);
-            const bool known = g_strcmp0(name, "ngosen.conf") == 0 || g_strcmp0(name, "ngosen-macro-table.conf") == 0 || g_strcmp0(name, "ngosen-custom-keymap.conf") == 0;
+            const bool known = g_strcmp0(name, "ngosen.conf") == 0 || g_strcmp0(name, "ngosen-macro-table.conf") == 0 || g_strcmp0(name, "ngosen-custom-keymap.conf") == 0 ||
+                g_strcmp0(name, "vietnamese.cm.dict") == 0;
             g_free(name);
             return known;
         }
@@ -52,22 +53,32 @@ namespace ngosen {
                 *static_cast<bool*>(changed) = true;
         }
 
+        GFileMonitor* watchDirectory(const std::string& path, bool* changed) {
+            GFile*        dir     = g_file_new_for_path(path.c_str());
+            GFileMonitor* monitor = g_file_monitor_directory(dir, G_FILE_MONITOR_WATCH_MOVES, nullptr, nullptr);
+            g_object_unref(dir);
+            if (monitor != nullptr)
+                g_signal_connect(monitor, "changed", G_CALLBACK(onDirChanged), changed);
+            return monitor;
+        }
+
     } // namespace
 
     IBusResources::IBusResources(SettingsPaths paths) : paths_(std::move(paths)) {
         Init();
         prepareSettings(paths_);
         load();
-        GFile* dir = g_file_new_for_path(paths_.configDir.c_str());
-        monitor_   = g_file_monitor_directory(dir, G_FILE_MONITOR_WATCH_MOVES, nullptr, nullptr);
-        g_object_unref(dir);
-        if (monitor_ != nullptr)
-            g_signal_connect(monitor_, "changed", G_CALLBACK(onDirChanged), &changed_);
+        monitor_ = watchDirectory(paths_.configDir, &changed_);
+        // GLib notices a folder created later only seconds after, missing a file written at once.
+        g_mkdir_with_parents(paths_.dataDir.c_str(), 0700);
+        dataMonitor_ = watchDirectory(paths_.dataDir, &changed_);
     }
 
     IBusResources::~IBusResources() {
-        if (monitor_ != nullptr)
-            g_object_unref(monitor_);
+        for (GFileMonitor* monitor : {monitor_, dataMonitor_}) {
+            if (monitor != nullptr)
+                g_object_unref(monitor);
+        }
         DeleteObject(macroTable_);
         DeleteObject(dictionary_);
     }
@@ -104,6 +115,12 @@ namespace ngosen {
         dictionary_ = openDictionary();
     }
 
+    std::string bundledDictionaryFile() {
+        // Lets the tests run the engine from the build tree.
+        const char* override = std::getenv("NGOSEN_IBUS_DICTIONARY");
+        return override != nullptr ? override : NGOSEN_IBUS_DICTIONARY;
+    }
+
     // The user's dictionary only with the custom dictionary on, as the fcitx5 edition does. The
     // spell check reads the packaged one otherwise.
     uintptr_t IBusResources::openDictionary() const {
@@ -113,10 +130,8 @@ namespace ngosen {
                 return dictionary;
             }
         }
-        // Lets the tests run the engine from the build tree.
-        const char*     override   = std::getenv("NGOSEN_IBUS_DICTIONARY");
-        const char*     path       = override != nullptr ? override : NGOSEN_IBUS_DICTIONARY;
-        const uintptr_t dictionary = openDictionaryAt(path);
+        const std::string path       = bundledDictionaryFile();
+        const uintptr_t   dictionary = openDictionaryAt(path);
         if (dictionary != 0)
             NGOSEN_INFO("Dictionary: " << path);
         else

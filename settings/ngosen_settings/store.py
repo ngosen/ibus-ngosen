@@ -69,9 +69,22 @@ class Engine:
     def charsets(self):
         return self._run("--list-charsets").splitlines()
 
+    def dictionary_paths(self):
+        """The user's word list and the one that comes with the package."""
+        paths = self._run("--print-dictionary-paths").split("\n")[:-1]
+        if len(paths) != 2:
+            # An older engine starts instead of answering.
+            raise subprocess.SubprocessError("the engine did not print the dictionary paths")
+        return paths[0], paths[1]
+
+
+def read_words(path):
+    text = read_text(path)
+    return [w for w in (line.strip() for line in (text or "").split("\n")) if w]
+
 
 class Store:
-    """The settings and the macro list, with one step of undo."""
+    """The settings, the macro list and the dictionary, with one step of undo."""
 
     def __init__(self, engine, folder=None):
         self.folder = folder or config_dir()
@@ -79,6 +92,9 @@ class Store:
         self.macro_file = os.path.join(self.folder, "ngosen-macro-table.conf")
         self.values = engine.settings()
         self.macros = ini.read_list(ini.parse(read_text(self.macro_file) or "")[1], MACRO_LIST)
+        self.dictionary_file, self.bundled_dictionary = engine.dictionary_paths()
+        own = os.path.exists(self.dictionary_file)
+        self.words = read_words(self.dictionary_file if own else self.bundled_dictionary)
         self._undo = None
 
     def set(self, key, value):
@@ -102,6 +118,16 @@ class Store:
         write_text(self.macro_file, kept + ini.list_text(MACRO_LIST, macros))
         self._undo = (self.macro_file, before, "macros", list(self.macros))
         self.macros = list(macros)
+
+    def set_words(self, words):
+        before = read_text(self.dictionary_file)
+        if sorted(words) == sorted(read_words(self.bundled_dictionary)):
+            # A copy of the packaged list would hide later updates to it.
+            restore_text(self.dictionary_file, None)
+        else:
+            write_text(self.dictionary_file, "".join(w + "\n" for w in words))
+        self._undo = (self.dictionary_file, before, "words", list(self.words))
+        self.words = list(words)
 
     def can_undo(self):
         return self._undo is not None

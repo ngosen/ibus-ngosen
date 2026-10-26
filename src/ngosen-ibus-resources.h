@@ -12,6 +12,9 @@
 
 namespace ngosen {
 
+    // The word list that comes with the package.
+    std::string bundledDictionaryFile();
+
     // Settings and tables every field shares. No emoji list: the IBus edition has no emoji picker.
     class IBusResources final : public EngineResources {
       public:
@@ -64,11 +67,12 @@ namespace ngosen {
         SettingsPaths            paths_;
         IBusSettings             settings_;
         std::vector<KeymapEntry> keymap_;
-        uintptr_t                dictionary_ = 0;
-        uintptr_t                macroTable_ = 0;
-        unsigned                 generation_ = 0;
-        bool                     changed_    = false;
-        GFileMonitor*            monitor_    = nullptr;
+        uintptr_t                dictionary_  = 0;
+        uintptr_t                macroTable_  = 0;
+        unsigned                 generation_  = 0;
+        bool                     changed_     = false;
+        GFileMonitor*            monitor_     = nullptr;
+        GFileMonitor*            dataMonitor_ = nullptr;
         Recorder                 recorder_;
     };
 

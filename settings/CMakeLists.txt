@@ -27,7 +27,8 @@ endif()
 add_test(NAME settings_window COMMAND ${display_runner} ${Python3_EXECUTABLE} -m unittest discover -s tests -t . -v
          WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 # GDK_BACKEND keeps GTK on the Xvfb display when the desktop session is Wayland.
-set_tests_properties(settings_window PROPERTIES ENVIRONMENT "NGOSEN_IBUS_ENGINE=$<TARGET_FILE:ibus-engine-ngosen>;GDK_BACKEND=x11")
+set_tests_properties(settings_window PROPERTIES ENVIRONMENT
+    "NGOSEN_IBUS_ENGINE=$<TARGET_FILE:ibus-engine-ngosen>;NGOSEN_IBUS_DICTIONARY=${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict;GDK_BACKEND=x11")
 
 find_program(DESKTOP_FILE_VALIDATE desktop-file-validate)
 if (DESKTOP_FILE_VALIDATE)
