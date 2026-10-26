@@ -29,6 +29,7 @@ DATE_FORMATS = [
 
 LABELS = {
     "InputMethod": N_("Input Method"),
+    "DirectTyping": N_("Type with Sen where the app allows"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
@@ -52,6 +53,9 @@ LABELS = {
 }
 
 HINTS = {
+    "DirectTyping": N_(
+        "Text goes straight into fields that report the text around the cursor, without an underline. Terminals and games keep the underline."
+    ),
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
     ),
@@ -92,7 +96,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "OutputCharset", "EnableCustomKeymap"]),
+    (None, ["InputMethod", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
     (
         N_("Tone marks"),
         [

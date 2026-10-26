@@ -97,9 +97,10 @@ namespace {
         changed.options.spellCheck       = false;
         changed.enableDictionary         = true;
         changed.enableCustomKeymap       = true;
+        changed.directTyping             = true;
         const std::string text           = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 19, "the file has every key");
+        check(parseIni(text).top.size() == 20, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -154,6 +155,7 @@ namespace {
         check(!settingForClick("OutputCharset/Nope", true, key, value), "an unknown charset");
         check(settingForClick("SpellCheck", false, key, value) && key == "SpellCheck" && value == "False", "turning spell check off");
         check(settingForClick("EnableDictionary", true, key, value) && value == "True", "turning the dictionary on");
+        check(settingForClick("DirectTyping", true, key, value) && key == "DirectTyping" && value == "True", "turning Sen on");
         check(!settingForClick("Mode", true, key, value) && !settingForClick(SettingsWindowItem, true, key, value), "items that are not settings");
     }
 

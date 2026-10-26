@@ -31,6 +31,7 @@ namespace {
             if (host->hasPreedit())
                 return;
             resources().reloadIfChanged();
+            host->setDirectTyping(resources().settings().directTyping);
             if (generation == resources().generation())
                 return;
             state->setEngine();
@@ -74,6 +75,9 @@ namespace {
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
+        // The core saw the cursor leave the word, so the word in the app is no longer ours to change.
+        if (g_mouse_clicked.load(std::memory_order_acquire))
+            session->host->forgetTypedWord();
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -124,6 +128,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
+        session->host->forgetTypedWord();
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
     }
@@ -142,8 +147,10 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
+            session->host->forgetTypedWord();
             session->state->resetAfterAppCommit(false);
+        }
     }
 
     void disable(IBusEngine* engine) {
@@ -152,8 +159,17 @@ namespace {
 
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
+            session->host->setReportedText(ibus_text_get_text(text), cursor);
+            const bool clicked = g_mouse_clicked.load(std::memory_order_acquire);
+            const bool reset   = needEngineReset.load(std::memory_order_acquire);
             session->state->surroundingUpdated();
+            // VS Code reports the cursor at the start of the field and then back after the word.
+            if (!clicked && session->host->backAfterTypedWord() && g_mouse_clicked.load(std::memory_order_acquire)) {
+                g_mouse_clicked.store(false, std::memory_order_release);
+                needEngineReset.store(reset, std::memory_order_release);
+            }
+        }
     }
 
     void setContentType(IBusEngine* engine, guint purpose, guint hints) {
@@ -203,7 +219,8 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->host       = host.get();
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
-    self->session       = session;
+    session->host->setDirectTyping(resources().settings().directTyping);
+    self->session = session;
 }
 
 namespace ngosen {

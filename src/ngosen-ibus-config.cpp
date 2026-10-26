@@ -217,6 +217,7 @@ namespace ngosen {
         read.text("DateFormat", o.dateFormat);
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
+        read.boolean("DirectTyping", settings.directTyping);
         return settings;
     }
 
@@ -243,6 +244,7 @@ namespace ngosen {
         line("DateFormat", o.dateFormat);
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
+        line("DirectTyping", boolText(settings.directTyping));
         return out.str();
     }
 

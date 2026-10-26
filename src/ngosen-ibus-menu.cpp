@@ -20,6 +20,7 @@ namespace ngosen {
             bool (*isOn)(const IBusSettings&);
         };
 
+        const Toggle        DirectTyping     = {"DirectTyping", N_("Type with Sen where the app allows"), [](const IBusSettings& s) { return s.directTyping; }};
         const Toggle        SpellCheck       = {"SpellCheck", N_("Spell Check"), [](const IBusSettings& s) { return s.options.spellCheck; }};
         const Toggle        Macro            = {"EnableMacro", N_("Macro"), [](const IBusSettings& s) { return s.options.enableMacro; }};
         const Toggle        CapitalizeMacro  = {"CapitalizeMacro", N_("Capitalize Macro"), [](const IBusSettings& s) { return s.options.capitalizeMacro; }};
@@ -29,7 +30,7 @@ namespace ngosen {
         const Toggle        Restore          = {"AutoNonVnRestore", N_("Auto Restore Invalid Words"), [](const IBusSettings& s) { return s.options.autoNonVnRestore; }};
         const Toggle        Dictionary       = {"EnableDictionary", N_("Custom Dictionary"), [](const IBusSettings& s) { return s.enableDictionary; }};
 
-        const Toggle* const Toggles[] = {&SpellCheck, &Macro, &CapitalizeMacro, &AfterPunctuation, &StartOfText, &Restore, &Dictionary};
+        const Toggle* const Toggles[] = {&DirectTyping, &SpellCheck, &Macro, &CapitalizeMacro, &AfterPunctuation, &StartOfText, &Restore, &Dictionary};
 
         // The two methods most people switch between, as in the fcitx5 edition; the rest stay in
         // the settings window.
@@ -59,6 +60,7 @@ namespace ngosen {
     IBusPropList* newSettingsMenu(const IBusSettings& settings) {
         IBusPropList* menu = ibus_prop_list_new();
         ibus_prop_list_append(menu, newChoice("InputMethod", _("Input Method"), MenuInputMethods, settings.options.inputMethod));
+        ibus_prop_list_append(menu, newToggle(DirectTyping, settings));
         ibus_prop_list_append(menu, newChoice("OutputCharset", _("Charset"), charsetNames(), settings.options.outputCharset));
         ibus_prop_list_append(menu, newToggle(SpellCheck, settings));
         ibus_prop_list_append(menu, newToggle(Macro, settings));
