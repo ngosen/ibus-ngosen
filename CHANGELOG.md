@@ -18,3 +18,5 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   gõ không mất (#3).
 - Cửa sổ cài đặt, mở từ Cài đặt › Bàn phím › "Tiếng Việt (Ngó Sen)" hoặc từ danh sách app: kiểu gõ, cách
   bỏ dấu, gõ tắt, ô gõ thử; lưu ngay khi đổi, có nút Hoàn tác (#5).
+- Gói cài cho Debian 13, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch Linux (cả máy ARM trừ Arch), và mã
+  nguồn kèm sẵn lõi Ngó Sen (#6).

@@ -1,0 +1,34 @@
+# Maintainer: Nguyen Phi <nguyenphidt at gmail dot com>
+#
+# Builds the checked-out tree this file sits in, so nothing is downloaded:
+#   cd packaging/arch && makepkg -si
+# packaging/aur/PKGBUILD builds the release tarball instead.
+
+pkgname=ibus-ngosen
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Ngó Sen for GNOME, a Vietnamese input method for IBus"
+arch=('x86_64')
+url="https://github.com/ngosen/ibus-ngosen"
+license=('GPL-3.0-or-later' 'LGPL-2.1-or-later' 'MIT' 'GPL-2.0-or-later' 'OFL-1.1')
+depends=('ibus' 'python' 'python-gobject' 'gtk4' 'libadwaita' 'hicolor-icon-theme'
+         'glibc' 'gcc-libs')
+makedepends=('cmake' 'rust')
+options=('!debug')
+
+build() {
+    cmake -S "$startdir/../.." -B build \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBEXECDIR=lib/ibus \
+        -DNGOSEN_IBUS_DAEMON_TESTS=OFF
+    cmake --build build
+}
+
+check() {
+    ctest --test-dir build --output-on-failure -j"$(nproc)"
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}
