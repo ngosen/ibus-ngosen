@@ -3,8 +3,9 @@
 Bộ gõ tiếng Việt Ngó Sen chạy trên IBus, bộ gõ có sẵn của GNOME. Gõ gạch chân như mọi bộ gõ IBus, đổi
 Anh/Việt bằng Super+Space như các nguồn nhập khác của GNOME.
 
-Đang làm, chưa có bản phát hành. Cần gõ ngay thì dùng
-[Ngó Sen đầy đủ](https://github.com/ngosen/ngosen) cho fcitx5.
+Tải gói ở trang [Releases](https://github.com/ngosen/ibus-ngosen/releases), cài rồi thêm "Tiếng Việt (Ngó
+Sen)" trong Cài đặt › Bàn phím › Nguồn nhập. Bản này chưa có Gõ Sen, Cứu chữ, Cứu dấu và emoji; cần những
+thứ đó thì dùng [Ngó Sen đầy đủ](https://github.com/ngosen/ngosen) cho fcitx5.
 
 ## Dựng từ mã nguồn
 
