@@ -418,6 +418,11 @@ for surrounding, app_commits, who in (
     app.close()
     check(app.text == "xin. a—b c -", f"doubled keys: a field {who}", app.text)
     check(app.deletions == 0, f"doubled keys: nothing deleted in a field {who}", app.deletions)
+    check(
+        ". " in app.commits,
+        f"doubled keys: one commit for the period in a field {who}",
+        app.commits,
+    )
 set_setting("AutoCapitalizeAfterPunctuation", "True")
 app = App("doubled keys")
 app.type("xin  chaof")

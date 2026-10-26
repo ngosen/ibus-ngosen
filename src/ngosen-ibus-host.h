@@ -62,6 +62,8 @@ namespace ngosen {
         bool                         holdKept();
         void                         hold(const std::string& text);
         std::string                  takeHeld();
+        void                         gatherCommits();
+        void                         sendGathered();
 
         void                         commitText(const std::string& text) override;
         void                         forwardKey(EditKey key, bool release, uint32_t time) override;
@@ -117,6 +119,9 @@ namespace ngosen {
         bool        kept_ = false;
         // A space or hyphen the next key decides about, shown in the preedit meanwhile.
         std::string held_;
+        // GNOME can drop the first of two commits sent at once, so a key that commits twice sends one.
+        bool        gathering_ = false;
+        std::string gathered_;
     };
 
     class IBusKeyPress final : public KeyPress {

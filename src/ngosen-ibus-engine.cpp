@@ -74,11 +74,11 @@ namespace {
     }
 
     // As if typed, so the core capitalizes after the period when set to.
-    void typeIntoCore(Session* session, IBusEngine* engine, guint keyval, const char* text) {
+    void typeIntoCore(Session* session, guint keyval, const char* text) {
         ngosen::IBusKeyPress key(keyval, 0, 0);
         session->state->keyEvent(key);
         if (!key.accepted())
-            ibus_engine_commit_text(engine, ibus_text_new_from_string(text));
+            session->host->commitText(text);
     }
 
     // The second of two spaces or hyphens changes the first, which is still in the preedit.
@@ -93,8 +93,10 @@ namespace {
         if (held == "-") {
             ibus_engine_commit_text(engine, ibus_text_new_from_string("—"));
         } else {
-            typeIntoCore(session, engine, IBUS_KEY_period, ".");
-            typeIntoCore(session, engine, IBUS_KEY_space, " ");
+            session->host->gatherCommits();
+            typeIntoCore(session, IBUS_KEY_period, ".");
+            typeIntoCore(session, IBUS_KEY_space, " ");
+            session->host->sendGathered();
         }
         return true;
     }

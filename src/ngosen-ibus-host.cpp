@@ -78,6 +78,10 @@ namespace ngosen {
             if (text.empty())
                 return;
         }
+        if (gathering_) {
+            gathered_ += text;
+            return;
+        }
         if (typed_.empty()) {
             ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
             return;
@@ -93,6 +97,18 @@ namespace ngosen {
         keep_.clear();
         kept_ = false;
         return kept;
+    }
+
+    void IBusHost::gatherCommits() {
+        gathering_ = true;
+        gathered_.clear();
+    }
+
+    void IBusHost::sendGathered() {
+        gathering_ = false;
+        if (!gathered_.empty())
+            ibus_engine_commit_text(engine_, ibus_text_new_from_string(gathered_.c_str()));
+        gathered_.clear();
     }
 
     // Always given: some apps draw a preedit without one as plain text, which looks already typed.
