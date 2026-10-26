@@ -243,6 +243,14 @@ def set_setting(key, value):
 with open(settings_path) as f:
     check("EnableDictionary=False" in f.read(), "settings: the first run writes every key", settings_path)
 
+open(log_path, "w").close()
+write_file(os.path.join(config_dir, "notes.txt"), "not a setting\n")
+app = App("stray file")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check("Settings reloaded" not in f.read(), "settings: a stray file triggers no reload", log_path)
+
 app = App("reload")
 app.type("vie")
 set_setting("InputMethod", "VNI")

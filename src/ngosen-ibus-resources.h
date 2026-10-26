@@ -9,24 +9,12 @@
 #include "ngosen-ibus-config.h"
 
 #include <gio/gio.h>
-#include <memory>
 
 namespace ngosen {
 
     // Settings and tables every field shares. No emoji list: the IBus edition has no emoji picker.
     class IBusResources final : public EngineResources {
       public:
-        // The handles a Vietnamese engine was built with. Each field holds the set it was built
-        // with, so a reload frees the old set only once no engine uses it.
-        struct Tables {
-            uintptr_t dictionary = 0;
-            uintptr_t macroTable = 0;
-            Tables()             = default;
-            ~Tables();
-            Tables(const Tables&)            = delete;
-            Tables& operator=(const Tables&) = delete;
-        };
-
         explicit IBusResources(SettingsPaths paths);
         ~IBusResources() override;
         IBusResources(const IBusResources&)            = delete;
@@ -39,10 +27,10 @@ namespace ngosen {
             return settings_.enableCustomKeymap ? keymap_ : std::vector<KeymapEntry>{};
         }
         uintptr_t dictionary() const override {
-            return tables_->dictionary;
+            return dictionary_;
         }
         uintptr_t macroTable() const override {
-            return tables_->macroTable;
+            return macroTable_;
         }
         std::vector<EmojiEntry> emojiHistory() override {
             return {};
@@ -55,24 +43,22 @@ namespace ngosen {
             return recorder_;
         }
 
-        std::shared_ptr<const Tables> tables() const {
-            return tables_;
-        }
         // Counts reloads, so a field knows its engine was built from older settings.
         unsigned generation() const {
             return generation_;
         }
-        // Rereads the settings if a file changed since the last load.
+        // Called between words only, as a field's engine is rebuilt after it.
         void reloadIfChanged();
 
       private:
         void                     load();
-        void                     openDictionary(Tables& tables) const;
+        uintptr_t                openDictionary() const;
 
         SettingsPaths            paths_;
         IBusSettings             settings_;
         std::vector<KeymapEntry> keymap_;
-        std::shared_ptr<Tables>  tables_;
+        uintptr_t                dictionary_ = 0;
+        uintptr_t                macroTable_ = 0;
         unsigned                 generation_ = 0;
         bool                     changed_    = false;
         GFileMonitor*            monitor_    = nullptr;

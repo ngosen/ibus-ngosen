@@ -21,15 +21,9 @@ namespace {
     }
 
     struct Session {
-        ngosen::IBusHost*                                    host = nullptr;
-        std::unique_ptr<ngosen::TypingState>                 state;
-        std::shared_ptr<const ngosen::IBusResources::Tables> tables;
-        unsigned                                             generation = 0;
-
-        void                                                 noteEngineBuilt() {
-            tables     = resources().tables();
-            generation = resources().generation();
-        }
+        ngosen::IBusHost*                    host = nullptr;
+        std::unique_ptr<ngosen::TypingState> state;
+        unsigned                             generation = 0;
 
         // Only between words: a new engine would drop the word being typed.
         void applyNewSettings() {
@@ -39,7 +33,7 @@ namespace {
             if (generation == resources().generation())
                 return;
             state->setEngine();
-            noteEngineBuilt();
+            generation = resources().generation();
         }
     };
 
@@ -175,12 +169,12 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
 }
 
 static void ngosen_engine_init(NgoSenEngine* self) {
-    auto  host     = std::make_unique<ngosen::IBusHost>(IBUS_ENGINE(self));
-    auto* session  = new Session;
-    session->host  = host.get();
-    session->state = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
-    session->noteEngineBuilt();
-    self->session = session;
+    auto  host          = std::make_unique<ngosen::IBusHost>(IBUS_ENGINE(self));
+    auto* session       = new Session;
+    session->host       = host.get();
+    session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
+    session->generation = resources().generation();
+    self->session       = session;
 }
 
 namespace ngosen {

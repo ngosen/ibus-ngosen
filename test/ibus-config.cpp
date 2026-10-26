@@ -98,8 +98,9 @@ namespace {
         changed.enableCustomKeymap       = true;
         const std::string text           = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 20, "the file has every key");
-        check(parseIni(text).top.at("SettingsVersion") == "1", "the file has its own version");
+        check(parseIni(text).top.size() == 19, "the file has every key");
+        // fcitx5 reads SettingsVersion as the version of its own upgrades.
+        check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
 
     void testImport(const fs::path& root) {
@@ -111,13 +112,17 @@ namespace {
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
         check(settings.top.count("Mode") == 0, "Mode not imported");
-        check(settings.top.at("SettingsVersion") == "1", "the fcitx5 SettingsVersion not imported");
+        check(settings.top.count("SettingsVersion") == 0, "the fcitx5 SettingsVersion not imported");
         check(read(paths.macroFile()) == FcitxMacros, "macros copied as they are");
         check(read(paths.dictionaryFile()) == "người dùng\n", "the user's dictionary copied");
         check(!fs::exists(paths.keymapFile()), "no keymap file without one to copy");
 
         write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
         check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");
+
+        write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
+        fs::remove(paths.settingsFile());
+        check(prepareSettings(paths) && read(paths.settingsFile()) == settingsText(defaultSettings()), "a deleted ngosen.conf comes back as the defaults");
     }
 
     void testNoOverwrite(const fs::path& root) {
@@ -143,17 +148,17 @@ namespace {
             write(paths.fcitxDataDir + "/vietnamese.cm.dict", "từ\n");
         };
         const auto result = [](const SettingsPaths& paths) {
-            return read(paths.settingsFile()) + read(paths.macroFile()) + read(paths.keymapFile()) + read(paths.dictionaryFile());
+            return read(paths.settingsFile()) + read(paths.macroFile()) + read(paths.keymapFile()) + read(paths.dictionaryFile()) + read(paths.importedMark());
         };
         const SettingsPaths clean = pathsIn(root / "clean");
         fill(clean);
         prepareSettings(clean);
-        for (int stopAt = 0; stopAt < 4; ++stopAt) {
+        for (int stopAt = 0; stopAt < 5; ++stopAt) {
             const SettingsPaths paths = pathsIn(root / std::to_string(stopAt));
             fill(paths);
             int        writes = 0;
             const bool done = prepareSettings(paths, [&](const std::string& path, const std::string& content) { return writes++ < stopAt && writeFileAtomically(path, content); });
-            check(!done && !fs::exists(paths.settingsFile()), "stopped after " + std::to_string(stopAt) + " writes");
+            check(!done && !fs::exists(paths.importedMark()), "stopped after " + std::to_string(stopAt) + " writes");
             prepareSettings(paths);
             check(result(paths) == result(clean), "finished after stopping at write " + std::to_string(stopAt));
         }

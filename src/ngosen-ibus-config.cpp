@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include <filesystem>
 #include <fstream>
+#include <glib.h>
 #include <sstream>
 #include <unistd.h>
 
@@ -127,14 +128,6 @@ namespace ngosen {
             return std::filesystem::exists(path, error);
         }
 
-        std::string userDir(const char* variable, const char* fallback) {
-            const char* value = std::getenv(variable);
-            if (value != nullptr && value[0] == '/')
-                return value;
-            const char* home = std::getenv("HOME");
-            return std::string(home != nullptr ? home : "") + "/" + fallback;
-        }
-
     } // namespace
 
     IniFile parseIni(const std::string& text) {
@@ -231,7 +224,6 @@ namespace ngosen {
         const auto&        o = settings.options;
         std::ostringstream out;
         const auto         line = [&out](const char* key, const std::string& value) { out << key << '=' << escapeIniValue(value) << '\n'; };
-        line("SettingsVersion", "1");
         line("InputMethod", o.inputMethod);
         line("OutputCharset", o.outputCharset);
         line("SpellCheck", boolText(o.spellCheck));
@@ -255,8 +247,8 @@ namespace ngosen {
     }
 
     SettingsPaths SettingsPaths::fromEnvironment() {
-        const std::string config = userDir("XDG_CONFIG_HOME", ".config");
-        const std::string data   = userDir("XDG_DATA_HOME", ".local/share");
+        const std::string config = g_get_user_config_dir();
+        const std::string data   = g_get_user_data_dir();
         return {config + "/ngosen", data + "/ngosen", config + "/fcitx5/conf", data + "/fcitx5/ngosen"};
     }
 
@@ -271,6 +263,9 @@ namespace ngosen {
     }
     std::string SettingsPaths::dictionaryFile() const {
         return dataDir + "/vietnamese.cm.dict";
+    }
+    std::string SettingsPaths::importedMark() const {
+        return configDir + "/.fcitx5-imported";
     }
 
     bool readFile(const std::string& path, std::string& content) {
@@ -296,10 +291,10 @@ namespace ngosen {
         size_t written = 0;
         while (written < content.size()) {
             const ssize_t n = ::write(fd, content.data() + written, content.size() - written);
-            if (n <= 0 && errno != EINTR)
-                break;
             if (n > 0)
                 written += static_cast<size_t>(n);
+            else if (n == 0 || errno != EINTR)
+                break;
         }
         const bool ok = written == content.size() && ::fsync(fd) == 0;
         ::close(fd);
@@ -312,24 +307,29 @@ namespace ngosen {
     }
 
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write) {
-        if (fileExists(paths.settingsFile()))
-            return true;
-        const std::pair<std::string, std::string> copies[] = {
-            {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
-            {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
-            {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
-        };
+        const bool  imported = fileExists(paths.importedMark());
         std::string content;
-        for (const auto& [from, to] : copies) {
-            if (!fileExists(to) && readFile(from, content) && !write(to, content))
+        if (!imported) {
+            const std::pair<std::string, std::string> copies[] = {
+                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
+                {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
+                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
+            };
+            for (const auto& [from, to] : copies) {
+                if (!fileExists(to) && readFile(from, content) && !write(to, content))
+                    return false;
+            }
+        }
+        if (!fileExists(paths.settingsFile())) {
+            IBusSettings settings = defaultSettings();
+            if (!imported && readFile(paths.fcitxConfigDir + "/ngosen.conf", content)) {
+                NGOSEN_INFO("Importing the settings of the fcitx5 edition");
+                settings = readSettings(parseIni(content));
+            }
+            if (!write(paths.settingsFile(), settingsText(settings)))
                 return false;
         }
-        IBusSettings settings = defaultSettings();
-        if (readFile(paths.fcitxConfigDir + "/ngosen.conf", content)) {
-            NGOSEN_INFO("Importing the settings of the fcitx5 edition");
-            settings = readSettings(parseIni(content));
-        }
-        return write(paths.settingsFile(), settingsText(settings));
+        return imported || write(paths.importedMark(), "");
     }
 
 } // namespace ngosen

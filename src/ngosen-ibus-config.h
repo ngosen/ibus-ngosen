@@ -15,16 +15,15 @@
 
 namespace ngosen {
 
-    // fcitx5's ini format, which both editions use so a settings file moves between them.
+    // fcitx5's ini format and key names, so importing the fcitx5 edition's files is a copy.
     struct IniFile {
         std::map<std::string, std::string>                        top;
         std::map<std::string, std::map<std::string, std::string>> sections;
     };
 
-    IniFile     parseIni(const std::string& text);
-    std::string escapeIniValue(const std::string& value);
+    IniFile                  parseIni(const std::string& text);
+    std::string              escapeIniValue(const std::string& value);
 
-    // The entries of a list written as [Macro/0], [Macro/1], ...
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
 
     struct IBusSettings {
@@ -51,6 +50,8 @@ namespace ngosen {
         std::string          macroFile() const;
         std::string          keymapFile() const;
         std::string          dictionaryFile() const;
+        // Marks the import as done, so deleting ngosen.conf brings back the defaults.
+        std::string importedMark() const;
     };
 
     bool readFile(const std::string& path, std::string& content);
@@ -60,7 +61,7 @@ namespace ngosen {
     using FileWriter = std::function<bool(const std::string& path, const std::string& content)>;
 
     // On the first run, copies the fcitx5 edition's settings, or writes the defaults when it has none.
-    // Never overwrites a file. The settings file is written last, so a run stopped halfway is finished
+    // Never overwrites a file. The import is marked done last, so a run stopped halfway is finished
     // by the next one. Returns false when a write failed.
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write = writeFileAtomically);
 
