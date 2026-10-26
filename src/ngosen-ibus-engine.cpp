@@ -15,15 +15,33 @@
 
 namespace {
 
-    struct Session {
-        ngosen::IBusHost*                    host = nullptr;
-        std::unique_ptr<ngosen::TypingState> state;
-    };
-
     ngosen::IBusResources& resources() {
-        static ngosen::IBusResources instance;
+        static ngosen::IBusResources instance(ngosen::SettingsPaths::fromEnvironment());
         return instance;
     }
+
+    struct Session {
+        ngosen::IBusHost*                                    host = nullptr;
+        std::unique_ptr<ngosen::TypingState>                 state;
+        std::shared_ptr<const ngosen::IBusResources::Tables> tables;
+        unsigned                                             generation = 0;
+
+        void                                                 noteEngineBuilt() {
+            tables     = resources().tables();
+            generation = resources().generation();
+        }
+
+        // Only between words: a new engine would drop the word being typed.
+        void applyNewSettings() {
+            if (host->hasPreedit())
+                return;
+            resources().reloadIfChanged();
+            if (generation == resources().generation())
+                return;
+            state->setEngine();
+            noteEngineBuilt();
+        }
+    };
 
 } // namespace
 
@@ -53,6 +71,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return FALSE;
+        session->applyNewSettings();
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
         if (session->host->takesPassword())
             return FALSE;
@@ -73,8 +92,10 @@ namespace {
     }
 
     void focusIn(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
+            session->applyNewSettings();
+        }
     }
 
     void focusOut(IBusEngine* engine) {
@@ -158,7 +179,8 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     auto* session  = new Session;
     session->host  = host.get();
     session->state = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
-    self->session  = session;
+    session->noteEngineBuilt();
+    self->session = session;
 }
 
 namespace ngosen {

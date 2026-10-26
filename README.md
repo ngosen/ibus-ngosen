@@ -24,6 +24,10 @@ ibus restart
 
 Sau đó thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
 
+Cài đặt nằm trong `~/.config/ngosen/`, cùng định dạng và tên khoá với `ngosen.conf` của Ngó Sen đầy đủ.
+Lần chạy đầu, nếu máy đã có Ngó Sen cho fcitx5 thì kiểu gõ, gõ tắt, bảng phím riêng và từ điển riêng được
+chép sang; file của fcitx5 giữ nguyên. Sửa file thì có hiệu lực từ chữ gõ tiếp theo.
+
 Log của engine nằm trong journal (`journalctl -t ibus-engine-ngosen`). Muốn có cả log gỡ lỗi thì
 chạy ibus-daemon với `NGOSEN_DEBUG=1`; chữ gõ trong ô mật khẩu không bao giờ được ghi.
 

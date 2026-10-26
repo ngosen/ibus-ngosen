@@ -2,6 +2,7 @@
 # app would show. The daemon commits the preedit itself on reset and focus out, as an app does when
 # the engine asks for it. Run by run-with-daemon.sh.
 import os
+import shutil
 import sys
 import time
 
@@ -218,6 +219,61 @@ check("việt" in plain, "log: a plain field logs what was typed", plain)
 hidden = typed_log(IBus.InputHints.PRIVATE)
 leaked = [w for w in ("việt", "viê") if w in hidden]
 check(not leaked, "log: a private field keeps no typed text", leaked)
+
+config_dir = os.path.join(os.environ["XDG_CONFIG_HOME"], "ngosen")
+user_dictionary = os.path.join(os.environ["XDG_DATA_HOME"], "ngosen", "vietnamese.cm.dict")
+settings_path = os.path.join(config_dir, "ngosen.conf")
+
+
+# As the settings window saves: a temporary file renamed over the old one.
+def write_file(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".tmp", "w") as f:
+        f.write(text)
+    os.replace(path + ".tmp", path)
+    pump(1000)
+
+
+def set_setting(key, value):
+    with open(settings_path) as f:
+        lines = [line for line in f.read().splitlines() if not line.startswith(key + "=")]
+    write_file(settings_path, "\n".join(lines + [f"{key}={value}"]) + "\n")
+
+
+with open(settings_path) as f:
+    check("EnableDictionary=False" in f.read(), "settings: the first run writes every key", settings_path)
+
+app = App("reload")
+app.type("vie")
+set_setting("InputMethod", "VNI")
+app.type("etj ")
+check(app.commits == ["việt "], "settings changed mid-word: the word keeps the old ones", app.commits)
+app.type("vie65t ")
+check(app.commits == ["việt ", "việt "], "settings changed mid-word: the next word uses the new ones", app.commits)
+app.close()
+set_setting("InputMethod", "Telex")
+
+write_file(os.path.join(config_dir, "ngosen-macro-table.conf"), "[Macro/0]\nKey=ko\nValue=không\n")
+app = App("macro")
+app.type("ko ")
+check(app.commits == ["không "], "macro: expands on space", app.commits)
+app.close()
+
+open(log_path, "w").close()
+os.makedirs(os.path.dirname(user_dictionary), exist_ok=True)
+shutil.copy(os.environ["NGOSEN_IBUS_DICTIONARY"], user_dictionary)
+set_setting("EnableDictionary", "False")
+app = App("dictionary")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check(f"Dictionary: {user_dictionary}" not in f.read(), "dictionary: the packaged one with the custom dictionary off", user_dictionary)
+set_setting("EnableDictionary", "True")
+app = App("dictionary")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check(f"Dictionary: {user_dictionary}" in f.read(), "dictionary: the user's one with the custom dictionary on", user_dictionary)
 
 if failures == 0:
     print("all IBus daemon checks passed")
