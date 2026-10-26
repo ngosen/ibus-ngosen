@@ -29,3 +29,4 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Trang "Từ điển" trong cửa sổ cài đặt: thêm, tìm và xoá từ trong từ điển riêng, lưu ngay, có Hoàn tác; sửa
   từ điển thì bộ gõ dùng ngay từ chữ tiếp theo (#11).
 - Tuỳ chọn hai dấu cách thành dấu chấm và "--" thành "—" (mặc định tắt), trong cửa sổ cài đặt mục Gõ nhanh (#12).
+- Tuỳ chọn "Gạch chân chữ đang gõ" (mặc định bật): tắt đi thì chữ đang gõ hiện như chữ thường (#13).
