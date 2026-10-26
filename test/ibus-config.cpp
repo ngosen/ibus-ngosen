@@ -99,10 +99,9 @@ namespace {
         changed.enableCustomKeymap       = true;
         changed.directTyping             = true;
         changed.doubleHyphenToEmDash     = true;
-        changed.underlinePreedit         = false;
         const std::string text           = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 23, "the file has every key");
+        check(parseIni(text).top.size() == 22, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }

@@ -41,9 +41,6 @@ namespace ngosen {
         void setDirectTyping(bool on) {
             directTyping_ = on;
         }
-        void setUnderline(bool on) {
-            underline_ = on;
-        }
         void setReportedText(const gchar* text, guint cursor);
         // The report puts the cursor exactly where an earlier report had it, right after the word we type.
         bool backAfterTypedWord() const {
@@ -95,7 +92,6 @@ namespace ngosen {
       private:
         void        replaceTypedWord(const std::string& word);
         glong       countToDelete(size_t& from) const;
-        guint       underlineStyle() const;
 
         IBusEngine* engine_;
         bool        focus_   = false;
@@ -108,7 +104,6 @@ namespace ngosen {
         std::string preedit_;
         std::string status_;
         bool        directTyping_   = false;
-        bool        underline_      = true;
         bool        direct_         = false;
         bool        preeditVisible_ = false;
         // The word as it now stands in the app, when it goes in without a preedit.

@@ -358,9 +358,3 @@ msgstr "Gõ ban rồi hai dấu cách ra “ban. ”."
 
 msgid "a--b → a—b."
 msgstr "a--b → a—b."
-
-msgid "Underline the Word Being Typed"
-msgstr "Gạch chân chữ đang gõ"
-
-msgid "Off: the word looks already typed until Space or punctuation commits it."
-msgstr "Tắt: chữ đang gõ trông như đã gõ xong, tới khi dấu cách hay dấu câu chốt chữ."

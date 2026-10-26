@@ -35,16 +35,6 @@ def connect():
 bus = connect()
 
 
-def underline_of(text):
-    attrs = text.get_attributes()
-    i = 0
-    while attrs and (attr := attrs.get(i)) is not None:
-        if attr.get_attr_type() == IBus.AttrType.UNDERLINE:
-            return attr.get_value()
-        i += 1
-    return None
-
-
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
@@ -61,7 +51,6 @@ class App:
         self.commits = []
         self.preedit = ""
         self.preedits = []
-        self.underline = None
         # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
         # sends the text after a deletion only along with some other change, such as the cursor
         # moving on screen: qt_through_shell is how many keys in a row must delete before the
@@ -134,13 +123,11 @@ class App:
             self.report()
 
     def on_preedit(self, _ic, text, _cursor, visible):
-        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
             self.preedits.append(self.preedit)
 
     def on_preedit_with_mode(self, _ic, text, _cursor, visible, mode):
-        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
             self.preedits.append(self.preedit)
@@ -426,19 +413,6 @@ check(app.text == "xin. Chào", "doubled keys: capitalized after the period", ap
 set_setting("AutoCapitalizeAfterPunctuation", "False")
 set_setting("DoubleSpaceToPeriod", "False")
 set_setting("DoubleHyphenToEmDash", "False")
-
-for underline, value in (("True", IBus.AttrUnderline.SINGLE), ("False", IBus.AttrUnderline.NONE)):
-    set_setting("UnderlinePreedit", underline)
-    for app_commits in (False, True):
-        app = App("underline", app_commits=app_commits)
-        app.type("vie")
-        check(
-            app.underline == value,
-            f"underline: {underline}, app commits {app_commits}",
-            app.underline,
-        )
-        app.close()
-set_setting("UnderlinePreedit", "True")
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")

@@ -30,7 +30,6 @@ DATE_FORMATS = [
 LABELS = {
     "InputMethod": N_("Input Method"),
     "DirectTyping": N_("Type with Sen where the app allows"),
-    "UnderlinePreedit": N_("Underline the Word Being Typed"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
@@ -87,9 +86,6 @@ HINTS = {
     ),
     "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
     "DoubleHyphenToEmDash": N_("a--b → a—b."),
-    "UnderlinePreedit": N_(
-        "Off: the word looks already typed until Space or punctuation commits it."
-    ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
 
@@ -104,10 +100,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (
-        None,
-        ["InputMethod", "DirectTyping", "UnderlinePreedit", "OutputCharset", "EnableCustomKeymap"],
-    ),
+    (None, ["InputMethod", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
     (
         N_("Tone marks"),
         [

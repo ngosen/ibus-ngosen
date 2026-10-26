@@ -95,15 +95,10 @@ namespace ngosen {
         return kept;
     }
 
-    // Always given: some apps draw a preedit without one as plain text, which looks already typed.
-    guint IBusHost::underlineStyle() const {
-        return underline_ ? IBUS_ATTR_UNDERLINE_SINGLE : IBUS_ATTR_UNDERLINE_NONE;
-    }
-
     void IBusHost::hold(const std::string& text) {
         held_           = text;
         IBusText* shown = ibus_text_new_from_string(text.c_str());
-        ibus_text_append_attribute(shown, IBUS_ATTR_TYPE_UNDERLINE, underlineStyle(), 0, 1);
+        ibus_text_append_attribute(shown, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, 1);
         ibus_engine_update_preedit_text_with_mode(engine_, shown, 1, TRUE, IBUS_ENGINE_PREEDIT_COMMIT);
         preeditVisible_ = true;
     }
@@ -245,8 +240,9 @@ namespace ngosen {
         }
         IBusText*   text   = ibus_text_new_from_string(preedit_.c_str());
         const guint length = static_cast<guint>(g_utf8_strlen(preedit_.c_str(), -1));
+        // Some apps draw a preedit without attributes as plain text, which looks already typed.
         if (length > 0)
-            ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, underlineStyle(), 0, length);
+            ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, length);
         // The app commits the preedit itself when it resets or loses focus, so no word is lost.
         ibus_engine_update_preedit_text_with_mode(engine_, text, length, length > 0, IBUS_ENGINE_PREEDIT_COMMIT);
         preeditVisible_ = length > 0;

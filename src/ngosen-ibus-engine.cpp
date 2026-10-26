@@ -32,7 +32,6 @@ namespace {
                 return;
             resources().reloadIfChanged();
             host->setDirectTyping(resources().settings().directTyping);
-            host->setUnderline(resources().settings().underlinePreedit);
             if (generation == resources().generation())
                 return;
             state->setEngine();
@@ -268,7 +267,6 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
     session->host->setDirectTyping(resources().settings().directTyping);
-    session->host->setUnderline(resources().settings().underlinePreedit);
     self->session = session;
 }
 
