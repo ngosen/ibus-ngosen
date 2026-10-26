@@ -28,10 +28,10 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: 'check settings misc'
+          args: 'check settings misc test'
       - uses: astral-sh/ruff-action@v4.1.0
         with:
-          args: 'format --check settings misc'
+          args: 'format --check settings misc test'
 
   new-names:
     name: Check new names

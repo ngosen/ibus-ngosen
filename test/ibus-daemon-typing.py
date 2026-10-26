@@ -47,7 +47,9 @@ class App:
         self.passed = []
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
-        caps = IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
+        caps = (
+            IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
+        )
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
         if app_commits:
@@ -127,7 +129,9 @@ class App:
 
     def tap_ctrl(self):
         self.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
-        self.ic.process_key_event(IBus.KEY_Control_L, 0, IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.RELEASE_MASK)
+        self.ic.process_key_event(
+            IBus.KEY_Control_L, 0, IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.RELEASE_MASK
+        )
         pump(200)
 
     def close(self):
@@ -162,7 +166,11 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     app.type("viee")
     app.reset()
     app.type("a ")
-    check(app.commits == ["viê", "a "], f"app reset ({who}): the word stays and the next one starts fresh", app.commits)
+    check(
+        app.commits == ["viê", "a "],
+        f"app reset ({who}): the word stays and the next one starts fresh",
+        app.commits,
+    )
     app.close()
 
     app = App("focus-out", app_commits=app_commits)
@@ -172,7 +180,9 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     app.ic.focus_in()
     pump(200)
     app.type("a ")
-    check(app.commits == ["viê", "a "], f"focus out ({who}): the next word starts fresh", app.commits)
+    check(
+        app.commits == ["viê", "a "], f"focus out ({who}): the next word starts fresh", app.commits
+    )
     app.close()
 
 app = App("enter")
@@ -188,8 +198,16 @@ app.close()
 for purpose in (IBus.InputPurpose.PASSWORD, IBus.InputPurpose.PIN):
     app = App("password", purpose)
     app.type("aa dd ")
-    check(app.text == "aa dd ", f"{purpose.value_nick}: the keys reach the app unchanged", (app.text, app.passed))
-    check(app.commits == [] and app.preedit == "", f"{purpose.value_nick}: nothing typed by the engine", (app.commits, app.preedit))
+    check(
+        app.text == "aa dd ",
+        f"{purpose.value_nick}: the keys reach the app unchanged",
+        (app.text, app.passed),
+    )
+    check(
+        app.commits == [] and app.preedit == "",
+        f"{purpose.value_nick}: nothing typed by the engine",
+        (app.commits, app.preedit),
+    )
     app.close()
 
 # ibus-daemon commits the preedit itself before it switches the engine away.
@@ -241,7 +259,11 @@ def set_setting(key, value):
 
 
 with open(settings_path) as f:
-    check("EnableDictionary=False" in f.read(), "settings: the first run writes every key", settings_path)
+    check(
+        "EnableDictionary=False" in f.read(),
+        "settings: the first run writes every key",
+        settings_path,
+    )
 
 open(log_path, "w").close()
 write_file(os.path.join(config_dir, "notes.txt"), "not a setting\n")
@@ -249,15 +271,23 @@ app = App("stray file")
 app.type("a ")
 app.close()
 with open(log_path) as f:
-    check("Settings reloaded" not in f.read(), "settings: a stray file triggers no reload", log_path)
+    check(
+        "Settings reloaded" not in f.read(), "settings: a stray file triggers no reload", log_path
+    )
 
 app = App("reload")
 app.type("vie")
 set_setting("InputMethod", "VNI")
 app.type("etj ")
-check(app.commits == ["việt "], "settings changed mid-word: the word keeps the old ones", app.commits)
+check(
+    app.commits == ["việt "], "settings changed mid-word: the word keeps the old ones", app.commits
+)
 app.type("vie65t ")
-check(app.commits == ["việt ", "việt "], "settings changed mid-word: the next word uses the new ones", app.commits)
+check(
+    app.commits == ["việt ", "việt "],
+    "settings changed mid-word: the next word uses the new ones",
+    app.commits,
+)
 app.close()
 set_setting("InputMethod", "Telex")
 
@@ -275,13 +305,21 @@ app = App("dictionary")
 app.type("a ")
 app.close()
 with open(log_path) as f:
-    check(f"Dictionary: {user_dictionary}" not in f.read(), "dictionary: the packaged one with the custom dictionary off", user_dictionary)
+    check(
+        f"Dictionary: {user_dictionary}" not in f.read(),
+        "dictionary: the packaged one with the custom dictionary off",
+        user_dictionary,
+    )
 set_setting("EnableDictionary", "True")
 app = App("dictionary")
 app.type("a ")
 app.close()
 with open(log_path) as f:
-    check(f"Dictionary: {user_dictionary}" in f.read(), "dictionary: the user's one with the custom dictionary on", user_dictionary)
+    check(
+        f"Dictionary: {user_dictionary}" in f.read(),
+        "dictionary: the user's one with the custom dictionary on",
+        user_dictionary,
+    )
 
 if failures == 0:
     print("all IBus daemon checks passed")
