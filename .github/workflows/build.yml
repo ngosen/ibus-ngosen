@@ -21,6 +21,18 @@ jobs:
       - name: clang-format
         run: git ls-files '*.c' '*.cpp' '*.h' | xargs -r clang-format --dry-run --Werror
 
+  python:
+    name: Python lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/ruff-action@v4.1.0
+        with:
+          args: 'check settings misc'
+      - uses: astral-sh/ruff-action@v4.1.0
+        with:
+          args: 'format --check settings misc'
+
   new-names:
     name: Check new names
     runs-on: ubuntu-latest
@@ -58,15 +70,18 @@ jobs:
           - image: fedora:44
             packages: gcc-c++ cmake make git pkgconf-pkg-config ibus-devel cargo rust
     steps:
-      # The engine tests run a private ibus-daemon and talk to it from Python.
+      # The engine tests run a private ibus-daemon and talk to it from Python; the settings window
+      # tests build the window on an Xvfb display.
       - name: Install dependencies
         run: |
           if command -v dnf > /dev/null; then
-            dnf install -y ${{ matrix.packages }} ibus python3-gobject dbus-daemon
+            dnf install -y ${{ matrix.packages }} ibus python3-gobject dbus-daemon \
+              gettext desktop-file-utils appstream gtk4 libadwaita xorg-x11-server-Xvfb
           else
             apt-get update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ${{ matrix.packages }} \
-              ibus dbus python3-gi gir1.2-ibus-1.0
+              ibus dbus python3-gi gir1.2-ibus-1.0 \
+              gettext desktop-file-utils appstream gir1.2-gtk-4.0 gir1.2-adw-1 xvfb xauth
           fi
       - uses: actions/checkout@v7
         with:
@@ -79,4 +94,6 @@ jobs:
           cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j"$(nproc)"
       - name: Test
+        env:
+          NGOSEN_WINDOW_TESTS: required
         run: ctest --test-dir build --output-on-failure --no-tests=error -j"$(nproc)"

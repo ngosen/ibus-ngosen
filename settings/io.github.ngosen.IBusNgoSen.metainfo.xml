@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ngosen.IBusNgoSen</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Ngó Sen for GNOME</name>
+  <name xml:lang="vi">Ngó Sen cho GNOME</name>
+  <summary>Type Vietnamese with Telex or VNI</summary>
+  <summary xml:lang="vi">Gõ tiếng Việt bằng Telex hoặc VNI</summary>
+  <description>
+    <p>
+      A Vietnamese input method for IBus, the input method GNOME comes with. The word being typed is
+      underlined until it is done. Switch between English and Vietnamese with Super+Space, as with
+      any other GNOME input source.
+    </p>
+    <p xml:lang="vi">
+      Bộ gõ tiếng Việt cho IBus, bộ gõ có sẵn của GNOME. Chữ đang gõ được gạch chân cho tới khi gõ
+      xong. Đổi Anh/Việt bằng Super+Space như các nguồn nhập khác của GNOME.
+    </p>
+  </description>
+  <launchable type="desktop-id">ibus-setup-ngosen.desktop</launchable>
+  <url type="homepage">https://github.com/ngosen/ibus-ngosen</url>
+  <url type="bugtracker">https://github.com/ngosen/ibus-ngosen/issues</url>
+  <developer id="io.github.ngosen">
+    <name>Ngó Sen contributors</name>
+  </developer>
+  <categories>
+    <category>Settings</category>
+  </categories>
+  <content_rating type="oars-1.1"/>
+</component>

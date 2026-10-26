@@ -15,7 +15,13 @@ set(NGOSEN_CORE_ONLY ON CACHE BOOL "Build the typing logic without fcitx5" FORCE
 enable_testing()
 add_subdirectory(ngosen)
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
 set(NGOSEN_IBUS_DATADIR "${CMAKE_INSTALL_FULL_DATADIR}/ibus-ngosen")
+set(NGOSEN_IBUS_EXEC "${CMAKE_INSTALL_FULL_LIBEXECDIR}/ibus-engine-ngosen")
+set(NGOSEN_SETUP_EXEC "${CMAKE_INSTALL_FULL_LIBEXECDIR}/ibus-setup-ngosen")
 add_subdirectory(src)
 add_subdirectory(data)
+add_subdirectory(settings)
+add_subdirectory(po)
 add_subdirectory(test)

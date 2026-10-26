@@ -3,6 +3,8 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+#include "bamboo-core.h"
+#include "ngosen-ibus-config.h"
 #include "ngosen-ibus-engine.h"
 
 #include <cstdio>
@@ -10,8 +12,37 @@
 #include <ibus.h>
 #include <syslog.h>
 
+namespace {
+
+    // The settings window asks the engine, so the defaults and the names live in one place.
+    int runSettingsCommand(const char* command) {
+        Init();
+        if (std::strcmp(command, "--print-settings") == 0) {
+            // What the engine types with, after the first-run import: missing or bad keys show
+            // their defaults.
+            const auto  paths = ngosen::SettingsPaths::fromEnvironment();
+            std::string text;
+            if (!ngosen::prepareSettings(paths) || !ngosen::readFile(paths.settingsFile(), text))
+                return 1;
+            std::fputs(ngosen::settingsText(ngosen::readSettings(ngosen::parseIni(text))).c_str(), stdout);
+            return 0;
+        }
+        const bool methods = std::strcmp(command, "--list-input-methods") == 0;
+        if (!methods && std::strcmp(command, "--list-charsets") != 0)
+            return -1;
+        for (const auto& name : methods ? ngosen::inputMethodNames() : ngosen::charsetNames())
+            std::printf("%s\n", name.c_str());
+        return 0;
+    }
+
+} // namespace
+
 int main(int argc, char** argv) {
     openlog("ibus-engine-ngosen", LOG_PID, LOG_USER);
+    if (argc > 1) {
+        if (const int status = runSettingsCommand(argv[1]); status >= 0)
+            return status;
+    }
     ibus_init();
     IBusBus* bus = ibus_bus_new();
     if (!ibus_bus_is_connected(bus)) {

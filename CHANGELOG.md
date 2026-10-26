@@ -16,3 +16,5 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Cài đặt trong `~/.config/ngosen/`: kiểu gõ, bảng mã, gõ tắt, bảng phím riêng, từ điển riêng. Lần chạy
   đầu chép cài đặt từ Ngó Sen cho fcitx5 nếu có; sửa file thì có hiệu lực từ chữ gõ tiếp theo, chữ đang
   gõ không mất (#3).
+- Cửa sổ cài đặt, mở từ Cài đặt › Bàn phím › "Tiếng Việt (Ngó Sen)" hoặc từ danh sách app: kiểu gõ, cách
+  bỏ dấu, gõ tắt, ô gõ thử; lưu ngay khi đổi, có nút Hoàn tác (#PR).
