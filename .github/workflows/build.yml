@@ -58,13 +58,15 @@ jobs:
           - image: fedora:44
             packages: gcc-c++ cmake make git pkgconf-pkg-config ibus-devel cargo rust
     steps:
+      # The engine tests run a private ibus-daemon and talk to it from Python.
       - name: Install dependencies
         run: |
           if command -v dnf > /dev/null; then
-            dnf install -y ${{ matrix.packages }}
+            dnf install -y ${{ matrix.packages }} ibus python3-gobject dbus-daemon
           else
             apt-get update
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ${{ matrix.packages }}
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ${{ matrix.packages }} \
+              ibus dbus python3-gi gir1.2-ibus-1.0
           fi
       - uses: actions/checkout@v7
         with:
