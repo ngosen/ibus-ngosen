@@ -7,3 +7,9 @@ Số version của `ibus-ngosen` riêng, không theo số của Ngó Sen đầy 
 tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
+
+### Thêm
+
+- Bộ gõ IBus "Tiếng Việt (Ngó Sen)": gõ gạch chân, chữ được chốt khi gõ cách, dấu câu, Enter, nhấp Ctrl hay
+  bấm chuột ra chỗ khác; ô mật khẩu nhận đúng phím đã gõ, và chữ gõ trong ô riêng tư không bị ghi vào
+  log (#2).
