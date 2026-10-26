@@ -59,6 +59,7 @@ class App:
         self.reported = ""
         self.deleted = False
         self.deleting_keys = 0
+        self.deletions = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
@@ -101,6 +102,7 @@ class App:
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
+        self.deletions += 1
         if self.qt_through_shell:
             if not self.deleted:
                 self.deleting_keys += 1
@@ -116,6 +118,7 @@ class App:
     # A forwarded BackSpace deletes like a typed one, as in a terminal.
     def on_forward(self, _ic, keyval, _keycode, state):
         if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
+            self.deletions += 1
             self.text = self.text[:-1]
             self.report()
 
@@ -392,11 +395,22 @@ with open(log_path) as f:
 
 set_setting("DoubleSpaceToPeriod", "True")
 set_setting("DoubleHyphenToEmDash", "True")
-for surrounding, who in ((True, "deletes around the cursor"), (False, "takes forwarded keys")):
-    app = App("doubled keys", surrounding=surrounding)
-    app.type("xin  a--b ")
+for surrounding, app_commits, who in (
+    (True, False, "that reports surrounding text"),
+    (False, False, "that cannot delete around the cursor"),
+    (True, True, "that commits the preedit itself"),
+):
+    app = App("doubled keys", surrounding=surrounding, app_commits=app_commits)
+    app.type("xin  a--b c -")
     app.close()
-    check(app.text == "xin. a—b ", f"doubled keys: a field that {who}", app.text)
+    check(app.text == "xin. a—b c -", f"doubled keys: a field {who}", app.text)
+    check(app.deletions == 0, f"doubled keys: nothing deleted in a field {who}", app.deletions)
+set_setting("AutoCapitalizeAfterPunctuation", "True")
+app = App("doubled keys")
+app.type("xin  chaof")
+app.close()
+check(app.text == "xin. Chào", "doubled keys: capitalized after the period", app.text)
+set_setting("AutoCapitalizeAfterPunctuation", "False")
 set_setting("DoubleSpaceToPeriod", "False")
 set_setting("DoubleHyphenToEmDash", "False")
 

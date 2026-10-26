@@ -49,7 +49,16 @@ namespace ngosen {
         // The app moved the cursor or took focus away, so the word in it is no longer ours to change.
         void forgetTypedWord() {
             typed_.clear();
+            held_.clear();
         }
+        // A commit ending in this character leaves it out, for holdKept() to show in the preedit.
+        void keepFromCommit(std::string text) {
+            keep_ = std::move(text);
+            kept_ = false;
+        }
+        bool                         holdKept();
+        void                         hold(const std::string& text);
+        std::string                  takeHeld();
 
         void                         commitText(const std::string& text) override;
         void                         forwardKey(EditKey key, bool release, uint32_t time) override;
@@ -99,6 +108,10 @@ namespace ngosen {
         bool        preeditVisible_ = false;
         // The word as it now stands in the app, when it goes in without a preedit.
         std::string typed_;
+        std::string keep_;
+        bool        kept_ = false;
+        // A space or hyphen the next key decides about, shown in the preedit meanwhile.
+        std::string held_;
     };
 
     class IBusKeyPress final : public KeyPress {

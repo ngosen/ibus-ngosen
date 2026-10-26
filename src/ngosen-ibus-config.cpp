@@ -187,6 +187,8 @@ namespace ngosen {
         o.retypeAfterSwitch    = false;
         o.retoneSelection      = false;
         o.enableMacroInOffMode = false;
+        o.doubleSpaceToPeriod  = false;
+        o.doubleHyphenToEmDash = false;
         return settings;
     }
 
@@ -211,13 +213,13 @@ namespace ngosen {
         o.lockWordKey = static_cast<LockWordKey>(lockWordKey);
         read.boolean("AutoCapitalizeAfterPunctuation", o.autoCapitalizeAfterPunctuation);
         read.boolean("CapitalizeStartOfText", o.capitalizeStartOfText);
-        read.boolean("DoubleSpaceToPeriod", o.doubleSpaceToPeriod);
-        read.boolean("DoubleHyphenToEmDash", o.doubleHyphenToEmDash);
         read.text("TimeFormat", o.timeFormat);
         read.text("DateFormat", o.dateFormat);
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
+        read.boolean("DoubleSpaceToPeriod", settings.doubleSpaceToPeriod);
+        read.boolean("DoubleHyphenToEmDash", settings.doubleHyphenToEmDash);
         return settings;
     }
 
@@ -240,13 +242,13 @@ namespace ngosen {
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
         line("AutoCapitalizeAfterPunctuation", boolText(o.autoCapitalizeAfterPunctuation));
         line("CapitalizeStartOfText", boolText(o.capitalizeStartOfText));
-        line("DoubleSpaceToPeriod", boolText(o.doubleSpaceToPeriod));
-        line("DoubleHyphenToEmDash", boolText(o.doubleHyphenToEmDash));
         line("TimeFormat", o.timeFormat);
         line("DateFormat", o.dateFormat);
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
+        line("DoubleSpaceToPeriod", boolText(settings.doubleSpaceToPeriod));
+        line("DoubleHyphenToEmDash", boolText(settings.doubleHyphenToEmDash));
         return out.str();
     }
 
