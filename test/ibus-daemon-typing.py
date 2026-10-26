@@ -341,8 +341,20 @@ check(app.commits == ["không "], "macro: expands on space", app.commits)
 app.close()
 
 open(log_path, "w").close()
-os.makedirs(os.path.dirname(user_dictionary), exist_ok=True)
-shutil.copy(os.environ["NGOSEN_IBUS_DICTIONARY"], user_dictionary)
+# A new user's first word list goes into a folder that did not exist when the engine started.
+check(
+    not os.path.isdir(os.path.dirname(user_dictionary))
+    or not os.listdir(os.path.dirname(user_dictionary)),
+    "dictionary: no word list before the first one",
+    user_dictionary,
+)
+with open(os.environ["NGOSEN_IBUS_DICTIONARY"]) as f:
+    write_file(user_dictionary, f.read())
+app = App("dictionary")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check("Settings reloaded" in f.read(), "dictionary: the first word list reloads", log_path)
 set_setting("EnableDictionary", "False")
 app = App("dictionary")
 app.type("a ")

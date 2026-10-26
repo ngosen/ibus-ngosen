@@ -68,7 +68,9 @@ namespace ngosen {
         Init();
         prepareSettings(paths_);
         load();
-        monitor_     = watchDirectory(paths_.configDir, &changed_);
+        monitor_ = watchDirectory(paths_.configDir, &changed_);
+        // GLib notices a folder created later only seconds after, missing a file written at once.
+        g_mkdir_with_parents(paths_.dataDir.c_str(), 0700);
         dataMonitor_ = watchDirectory(paths_.dataDir, &changed_);
     }
 
