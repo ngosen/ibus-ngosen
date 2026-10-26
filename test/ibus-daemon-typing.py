@@ -363,6 +363,14 @@ with open(log_path) as f:
         "dictionary: the user's one with the custom dictionary on",
         user_dictionary,
     )
+open(log_path, "w").close()
+with open(user_dictionary) as f:
+    write_file(user_dictionary, f.read() + "ngosen\n")
+app = App("dictionary")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
