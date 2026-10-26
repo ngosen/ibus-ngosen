@@ -43,6 +43,13 @@ namespace ngosen {
             return recorder_;
         }
 
+        const IBusSettings& settings() const {
+            return settings_;
+        }
+        // Writes one setting and returns what the file now says. The file monitor reloads it
+        // between words, as for a change the settings window makes.
+        bool saveSetting(const std::string& key, const std::string& value, IBusSettings& saved) const;
+
         // Counts reloads, so a field knows its engine was built from older settings.
         unsigned generation() const {
             return generation_;

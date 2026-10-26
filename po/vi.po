@@ -292,3 +292,27 @@ msgstr "Không lưu được: {}"
 #: data/ngosen.xml.in
 msgid "Vietnamese input method"
 msgstr "Bộ gõ tiếng Việt"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Charset"
+msgstr "Bảng mã"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Spell Check"
+msgstr "Kiểm tra chính tả"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Auto Capitalize"
+msgstr "Tự viết hoa"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "After . ! ? and Enter"
+msgstr "Sau dấu . ! ? và Enter"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Start of text or line"
+msgstr "Đầu văn bản, đầu dòng"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Settings"
+msgstr "Cài đặt"
