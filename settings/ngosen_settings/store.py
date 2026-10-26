@@ -71,8 +71,11 @@ class Engine:
 
     def dictionary_paths(self):
         """The user's word list and the one that comes with the package."""
-        user, bundled = self._run("--print-dictionary-paths").splitlines()
-        return user, bundled
+        paths = self._run("--print-dictionary-paths").split("\n")[:-1]
+        if len(paths) != 2:
+            # An older engine starts instead of answering.
+            raise subprocess.SubprocessError("the engine did not print the dictionary paths")
+        return paths[0], paths[1]
 
 
 def read_words(path):
