@@ -81,26 +81,27 @@ namespace {
         const IBusSettings read = readSettings(parseIni(FcitxSettings));
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
-        check(!read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod stays off");
+        check(read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod is read");
         check(!read.options.retypeAfterSwitch && !read.options.retoneSelection, "retyping stays off");
 
         const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nSpellCheck=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
         check(odd.options.inputMethod == "Telex" && odd.options.spellCheck && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
         check(odd.options.lockWordKey == LockWordKey::None, "LockWordModifier is read by name");
 
-        IBusSettings changed             = defaults;
-        changed.options.inputMethod      = "VNI";
-        changed.options.outputCharset    = "TCVN3 (ABC)";
-        changed.options.bracketTransform = 1;
-        changed.options.lockWordKey      = LockWordKey::Alt;
-        changed.options.timeFormat       = "%H giờ %M";
-        changed.options.spellCheck       = false;
-        changed.enableDictionary         = true;
-        changed.enableCustomKeymap       = true;
-        changed.directTyping             = true;
-        const std::string text           = settingsText(changed);
+        IBusSettings changed                 = defaults;
+        changed.options.inputMethod          = "VNI";
+        changed.options.outputCharset        = "TCVN3 (ABC)";
+        changed.options.bracketTransform     = 1;
+        changed.options.lockWordKey          = LockWordKey::Alt;
+        changed.options.timeFormat           = "%H giờ %M";
+        changed.options.spellCheck           = false;
+        changed.enableDictionary             = true;
+        changed.enableCustomKeymap           = true;
+        changed.directTyping                 = true;
+        changed.options.doubleHyphenToEmDash = true;
+        const std::string text               = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 20, "the file has every key");
+        check(parseIni(text).top.size() == 22, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
