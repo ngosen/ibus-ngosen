@@ -41,13 +41,10 @@ namespace ngosen {
         void setDirectTyping(bool on) {
             directTyping_ = on;
         }
-        // Kept apart from the copy IBus edits on each deletion, since GNOME Shell does not see those edits.
-        void setReportedText(const gchar* text, guint cursor) {
-            reportedBeforeCursor_.assign(text, static_cast<size_t>(g_utf8_offset_to_pointer(text, cursor) - text));
-        }
-        bool cursorAfterTypedWord() const {
-            return !typed_.empty() && reportedBeforeCursor_.size() >= typed_.size() &&
-                reportedBeforeCursor_.compare(reportedBeforeCursor_.size() - typed_.size(), typed_.size(), typed_) == 0;
+        void setReportedText(const gchar* text, guint cursor);
+        // The report puts the cursor exactly where an earlier report had it, right after the word we type.
+        bool backAfterTypedWord() const {
+            return backAfterTypedWord_;
         }
         // The app moved the cursor or took focus away, so the word in it is no longer ours to change.
         void forgetTypedWord() {
@@ -93,6 +90,8 @@ namespace ngosen {
         guint       hints_   = IBUS_INPUT_HINT_NONE;
         std::string client_;
         std::string reportedBeforeCursor_;
+        std::string wordEndBeforeCursor_;
+        bool        backAfterTypedWord_ = false;
         std::string preedit_;
         std::string status_;
         bool        directTyping_   = false;

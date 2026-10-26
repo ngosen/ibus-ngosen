@@ -7,8 +7,8 @@
 
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
+#include "ngosen-utf8.h"
 
-#include <cstring>
 #include <libintl.h>
 
 namespace ngosen {
@@ -81,22 +81,28 @@ namespace ngosen {
 
     // Only the end that changed, so most keys add a character and delete nothing.
     void IBusHost::replaceTypedWord(const std::string& word) {
-        const char* kept = typed_.c_str();
-        const char* next = word.c_str();
-        while (*kept != '\0' && *next != '\0') {
-            const char* keptEnd = g_utf8_next_char(kept);
-            const char* nextEnd = g_utf8_next_char(next);
-            if (keptEnd - kept != nextEnd - next || std::memcmp(kept, next, static_cast<size_t>(keptEnd - kept)) != 0)
-                break;
-            kept = keptEnd;
-            next = nextEnd;
-        }
-        auto same = static_cast<size_t>(kept - typed_.c_str());
+        std::string gone;
+        std::string added;
+        utf8::compareAndSplitStrings(typed_, word, gone, added);
+        size_t same = typed_.size() - gone.size();
         if (const glong extra = countToDelete(same); extra > 0)
             ibus_engine_delete_surrounding_text(engine_, static_cast<gint>(-extra), static_cast<guint>(extra));
         if (same < word.size())
             ibus_engine_commit_text(engine_, ibus_text_new_from_string(word.c_str() + same));
         typed_ = word;
+    }
+
+    // Kept apart from the copy IBus edits on each deletion, since GNOME Shell does not see those edits.
+    void IBusHost::setReportedText(const gchar* text, guint cursor) {
+        if (cursor > static_cast<guint>(g_utf8_strlen(text, -1))) {
+            reportedBeforeCursor_.clear();
+            backAfterTypedWord_ = false;
+            return;
+        }
+        reportedBeforeCursor_.assign(text, static_cast<size_t>(g_utf8_offset_to_pointer(text, cursor) - text));
+        backAfterTypedWord_ = !typed_.empty() && reportedBeforeCursor_ == wordEndBeforeCursor_;
+        if (!typed_.empty() && g_str_has_suffix(reportedBeforeCursor_.c_str(), typed_.c_str()))
+            wordEndBeforeCursor_ = reportedBeforeCursor_;
     }
 
     // GNOME Shell passes a deletion to Wayland apps in bytes, measured on the text the app last

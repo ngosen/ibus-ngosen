@@ -11,8 +11,9 @@ careful human wrote it, and the person sending it must be able to explain every 
 ## What this repository is
 
 The IBus engine of Ngó Sen for GNOME, where IBus is the input method framework. It types with an
-underlined preedit only, as IBus engines usually do; typing straight into the app and fixes for single
-apps belong to fcitx5-ngosen. Switching between Vietnamese and English is GNOME's: two input sources and
+underlined preedit, as IBus engines usually do. An option types straight into fields that report the
+text around the cursor; that path handles how GNOME Shell passes deletions on and keeps the core's
+click check, and fixes for single apps still belong to fcitx5-ngosen. Switching between Vietnamese and English is GNOME's: two input sources and
 Super+Space.
 
 ## Code

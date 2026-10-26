@@ -160,13 +160,15 @@ namespace {
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
         if (Session* session = sessionOf(engine)) {
-            const gchar* chars = ibus_text_get_text(text);
-            if (cursor <= static_cast<guint>(g_utf8_strlen(chars, -1)))
-                session->host->setReportedText(chars, cursor);
-            // VS Code reports the cursor at the start of the field and then back. While it is right
-            // after the word we are typing, the user has not moved it.
-            if (!session->host->cursorAfterTypedWord())
-                session->state->surroundingUpdated();
+            session->host->setReportedText(ibus_text_get_text(text), cursor);
+            const bool clicked = g_mouse_clicked.load(std::memory_order_acquire);
+            const bool reset   = needEngineReset.load(std::memory_order_acquire);
+            session->state->surroundingUpdated();
+            // VS Code reports the cursor at the start of the field and then back after the word.
+            if (!clicked && session->host->backAfterTypedWord() && g_mouse_clicked.load(std::memory_order_acquire)) {
+                g_mouse_clicked.store(false, std::memory_order_release);
+                needEngineReset.store(reset, std::memory_order_release);
+            }
         }
     }
 

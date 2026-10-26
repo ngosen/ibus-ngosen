@@ -421,6 +421,14 @@ app.type("a")
 check(app.text == "viea", "direct, unannounced click: the next key deletes nothing", app.text)
 app.close()
 
+app = App("click inside")
+app.type("vie")
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 1, 1)
+pump(100)
+app.type("e")
+check(app.text == "viee", "direct, click inside the word: the next key deletes nothing", app.text)
+app.close()
+
 # VS Code reports the cursor at the start and then back after the word.
 app = App("back and forth")
 app.type("v")
