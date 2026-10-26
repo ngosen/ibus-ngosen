@@ -2,7 +2,6 @@
 # app would show. The daemon commits the preedit itself on reset and focus out, as an app does when
 # the engine asks for it. Run by run-with-daemon.sh.
 import os
-import shutil
 import sys
 import time
 
