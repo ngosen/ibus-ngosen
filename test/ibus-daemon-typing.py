@@ -39,19 +39,28 @@ bus = connect()
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
-    def __init__(self, name, purpose=IBus.InputPurpose.FREE_FORM, app_commits=False, hints=0):
+    def __init__(
+        self,
+        name,
+        purpose=IBus.InputPurpose.FREE_FORM,
+        app_commits=False,
+        hints=0,
+        surrounding=True,
+    ):
         self.text = ""
         self.commits = []
         self.preedit = ""
+        self.preedits = []
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
-        caps = (
-            IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
-        )
+        caps = IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT
+        if surrounding:
+            caps |= IBus.Capabilite.SURROUNDING_TEXT
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
+        self.ic.connect("delete-surrounding-text", self.on_delete)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -77,11 +86,21 @@ class App:
         self.text += text.get_text()
         self.report()
 
+    # The cursor stays at the end of the text.
+    def on_delete(self, _ic, offset, count):
+        start = len(self.text) + offset
+        self.text = self.text[:start] + self.text[start + count :]
+        self.report()
+
     def on_preedit(self, _ic, text, _cursor, visible):
         self.preedit = text.get_text() if visible else ""
+        if self.preedit:
+            self.preedits.append(self.preedit)
 
     def on_preedit_with_mode(self, _ic, text, _cursor, visible, mode):
         self.preedit = text.get_text() if visible else ""
+        if self.preedit:
+            self.preedits.append(self.preedit)
         self.preedit_mode = mode
 
     def on_hide_preedit(self, _ic):
@@ -320,6 +339,40 @@ with open(log_path) as f:
         "dictionary: the user's one with the custom dictionary on",
         user_dictionary,
     )
+
+# Straight into a field that can delete around the cursor, underlined in one that cannot.
+set_setting("DirectTyping", "True")
+for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
+    app = App("direct", app_commits=app_commits)
+    app.type("vieetj ")
+    check(app.text == "việt ", f"direct ({who}): the word", app.text)
+    check(app.preedits == [], f"direct ({who}): no underline", app.preedits)
+    app.type("a")
+    app.key(IBus.KEY_BackSpace)
+    pump(200)
+    check(app.text == "việt ", f"direct ({who}): BackSpace removes the word", app.text)
+    app.type("ko ")
+    check(app.text == "việt không ", f"direct ({who}): a macro replaces the word", app.text)
+    app.type("vie")
+    app.reset()
+    app.type("e ")
+    check(
+        app.text == "việt không viee ",
+        f"direct ({who}): after a click the next key deletes nothing",
+        app.text,
+    )
+    app.type("dd")
+    app.key(IBus.KEY_Return)
+    pump(200)
+    check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
+    app.close()
+
+app = App("no surrounding", surrounding=False)
+app.type("vieetj ")
+check(app.text == "việt ", "direct, terminal: the word", app.text)
+check("việt" in app.preedits, "direct, terminal: underlined", app.preedits)
+app.close()
+set_setting("DirectTyping", "False")
 
 
 def checked_items(props):

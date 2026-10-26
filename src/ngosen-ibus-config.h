@@ -34,6 +34,8 @@ namespace ngosen {
         Options options;
         bool    enableDictionary   = false;
         bool    enableCustomKeymap = false;
+        // Straight into fields that can delete around the cursor, underlined elsewhere.
+        bool directTyping = false;
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.

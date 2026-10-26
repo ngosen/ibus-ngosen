@@ -38,6 +38,13 @@ namespace ngosen {
         bool hasPreedit() const {
             return !preedit_.empty();
         }
+        void setDirectTyping(bool on) {
+            directTyping_ = on;
+        }
+        // The app moved the cursor or took focus away, so the word in it is no longer ours to change.
+        void forgetTypedWord() {
+            typed_.clear();
+        }
 
         void                         commitText(const std::string& text) override;
         void                         forwardKey(EditKey key, bool release, uint32_t time) override;
@@ -69,6 +76,8 @@ namespace ngosen {
         std::string                  keyText(uint32_t sym) const override;
 
       private:
+        void        replaceTypedWord(const std::string& word);
+
         IBusEngine* engine_;
         bool        focus_   = false;
         guint       purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
@@ -76,6 +85,11 @@ namespace ngosen {
         std::string client_;
         std::string preedit_;
         std::string status_;
+        bool        directTyping_   = false;
+        bool        direct_         = false;
+        bool        preeditVisible_ = false;
+        // The word as it now stands in the app, when it goes in without a preedit.
+        std::string typed_;
     };
 
     class IBusKeyPress final : public KeyPress {

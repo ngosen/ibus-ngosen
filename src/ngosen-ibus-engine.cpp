@@ -31,6 +31,7 @@ namespace {
             if (host->hasPreedit())
                 return;
             resources().reloadIfChanged();
+            host->setDirectTyping(resources().settings().directTyping);
             if (generation == resources().generation())
                 return;
             state->setEngine();
@@ -124,6 +125,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
+        session->host->forgetTypedWord();
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
     }
@@ -142,8 +144,10 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
+            session->host->forgetTypedWord();
             session->state->resetAfterAppCommit(false);
+        }
     }
 
     void disable(IBusEngine* engine) {
@@ -203,7 +207,8 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->host       = host.get();
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
-    self->session       = session;
+    session->host->setDirectTyping(resources().settings().directTyping);
+    self->session = session;
 }
 
 namespace ngosen {

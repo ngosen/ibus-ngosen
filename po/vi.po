@@ -316,3 +316,15 @@ msgstr "Đầu văn bản, đầu dòng"
 #: src/ngosen-ibus-menu.cpp
 msgid "Settings"
 msgstr "Cài đặt"
+
+#: settings/ngosen_settings/options.py
+msgid "Type with Sen where the app allows"
+msgstr "Gõ Sen ở app cho phép"
+
+#: settings/ngosen_settings/options.py
+msgid ""
+"Text goes straight into fields that report the text around the cursor, "
+"without an underline. Terminals and games keep the underline."
+msgstr ""
+"Chữ hiện thẳng vào ô, không gạch chân, ở ô báo được chữ quanh con trỏ. "
+"Terminal và game vẫn gạch chân."

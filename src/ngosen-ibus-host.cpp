@@ -8,6 +8,7 @@
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
 
+#include <cstring>
 #include <libintl.h>
 
 namespace ngosen {
@@ -70,7 +71,32 @@ namespace ngosen {
     } // namespace
 
     void IBusHost::commitText(const std::string& text) {
-        ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
+        if (typed_.empty()) {
+            ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
+            return;
+        }
+        replaceTypedWord(text);
+        typed_.clear();
+    }
+
+    // Only the end that changed, so most keys add a character and delete nothing. The count comes
+    // from what we typed, not from the text the app reports, which some apps report wrongly.
+    void IBusHost::replaceTypedWord(const std::string& word) {
+        const char* kept = typed_.c_str();
+        const char* next = word.c_str();
+        while (*kept != '\0' && *next != '\0') {
+            const char* keptEnd = g_utf8_next_char(kept);
+            const char* nextEnd = g_utf8_next_char(next);
+            if (keptEnd - kept != nextEnd - next || std::memcmp(kept, next, static_cast<size_t>(keptEnd - kept)) != 0)
+                break;
+            kept = keptEnd;
+            next = nextEnd;
+        }
+        if (const glong extra = g_utf8_strlen(kept, -1); extra > 0)
+            ibus_engine_delete_surrounding_text(engine_, static_cast<gint>(-extra), static_cast<guint>(extra));
+        if (*next != '\0')
+            ibus_engine_commit_text(engine_, ibus_text_new_from_string(next));
+        typed_ = word;
     }
 
     void IBusHost::forwardKey(EditKey key, bool release, uint32_t /*time*/) {
@@ -134,6 +160,15 @@ namespace ngosen {
     }
 
     void IBusHost::refreshPreedit() {
+        // Decided once per word, so a word never moves between the preedit and the app. A terminal
+        // cannot delete around the cursor and keeps the preedit.
+        const bool wordStarts = typed_.empty() && !preeditVisible_;
+        if (wordStarts && !preedit_.empty())
+            direct_ = directTyping_ && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+        if (direct_ && (wordStarts || !typed_.empty())) {
+            replaceTypedWord(preedit_);
+            return;
+        }
         IBusText*   text   = ibus_text_new_from_string(preedit_.c_str());
         const guint length = static_cast<guint>(g_utf8_strlen(preedit_.c_str(), -1));
         // Some apps draw a preedit without attributes as plain text, which looks already typed.
@@ -141,6 +176,7 @@ namespace ngosen {
             ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, length);
         // The app commits the preedit itself when it resets or loses focus, so no word is lost.
         ibus_engine_update_preedit_text_with_mode(engine_, text, length, length > 0, IBUS_ENGINE_PREEDIT_COMMIT);
+        preeditVisible_ = length > 0;
     }
 
     void IBusHost::refreshPanel() {
