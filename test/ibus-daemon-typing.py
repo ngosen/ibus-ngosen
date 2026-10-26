@@ -2,7 +2,6 @@
 # app would show. The daemon commits the preedit itself on reset and focus out, as an app does when
 # the engine asks for it. Run by run-with-daemon.sh.
 import os
-import shutil
 import sys
 import time
 
@@ -36,22 +35,53 @@ def connect():
 bus = connect()
 
 
+def underline_of(text):
+    attrs = text.get_attributes()
+    i = 0
+    while attrs and (attr := attrs.get(i)) is not None:
+        if attr.get_attr_type() == IBus.AttrType.UNDERLINE:
+            return attr.get_value()
+        i += 1
+    return None
+
+
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
-    def __init__(self, name, purpose=IBus.InputPurpose.FREE_FORM, app_commits=False, hints=0):
+    def __init__(
+        self,
+        name,
+        purpose=IBus.InputPurpose.FREE_FORM,
+        app_commits=False,
+        hints=0,
+        surrounding=True,
+        qt_through_shell=False,
+    ):
         self.text = ""
         self.commits = []
         self.preedit = ""
+        self.preedits = []
+        self.underline = None
+        # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
+        # sends the text after a deletion only along with some other change, such as the cursor
+        # moving on screen: qt_through_shell is how many keys in a row must delete before the
+        # report stops.
+        self.qt_through_shell = qt_through_shell
+        self.reported = ""
+        self.deleted = False
+        self.deleting_keys = 0
+        self.deletions = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
-        caps = (
-            IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
-        )
+        caps = IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT
+        if surrounding:
+            caps |= IBus.Capabilite.SURROUNDING_TEXT
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
+        self.ic.connect("delete-surrounding-text", self.on_delete)
+        self.ic.connect("forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -69,19 +99,51 @@ class App:
         self.report()
 
     def report(self):
-        n = len(self.text)
-        self.ic.set_surrounding_text(IBus.Text.new_from_string(self.text), n, n)
+        if not (
+            self.qt_through_shell and self.deleted and self.deleting_keys >= self.qt_through_shell
+        ):
+            self.reported = self.text
+        n = len(self.reported)
+        self.ic.set_surrounding_text(IBus.Text.new_from_string(self.reported), n, n)
 
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
         self.text += text.get_text()
         self.report()
 
+    # The cursor stays at the end of the text.
+    def on_delete(self, _ic, offset, count):
+        self.deletions += 1
+        if self.qt_through_shell:
+            if not self.deleted:
+                self.deleting_keys += 1
+            self.deleted = True
+            end = len(self.reported) + offset + count
+            size = len(self.reported[end - count : end].encode())
+            count = len(self.text.encode()[-size:].decode(errors="replace"))
+            offset = -count
+        start = len(self.text) + offset
+        self.text = self.text[:start] + self.text[start + count :]
+        self.report()
+
+    # A forwarded BackSpace deletes like a typed one, as in a terminal.
+    def on_forward(self, _ic, keyval, _keycode, state):
+        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
+            self.deletions += 1
+            self.text = self.text[:-1]
+            self.report()
+
     def on_preedit(self, _ic, text, _cursor, visible):
+        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
+        if self.preedit:
+            self.preedits.append(self.preedit)
 
     def on_preedit_with_mode(self, _ic, text, _cursor, visible, mode):
+        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
+        if self.preedit:
+            self.preedits.append(self.preedit)
         self.preedit_mode = mode
 
     def on_hide_preedit(self, _ic):
@@ -115,6 +177,9 @@ class App:
                     self.text += char
                 self.report()
 
+        if not self.deleted:
+            self.deleting_keys = 0
+        self.deleted = False
         self.ic.process_key_event_async(keyval, 0, state, -1, None, done)
         end = time.monotonic() + 5
         while not replies and time.monotonic() < end:
@@ -298,8 +363,20 @@ check(app.commits == ["không "], "macro: expands on space", app.commits)
 app.close()
 
 open(log_path, "w").close()
-os.makedirs(os.path.dirname(user_dictionary), exist_ok=True)
-shutil.copy(os.environ["NGOSEN_IBUS_DICTIONARY"], user_dictionary)
+# A new user's first word list goes into a folder that did not exist when the engine started.
+check(
+    not os.path.isdir(os.path.dirname(user_dictionary))
+    or not os.listdir(os.path.dirname(user_dictionary)),
+    "dictionary: no word list before the first one",
+    user_dictionary,
+)
+with open(os.environ["NGOSEN_IBUS_DICTIONARY"]) as f:
+    write_file(user_dictionary, f.read())
+app = App("dictionary")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check("Settings reloaded" in f.read(), "dictionary: the first word list reloads", log_path)
 set_setting("EnableDictionary", "False")
 app = App("dictionary")
 app.type("a ")
@@ -320,6 +397,170 @@ with open(log_path) as f:
         "dictionary: the user's one with the custom dictionary on",
         user_dictionary,
     )
+open(log_path, "w").close()
+with open(user_dictionary) as f:
+    write_file(user_dictionary, f.read() + "ngosen\n")
+app = App("dictionary")
+app.type("a ")
+app.close()
+with open(log_path) as f:
+    check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
+
+set_setting("DoubleSpaceToPeriod", "True")
+set_setting("DoubleHyphenToEmDash", "True")
+for surrounding, app_commits, who in (
+    (True, False, "that reports surrounding text"),
+    (False, False, "that cannot delete around the cursor"),
+    (True, True, "that commits the preedit itself"),
+):
+    app = App("doubled keys", surrounding=surrounding, app_commits=app_commits)
+    app.type("xin  a--b c -")
+    app.close()
+    check(app.text == "xin. a—b c -", f"doubled keys: a field {who}", app.text)
+    check(app.deletions == 0, f"doubled keys: nothing deleted in a field {who}", app.deletions)
+set_setting("AutoCapitalizeAfterPunctuation", "True")
+app = App("doubled keys")
+app.type("xin  chaof")
+app.close()
+check(app.text == "xin. Chào", "doubled keys: capitalized after the period", app.text)
+set_setting("AutoCapitalizeAfterPunctuation", "False")
+set_setting("DoubleSpaceToPeriod", "False")
+set_setting("DoubleHyphenToEmDash", "False")
+
+for underline, value in (("True", IBus.AttrUnderline.SINGLE), ("False", IBus.AttrUnderline.NONE)):
+    set_setting("UnderlinePreedit", underline)
+    for app_commits in (False, True):
+        app = App("underline", app_commits=app_commits)
+        app.type("vie")
+        check(
+            app.underline == value,
+            f"underline: {underline}, app commits {app_commits}",
+            app.underline,
+        )
+        app.close()
+set_setting("UnderlinePreedit", "True")
+
+# Straight into a field that can delete around the cursor, underlined in one that cannot.
+set_setting("DirectTyping", "True")
+for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
+    app = App("direct", app_commits=app_commits)
+    app.type("vieetj ")
+    check(app.text == "việt ", f"direct ({who}): the word", app.text)
+    check(app.preedits == [], f"direct ({who}): no underline", app.preedits)
+    app.type("a")
+    app.key(IBus.KEY_BackSpace)
+    pump(200)
+    check(app.text == "việt ", f"direct ({who}): BackSpace removes the word", app.text)
+    app.type("ko ")
+    check(app.text == "việt không ", f"direct ({who}): a macro replaces the word", app.text)
+    app.type("vie")
+    app.reset()
+    app.type("e ")
+    check(
+        app.text == "việt không viee ",
+        f"direct ({who}): after a click the next key deletes nothing",
+        app.text,
+    )
+    app.type("dd")
+    app.key(IBus.KEY_Return)
+    pump(200)
+    check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
+    app.close()
+
+for keys in (1, 2):
+    app = App("gnome-shell", qt_through_shell=keys)
+    app.type("nam tieesng")
+    app.key(IBus.KEY_BackSpace)
+    app.key(IBus.KEY_BackSpace)
+    app.type("ng ")
+    check(app.text == "nam tiếng ", f"direct, Qt through GNOME Shell ({keys}): the words", app.text)
+    app.close()
+
+# Qt reports the text around the cursor only once the field has text.
+app = App("flag later", surrounding=False)
+app.type("vieetj ")
+app.ic.set_capabilities(
+    IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
+)
+app.report()
+pump(100)
+app.type("nam tieesng ")
+check(app.text == "việt nam tiếng ", "direct, flag after the first word: the words", app.text)
+app.close()
+
+# A click the app does not announce: the text stays and only the cursor moves.
+app = App("click")
+app.type("vie")
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
+pump(100)
+app.type("a")
+check(app.text == "viea", "direct, unannounced click: the next key deletes nothing", app.text)
+app.close()
+
+app = App("click inside")
+app.type("vie")
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 1, 1)
+pump(100)
+app.type("e")
+check(app.text == "viee", "direct, click inside the word: the next key deletes nothing", app.text)
+app.close()
+
+# VS Code reports the cursor at the start and then back after the word.
+app = App("back and forth")
+app.type("v")
+for cursor in (0, 1):
+    app.ic.set_surrounding_text(IBus.Text.new_from_string("vv"), cursor, cursor)
+    pump(100)
+app.type("ieetj ")
+check(app.text == "việt ", "direct, cursor reported back and forth: the word", app.text)
+app.close()
+
+app = App("no surrounding", surrounding=False)
+app.type("vieetj ")
+check(app.text == "việt ", "direct, terminal: the word", app.text)
+check("việt" in app.preedits, "direct, terminal: underlined", app.preedits)
+app.close()
+set_setting("DirectTyping", "False")
+
+
+def checked_items(props):
+    found = set()
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        if prop.get_state() == IBus.PropState.CHECKED:
+            found.add(prop.get_key())
+        found |= checked_items(prop.get_sub_props())
+        i += 1
+    return found
+
+
+# A click in the GNOME input source menu, which the panel sends as a property activation.
+menus = []
+app = App("menu")
+app.ic.set_capabilities(
+    IBus.Capabilite.FOCUS
+    | IBus.Capabilite.PREEDIT_TEXT
+    | IBus.Capabilite.SURROUNDING_TEXT
+    | IBus.Capabilite.PROPERTY
+)
+app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
+app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
+pump(1000)
+with open(settings_path) as f:
+    saved = f.read()
+check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
+check(
+    bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
+    "menu: shows the new choice",
+    menus,
+)
+app.type("vie65t ")
+check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
+app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+pump(1000)
+with open(settings_path) as f:
+    check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
+app.close()
 
 if failures == 0:
     print("all IBus daemon checks passed")

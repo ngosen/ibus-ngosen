@@ -12,6 +12,9 @@
 
 namespace ngosen {
 
+    // The word list that comes with the package.
+    std::string bundledDictionaryFile();
+
     // Settings and tables every field shares. No emoji list: the IBus edition has no emoji picker.
     class IBusResources final : public EngineResources {
       public:
@@ -43,6 +46,13 @@ namespace ngosen {
             return recorder_;
         }
 
+        const IBusSettings& settings() const {
+            return settings_;
+        }
+        // Writes one setting and returns what the file now says. The file monitor reloads it
+        // between words, as for a change the settings window makes.
+        bool saveSetting(const std::string& key, const std::string& value, IBusSettings& saved) const;
+
         // Counts reloads, so a field knows its engine was built from older settings.
         unsigned generation() const {
             return generation_;
@@ -57,11 +67,12 @@ namespace ngosen {
         SettingsPaths            paths_;
         IBusSettings             settings_;
         std::vector<KeymapEntry> keymap_;
-        uintptr_t                dictionary_ = 0;
-        uintptr_t                macroTable_ = 0;
-        unsigned                 generation_ = 0;
-        bool                     changed_    = false;
-        GFileMonitor*            monitor_    = nullptr;
+        uintptr_t                dictionary_  = 0;
+        uintptr_t                macroTable_  = 0;
+        unsigned                 generation_  = 0;
+        bool                     changed_     = false;
+        GFileMonitor*            monitor_     = nullptr;
+        GFileMonitor*            dataMonitor_ = nullptr;
         Recorder                 recorder_;
     };
 

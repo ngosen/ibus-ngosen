@@ -217,6 +217,10 @@ namespace ngosen {
         read.text("DateFormat", o.dateFormat);
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
+        read.boolean("DirectTyping", settings.directTyping);
+        read.boolean("UnderlinePreedit", settings.underlinePreedit);
+        read.boolean("DoubleSpaceToPeriod", settings.doubleSpaceToPeriod);
+        read.boolean("DoubleHyphenToEmDash", settings.doubleHyphenToEmDash);
         return settings;
     }
 
@@ -243,6 +247,38 @@ namespace ngosen {
         line("DateFormat", o.dateFormat);
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
+        line("DirectTyping", boolText(settings.directTyping));
+        line("UnderlinePreedit", boolText(settings.underlinePreedit));
+        line("DoubleSpaceToPeriod", boolText(settings.doubleSpaceToPeriod));
+        line("DoubleHyphenToEmDash", boolText(settings.doubleHyphenToEmDash));
+        return out.str();
+    }
+
+    std::string withSetting(const std::string& text, const std::string& key, const std::string& value) {
+        const std::string  setting = key + '=' + escapeIniValue(value);
+        std::istringstream lines(text);
+        std::ostringstream out;
+        std::string        line;
+        bool               top = true;
+        bool               set = false;
+        while (std::getline(lines, line)) {
+            const std::string trimmed = trim(line);
+            const auto        equal   = trimmed.find('=');
+            if (!trimmed.empty() && trimmed.front() == '[' && trimmed.back() == ']') {
+                // A key after a section header would belong to that section.
+                if (top && !set)
+                    out << setting << '\n';
+                top = false;
+                set = true;
+            } else if (top && equal != std::string::npos && trimmed[0] != '#' && trimmed.substr(0, equal) == key) {
+                // Every copy, since parseIni() keeps the last one.
+                line = setting;
+                set  = true;
+            }
+            out << line << '\n';
+        }
+        if (!set)
+            out << setting << '\n';
         return out.str();
     }
 

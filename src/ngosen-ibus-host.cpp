@@ -7,6 +7,7 @@
 
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
+#include "ngosen-utf8.h"
 
 #include <libintl.h>
 
@@ -69,8 +70,107 @@ namespace ngosen {
         GSourceFuncs GlibTimer::funcs_ = {nullptr, nullptr, &GlibTimer::dispatch, nullptr, nullptr, nullptr};
     } // namespace
 
-    void IBusHost::commitText(const std::string& text) {
-        ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
+    void IBusHost::commitText(const std::string& committed) {
+        std::string text = committed;
+        if (!keep_.empty() && g_str_has_suffix(text.c_str(), keep_.c_str())) {
+            text.resize(text.size() - keep_.size());
+            kept_ = true;
+            if (text.empty())
+                return;
+        }
+        if (typed_.empty()) {
+            ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
+            return;
+        }
+        replaceTypedWord(text);
+        typed_.clear();
+    }
+
+    bool IBusHost::holdKept() {
+        const bool kept = kept_;
+        if (kept)
+            hold(keep_);
+        keep_.clear();
+        kept_ = false;
+        return kept;
+    }
+
+    // Always given: some apps draw a preedit without one as plain text, which looks already typed.
+    guint IBusHost::underlineStyle() const {
+        return underline_ ? IBUS_ATTR_UNDERLINE_SINGLE : IBUS_ATTR_UNDERLINE_NONE;
+    }
+
+    void IBusHost::hold(const std::string& text) {
+        held_           = text;
+        IBusText* shown = ibus_text_new_from_string(text.c_str());
+        ibus_text_append_attribute(shown, IBUS_ATTR_TYPE_UNDERLINE, underlineStyle(), 0, 1);
+        ibus_engine_update_preedit_text_with_mode(engine_, shown, 1, TRUE, IBUS_ENGINE_PREEDIT_COMMIT);
+        preeditVisible_ = true;
+    }
+
+    std::string IBusHost::takeHeld() {
+        std::string held = std::move(held_);
+        held_.clear();
+        if (!held.empty()) {
+            ibus_engine_update_preedit_text_with_mode(engine_, ibus_text_new_from_string(""), 0, FALSE, IBUS_ENGINE_PREEDIT_CLEAR);
+            preeditVisible_ = false;
+        }
+        return held;
+    }
+
+    // Only the end that changed, so most keys add a character and delete nothing.
+    void IBusHost::replaceTypedWord(const std::string& word) {
+        std::string gone;
+        std::string added;
+        utf8::compareAndSplitStrings(typed_, word, gone, added);
+        size_t same = typed_.size() - gone.size();
+        if (const glong extra = countToDelete(same); extra > 0)
+            ibus_engine_delete_surrounding_text(engine_, static_cast<gint>(-extra), static_cast<guint>(extra));
+        if (same < word.size())
+            ibus_engine_commit_text(engine_, ibus_text_new_from_string(word.c_str() + same));
+        typed_ = word;
+    }
+
+    // Kept apart from the copy IBus edits on each deletion, since GNOME Shell does not see those edits.
+    void IBusHost::setReportedText(const gchar* text, guint cursor) {
+        if (cursor > static_cast<guint>(g_utf8_strlen(text, -1))) {
+            reportedBeforeCursor_.clear();
+            backAfterTypedWord_ = false;
+            return;
+        }
+        reportedBeforeCursor_.assign(text, static_cast<size_t>(g_utf8_offset_to_pointer(text, cursor) - text));
+        backAfterTypedWord_ = !typed_.empty() && reportedBeforeCursor_ == wordEndBeforeCursor_;
+        if (!typed_.empty() && g_str_has_suffix(reportedBeforeCursor_.c_str(), typed_.c_str()))
+            wordEndBeforeCursor_ = reportedBeforeCursor_;
+    }
+
+    // GNOME Shell passes a deletion to Wayland apps in bytes, measured on the text the app last
+    // reported, and Qt does not report again after a deletion. So count over that text, and when
+    // no count there covers the bytes to delete, delete from an earlier character of the word.
+    glong IBusHost::countToDelete(size_t& from) const {
+        const glong chars = g_utf8_strlen(typed_.c_str() + from, -1);
+        if (chars == 0 || client_ != "gnome-shell")
+            return chars;
+        const char* reportedStart = reportedBeforeCursor_.c_str();
+        const char* reportedEnd   = reportedStart + reportedBeforeCursor_.size();
+        const char* reported      = reportedEnd;
+        const char* typedStart    = typed_.c_str();
+        const char* typedEnd      = typedStart + typed_.size();
+        const char* typed         = typedStart + from;
+        glong       count         = 0;
+        while (true) {
+            while (reportedEnd - reported < typedEnd - typed && reported > reportedStart) {
+                reported = g_utf8_prev_char(reported);
+                ++count;
+            }
+            if (reportedEnd - reported == typedEnd - typed) {
+                from = static_cast<size_t>(typed - typedStart);
+                return count;
+            }
+            if (typed == typedStart)
+                return chars;
+            typed = g_utf8_prev_char(typed);
+        }
     }
 
     void IBusHost::forwardKey(EditKey key, bool release, uint32_t /*time*/) {
@@ -134,13 +234,22 @@ namespace ngosen {
     }
 
     void IBusHost::refreshPreedit() {
+        // Decided once per word, so a word never moves between the preedit and the app. A terminal
+        // cannot delete around the cursor and keeps the preedit.
+        const bool wordStarts = typed_.empty() && !preeditVisible_;
+        if (wordStarts && !preedit_.empty())
+            direct_ = directTyping_ && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+        if (direct_ && (wordStarts || !typed_.empty())) {
+            replaceTypedWord(preedit_);
+            return;
+        }
         IBusText*   text   = ibus_text_new_from_string(preedit_.c_str());
         const guint length = static_cast<guint>(g_utf8_strlen(preedit_.c_str(), -1));
-        // Some apps draw a preedit without attributes as plain text, which looks already typed.
         if (length > 0)
-            ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, length);
+            ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, underlineStyle(), 0, length);
         // The app commits the preedit itself when it resets or loses focus, so no word is lost.
         ibus_engine_update_preedit_text_with_mode(engine_, text, length, length > 0, IBUS_ENGINE_PREEDIT_COMMIT);
+        preeditVisible_ = length > 0;
     }
 
     void IBusHost::refreshPanel() {

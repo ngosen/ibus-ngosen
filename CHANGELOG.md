@@ -26,3 +26,12 @@ Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1
 - Gói cài cho Debian 13, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch Linux (cả máy ARM trừ Arch), và mã
   nguồn kèm sẵn lõi Ngó Sen. Gói Debian tự kéo theo mô-đun IBus cho app GTK, kể cả trên MX Linux vốn không
   cài gói khuyên dùng (#6, #8).
+- Menu nhanh trong menu nguồn nhập của GNOME (thanh trên cùng), giống menu khay của bản fcitx5: đổi Telex/VNI,
+  bảng mã, bật tắt kiểm tra chính tả, gõ tắt, tự viết hoa, tự khôi phục từ gõ sai, từ điển tuỳ chỉnh, và mở cửa
+  sổ cài đặt (#9).
+- Tuỳ chọn "Gõ Sen ở app cho phép" (mặc định tắt): chữ hiện thẳng vào ô, không gạch chân, ở app báo được chữ
+  quanh con trỏ (app GTK, Qt, Firefox, Chrome, VS Code, LibreOffice); terminal và game vẫn gạch chân (#10).
+- Trang "Từ điển" trong cửa sổ cài đặt: thêm, tìm và xoá từ trong từ điển riêng, lưu ngay, có Hoàn tác; sửa
+  từ điển thì bộ gõ dùng ngay từ chữ tiếp theo (#11).
+- Tuỳ chọn hai dấu cách thành dấu chấm và "--" thành "—" (mặc định tắt), trong cửa sổ cài đặt mục Gõ nhanh (#12).
+- Tuỳ chọn "Gạch chân chữ đang gõ" (mặc định bật): tắt đi thì chữ đang gõ hiện như chữ thường (#13).

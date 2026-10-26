@@ -34,6 +34,13 @@ namespace ngosen {
         Options options;
         bool    enableDictionary   = false;
         bool    enableCustomKeymap = false;
+        // Straight into fields that can delete around the cursor, underlined elsewhere.
+        bool directTyping = false;
+        // Off for users who find the underline distracting; the word still waits for its commit.
+        bool underlinePreedit = true;
+        // Held in the preedit and changed there, so the core's own versions, which delete, stay off.
+        bool doubleSpaceToPeriod  = false;
+        bool doubleHyphenToEmDash = false;
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.
@@ -42,6 +49,8 @@ namespace ngosen {
     IBusSettings readSettings(const IniFile& ini);
     // Writes every key readSettings() reads, so the settings window finds them all in the file.
     std::string settingsText(const IBusSettings& settings);
+    // Sets one key and keeps the rest of the file as the user or the settings window wrote it.
+    std::string withSetting(const std::string& text, const std::string& key, const std::string& value);
 
     struct SettingsPaths {
         std::string          configDir;      // ~/.config/ngosen

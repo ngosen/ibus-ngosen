@@ -29,6 +29,8 @@ DATE_FORMATS = [
 
 LABELS = {
     "InputMethod": N_("Input Method"),
+    "DirectTyping": N_("Type with Sen where the app allows"),
+    "UnderlinePreedit": N_("Underline the Word Being Typed"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
@@ -45,6 +47,8 @@ LABELS = {
         "Auto capitalize after sentence-ending punctuation (. ! ? Enter)"
     ),
     "CapitalizeStartOfText": N_("Capitalize the first letter of the text or of a line"),
+    "DoubleSpaceToPeriod": N_("Double Space to Period"),
+    "DoubleHyphenToEmDash": N_("Double Hyphen to Em-Dash (--)"),
     "EnableMacro": N_("Enable Macro"),
     "CapitalizeMacro": N_("Capitalize Macro"),
     "TimeFormat": N_("Time Format ($TIME in macro)"),
@@ -52,13 +56,16 @@ LABELS = {
 }
 
 HINTS = {
+    "DirectTyping": N_(
+        "Text goes straight into fields that report the text around the cursor, without an underline. Terminals and games keep the underline."
+    ),
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
     ),
     "EnableCustomKeymap": N_("The keys set in the full edition, used by the Custom input method."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
     "EnableDictionary": N_(
-        "The word list from the full edition. Off: the one that comes with Ngó Sen."
+        "Check spelling against the list below. Off: the list that comes with Ngó Sen."
     ),
     "AutoNonVnRestore": N_("Typing windows still gives windows."),
     "LockWordModifier": N_(
@@ -78,6 +85,11 @@ HINTS = {
     "CapitalizeStartOfText": N_(
         "xin → Xin in an empty field or on a new line. Not in address bars or some apps; on GNOME 47 and later, Chrome and similar apps skip an empty field."
     ),
+    "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
+    "DoubleHyphenToEmDash": N_("a--b → a—b."),
+    "UnderlinePreedit": N_(
+        "Off: the word looks already typed until Space or punctuation commits it."
+    ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
 
@@ -92,12 +104,14 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "OutputCharset", "EnableCustomKeymap"]),
+    (
+        None,
+        ["InputMethod", "DirectTyping", "UnderlinePreedit", "OutputCharset", "EnableCustomKeymap"],
+    ),
     (
         N_("Tone marks"),
         [
             "SpellCheck",
-            "EnableDictionary",
             "AutoNonVnRestore",
             "LockWordModifier",
             "DdFreeStyle",
@@ -108,7 +122,15 @@ TYPING_GROUPS = [
             "BracketTransform",
         ],
     ),
-    (N_("Quick typing"), ["AutoCapitalizeAfterPunctuation", "CapitalizeStartOfText"]),
+    (
+        N_("Quick typing"),
+        [
+            "AutoCapitalizeAfterPunctuation",
+            "CapitalizeStartOfText",
+            "DoubleSpaceToPeriod",
+            "DoubleHyphenToEmDash",
+        ],
+    ),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]
 

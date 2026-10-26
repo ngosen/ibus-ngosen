@@ -6,9 +6,12 @@
 #include "bamboo-core.h"
 #include "ngosen-ibus-config.h"
 #include "ngosen-ibus-engine.h"
+#include "ngosen-ibus-resources.h"
 
+#include <clocale>
 #include <cstdio>
 #include <cstring>
+#include <glib/gi18n-lib.h>
 #include <ibus.h>
 #include <syslog.h>
 
@@ -18,6 +21,10 @@ namespace {
     int runSettingsCommand(const char* command) {
         const bool methods = std::strcmp(command, "--list-input-methods") == 0;
         const bool print   = std::strcmp(command, "--print-settings") == 0;
+        if (std::strcmp(command, "--print-dictionary-paths") == 0) {
+            std::printf("%s\n%s\n", ngosen::SettingsPaths::fromEnvironment().dictionaryFile().c_str(), ngosen::bundledDictionaryFile().c_str());
+            return 0;
+        }
         if (!methods && !print && std::strcmp(command, "--list-charsets") != 0)
             return -1;
         Init();
@@ -44,6 +51,10 @@ int main(int argc, char** argv) {
         if (const int status = runSettingsCommand(argv[1]); status >= 0)
             return status;
     }
+    // For the menu items, which GNOME shows as the engine gives them.
+    std::setlocale(LC_ALL, "");
+    bindtextdomain(GETTEXT_PACKAGE, NGOSEN_LOCALEDIR);
+    bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
     ibus_init();
     IBusBus* bus = ibus_bus_new();
     if (!ibus_bus_is_connected(bus)) {

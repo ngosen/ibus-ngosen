@@ -24,6 +24,12 @@ class Vietnamese:
 
 
 class FakeEngine:
+    def __init__(self, folder):
+        self.folder = folder
+
+    def dictionary_paths(self):
+        return os.path.join(self.folder, "own.dict"), os.path.join(self.folder, "bundled.dict")
+
     def settings(self):
         return {
             "InputMethod": "Telex",
@@ -32,6 +38,7 @@ class FakeEngine:
             "W2U": "Non-Start",
             "TimeFormat": "%H:%M:%S %Z",
             "EnableMacro": "True",
+            "EnableDictionary": "True",
         }
 
 
@@ -55,7 +62,8 @@ class WindowTest(unittest.TestCase):
         window.i18n._translation = Vietnamese()
         self.folder = tempfile.mkdtemp()
         write_text(os.path.join(self.folder, "ngosen.conf"), "SpellCheck=True\nFutureKey=kept\n")
-        self.store = Store(FakeEngine(), self.folder)
+        write_text(os.path.join(self.folder, "bundled.dict"), "việt\nnam\n")
+        self.store = Store(FakeEngine(self.folder), self.folder)
         names = {
             "InputMethod": ["Telex", "VNI", "Telex + VNI"],
             "OutputCharset": ["Unicode", "TCVN3 (ABC)"],
@@ -98,6 +106,27 @@ class WindowTest(unittest.TestCase):
         self.window.undo()
         self.assertEqual(self.store.macros, [("kg", "khô gà")])
         self.assertIsNotNone(macros.list.get_row_at_index(0))
+
+    def test_dictionary_add_and_remove(self):
+        page = self.window.dictionary
+        page.word_row.set_text("ngo ãy")
+        self.assertFalse(page.add_button.get_sensitive())
+        page.word_row.set_text("việt")
+        self.assertFalse(page.add_button.get_sensitive())
+        page.word_row.set_text("ngoãy")
+        page._add()
+        self.assertEqual(self.store.words, ["việt", "nam", "ngoãy"])
+        self.assertEqual(page.list.get_row_at_index(0).get_title(), "ngoãy")
+        page._remove("ngoãy")
+        self.assertFalse(os.path.exists(self.store.dictionary_file))
+        self.window.undo()
+        self.assertEqual(read_text(self.store.dictionary_file), "việt\nnam\nngoãy\n")
+
+    def test_dictionary_list_follows_the_switch(self):
+        page = self.window.dictionary
+        self.assertTrue(page.editor.get_sensitive())
+        self.window.rows.rows["EnableDictionary"].set_active(False)
+        self.assertFalse(page.editor.get_sensitive())
 
     def tearDown(self):
         self.window.destroy()

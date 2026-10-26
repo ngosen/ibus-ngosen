@@ -98,8 +98,8 @@ msgid "Words that are not Vietnamese get no tone marks."
 msgstr "Từ không phải tiếng Việt thì không thêm dấu."
 
 #: settings/ngosen_settings/options.py
-msgid "The word list from the full edition. Off: the one that comes with Ngó Sen."
-msgstr "Từ điển của bạn ở bản đầy đủ. Tắt: dùng từ điển có sẵn của Ngó Sen."
+msgid "Check spelling against the list below. Off: the list that comes with Ngó Sen."
+msgstr "Kiểm chính tả theo danh sách bên dưới. Tắt: dùng danh sách có sẵn của Ngó Sen."
 
 #: settings/ngosen_settings/options.py
 msgid "Typing windows still gives windows."
@@ -178,12 +178,9 @@ msgid "Cứu chữ and Cứu dấu"
 msgstr "Cứu chữ, Cứu dấu"
 
 #: settings/ngosen_settings/pages.py
-msgid "Two spaces to a period, -- to —"
-msgstr "Hai dấu cách ra dấu chấm, -- ra —"
-
 #: settings/ngosen_settings/pages.py
-msgid "The emoji picker, rules for each app and the dictionary editor"
-msgstr "Bảng chọn emoji, luật theo app và trình sửa từ điển"
+msgid "The emoji picker and rules for each app"
+msgstr "Bảng chọn emoji và luật theo app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Not in the GNOME edition"
@@ -292,3 +289,78 @@ msgstr "Không lưu được: {}"
 #: data/ngosen.xml.in
 msgid "Vietnamese input method"
 msgstr "Bộ gõ tiếng Việt"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Charset"
+msgstr "Bảng mã"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Spell Check"
+msgstr "Kiểm tra chính tả"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Auto Capitalize"
+msgstr "Tự viết hoa"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "After . ! ? and Enter"
+msgstr "Sau dấu . ! ? và Enter"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Start of text or line"
+msgstr "Đầu văn bản, đầu dòng"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Settings"
+msgstr "Cài đặt"
+
+#: settings/ngosen_settings/options.py
+msgid "Type with Sen where the app allows"
+msgstr "Gõ Sen ở app cho phép"
+
+#: settings/ngosen_settings/options.py
+msgid ""
+"Text goes straight into fields that report the text around the cursor, "
+"without an underline. Terminals and games keep the underline."
+msgstr ""
+"Chữ hiện thẳng vào ô, không gạch chân, ở ô báo được chữ quanh con trỏ. "
+"Terminal và game vẫn gạch chân."
+
+msgid "Dictionary"
+msgstr "Từ điển"
+
+msgid "Word (e.g. ngoãy)"
+msgstr "Từ (ví dụ: ngoãy)"
+
+msgid "Search words..."
+msgstr "Tìm từ..."
+
+msgid "One word, without spaces."
+msgstr "Mỗi lần một từ, không có dấu cách."
+
+msgid "{} words. Search to see them."
+msgstr "{} từ. Gõ vào ô tìm để xem."
+
+msgid "No words found."
+msgstr "Không tìm thấy từ nào."
+
+msgid "Showing {} of {} words found."
+msgstr "Đang hiện {} trên {} từ tìm thấy."
+
+msgid "Double Space to Period"
+msgstr "Hai dấu cách thành dấu chấm (thử nghiệm)"
+
+msgid "Double Hyphen to Em-Dash (--)"
+msgstr "Hai gạch nối thành gạch dài"
+
+msgid "ban and Space twice gives “ban. ”."
+msgstr "Gõ ban rồi hai dấu cách ra “ban. ”."
+
+msgid "a--b → a—b."
+msgstr "a--b → a—b."
+
+msgid "Underline the Word Being Typed"
+msgstr "Gạch chân chữ đang gõ"
+
+msgid "Off: the word looks already typed until Space or punctuation commits it."
+msgstr "Tắt: chữ đang gõ trông như đã gõ xong, tới khi dấu cách hay dấu câu chốt chữ."

@@ -7,6 +7,7 @@
 
 #include "ngosen-globals.h"
 #include "ngosen-ibus-host.h"
+#include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-resources.h"
 #include "ngosen-log.h"
 #include "ngosen-state.h"
@@ -30,6 +31,8 @@ namespace {
             if (host->hasPreedit())
                 return;
             resources().reloadIfChanged();
+            host->setDirectTyping(resources().settings().directTyping);
+            host->setUnderline(resources().settings().underlinePreedit);
             if (generation == resources().generation())
                 return;
             state->setEngine();
@@ -56,9 +59,44 @@ namespace {
         return reinterpret_cast<NgoSenEngine*>(engine)->session;
     }
 
-    bool isPlainEnter(guint keyval, guint state) {
-        constexpr guint modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_RELEASE_MASK;
-        return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
+    constexpr guint Modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK;
+
+    // The character a doubled key would change, or "" when the setting for it is off.
+    std::string doubledKeyText(guint keyval, guint state) {
+        if ((state & (Modifiers | IBUS_RELEASE_MASK)) != 0)
+            return "";
+        const auto& settings = resources().settings();
+        if ((keyval == IBUS_KEY_space || keyval == IBUS_KEY_KP_Space) && settings.doubleSpaceToPeriod)
+            return " ";
+        if ((keyval == IBUS_KEY_minus || keyval == IBUS_KEY_KP_Subtract) && settings.doubleHyphenToEmDash)
+            return "-";
+        return "";
+    }
+
+    // As if typed, so the core capitalizes after the period when set to.
+    void typeIntoCore(Session* session, IBusEngine* engine, guint keyval, const char* text) {
+        ngosen::IBusKeyPress key(keyval, 0, 0);
+        session->state->keyEvent(key);
+        if (!key.accepted())
+            ibus_engine_commit_text(engine, ibus_text_new_from_string(text));
+    }
+
+    // The second of two spaces or hyphens changes the first, which is still in the preedit.
+    bool takeHeldKey(Session* session, IBusEngine* engine, const std::string& doubled) {
+        const std::string held = session->host->takeHeld();
+        if (held.empty())
+            return false;
+        if (held != doubled) {
+            ibus_engine_commit_text(engine, ibus_text_new_from_string(held.c_str()));
+            return false;
+        }
+        if (held == "-") {
+            ibus_engine_commit_text(engine, ibus_text_new_from_string("—"));
+        } else {
+            typeIntoCore(session, engine, IBUS_KEY_period, ".");
+            typeIntoCore(session, engine, IBUS_KEY_space, " ");
+        }
+        return true;
     }
 
     gboolean processKeyEvent(IBusEngine* engine, guint keyval, guint keycode, guint state) {
@@ -69,12 +107,27 @@ namespace {
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
         if (session->host->takesPassword())
             return FALSE;
+        const bool        release = (state & IBUS_RELEASE_MASK) != 0;
+        const std::string doubled = doubledKeyText(keyval, state);
+        if (!release && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier() && takeHeldKey(session, engine, doubled))
+            return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
-        if (isPlainEnter(keyval, state) && session->host->hasPreedit())
+        const bool enter = keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter;
+        if (enter && (state & (Modifiers | IBUS_RELEASE_MASK)) == 0 && session->host->hasPreedit())
             session->state->commitBuffer();
+        // The core saw the cursor leave the word, so the word in the app is no longer ours to change.
+        if (g_mouse_clicked.load(std::memory_order_acquire))
+            session->host->forgetTypedWord();
         ngosen::IBusKeyPress key(keyval, keycode, state);
+        session->host->keepFromCommit(doubled);
         session->state->keyEvent(key);
+        if (session->host->holdKept())
+            return TRUE;
+        if (!doubled.empty() && !key.accepted() && key.replacedSym() == 0) {
+            session->host->hold(doubled);
+            return TRUE;
+        }
         if (key.accepted())
             return TRUE;
         // IBus cannot change a key it lets through, so the changed key goes out on its own.
@@ -85,17 +138,45 @@ namespace {
         return FALSE;
     }
 
+    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings) {
+        IBusPropList* menu = ngosen::newSettingsMenu(settings);
+        g_object_ref_sink(menu);
+        ibus_engine_register_properties(engine, menu);
+        g_object_unref(menu);
+    }
+
     void focusIn(IBusEngine* engine) {
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
             session->applyNewSettings();
         }
+        showMenu(engine, resources().settings());
+    }
+
+    void propertyActivate(IBusEngine* engine, const gchar* name, guint state) {
+        if (g_strcmp0(name, ngosen::SettingsWindowItem) == 0) {
+            gchar*  argv[] = {const_cast<gchar*>(NGOSEN_SETUP_EXEC), nullptr}; //NOLINT
+            GError* error  = nullptr;
+            if (!g_spawn_async(nullptr, argv, nullptr, G_SPAWN_DEFAULT, nullptr, nullptr, nullptr, &error)) {
+                NGOSEN_WARN("Cannot open the settings window: " << error->message);
+                g_error_free(error);
+            }
+            return;
+        }
+        std::string key;
+        std::string value;
+        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, key, value))
+            return;
+        ngosen::IBusSettings saved;
+        // A failed write shows the old state again, so the menu never claims a setting that is not saved.
+        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().settings());
     }
 
     void focusOut(IBusEngine* engine) {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
+        session->host->forgetTypedWord();
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
     }
@@ -114,8 +195,10 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
+            session->host->forgetTypedWord();
             session->state->resetAfterAppCommit(false);
+        }
     }
 
     void disable(IBusEngine* engine) {
@@ -124,8 +207,17 @@ namespace {
 
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
+            session->host->setReportedText(ibus_text_get_text(text), cursor);
+            const bool clicked = g_mouse_clicked.load(std::memory_order_acquire);
+            const bool reset   = needEngineReset.load(std::memory_order_acquire);
             session->state->surroundingUpdated();
+            // VS Code reports the cursor at the start of the field and then back after the word.
+            if (!clicked && session->host->backAfterTypedWord() && g_mouse_clicked.load(std::memory_order_acquire)) {
+                g_mouse_clicked.store(false, std::memory_order_release);
+                needEngineReset.store(reset, std::memory_order_release);
+            }
+        }
     }
 
     void setContentType(IBusEngine* engine, guint purpose, guint hints) {
@@ -165,6 +257,7 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->set_content_type     = setContentType;
     engineClass->focus_in_id          = focusInId;
     engineClass->focus_out_id         = focusOutId;
+    engineClass->property_activate    = propertyActivate;
     IBUS_OBJECT_CLASS(klass)->destroy = destroy;
 }
 
@@ -174,7 +267,9 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->host       = host.get();
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
-    self->session       = session;
+    session->host->setDirectTyping(resources().settings().directTyping);
+    session->host->setUnderline(resources().settings().underlinePreedit);
+    self->session = session;
 }
 
 namespace ngosen {
