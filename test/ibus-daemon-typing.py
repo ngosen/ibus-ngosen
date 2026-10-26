@@ -46,11 +46,20 @@ class App:
         app_commits=False,
         hints=0,
         surrounding=True,
+        qt_through_shell=False,
     ):
         self.text = ""
         self.commits = []
         self.preedit = ""
         self.preedits = []
+        # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
+        # sends the text after a deletion only along with some other change, such as the cursor
+        # moving on screen: qt_through_shell is how many keys in a row must delete before the
+        # report stops.
+        self.qt_through_shell = qt_through_shell
+        self.reported = ""
+        self.deleted = False
+        self.deleting_keys = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
@@ -78,8 +87,12 @@ class App:
         self.report()
 
     def report(self):
-        n = len(self.text)
-        self.ic.set_surrounding_text(IBus.Text.new_from_string(self.text), n, n)
+        if not (
+            self.qt_through_shell and self.deleted and self.deleting_keys >= self.qt_through_shell
+        ):
+            self.reported = self.text
+        n = len(self.reported)
+        self.ic.set_surrounding_text(IBus.Text.new_from_string(self.reported), n, n)
 
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
@@ -88,6 +101,14 @@ class App:
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
+        if self.qt_through_shell:
+            if not self.deleted:
+                self.deleting_keys += 1
+            self.deleted = True
+            end = len(self.reported) + offset + count
+            size = len(self.reported[end - count : end].encode())
+            count = len(self.text.encode()[-size:].decode(errors="replace"))
+            offset = -count
         start = len(self.text) + offset
         self.text = self.text[:start] + self.text[start + count :]
         self.report()
@@ -134,6 +155,9 @@ class App:
                     self.text += char
                 self.report()
 
+        if not self.deleted:
+            self.deleting_keys = 0
+        self.deleted = False
         self.ic.process_key_event_async(keyval, 0, state, -1, None, done)
         end = time.monotonic() + 5
         while not replies and time.monotonic() < end:
@@ -366,6 +390,46 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     pump(200)
     check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
     app.close()
+
+for keys in (1, 2):
+    app = App("gnome-shell", qt_through_shell=keys)
+    app.type("nam tieesng")
+    app.key(IBus.KEY_BackSpace)
+    app.key(IBus.KEY_BackSpace)
+    app.type("ng ")
+    check(app.text == "nam tiếng ", f"direct, Qt through GNOME Shell ({keys}): the words", app.text)
+    app.close()
+
+# Qt reports the text around the cursor only once the field has text.
+app = App("flag later", surrounding=False)
+app.type("vieetj ")
+app.ic.set_capabilities(
+    IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
+)
+app.report()
+pump(100)
+app.type("nam tieesng ")
+check(app.text == "việt nam tiếng ", "direct, flag after the first word: the words", app.text)
+app.close()
+
+# A click the app does not announce: the text stays and only the cursor moves.
+app = App("click")
+app.type("vie")
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
+pump(100)
+app.type("a")
+check(app.text == "viea", "direct, unannounced click: the next key deletes nothing", app.text)
+app.close()
+
+# VS Code reports the cursor at the start and then back after the word.
+app = App("back and forth")
+app.type("v")
+for cursor in (0, 1):
+    app.ic.set_surrounding_text(IBus.Text.new_from_string("vv"), cursor, cursor)
+    pump(100)
+app.type("ieetj ")
+check(app.text == "việt ", "direct, cursor reported back and forth: the word", app.text)
+app.close()
 
 app = App("no surrounding", surrounding=False)
 app.type("vieetj ")

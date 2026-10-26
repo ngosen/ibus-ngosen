@@ -75,6 +75,9 @@ namespace {
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
+        // The core saw the cursor leave the word, so the word in the app is no longer ours to change.
+        if (g_mouse_clicked.load(std::memory_order_acquire))
+            session->host->forgetTypedWord();
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -156,8 +159,15 @@ namespace {
 
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
-        if (Session* session = sessionOf(engine))
-            session->state->surroundingUpdated();
+        if (Session* session = sessionOf(engine)) {
+            const gchar* chars = ibus_text_get_text(text);
+            if (cursor <= static_cast<guint>(g_utf8_strlen(chars, -1)))
+                session->host->setReportedText(chars, cursor);
+            // VS Code reports the cursor at the start of the field and then back. While it is right
+            // after the word we are typing, the user has not moved it.
+            if (!session->host->cursorAfterTypedWord())
+                session->state->surroundingUpdated();
+        }
     }
 
     void setContentType(IBusEngine* engine, guint purpose, guint hints) {

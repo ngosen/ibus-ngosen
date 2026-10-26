@@ -79,8 +79,7 @@ namespace ngosen {
         typed_.clear();
     }
 
-    // Only the end that changed, so most keys add a character and delete nothing. The count comes
-    // from what we typed, not from the text the app reports, which some apps report wrongly.
+    // Only the end that changed, so most keys add a character and delete nothing.
     void IBusHost::replaceTypedWord(const std::string& word) {
         const char* kept = typed_.c_str();
         const char* next = word.c_str();
@@ -92,11 +91,41 @@ namespace ngosen {
             kept = keptEnd;
             next = nextEnd;
         }
-        if (const glong extra = g_utf8_strlen(kept, -1); extra > 0)
+        auto same = static_cast<size_t>(kept - typed_.c_str());
+        if (const glong extra = countToDelete(same); extra > 0)
             ibus_engine_delete_surrounding_text(engine_, static_cast<gint>(-extra), static_cast<guint>(extra));
-        if (*next != '\0')
-            ibus_engine_commit_text(engine_, ibus_text_new_from_string(next));
+        if (same < word.size())
+            ibus_engine_commit_text(engine_, ibus_text_new_from_string(word.c_str() + same));
         typed_ = word;
+    }
+
+    // GNOME Shell passes a deletion to Wayland apps in bytes, measured on the text the app last
+    // reported, and Qt does not report again after a deletion. So count over that text, and when
+    // no count there covers the bytes to delete, delete from an earlier character of the word.
+    glong IBusHost::countToDelete(size_t& from) const {
+        const glong chars = g_utf8_strlen(typed_.c_str() + from, -1);
+        if (chars == 0 || client_ != "gnome-shell")
+            return chars;
+        const char* reportedStart = reportedBeforeCursor_.c_str();
+        const char* reportedEnd   = reportedStart + reportedBeforeCursor_.size();
+        const char* reported      = reportedEnd;
+        const char* typedStart    = typed_.c_str();
+        const char* typedEnd      = typedStart + typed_.size();
+        const char* typed         = typedStart + from;
+        glong       count         = 0;
+        while (true) {
+            while (reportedEnd - reported < typedEnd - typed && reported > reportedStart) {
+                reported = g_utf8_prev_char(reported);
+                ++count;
+            }
+            if (reportedEnd - reported == typedEnd - typed) {
+                from = static_cast<size_t>(typed - typedStart);
+                return count;
+            }
+            if (typed == typedStart)
+                return chars;
+            typed = g_utf8_prev_char(typed);
+        }
     }
 
     void IBusHost::forwardKey(EditKey key, bool release, uint32_t /*time*/) {
