@@ -16,8 +16,12 @@ namespace {
 
     // The settings window asks the engine, so the defaults and the names live in one place.
     int runSettingsCommand(const char* command) {
+        const bool methods = std::strcmp(command, "--list-input-methods") == 0;
+        const bool print   = std::strcmp(command, "--print-settings") == 0;
+        if (!methods && !print && std::strcmp(command, "--list-charsets") != 0)
+            return -1;
         Init();
-        if (std::strcmp(command, "--print-settings") == 0) {
+        if (print) {
             // What the engine types with, after the first-run import: missing or bad keys show
             // their defaults.
             const auto  paths = ngosen::SettingsPaths::fromEnvironment();
@@ -27,9 +31,6 @@ namespace {
             std::fputs(ngosen::settingsText(ngosen::readSettings(ngosen::parseIni(text))).c_str(), stdout);
             return 0;
         }
-        const bool methods = std::strcmp(command, "--list-input-methods") == 0;
-        if (!methods && std::strcmp(command, "--list-charsets") != 0)
-            return -1;
         for (const auto& name : methods ? ngosen::inputMethodNames() : ngosen::charsetNames())
             std::printf("%s\n", name.c_str());
         return 0;

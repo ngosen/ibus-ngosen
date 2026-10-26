@@ -7,6 +7,7 @@ use is translated differently here than in the fcitx5 edition.
 
 import ast
 import pathlib
+import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -29,6 +30,10 @@ def used_strings():
             ):
                 found.setdefault(node.args[0].value, f"{path.relative_to(ROOT)}:{node.lineno}")
     return found
+
+
+def placeholders(text):
+    return sorted(re.findall(r"\{\w*\}", text))
 
 
 def read_po(path):
@@ -57,6 +62,8 @@ def main():
     for msgid, where in used.items():
         if not ours.get(msgid):
             errors.append(f"{where}: no Vietnamese for {msgid!r}")
+        elif placeholders(msgid) != placeholders(ours[msgid]):
+            errors.append(f"{where}: {ours[msgid]!r} does not have the placeholders of {msgid!r}")
         elif msgid in full and full[msgid] != ours[msgid]:
             errors.append(
                 f"{where}: {msgid!r} is {ours[msgid]!r} here but {full[msgid]!r} in the fcitx5 edition"

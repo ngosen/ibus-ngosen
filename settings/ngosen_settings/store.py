@@ -19,7 +19,7 @@ def config_dir():
 
 def read_text(path):
     try:
-        with open(path, encoding="utf-8") as f:
+        with open(path, encoding="utf-8", errors="surrogateescape", newline="") as f:
             return f.read()
     except FileNotFoundError:
         return None
@@ -31,7 +31,7 @@ def write_text(path, text):
     os.makedirs(folder, exist_ok=True)
     fd, temp = tempfile.mkstemp(dir=folder, prefix=os.path.basename(path) + ".")
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
+        with os.fdopen(fd, "w", encoding="utf-8", errors="surrogateescape", newline="") as f:
             f.write(text)
             f.flush()
             os.fsync(f.fileno())

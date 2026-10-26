@@ -34,11 +34,17 @@ def escape(value):
     return '"' + "".join(ESCAPED.get(char, char) for char in value) + '"'
 
 
+def lines(text):
+    """Lines as std::getline sees them; str.splitlines() also splits on U+2028 and others."""
+    parts = text.split("\n")
+    return parts[:-1] if parts and parts[-1] == "" else parts
+
+
 def parse(text):
     """Keys before the first section, and each section's keys."""
     top, sections = {}, {}
     current = top
-    for line in text.splitlines():
+    for line in lines(text):
         line = line.strip(SPACE)
         if not line or line.startswith("#"):
             continue
@@ -71,16 +77,16 @@ def list_text(name, entries):
 
 def set_value(text, key, value):
     """text with key set to value, keeping every other line as it was."""
-    lines = text.splitlines()
+    rows = lines(text)
     first_section = next(
-        (i for i, line in enumerate(lines) if line.strip(SPACE).startswith("[")), len(lines)
+        (i for i, row in enumerate(rows) if row.strip(SPACE).startswith("[")), len(rows)
     )
-    new_line = f"{key}={escape(value)}"
+    new_row = f"{key}={escape(value)}"
     found = False
     for i in range(first_section):
-        if lines[i].strip(SPACE).partition("=")[0] == key and "=" in lines[i]:
-            lines[i] = new_line
+        if rows[i].strip(SPACE).partition("=")[0] == key and "=" in rows[i]:
+            rows[i] = new_row
             found = True
     if not found:
-        lines.insert(first_section, new_line)
-    return "\n".join(lines) + "\n"
+        rows.insert(first_section, new_row)
+    return "\n".join(rows) + "\n"

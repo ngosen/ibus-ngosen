@@ -58,6 +58,15 @@ class IniTest(unittest.TestCase):
             '# note\nInputMethod=Telex\nUnknownKey=kept\n\nTimeFormat="%I:%M %p"\n[Group]\nInputMethod=other\n',
         )
 
+    def test_line_separators(self):
+        # The engine splits lines on \n only, so U+2028 and friends are part of a value.
+        value = "a b\x85c"
+        self.assertEqual(ini.parse(f"Key={value}\n")[0], {"Key": value})
+        text = f"Old={value}\nInputMethod=Telex\n"
+        self.assertEqual(
+            ini.set_value(text, "InputMethod", "VNI"), f"Old={value}\nInputMethod=VNI\n"
+        )
+
     def test_macro_keys(self):
         self.assertTrue(options.valid_macro_key("kg"))
         self.assertTrue(options.valid_macro_key("đt2"))
@@ -98,6 +107,23 @@ class StoreTest(unittest.TestCase):
         store.undo()
         self.assertEqual(store.macros, [("ko", "không"), ("kg", "khô gà")])
         self.assertEqual(ini.read_list(ini.parse(read_text(self.macros))[1], "Macro"), store.macros)
+
+    def test_invalid_utf8(self):
+        with open(self.macros, "wb") as f:
+            f.write(b"[Macro/0]\nKey=ko\nValue=kh\xffng\n")
+        store = self.store()
+        store.set_macros(store.macros + [("kg", "khô gà")])
+        with open(self.macros, "rb") as f:
+            self.assertIn(b"Value=kh\xffng\n", f.read())
+
+    def test_crlf_undo_is_exact(self):
+        with open(self.settings, "wb") as f:
+            f.write(b"InputMethod=Telex\r\nFutureKey=kept\r\n")
+        store = self.store()
+        store.set("InputMethod", "VNI")
+        store.undo()
+        with open(self.settings, "rb") as f:
+            self.assertEqual(f.read(), b"InputMethod=Telex\r\nFutureKey=kept\r\n")
 
     def test_undo_removes_a_file_it_created(self):
         store = self.store()
