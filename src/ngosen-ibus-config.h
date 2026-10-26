@@ -36,6 +36,8 @@ namespace ngosen {
         bool    enableCustomKeymap = false;
         // Straight into fields that can delete around the cursor, underlined elsewhere.
         bool directTyping = false;
+        // Off for users who find the underline distracting; the word still waits for its commit.
+        bool underlinePreedit = true;
         // Held in the preedit and changed there, so the core's own versions, which delete, stay off.
         bool doubleSpaceToPeriod  = false;
         bool doubleHyphenToEmDash = false;
