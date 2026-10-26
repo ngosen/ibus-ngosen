@@ -19,6 +19,7 @@
       <longname>Ngó Sen</longname>
       <description>Vietnamese input method</description>
       <symbol>vi</symbol>
+      <setup>@NGOSEN_SETUP_EXEC@</setup>
       <rank>0</rank>
     </engine>
   </engines>

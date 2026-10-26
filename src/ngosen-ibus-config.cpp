@@ -72,20 +72,6 @@ namespace ngosen {
             return std::find(list.begin(), list.end(), value) != list.end();
         }
 
-        const std::vector<std::string>& inputMethodNames() {
-            static const std::vector<std::string> names = [] {
-                auto list = takeNames(GetInputMethodNames());
-                list.emplace_back("Custom");
-                return list;
-            }();
-            return names;
-        }
-
-        const std::vector<std::string>& charsetNames() {
-            static const std::vector<std::string> names = takeNames(GetCharsetNames());
-            return names;
-        }
-
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
         const char* const LockWordKeyNames[] = {"Disabled", "Shift", "Ctrl", "Alt"};
 
@@ -129,6 +115,20 @@ namespace ngosen {
         }
 
     } // namespace
+
+    const std::vector<std::string>& inputMethodNames() {
+        static const std::vector<std::string> names = [] {
+            auto list = takeNames(GetInputMethodNames());
+            list.emplace_back("Custom");
+            return list;
+        }();
+        return names;
+    }
+
+    const std::vector<std::string>& charsetNames() {
+        static const std::vector<std::string> names = takeNames(GetCharsetNames());
+        return names;
+    }
 
     IniFile parseIni(const std::string& text) {
         IniFile                             ini;

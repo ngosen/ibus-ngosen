@@ -26,6 +26,10 @@ namespace ngosen {
 
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
 
+    // The names the Vietnamese engine knows, for the settings window to offer.
+    const std::vector<std::string>& inputMethodNames();
+    const std::vector<std::string>& charsetNames();
+
     struct IBusSettings {
         Options options;
         bool    enableDictionary   = false;
