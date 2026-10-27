@@ -25,6 +25,5 @@ pkgbuild_version() {
 check debian/changelog "$(sed -n '1s/^[^(]*(\([^)]*\)).*/\1/p' debian/changelog)" "$want"
 check rpm "$(sed -n 's/^Version: *//p' rpm/ibus-ngosen.spec)-$(sed -n 's/^Release: *\([0-9]*\).*/\1/p' rpm/ibus-ngosen.spec)" "$want"
 check arch/PKGBUILD "$(pkgbuild_version arch/PKGBUILD)" "$want"
-check aur/PKGBUILD "$(pkgbuild_version aur/PKGBUILD)" "$want"
 check CMakeLists.txt "$(sed -n 's/^project(ibus-ngosen VERSION \([0-9.]*\).*/\1/p' ../CMakeLists.txt)" "${want%-*}"
 exit "$fail"

@@ -19,8 +19,9 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
 
 1. On a `release/X.Y.Z` branch, point the `ngosen` submodule at a released `ngosen-*` tag
    (`misc/check-core-tag.sh` must pass) and set the version in `CMakeLists.txt`,
-   `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` (with a `%changelog` entry) and both
-   `PKGBUILD`s. `packaging/check-version.sh X.Y.Z-N` must pass; the release workflow runs it on the tag.
+   `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` (with a `%changelog` entry) and
+   `packaging/arch/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must pass; the release workflow runs it
+   on the tag.
 2. `CHANGELOG.md`: turn `## [Chưa phát hành]` into `## [X.Y.Z-N] — DD/MM/YYYY` with a one-line summary,
    the core tag it uses and a link to the release, and start a new empty `## [Chưa phát hành]`.
 3. Merge the PR into `main` once CI passes, then tag the merge commit through the API, not from a local
@@ -31,6 +32,7 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
    ```
 
 4. Check the draft release before publishing: all packages and `SHA256SUMS` are attached and the sums
-   match; release notes list only the systems typed on with this version.
-5. AUR: copy `packaging/aur/PKGBUILD`, put the tarball's sum from `SHA256SUMS` in `sha256sums`, then
-   `makepkg --printsrcinfo > .SRCINFO` and push both to the AUR repository.
+   match, and each pattern `install.sh` in the `ngosen` repository looks for matches exactly one line of
+   `SHA256SUMS`; release notes list only the systems typed on with this version.
+5. Publish it: `gh release edit ibus-ngosen-X.Y.Z-N --repo ngosen/ibus-ngosen --draft=false --latest`.
+   Arch packages are attached to the release like the others; there is no AUR package.
