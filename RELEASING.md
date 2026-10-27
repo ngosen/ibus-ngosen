@@ -36,3 +36,6 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
    `SHA256SUMS`; release notes list only the systems typed on with this version.
 5. Publish it: `gh release edit ibus-ngosen-X.Y.Z-N --repo ngosen/ibus-ngosen --draft=false --latest`.
    Arch packages are attached to the release like the others; there is no AUR package.
+6. The APT and pacman repositories are built in `ngosen/ngosen` and carry both editions. Rebuild them so
+   they pick up this release, and check that the run passes:
+   `gh workflow run package-repos.yml --repo ngosen/ngosen --ref <newest ngosen-* tag>`.
