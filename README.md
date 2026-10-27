@@ -3,8 +3,8 @@
 Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Đổi Anh/Việt bằng
 Super+Space như các nguồn nhập khác của GNOME.
 
-Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Tính năng nào cần lách giới hạn của
-GNOME/IBus thì không có.
+Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
+không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
 
 Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là cách gõ mà IBus và GNOME hỗ trợ chính, nên chạy
 được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép" (mặc định tắt)
