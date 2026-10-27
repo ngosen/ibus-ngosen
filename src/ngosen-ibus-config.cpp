@@ -218,9 +218,6 @@ namespace ngosen {
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
-        read.boolean("UnderlinePreedit", settings.underlinePreedit);
-        read.boolean("DoubleSpaceToPeriod", settings.doubleSpaceToPeriod);
-        read.boolean("DoubleHyphenToEmDash", settings.doubleHyphenToEmDash);
         return settings;
     }
 
@@ -248,9 +245,6 @@ namespace ngosen {
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
-        line("UnderlinePreedit", boolText(settings.underlinePreedit));
-        line("DoubleSpaceToPeriod", boolText(settings.doubleSpaceToPeriod));
-        line("DoubleHyphenToEmDash", boolText(settings.doubleHyphenToEmDash));
         return out.str();
     }
 

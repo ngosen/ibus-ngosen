@@ -35,16 +35,6 @@ def connect():
 bus = connect()
 
 
-def underline_of(text):
-    attrs = text.get_attributes()
-    i = 0
-    while attrs and (attr := attrs.get(i)) is not None:
-        if attr.get_attr_type() == IBus.AttrType.UNDERLINE:
-            return attr.get_value()
-        i += 1
-    return None
-
-
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
@@ -61,7 +51,6 @@ class App:
         self.commits = []
         self.preedit = ""
         self.preedits = []
-        self.underline = None
         # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
         # sends the text after a deletion only along with some other change, such as the cursor
         # moving on screen: qt_through_shell is how many keys in a row must delete before the
@@ -70,7 +59,6 @@ class App:
         self.reported = ""
         self.deleted = False
         self.deleting_keys = 0
-        self.deletions = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
@@ -81,7 +69,6 @@ class App:
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
         self.ic.connect("delete-surrounding-text", self.on_delete)
-        self.ic.connect("forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -113,7 +100,6 @@ class App:
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
-        self.deletions += 1
         if self.qt_through_shell:
             if not self.deleted:
                 self.deleting_keys += 1
@@ -126,21 +112,12 @@ class App:
         self.text = self.text[:start] + self.text[start + count :]
         self.report()
 
-    # A forwarded BackSpace deletes like a typed one, as in a terminal.
-    def on_forward(self, _ic, keyval, _keycode, state):
-        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
-            self.deletions += 1
-            self.text = self.text[:-1]
-            self.report()
-
     def on_preedit(self, _ic, text, _cursor, visible):
-        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
             self.preedits.append(self.preedit)
 
     def on_preedit_with_mode(self, _ic, text, _cursor, visible, mode):
-        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
             self.preedits.append(self.preedit)
@@ -405,40 +382,6 @@ app.type("a ")
 app.close()
 with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
-
-set_setting("DoubleSpaceToPeriod", "True")
-set_setting("DoubleHyphenToEmDash", "True")
-for surrounding, app_commits, who in (
-    (True, False, "that reports surrounding text"),
-    (False, False, "that cannot delete around the cursor"),
-    (True, True, "that commits the preedit itself"),
-):
-    app = App("doubled keys", surrounding=surrounding, app_commits=app_commits)
-    app.type("xin  a--b c -")
-    app.close()
-    check(app.text == "xin. a—b c -", f"doubled keys: a field {who}", app.text)
-    check(app.deletions == 0, f"doubled keys: nothing deleted in a field {who}", app.deletions)
-set_setting("AutoCapitalizeAfterPunctuation", "True")
-app = App("doubled keys")
-app.type("xin  chaof")
-app.close()
-check(app.text == "xin. Chào", "doubled keys: capitalized after the period", app.text)
-set_setting("AutoCapitalizeAfterPunctuation", "False")
-set_setting("DoubleSpaceToPeriod", "False")
-set_setting("DoubleHyphenToEmDash", "False")
-
-for underline, value in (("True", IBus.AttrUnderline.SINGLE), ("False", IBus.AttrUnderline.NONE)):
-    set_setting("UnderlinePreedit", underline)
-    for app_commits in (False, True):
-        app = App("underline", app_commits=app_commits)
-        app.type("vie")
-        check(
-            app.underline == value,
-            f"underline: {underline}, app commits {app_commits}",
-            app.underline,
-        )
-        app.close()
-set_setting("UnderlinePreedit", "True")
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")

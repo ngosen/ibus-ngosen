@@ -32,7 +32,6 @@ namespace {
                 return;
             resources().reloadIfChanged();
             host->setDirectTyping(resources().settings().directTyping);
-            host->setUnderline(resources().settings().underlinePreedit);
             if (generation == resources().generation())
                 return;
             state->setEngine();
@@ -59,44 +58,9 @@ namespace {
         return reinterpret_cast<NgoSenEngine*>(engine)->session;
     }
 
-    constexpr guint Modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK;
-
-    // The character a doubled key would change, or "" when the setting for it is off.
-    std::string doubledKeyText(guint keyval, guint state) {
-        if ((state & (Modifiers | IBUS_RELEASE_MASK)) != 0)
-            return "";
-        const auto& settings = resources().settings();
-        if ((keyval == IBUS_KEY_space || keyval == IBUS_KEY_KP_Space) && settings.doubleSpaceToPeriod)
-            return " ";
-        if ((keyval == IBUS_KEY_minus || keyval == IBUS_KEY_KP_Subtract) && settings.doubleHyphenToEmDash)
-            return "-";
-        return "";
-    }
-
-    // As if typed, so the core capitalizes after the period when set to.
-    void typeIntoCore(Session* session, IBusEngine* engine, guint keyval, const char* text) {
-        ngosen::IBusKeyPress key(keyval, 0, 0);
-        session->state->keyEvent(key);
-        if (!key.accepted())
-            ibus_engine_commit_text(engine, ibus_text_new_from_string(text));
-    }
-
-    // The second of two spaces or hyphens changes the first, which is still in the preedit.
-    bool takeHeldKey(Session* session, IBusEngine* engine, const std::string& doubled) {
-        const std::string held = session->host->takeHeld();
-        if (held.empty())
-            return false;
-        if (held != doubled) {
-            ibus_engine_commit_text(engine, ibus_text_new_from_string(held.c_str()));
-            return false;
-        }
-        if (held == "-") {
-            ibus_engine_commit_text(engine, ibus_text_new_from_string("—"));
-        } else {
-            typeIntoCore(session, engine, IBUS_KEY_period, ".");
-            typeIntoCore(session, engine, IBUS_KEY_space, " ");
-        }
-        return true;
+    bool isPlainEnter(guint keyval, guint state) {
+        constexpr guint modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_RELEASE_MASK;
+        return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
     }
 
     gboolean processKeyEvent(IBusEngine* engine, guint keyval, guint keycode, guint state) {
@@ -107,27 +71,15 @@ namespace {
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
         if (session->host->takesPassword())
             return FALSE;
-        const bool        release = (state & IBUS_RELEASE_MASK) != 0;
-        const std::string doubled = doubledKeyText(keyval, state);
-        if (!release && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier() && takeHeldKey(session, engine, doubled))
-            return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
-        const bool enter = keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter;
-        if (enter && (state & (Modifiers | IBUS_RELEASE_MASK)) == 0 && session->host->hasPreedit())
+        if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
         // The core saw the cursor leave the word, so the word in the app is no longer ours to change.
         if (g_mouse_clicked.load(std::memory_order_acquire))
             session->host->forgetTypedWord();
         ngosen::IBusKeyPress key(keyval, keycode, state);
-        session->host->keepFromCommit(doubled);
         session->state->keyEvent(key);
-        if (session->host->holdKept())
-            return TRUE;
-        if (!doubled.empty() && !key.accepted() && key.replacedSym() == 0) {
-            session->host->hold(doubled);
-            return TRUE;
-        }
         if (key.accepted())
             return TRUE;
         // IBus cannot change a key it lets through, so the changed key goes out on its own.
@@ -268,7 +220,6 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
     session->host->setDirectTyping(resources().settings().directTyping);
-    session->host->setUnderline(resources().settings().underlinePreedit);
     self->session = session;
 }
 
