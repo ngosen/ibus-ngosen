@@ -466,6 +466,16 @@ app.close()
 set_setting("DirectTyping", "False")
 
 
+def labels(props):
+    found = {}
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        found[prop.get_key()] = prop.get_label().get_text()
+        found.update(labels(prop.get_sub_props()))
+        i += 1
+    return found
+
+
 def checked_items(props):
     found = set()
     i = 0
@@ -508,6 +518,7 @@ class GnomeMenu:
 
 # A click in the GNOME input source menu, which the panel sends as a property activation.
 menus = []
+menu_labels = {}
 gnome = GnomeMenu()
 app = App("menu")
 app.ic.set_capabilities(
@@ -517,6 +528,7 @@ app.ic.set_capabilities(
     | IBus.Capabilite.PROPERTY
 )
 app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
+app.ic.connect("register-properties", lambda _ic, props: menu_labels.update(labels(props)))
 app.ic.connect("register-properties", lambda _ic, props: gnome.register(props))
 app.ic.connect("update-property", lambda _ic, prop: gnome.update(prop))
 app.ic.focus_out()
@@ -528,6 +540,11 @@ pump(1000)
 with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
+check(
+    menu_labels.get("SpellCheck") == "Kiểm tra chính tả",
+    "menu: in Vietnamese whatever the desktop language",
+    menu_labels.get("SpellCheck"),
+)
 check(
     bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
     "menu: shows the new choice",
