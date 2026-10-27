@@ -90,14 +90,40 @@ namespace {
         return FALSE;
     }
 
+    void updateItems(IBusEngine* engine, IBusPropList* items) {
+        for (guint i = 0; IBusProperty* item = ibus_prop_list_get(items, i); ++i) {
+            ibus_engine_update_property(engine, item);
+            updateItems(engine, ibus_property_get_sub_props(item));
+        }
+    }
+
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings) {
         IBusPropList* menu = ngosen::newSettingsMenu(settings);
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
+        // GNOME Shell takes the whole menu only once after the engine is chosen, then single items.
+        updateItems(engine, menu);
         g_object_unref(menu);
     }
 
+    // The panel shows this engine's menu, which a change from the settings window updates at once.
+    IBusEngine* focusedEngine = nullptr;
+
+    void        showNewSettings() {
+        if (focusedEngine == nullptr)
+            return;
+        if (Session* session = sessionOf(focusedEngine))
+            session->applyNewSettings();
+        showMenu(focusedEngine, resources().settings());
+    }
+
     void focusIn(IBusEngine* engine) {
+        static bool watching = false;
+        if (!watching) {
+            resources().onChange(showNewSettings);
+            watching = true;
+        }
+        focusedEngine = engine;
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
             session->applyNewSettings();
@@ -125,6 +151,8 @@ namespace {
     }
 
     void focusOut(IBusEngine* engine) {
+        if (focusedEngine == engine)
+            focusedEngine = nullptr;
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
@@ -181,6 +209,8 @@ namespace {
 
     void destroy(IBusObject* object) {
         auto* self = reinterpret_cast<NgoSenEngine*>(object);
+        if (focusedEngine == &self->parent)
+            focusedEngine = nullptr;
         delete self->session;
         self->session = nullptr;
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
