@@ -33,5 +33,3 @@ Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1
   quanh con trỏ (app GTK, Qt, Firefox, Chrome, VS Code, LibreOffice); terminal và game vẫn gạch chân (#10).
 - Trang "Từ điển" trong cửa sổ cài đặt: thêm, tìm và xoá từ trong từ điển riêng, lưu ngay, có Hoàn tác; sửa
   từ điển thì bộ gõ dùng ngay từ chữ tiếp theo (#11).
-- Tuỳ chọn hai dấu cách thành dấu chấm và "--" thành "—" (mặc định tắt), trong cửa sổ cài đặt mục Gõ nhanh (#12).
-- Tuỳ chọn "Gạch chân chữ đang gõ" (mặc định bật): tắt đi thì chữ đang gõ hiện như chữ thường (#13).

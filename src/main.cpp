@@ -10,6 +10,7 @@
 
 #include <clocale>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <glib/gi18n-lib.h>
 #include <ibus.h>
@@ -51,9 +52,12 @@ int main(int argc, char** argv) {
         if (const int status = runSettingsCommand(argv[1]); status >= 0)
             return status;
     }
-    // For the menu items, which GNOME shows as the engine gives them.
+    // For the menu items, which GNOME shows as the engine gives them: Vietnamese whatever the
+    // desktop language is, as in the settings window.
+    g_setenv("LANGUAGE", "vi", TRUE);
     std::setlocale(LC_ALL, "");
-    bindtextdomain(GETTEXT_PACKAGE, NGOSEN_LOCALEDIR);
+    const char* localeDir = std::getenv("NGOSEN_IBUS_LOCALEDIR");
+    bindtextdomain(GETTEXT_PACKAGE, localeDir != nullptr ? localeDir : NGOSEN_LOCALEDIR);
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
     ibus_init();
     IBusBus* bus = ibus_bus_new();

@@ -41,9 +41,6 @@ namespace ngosen {
         void setDirectTyping(bool on) {
             directTyping_ = on;
         }
-        void setUnderline(bool on) {
-            underline_ = on;
-        }
         void setReportedText(const gchar* text, guint cursor);
         // The report puts the cursor exactly where an earlier report had it, right after the word we type.
         bool backAfterTypedWord() const {
@@ -52,16 +49,7 @@ namespace ngosen {
         // The app moved the cursor or took focus away, so the word in it is no longer ours to change.
         void forgetTypedWord() {
             typed_.clear();
-            held_.clear();
         }
-        // A commit ending in this character leaves it out, for holdKept() to show in the preedit.
-        void keepFromCommit(std::string text) {
-            keep_ = std::move(text);
-            kept_ = false;
-        }
-        bool                         holdKept();
-        void                         hold(const std::string& text);
-        std::string                  takeHeld();
 
         void                         commitText(const std::string& text) override;
         void                         forwardKey(EditKey key, bool release, uint32_t time) override;
@@ -95,7 +83,6 @@ namespace ngosen {
       private:
         void        replaceTypedWord(const std::string& word);
         glong       countToDelete(size_t& from) const;
-        guint       underlineStyle() const;
 
         IBusEngine* engine_;
         bool        focus_   = false;
@@ -108,15 +95,10 @@ namespace ngosen {
         std::string preedit_;
         std::string status_;
         bool        directTyping_   = false;
-        bool        underline_      = true;
         bool        direct_         = false;
         bool        preeditVisible_ = false;
         // The word as it now stands in the app, when it goes in without a preedit.
         std::string typed_;
-        std::string keep_;
-        bool        kept_ = false;
-        // A space or hyphen the next key decides about, shown in the preedit meanwhile.
-        std::string held_;
     };
 
     class IBusKeyPress final : public KeyPress {

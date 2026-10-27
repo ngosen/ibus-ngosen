@@ -35,16 +35,6 @@ def connect():
 bus = connect()
 
 
-def underline_of(text):
-    attrs = text.get_attributes()
-    i = 0
-    while attrs and (attr := attrs.get(i)) is not None:
-        if attr.get_attr_type() == IBus.AttrType.UNDERLINE:
-            return attr.get_value()
-        i += 1
-    return None
-
-
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
@@ -61,7 +51,6 @@ class App:
         self.commits = []
         self.preedit = ""
         self.preedits = []
-        self.underline = None
         # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
         # sends the text after a deletion only along with some other change, such as the cursor
         # moving on screen: qt_through_shell is how many keys in a row must delete before the
@@ -70,7 +59,6 @@ class App:
         self.reported = ""
         self.deleted = False
         self.deleting_keys = 0
-        self.deletions = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
         self.app_commits = app_commits
@@ -81,7 +69,6 @@ class App:
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
         self.ic.connect("delete-surrounding-text", self.on_delete)
-        self.ic.connect("forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -113,7 +100,6 @@ class App:
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
-        self.deletions += 1
         if self.qt_through_shell:
             if not self.deleted:
                 self.deleting_keys += 1
@@ -126,21 +112,12 @@ class App:
         self.text = self.text[:start] + self.text[start + count :]
         self.report()
 
-    # A forwarded BackSpace deletes like a typed one, as in a terminal.
-    def on_forward(self, _ic, keyval, _keycode, state):
-        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
-            self.deletions += 1
-            self.text = self.text[:-1]
-            self.report()
-
     def on_preedit(self, _ic, text, _cursor, visible):
-        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
             self.preedits.append(self.preedit)
 
     def on_preedit_with_mode(self, _ic, text, _cursor, visible, mode):
-        self.underline = underline_of(text)
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
             self.preedits.append(self.preedit)
@@ -406,40 +383,6 @@ app.close()
 with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
-set_setting("DoubleSpaceToPeriod", "True")
-set_setting("DoubleHyphenToEmDash", "True")
-for surrounding, app_commits, who in (
-    (True, False, "that reports surrounding text"),
-    (False, False, "that cannot delete around the cursor"),
-    (True, True, "that commits the preedit itself"),
-):
-    app = App("doubled keys", surrounding=surrounding, app_commits=app_commits)
-    app.type("xin  a--b c -")
-    app.close()
-    check(app.text == "xin. a—b c -", f"doubled keys: a field {who}", app.text)
-    check(app.deletions == 0, f"doubled keys: nothing deleted in a field {who}", app.deletions)
-set_setting("AutoCapitalizeAfterPunctuation", "True")
-app = App("doubled keys")
-app.type("xin  chaof")
-app.close()
-check(app.text == "xin. Chào", "doubled keys: capitalized after the period", app.text)
-set_setting("AutoCapitalizeAfterPunctuation", "False")
-set_setting("DoubleSpaceToPeriod", "False")
-set_setting("DoubleHyphenToEmDash", "False")
-
-for underline, value in (("True", IBus.AttrUnderline.SINGLE), ("False", IBus.AttrUnderline.NONE)):
-    set_setting("UnderlinePreedit", underline)
-    for app_commits in (False, True):
-        app = App("underline", app_commits=app_commits)
-        app.type("vie")
-        check(
-            app.underline == value,
-            f"underline: {underline}, app commits {app_commits}",
-            app.underline,
-        )
-        app.close()
-set_setting("UnderlinePreedit", "True")
-
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
@@ -523,6 +466,16 @@ app.close()
 set_setting("DirectTyping", "False")
 
 
+def labels(props):
+    found = {}
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        found[prop.get_key()] = prop.get_label().get_text()
+        found.update(labels(prop.get_sub_props()))
+        i += 1
+    return found
+
+
 def checked_items(props):
     found = set()
     i = 0
@@ -534,8 +487,39 @@ def checked_items(props):
     return found
 
 
+def prop_states(props):
+    found = {}
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        found[prop.get_key()] = prop.get_state()
+        found.update(prop_states(prop.get_sub_props()))
+        i += 1
+    return found
+
+
+# GNOME Shell takes the whole menu once after the engine is chosen, then only single updates.
+class GnomeMenu:
+    def __init__(self):
+        self.states = None
+
+    def register(self, props):
+        if self.states is None and props.get(0) is not None:
+            self.states = prop_states(props)
+
+    def update(self, prop):
+        if self.states is not None and prop.get_key() in self.states:
+            self.states[prop.get_key()] = prop.get_state()
+
+    def checked(self):
+        return {
+            key for key, state in (self.states or {}).items() if state == IBus.PropState.CHECKED
+        }
+
+
 # A click in the GNOME input source menu, which the panel sends as a property activation.
 menus = []
+menu_labels = {}
+gnome = GnomeMenu()
 app = App("menu")
 app.ic.set_capabilities(
     IBus.Capabilite.FOCUS
@@ -544,15 +528,32 @@ app.ic.set_capabilities(
     | IBus.Capabilite.PROPERTY
 )
 app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
+app.ic.connect("register-properties", lambda _ic, props: menu_labels.update(labels(props)))
+app.ic.connect("register-properties", lambda _ic, props: gnome.register(props))
+app.ic.connect("update-property", lambda _ic, prop: gnome.update(prop))
+app.ic.focus_out()
+app.ic.focus_in()
+pump(300)
+check(gnome.states is not None, "menu: GNOME gets the menu", gnome.states)
 app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
 check(
+    menu_labels.get("SpellCheck") == "Kiểm tra chính tả",
+    "menu: in Vietnamese whatever the desktop language",
+    menu_labels.get("SpellCheck"),
+)
+check(
     bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
     "menu: shows the new choice",
     menus,
+)
+check(
+    "InputMethod/VNI" in gnome.checked() and "InputMethod/Telex" not in gnome.checked(),
+    "menu: GNOME shows the new choice",
+    gnome.checked(),
 )
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
@@ -560,6 +561,15 @@ app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
 pump(1000)
 with open(settings_path) as f:
     check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
+# As when the settings window changes it while the field keeps focus and no key is typed.
+set_setting("EnableMacro", "False")
+pump(1000)
+check(
+    "EnableMacro" not in gnome.checked(),
+    "menu: a change in the settings file shows at once",
+    gnome.checked(),
+)
+set_setting("EnableMacro", "True")
 app.close()
 
 if failures == 0:

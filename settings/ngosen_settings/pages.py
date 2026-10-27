@@ -312,6 +312,7 @@ class DictionaryPage:
 MISSING = [
     N_("Sen, which types straight into the app, and its fixes for each app"),
     N_("Cứu chữ and Cứu dấu"),
+    N_("Two spaces to a period, -- to —"),
     N_("The emoji picker and rules for each app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
