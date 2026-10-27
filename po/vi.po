@@ -323,11 +323,12 @@ msgstr "Gõ Sen ở app cho phép"
 
 #: settings/ngosen_settings/options.py
 msgid ""
-"Text goes straight into fields that report the text around the cursor, "
-"without an underline. Terminals and games keep the underline."
+"On GNOME Wayland, text goes straight into fields that report the text "
+"around the cursor, without an underline. Terminals, games and X11 apps keep "
+"the underline."
 msgstr ""
-"Chữ hiện thẳng vào ô, không gạch chân, ở ô báo được chữ quanh con trỏ. "
-"Terminal và game vẫn gạch chân."
+"Trên GNOME Wayland, chữ hiện thẳng vào ô, không gạch chân, nếu ô báo được chữ "
+"quanh con trỏ. Terminal, game và app X11 vẫn gạch chân."
 
 msgid "Dictionary"
 msgstr "Từ điển"

@@ -1,11 +1,51 @@
 # Ngó Sen cho GNOME
 
-Bộ gõ tiếng Việt Ngó Sen chạy trên IBus, bộ gõ có sẵn của GNOME. Gõ gạch chân như mọi bộ gõ IBus, đổi
-Anh/Việt bằng Super+Space như các nguồn nhập khác của GNOME.
+Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Đổi Anh/Việt bằng
+Super+Space như các nguồn nhập khác của GNOME.
 
-Tải gói ở trang [Releases](https://github.com/ngosen/ibus-ngosen/releases), cài rồi thêm "Tiếng Việt (Ngó
-Sen)" trong Cài đặt › Bàn phím › Nguồn nhập. Bản này chưa có Gõ Sen, Cứu chữ, Cứu dấu và emoji; cần những
-thứ đó thì dùng [Ngó Sen đầy đủ](https://github.com/ngosen/ngosen) cho fcitx5.
+Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Tính năng nào cần lách giới hạn của
+GNOME/IBus thì không có.
+
+Nếu cần Cứu chữ, Cứu dấu, phím chuyển Anh/Việt riêng, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
+mode, chèn emoji hay Gõ Sen trên X11, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
+
+## Cài
+
+```
+curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --ibus
+```
+
+Lệnh tải package `ibus-ngosen` đúng distro từ [release mới nhất](https://github.com/ngosen/ibus-ngosen/releases/latest),
+so hash SHA-256 và hỏi lại trước khi cài.
+
+Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch và CachyOS. Linux Mint 22 dùng package
+của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch chỉ có x86_64. Không có package cho
+openSUSE, Debian 12 và Ubuntu 22.04.
+
+Trên GNOME, lệnh thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập, đặt app dùng IBus rồi khởi động lại IBus. Nếu tài
+khoản đang dùng fcitx5, lệnh hỏi có bỏ fcitx5 để chuyển sang bản cho GNOME không. Hai bản không chạy cùng lúc trong
+một tài khoản; mỗi tài khoản chọn một.
+
+Trên desktop khác GNOME như Cinnamon, Xfce, lệnh chỉ cài package rồi in các bước tự làm:
+
+1. Chạy `im-config -n ibus` nếu máy có `im-config`.
+2. Mở IBus Preferences bằng `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)".
+3. Đăng xuất rồi đăng nhập lại.
+
+Muốn cài bằng tay, tải package đúng distro và kiến trúc từ trang
+[Releases](https://github.com/ngosen/ibus-ngosen/releases), rồi cài bằng trình quản lý gói. Sau đó thiết lập IBus và
+thêm nguồn nhập như trên.
+
+## Gỡ
+
+```
+curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --uninstall
+```
+
+Lệnh tự nhận bản đang cài. Nếu có cả hai bản, lệnh hỏi gỡ bản nào; thêm `--ibus` để chọn bản cho GNOME.
+
+Trên GNOME, lệnh trả lại nguồn nhập và thiết lập IBus mà lệnh cài đã đổi. Gỡ xong, đăng xuất rồi đăng nhập lại. Cài
+đặt trong `~/.config/ngosen/` được giữ lại.
 
 ## Dựng từ mã nguồn
 

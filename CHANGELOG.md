@@ -29,7 +29,8 @@ Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1
 - Menu nhanh trong menu nguồn nhập của GNOME (thanh trên cùng), giống menu khay của bản fcitx5: đổi Telex/VNI,
   bảng mã, bật tắt kiểm tra chính tả, gõ tắt, tự viết hoa, tự khôi phục từ gõ sai, từ điển tuỳ chỉnh, và mở cửa
   sổ cài đặt (#9).
-- Tuỳ chọn "Gõ Sen ở app cho phép" (mặc định tắt): chữ hiện thẳng vào ô, không gạch chân, ở app báo được chữ
-  quanh con trỏ (app GTK, Qt, Firefox, Chrome, VS Code, LibreOffice); terminal và game vẫn gạch chân (#10).
+- Tuỳ chọn "Gõ Sen ở app cho phép" (mặc định tắt): chữ hiện thẳng vào ô, không gạch chân, khi app trên GNOME
+  Wayland báo được chữ quanh con trỏ (app GTK, Qt, Firefox, Chrome, LibreOffice). Terminal, game và app chạy
+  qua X11 hoặc XWayland (kể cả trên Cinnamon, Xfce) vẫn gạch chân (#10, #19).
 - Trang "Từ điển" trong cửa sổ cài đặt: thêm, tìm và xoá từ trong từ điển riêng, lưu ngay, có Hoàn tác; sửa
   từ điển thì bộ gõ dùng ngay từ chữ tiếp theo (#11).
