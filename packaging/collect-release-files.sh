@@ -36,6 +36,10 @@ for release in 43 44; do
     cp "$(only "$src/rpm-fedora-$release-arm64" 'ibus-ngosen-[0-9]*.aarch64.rpm')" "$out/"
 done
 
+# openSUSE names its RPMs without a dist tag, so the name says which distribution it is for.
+rpm=$(only "$src/rpm-opensuse-tumbleweed" 'ibus-ngosen-[0-9]*.x86_64.rpm')
+cp "$rpm" "$out/$(basename "$rpm" .x86_64.rpm).opensuse-tumbleweed.x86_64.rpm"
+
 cp "$(only "$src/arch-pkg" 'ibus-ngosen-[0-9]*-x86_64.pkg.tar.zst')" "$out/"
 cp "$(only "$src/source" 'ibus-ngosen-[0-9]*.tar.gz')" "$out/"
 

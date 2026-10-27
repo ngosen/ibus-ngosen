@@ -19,9 +19,9 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
 
 1. On a `release/X.Y.Z` branch, point the `ngosen` submodule at a released `ngosen-*` tag
    (`misc/check-core-tag.sh` must pass) and set the version in `CMakeLists.txt`,
-   `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` (with a `%changelog` entry) and
-   `packaging/arch/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must pass; the release workflow runs it
-   on the tag.
+   `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` and `packaging/rpm/opensuse/ibus-ngosen.spec`
+   (each with a `%changelog` entry) and `packaging/arch/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must
+   pass; the release workflow runs it on the tag.
 2. `CHANGELOG.md`: turn `## [Chưa phát hành]` into `## [X.Y.Z-N] — DD/MM/YYYY` with a one-line summary,
    the core tag it uses and a link to the release, and start a new empty `## [Chưa phát hành]`.
 3. Merge the PR into `main` once CI passes, then tag the merge commit through the API, not from a local
@@ -36,7 +36,7 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
    `SHA256SUMS`; release notes list only the systems typed on with this version.
 5. Publish it: `gh release edit ibus-ngosen-X.Y.Z-N --repo ngosen/ibus-ngosen --draft=false --latest`.
    Arch packages are attached to the release like the others; there is no AUR package.
-6. The APT and pacman repositories are built in `ngosen/ngosen` and carry both editions. Rebuild them so
+6. The APT, pacman and openSUSE repositories are built in `ngosen/ngosen` and carry both editions. Rebuild them so
    they pick up this release, and check that the run passes:
    `gh workflow run package-repos.yml --repo ngosen/ngosen --ref <newest ngosen-* tag>`.
 7. Publishing starts `Fedora COPR` (`copr.yml`), which builds the release tarball in the COPR project
