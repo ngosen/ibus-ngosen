@@ -56,9 +56,6 @@ int main(int argc, char** argv) {
     // desktop language is, as in the settings window.
     g_setenv("LANGUAGE", "vi", TRUE);
     std::setlocale(LC_ALL, "");
-    // gettext ignores LANGUAGE in the C locale.
-    if (g_strcmp0(std::setlocale(LC_MESSAGES, nullptr), "C") == 0)
-        std::setlocale(LC_MESSAGES, "C.UTF-8");
     const char* localeDir = std::getenv("NGOSEN_IBUS_LOCALEDIR");
     bindtextdomain(GETTEXT_PACKAGE, localeDir != nullptr ? localeDir : NGOSEN_LOCALEDIR);
     bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
