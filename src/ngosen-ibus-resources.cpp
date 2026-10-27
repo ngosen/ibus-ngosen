@@ -48,17 +48,17 @@ namespace ngosen {
             return known;
         }
 
-        void onDirChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer changed) {
+        void onDirChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
             if (isSettingsFile(file) || isSettingsFile(other))
-                *static_cast<bool*>(changed) = true;
+                static_cast<IBusResources*>(resources)->noticeChange();
         }
 
-        GFileMonitor* watchDirectory(const std::string& path, bool* changed) {
+        GFileMonitor* watchDirectory(const std::string& path, IBusResources* resources) {
             GFile*        dir     = g_file_new_for_path(path.c_str());
             GFileMonitor* monitor = g_file_monitor_directory(dir, G_FILE_MONITOR_WATCH_MOVES, nullptr, nullptr);
             g_object_unref(dir);
             if (monitor != nullptr)
-                g_signal_connect(monitor, "changed", G_CALLBACK(onDirChanged), changed);
+                g_signal_connect(monitor, "changed", G_CALLBACK(onDirChanged), resources);
             return monitor;
         }
 
@@ -68,10 +68,10 @@ namespace ngosen {
         Init();
         prepareSettings(paths_);
         load();
-        monitor_ = watchDirectory(paths_.configDir, &changed_);
+        monitor_ = watchDirectory(paths_.configDir, this);
         // GLib notices a folder created later only seconds after, missing a file written at once.
         g_mkdir_with_parents(paths_.dataDir.c_str(), 0700);
-        dataMonitor_ = watchDirectory(paths_.dataDir, &changed_);
+        dataMonitor_ = watchDirectory(paths_.dataDir, this);
     }
 
     IBusResources::~IBusResources() {
@@ -81,6 +81,12 @@ namespace ngosen {
         }
         DeleteObject(macroTable_);
         DeleteObject(dictionary_);
+    }
+
+    void IBusResources::noticeChange() {
+        changed_ = true;
+        if (onChange_)
+            onChange_();
     }
 
     void IBusResources::reloadIfChanged() {

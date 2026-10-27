@@ -10,6 +10,8 @@
 
 #include <gio/gio.h>
 
+#include <functional>
+
 namespace ngosen {
 
     // The word list that comes with the package.
@@ -59,6 +61,10 @@ namespace ngosen {
         }
         // Called between words only, as a field's engine is rebuilt after it.
         void reloadIfChanged();
+        void noticeChange();
+        void onChange(std::function<void()> callback) {
+            onChange_ = std::move(callback);
+        }
 
       private:
         void                     load();
@@ -74,6 +80,7 @@ namespace ngosen {
         GFileMonitor*            monitor_     = nullptr;
         GFileMonitor*            dataMonitor_ = nullptr;
         Recorder                 recorder_;
+        std::function<void()>    onChange_;
     };
 
 } // namespace ngosen

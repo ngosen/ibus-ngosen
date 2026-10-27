@@ -503,6 +503,14 @@ app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
 pump(1000)
 with open(settings_path) as f:
     check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
+# As when the settings window changes it while the field keeps focus and no key is typed.
+set_setting("SpellCheck", "True")
+pump(1000)
+check(
+    bool(menus) and "SpellCheck" in menus[-1],
+    "menu: a change in the settings file shows at once",
+    menus[-1:],
+)
 app.close()
 
 if failures == 0:
