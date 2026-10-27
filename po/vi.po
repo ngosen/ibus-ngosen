@@ -170,8 +170,8 @@ msgid "Quick typing"
 msgstr "Gõ nhanh"
 
 #: settings/ngosen_settings/pages.py
-msgid "Sen, which types straight into the app, and its fixes for each app"
-msgstr "Gõ Sen (đưa chữ thẳng vào app) và các sửa lỗi riêng từng app"
+msgid "Sen in every app, with its fixes for each app"
+msgstr "Gõ Sen ở mọi app, kèm sửa lỗi riêng từng app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Cứu chữ and Cứu dấu"
@@ -186,8 +186,48 @@ msgid "The emoji picker and rules for each app"
 msgstr "Bảng chọn emoji và luật theo app"
 
 #: settings/ngosen_settings/pages.py
-msgid "Not in the GNOME edition"
-msgstr "Bản cho GNOME chưa có"
+msgid "Its own English/Vietnamese key, tapped like UniKey's Ctrl+Shift"
+msgstr "Phím chuyển Anh/Việt riêng, nhấp Ctrl+Shift như UniKey"
+
+#: settings/ngosen_settings/pages.py
+msgid "Vim mode for each app"
+msgstr "Vim mode theo app"
+
+#: settings/ngosen_settings/pages.py
+msgid "In the fcitx5 edition"
+msgstr "Có ở bản fcitx5"
+
+#: settings/ngosen_settings/pages.py
+msgid "Ngó Sen for fcitx5 also has these. It runs on fcitx5 instead of IBus."
+msgstr "Ngó Sen bản fcitx5 có thêm những tính năng này. Bản đó chạy trên fcitx5 thay cho IBus."
+
+#: settings/ngosen_settings/pages.py
+msgid "Switch to the fcitx5 edition"
+msgstr "Chuyển sang bản fcitx5"
+
+#: settings/ngosen_settings/pages.py
+msgid "Shows the install command to copy."
+msgstr "Hiện lệnh cài để chép vào terminal."
+
+#: settings/ngosen_settings/pages.py
+msgid ""
+"Run this command in a terminal. It asks before removing this edition. Log "
+"out and back in when it is done."
+msgstr ""
+"Chạy lệnh này trong terminal. Lệnh hỏi lại trước khi gỡ bản cho GNOME. Cài "
+"xong thì đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/pages.py
+msgid "Close"
+msgstr "Đóng"
+
+#: settings/ngosen_settings/pages.py
+msgid "Copy command"
+msgstr "Chép lệnh"
+
+#: settings/ngosen_settings/pages.py
+msgid "Command copied."
+msgstr "Đã chép lệnh."
 
 #: settings/ngosen_settings/pages.py
 msgid "Licensed under the GNU General Public License v3.0"

@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The pages of the window. Each control saves as soon as it changes."""
 
-from gi.repository import Adw, GLib, Gtk
+from gi.repository import Adw, GLib, Gtk, Pango
 
 from . import options
 from .i18n import N_, _
@@ -309,34 +309,87 @@ class DictionaryPage:
         return row
 
 
-MISSING = [
-    N_("Sen, which types straight into the app, and its fixes for each app"),
+FCITX5_ONLY = [
+    N_("Sen in every app, with its fixes for each app"),
     N_("Cứu chữ and Cứu dấu"),
+    N_("Its own English/Vietnamese key, tapped like UniKey's Ctrl+Shift"),
+    N_("Vim mode for each app"),
     N_("Two spaces to a period, -- to —"),
     N_("The emoji picker and rules for each app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
+# The installer asks before it removes this edition, so the window only hands the command over.
+FULL_EDITION_COMMAND = (
+    "curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash"
+)
 PROJECT_URL = "https://github.com/ngosen/ibus-ngosen"
 
 
 def about_page(version):
     page = Adw.PreferencesPage(title=_("About"), icon_name="help-about-symbolic")
     page.add(_about_header(version))
-    missing = preferences_group(N_("Not in the GNOME edition"))
-    for text in MISSING:
-        missing.add(Adw.ActionRow(title=_(text), use_markup=False))
-    missing.add(
-        _link_row(
-            _("Ngó Sen full edition"), _("Runs on fcitx5 and has all of these."), FULL_EDITION_URL
-        )
-    )
-    page.add(missing)
     links = preferences_group()
     links.add(_link_row(_("Report Bug"), None, PROJECT_URL + "/issues/new"))
     links.add(_link_row(_("Source code"), None, PROJECT_URL))
     page.add(links)
     page.add(_credit())
     return page
+
+
+def fcitx5_group(show_toast):
+    group = preferences_group(
+        N_("In the fcitx5 edition"),
+        _("Ngó Sen for fcitx5 also has these. It runs on fcitx5 instead of IBus."),
+    )
+    for text in FCITX5_ONLY:
+        group.add(Adw.ActionRow(title=_(text), use_markup=False))
+    switch = Adw.ActionRow(
+        title=_("Switch to the fcitx5 edition"),
+        subtitle=_("Shows the install command to copy."),
+        activatable=True,
+    )
+    switch.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
+    switch.connect("activated", lambda r: show_switch_dialog(r.get_root(), show_toast))
+    group.add(switch)
+    group.add(
+        _link_row(
+            _("Ngó Sen full edition"), _("Runs on fcitx5 and has all of these."), FULL_EDITION_URL
+        )
+    )
+    return group
+
+
+def show_switch_dialog(parent, show_toast):
+    dialog = Adw.AlertDialog(
+        heading=_("Switch to the fcitx5 edition"),
+        body=_(
+            "Run this command in a terminal. It asks before removing this edition. "
+            "Log out and back in when it is done."
+        ),
+    )
+    command = Gtk.Label(label=FULL_EDITION_COMMAND, selectable=True, wrap=True, xalign=0)
+    command.set_wrap_mode(Pango.WrapMode.CHAR)
+    # A hyphen at the break would read as part of the command.
+    attributes = Pango.AttrList()
+    attributes.insert(Pango.attr_insert_hyphens_new(False))
+    command.set_attributes(attributes)
+    command.add_css_class("monospace")
+    dialog.set_extra_child(command)
+    dialog.add_response("close", _("Close"))
+    dialog.add_response("copy", _("Copy command"))
+    dialog.set_response_appearance("copy", Adw.ResponseAppearance.SUGGESTED)
+    dialog.set_default_response("copy")
+    dialog.set_close_response("close")
+    dialog.connect("response", lambda d, response: _copy_command(d, response, show_toast))
+    dialog.present(parent)
+    return dialog
+
+
+def _copy_command(dialog, response, show_toast):
+    if response != "copy":
+        return
+    dialog.get_clipboard().set(FULL_EDITION_COMMAND)
+    show_toast(Adw.Toast(title=_("Command copied.")))
 
 
 def _about_header(version):
