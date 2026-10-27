@@ -477,8 +477,38 @@ def checked_items(props):
     return found
 
 
+def prop_states(props):
+    found = {}
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        found[prop.get_key()] = prop.get_state()
+        found.update(prop_states(prop.get_sub_props()))
+        i += 1
+    return found
+
+
+# GNOME Shell takes the whole menu once after the engine is chosen, then only single updates.
+class GnomeMenu:
+    def __init__(self):
+        self.states = None
+
+    def register(self, props):
+        if self.states is None and props.get(0) is not None:
+            self.states = prop_states(props)
+
+    def update(self, prop):
+        if self.states is not None and prop.get_key() in self.states:
+            self.states[prop.get_key()] = prop.get_state()
+
+    def checked(self):
+        return {
+            key for key, state in (self.states or {}).items() if state == IBus.PropState.CHECKED
+        }
+
+
 # A click in the GNOME input source menu, which the panel sends as a property activation.
 menus = []
+gnome = GnomeMenu()
 app = App("menu")
 app.ic.set_capabilities(
     IBus.Capabilite.FOCUS
@@ -487,6 +517,12 @@ app.ic.set_capabilities(
     | IBus.Capabilite.PROPERTY
 )
 app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
+app.ic.connect("register-properties", lambda _ic, props: gnome.register(props))
+app.ic.connect("update-property", lambda _ic, prop: gnome.update(prop))
+app.ic.focus_out()
+app.ic.focus_in()
+pump(300)
+check(gnome.states is not None, "menu: GNOME gets the menu", gnome.states)
 app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
@@ -497,6 +533,11 @@ check(
     "menu: shows the new choice",
     menus,
 )
+check(
+    "InputMethod/VNI" in gnome.checked() and "InputMethod/Telex" not in gnome.checked(),
+    "menu: GNOME shows the new choice",
+    gnome.checked(),
+)
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
 app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
@@ -504,13 +545,14 @@ pump(1000)
 with open(settings_path) as f:
     check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
 # As when the settings window changes it while the field keeps focus and no key is typed.
-set_setting("SpellCheck", "True")
+set_setting("EnableMacro", "False")
 pump(1000)
 check(
-    bool(menus) and "SpellCheck" in menus[-1],
+    "EnableMacro" not in gnome.checked(),
     "menu: a change in the settings file shows at once",
-    menus[-1:],
+    gnome.checked(),
 )
+set_setting("EnableMacro", "True")
 app.close()
 
 if failures == 0:
