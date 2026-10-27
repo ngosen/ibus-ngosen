@@ -54,7 +54,7 @@ LABELS = {
 
 HINTS = {
     "DirectTyping": N_(
-        "Text goes straight into fields that report the text around the cursor, without an underline. Terminals and games keep the underline."
+        "On GNOME Wayland, text goes straight into fields that report the text around the cursor, without an underline. Terminals, games and X11 apps keep the underline."
     ),
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
