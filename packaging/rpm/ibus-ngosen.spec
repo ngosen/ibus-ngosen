@@ -51,5 +51,5 @@ with. The word being typed is underlined until it is done.
 %{_datadir}/icons/hicolor/scalable/apps/io.github.ngosen.IBusNgoSen.svg
 
 %changelog
-* Mon Oct 26 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.0.0-1
+* Tue Oct 27 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.0.0-1
 - First release.
