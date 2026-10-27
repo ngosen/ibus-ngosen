@@ -39,3 +39,7 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
 6. The APT and pacman repositories are built in `ngosen/ngosen` and carry both editions. Rebuild them so
    they pick up this release, and check that the run passes:
    `gh workflow run package-repos.yml --repo ngosen/ngosen --ref <newest ngosen-* tag>`.
+7. Publishing starts `Fedora COPR` (`copr.yml`), which builds the release tarball in the COPR project
+   `nguyenphi/ngosen`, next to `fcitx5-ngosen`; check that it passes. It needs the `COPR_CONFIG` secret
+   (the API token from https://copr.fedorainfracloud.org/api/) in the `release` environment. If it fails,
+   rerun it: `gh workflow run copr.yml --repo ngosen/ibus-ngosen --ref ibus-ngosen-X.Y.Z-N`.

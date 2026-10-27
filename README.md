@@ -36,6 +36,14 @@ Trên desktop khác GNOME như Cinnamon, Xfce, lệnh chỉ cài package rồi i
 2. Mở IBus Preferences bằng `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)".
 3. Đăng xuất rồi đăng nhập lại.
 
+Trên Fedora, có thể cài từ kho COPR, để `dnf upgrade` tự lên version mới. Sau đó thiết lập IBus và thêm nguồn nhập
+như trên:
+
+```
+sudo dnf copr enable nguyenphi/ngosen
+sudo dnf install ibus-ngosen
+```
+
 Muốn cài bằng tay, tải package đúng distro và kiến trúc từ trang
 [Releases](https://github.com/ngosen/ibus-ngosen/releases), rồi cài bằng trình quản lý gói. Sau đó thiết lập IBus và
 thêm nguồn nhập như trên.
