@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Cuối trang Gõ chữ có nhóm "Có ở bản fcitx5": những gì chỉ bản fcitx5 có, và dòng "Chuyển sang bản
+  fcitx5" mở hộp thoại có lệnh cài cùng nút "Chép lệnh". Cửa sổ không tự chạy lệnh (#25).
+
 ## [1.0.0-1] — 27/10/2026
 
 Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1`. Tải gói ở
