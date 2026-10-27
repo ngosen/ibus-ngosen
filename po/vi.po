@@ -1,0 +1,352 @@
+# Vietnamese translation of ibus-ngosen.
+# Strings shared with the fcitx5 edition use its translation; misc/check-translations.py checks it.
+msgid ""
+msgstr ""
+"Project-Id-Version: ibus-ngosen\n"
+"Language: vi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: settings/ngosen_settings/options.py
+msgid "Input Method"
+msgstr "Kiểu gõ"
+
+#: settings/ngosen_settings/options.py
+msgid "Output Charset"
+msgstr "Bảng mã"
+
+#: settings/ngosen_settings/options.py
+msgid "Custom Keymap"
+msgstr "Keymap tuỳ chỉnh"
+
+#: settings/ngosen_settings/options.py
+msgid "Enable Spell Check Using Dictionary"
+msgstr "Kiểm tra chính tả"
+
+#: settings/ngosen_settings/options.py
+msgid "Custom Dictionary"
+msgstr "Từ điển tuỳ chỉnh"
+
+#: settings/ngosen_settings/options.py
+msgid "Auto Restore Invalid Words"
+msgstr "Tự khôi phục từ gõ sai"
+
+#: settings/ngosen_settings/options.py
+msgid "Key to Keep the Word as Typed"
+msgstr "Phím chốt chữ"
+
+#: settings/ngosen_settings/options.py
+msgid "Allow dd To Produce đ When Auto Restore Invalid Words Is On"
+msgstr "Vẫn gõ dd ra đ khi tự khôi phục"
+
+#: settings/ngosen_settings/options.py
+msgid "Use oà, uý (Instead Of òa, úy)"
+msgstr "Bỏ dấu kiểu mới (oà, uý)"
+
+#: settings/ngosen_settings/options.py
+msgid "Allow Type With More Freedom"
+msgstr "Gõ tự do"
+
+#: settings/ngosen_settings/options.py
+msgid "Backspace Removes the Tone Mark"
+msgstr "Backspace xóa dấu thanh"
+
+#: settings/ngosen_settings/options.py
+msgid "Type w to Produce ư"
+msgstr "Gõ w ra ư"
+
+#: settings/ngosen_settings/options.py
+msgid "Type [ -> ơ, ] -> ư, { -> Ơ, } -> Ư"
+msgstr "Phím [ ] ra ơ ư"
+
+#: settings/ngosen_settings/options.py
+msgid "Auto capitalize after sentence-ending punctuation (. ! ? Enter)"
+msgstr "Tự viết hoa đầu câu (thử nghiệm)"
+
+#: settings/ngosen_settings/options.py
+msgid "Capitalize the first letter of the text or of a line"
+msgstr "Tự viết hoa chữ đầu văn bản và đầu dòng (thử nghiệm)"
+
+#: settings/ngosen_settings/options.py
+msgid "Enable Macro"
+msgstr "Bật gõ tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "Capitalize Macro"
+msgstr "Gõ tắt chữ hoa"
+
+#: settings/ngosen_settings/options.py
+msgid "Time Format ($TIME in macro)"
+msgstr "Định dạng giờ ($TIME trong gõ tắt)"
+
+#: settings/ngosen_settings/options.py
+msgid "Date Format ($DATE in macro)"
+msgstr "Định dạng ngày ($DATE trong macro)"
+
+#: settings/ngosen_settings/options.py
+msgid "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
+msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã khác như TCVN3 (ABC)."
+
+#: settings/ngosen_settings/options.py
+msgid "The keys set in the full edition, used by the Custom input method."
+msgstr "Bảng phím đặt ở bản đầy đủ, dùng cho kiểu gõ Custom."
+
+#: settings/ngosen_settings/options.py
+msgid "Words that are not Vietnamese get no tone marks."
+msgstr "Từ không phải tiếng Việt thì không thêm dấu."
+
+#: settings/ngosen_settings/options.py
+msgid "Check spelling against the list below. Off: the list that comes with Ngó Sen."
+msgstr "Kiểm chính tả theo danh sách bên dưới. Tắt: dùng danh sách có sẵn của Ngó Sen."
+
+#: settings/ngosen_settings/options.py
+msgid "Typing windows still gives windows."
+msgstr "Gõ windows vẫn ra windows."
+
+#: settings/ngosen_settings/options.py
+msgid "Tap the key alone to keep the word as shown: tunx, Ctrl → tũn, with no restore or macro. Alt also shows the menu bar in some apps."
+msgstr "Bấm rồi thả riêng phím để giữ nguyên từ: tunx, Ctrl → tũn, không khôi phục hay bung macro. Alt còn hiện thanh menu ở một số app."
+
+#: settings/ngosen_settings/options.py
+msgid "dd and Space stays đ instead of going back to dd."
+msgstr "Gõ dd rồi dấu cách vẫn ra đ, không bị trả về dd."
+
+#: settings/ngosen_settings/options.py
+msgid "hoà, khoẻ, thuý, tuỳ. Off: hòa, khỏe, thúy, tùy."
+msgstr "hoà, khoẻ, thuý, tuỳ. Tắt: hòa, khỏe, thúy, tùy."
+
+#: settings/ngosen_settings/options.py
+msgid "Tone marks can also go at the end of the word."
+msgstr "Gõ dấu ở cuối từ cũng được."
+
+#: settings/ngosen_settings/options.py
+msgid "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
+msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xóa dấu thanh. Chữ không có dấu thanh thì Backspace xóa chữ như thường."
+
+#: settings/ngosen_settings/options.py
+msgid "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
+msgstr "Không phải đầu từ: nhw → như, còn w đứng riêng vẫn là w. Mọi nơi: w đứng riêng cũng ra ư. uw thì luôn ra ư."
+
+#: settings/ngosen_settings/options.py
+msgid "ch]a → chưa, m[f → mờ. Type a bracket twice to get it back: [[ → [."
+msgstr "ch]a → chưa, m[f → mờ. Gõ ngoặc hai lần để lấy lại dấu ngoặc: [[ → [."
+
+#: settings/ngosen_settings/options.py
+msgid "ban. tooi → ban. Tôi. The same after Enter."
+msgstr "ban. tooi → ban. Tôi. Sau Enter cũng vậy."
+
+#: settings/ngosen_settings/options.py
+msgid "xin → Xin in an empty field or on a new line. Not in address bars or some apps; on GNOME 47 and later, Chrome and similar apps skip an empty field."
+msgstr "xin → Xin ở ô trống hoặc đầu dòng mới. Không áp dụng ở thanh địa chỉ và vài app; trên GNOME 47 trở lên, Chrome và app tương tự chưa viết hoa ở ô trống."
+
+#: settings/ngosen_settings/options.py
+msgid "Macros support dynamic placeholders: $TIME and $DATE."
+msgstr "Gõ tắt có thể sử dụng giữ chỗ động: $TIME (thời gian hiện tại) và $DATE (ngày hiện tại)."
+
+#: settings/ngosen_settings/options.py
+msgid "Disabled"
+msgstr "Tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "Non-Start"
+msgstr "Không phải đầu từ"
+
+#: settings/ngosen_settings/options.py
+msgid "Everywhere"
+msgstr "Mọi nơi"
+
+#: settings/ngosen_settings/options.py
+msgid "None"
+msgstr "Rỗng"
+
+#: settings/ngosen_settings/options.py
+msgid "Tone marks"
+msgstr "Cách bỏ dấu"
+
+#: settings/ngosen_settings/options.py
+msgid "Quick typing"
+msgstr "Gõ nhanh"
+
+#: settings/ngosen_settings/pages.py
+msgid "Sen, which types straight into the app, and its fixes for each app"
+msgstr "Gõ Sen (đưa chữ thẳng vào app) và các sửa lỗi riêng từng app"
+
+#: settings/ngosen_settings/pages.py
+msgid "Cứu chữ and Cứu dấu"
+msgstr "Cứu chữ, Cứu dấu"
+
+#: settings/ngosen_settings/pages.py
+msgid "Two spaces to a period, -- to —"
+msgstr "Hai dấu cách ra dấu chấm, -- ra —"
+
+#: settings/ngosen_settings/pages.py
+msgid "The emoji picker and rules for each app"
+msgstr "Bảng chọn emoji và luật theo app"
+
+#: settings/ngosen_settings/pages.py
+msgid "Not in the GNOME edition"
+msgstr "Bản cho GNOME chưa có"
+
+#: settings/ngosen_settings/pages.py
+msgid "Licensed under the GNU General Public License v3.0"
+msgstr "Được cấp phép dưới Giấy phép Công cộng GNU v3.0"
+
+#: settings/ngosen_settings/pages.py
+msgid "Typing"
+msgstr "Gõ chữ"
+
+#: settings/ngosen_settings/pages.py
+msgid "About"
+msgstr "Giới thiệu"
+
+#: settings/ngosen_settings/pages.py
+msgid "Ngó Sen full edition"
+msgstr "Ngó Sen đầy đủ"
+
+#: settings/ngosen_settings/pages.py
+msgid "Runs on fcitx5 and has all of these."
+msgstr "Chạy trên fcitx5, có đủ những thứ trên."
+
+#: settings/ngosen_settings/pages.py
+msgid "Report Bug"
+msgstr "Báo cáo lỗi"
+
+#: settings/ngosen_settings/pages.py
+msgid "Source code"
+msgstr "Mã nguồn"
+
+#: settings/ngosen_settings/pages.py
+#, python-brace-format
+msgid "Based on the code of {fork} and {vmk}."
+msgstr "Dựa trên mã của {fork} và {vmk}."
+
+#: settings/ngosen_settings/pages.py
+msgid "Macro"
+msgstr "Gõ tắt"
+
+#: settings/ngosen_settings/pages.py
+msgid "Abbreviation (e.g. kg)"
+msgstr "Từ viết tắt (ví dụ: kg)"
+
+#: settings/ngosen_settings/pages.py
+msgid "Full text (e.g. khô gà)"
+msgstr "Từ đầy đủ (ví dụ: khô gà)"
+
+#: settings/ngosen_settings/pages.py
+msgid "Search macros..."
+msgstr "Tìm từ gõ tắt..."
+
+#: settings/ngosen_settings/pages.py
+msgid "Macro keys cannot contain spaces or special characters."
+msgstr "Cảnh báo: từ gõ tắt không được chứa phím cách hoặc ký tự đặc biệt."
+
+#: settings/ngosen_settings/pages.py
+msgid "Update"
+msgstr "Cập nhật"
+
+#: settings/ngosen_settings/pages.py
+msgid "Add"
+msgstr "Thêm"
+
+#: settings/ngosen_settings/pages.py
+msgid "Remove"
+msgstr "Xoá"
+
+#: settings/ngosen_settings/pages.py
+msgid "Vietnamese input method for GNOME"
+msgstr "Bộ gõ tiếng Việt cho GNOME"
+
+#: settings/ngosen_settings/pages.py
+msgid "Try it"
+msgstr "Gõ thử"
+
+#: settings/ngosen_settings/pages.py
+msgid "No macros yet."
+msgstr "Chưa có gõ tắt nào."
+
+#: settings/ngosen_settings/pages.py
+#, python-brace-format
+msgid "Version {}"
+msgstr "Phiên bản {}"
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot read the settings"
+msgstr "Không đọc được cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "_Undo"
+msgstr "_Hoàn tác"
+
+#: settings/ngosen_settings/window.py
+#, python-brace-format
+msgid "Saved “{}”."
+msgstr "Đã lưu “{}”."
+
+#: settings/ngosen_settings/window.py
+#, python-brace-format
+msgid "Cannot save: {}"
+msgstr "Không lưu được: {}"
+
+#: data/ngosen.xml.in
+msgid "Vietnamese input method"
+msgstr "Bộ gõ tiếng Việt"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Charset"
+msgstr "Bảng mã"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Spell Check"
+msgstr "Kiểm tra chính tả"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Auto Capitalize"
+msgstr "Tự viết hoa"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "After . ! ? and Enter"
+msgstr "Sau dấu . ! ? và Enter"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Start of text or line"
+msgstr "Đầu văn bản, đầu dòng"
+
+#: src/ngosen-ibus-menu.cpp
+msgid "Settings"
+msgstr "Cài đặt"
+
+#: settings/ngosen_settings/options.py
+msgid "Type with Sen where the app allows"
+msgstr "Gõ Sen ở app cho phép"
+
+#: settings/ngosen_settings/options.py
+msgid ""
+"On GNOME Wayland, text goes straight into fields that report the text "
+"around the cursor, without an underline. Terminals, games and X11 apps keep "
+"the underline."
+msgstr ""
+"Trên GNOME Wayland, chữ hiện thẳng vào ô, không gạch chân, nếu ô báo được chữ "
+"quanh con trỏ. Terminal, game và app X11 vẫn gạch chân."
+
+msgid "Dictionary"
+msgstr "Từ điển"
+
+msgid "Word (e.g. ngoãy)"
+msgstr "Từ (ví dụ: ngoãy)"
+
+msgid "Search words..."
+msgstr "Tìm từ..."
+
+msgid "One word, without spaces."
+msgstr "Mỗi lần một từ, không có dấu cách."
+
+msgid "{} words. Search to see them."
+msgstr "{} từ. Gõ vào ô tìm để xem."
+
+msgid "No words found."
+msgstr "Không tìm thấy từ nào."
+
+msgid "Showing {} of {} words found."
+msgstr "Đang hiện {} trên {} từ tìm thấy."

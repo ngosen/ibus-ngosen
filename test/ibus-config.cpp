@@ -1,0 +1,245 @@
+/*
+ * SPDX-FileCopyrightText: 2026 Ngó Sen contributors
+ *
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+#include "bamboo-core.h"
+#include "ngosen-ibus-config.h"
+#include "ngosen-ibus-menu.h"
+
+#include <cstdio>
+#include <cstdlib>
+#include <filesystem>
+#include <iostream>
+#include <string>
+
+namespace fs = std::filesystem;
+using namespace ngosen;
+
+namespace {
+
+    int  failures = 0;
+
+    void check(bool ok, const std::string& what) {
+        if (!ok) {
+            ++failures;
+            std::cout << "FAIL " << what << '\n';
+        }
+    }
+
+    std::string read(const std::string& path) {
+        std::string text;
+        return readFile(path, text) ? text : "<missing>";
+    }
+
+    void write(const std::string& path, const std::string& text) {
+        fs::create_directories(fs::path(path).parent_path());
+        check(writeFileAtomically(path, text), "write " + path);
+    }
+
+    bool sameOptions(const IBusSettings& a, const IBusSettings& b) {
+        return settingsText(a) == settingsText(b);
+    }
+
+    SettingsPaths pathsIn(const fs::path& root) {
+        return {root / "config/ngosen", root / "data/ngosen", root / "config/fcitx5/conf", root / "data/fcitx5/ngosen"};
+    }
+
+    // As the fcitx5 edition writes them: defaults are commented out.
+    const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\nDoubleSpaceToPeriod=True\n"
+                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\n";
+    const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
+
+    void              testValues() {
+        for (const std::string value : {"không", "a b", "x\"y", "back\\slash", "line\nbreak", "", "  lead", "tab\tin", "100%"}) {
+            const IniFile ini = parseIni("Key=" + escapeIniValue(value) + "\n");
+            const auto    it  = ini.top.find("Key");
+            check(it != ini.top.end() && it->second == value, "value round trip: " + value);
+        }
+        check(parseIni("Key=\"a\\qb\"\n").top.count("Key") == 0, "an unknown escape drops the value, as in fcitx5");
+        check(parseIni("Key=a\\nb\n").top.at("Key") == "a\\nb", "an unquoted value has no escapes, as in fcitx5");
+        check(parseIni("Key=  spaced  \n").top.at("Key") == "  spaced", "spaces at the ends of a line are dropped");
+    }
+
+    void testLists() {
+        const auto macros = iniList(parseIni(FcitxMacros), "Macro");
+        check(macros.size() == 2 && macros[0].key == "ko" && macros[0].value == "không" && macros[1].value == "Việt Nam", "macro list");
+        const auto gap = iniList(parseIni("[Macro/0]\nKey=a\nValue=b\n[Macro/2]\nKey=c\nValue=d\n"), "Macro");
+        check(gap.size() == 1, "a list stops at the first missing index, as in fcitx5");
+    }
+
+    void testSettings() {
+        const IBusSettings defaults = defaultSettings();
+        check(sameOptions(readSettings(parseIni("")), defaults), "an empty file reads as the defaults");
+        Options fcitxDefaults           = defaultOptions;
+        fcitxDefaults.retypeAfterSwitch = false;
+        fcitxDefaults.retoneSelection   = false;
+        IBusSettings expected           = defaults;
+        expected.options                = fcitxDefaults;
+        check(sameOptions(defaults, expected), "the defaults are the fcitx5 edition's");
+
+        const IBusSettings read = readSettings(parseIni(FcitxSettings));
+        check(read.options.inputMethod == "VNI", "InputMethod is read");
+        check(read.options.w2u == 2, "W2U is read by name");
+        check(!read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod stays off");
+        check(!read.options.retypeAfterSwitch && !read.options.retoneSelection, "retyping stays off");
+
+        const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nSpellCheck=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
+        check(odd.options.inputMethod == "Telex" && odd.options.spellCheck && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
+        check(odd.options.lockWordKey == LockWordKey::None, "LockWordModifier is read by name");
+
+        IBusSettings changed             = defaults;
+        changed.options.inputMethod      = "VNI";
+        changed.options.outputCharset    = "TCVN3 (ABC)";
+        changed.options.bracketTransform = 1;
+        changed.options.lockWordKey      = LockWordKey::Alt;
+        changed.options.timeFormat       = "%H giờ %M";
+        changed.options.spellCheck       = false;
+        changed.enableDictionary         = true;
+        changed.enableCustomKeymap       = true;
+        changed.directTyping             = true;
+        const std::string text           = settingsText(changed);
+        check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
+        check(parseIni(text).top.size() == 20, "the file has every key");
+        // fcitx5 reads SettingsVersion as the version of its own upgrades.
+        check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
+    }
+
+    void testOneSetting() {
+        const std::string mine = "# my note\nInputMethod=Telex\nSpellCheck=True\n";
+        check(withSetting(mine, "SpellCheck", "False") == "# my note\nInputMethod=Telex\nSpellCheck=False\n", "one key changes, the rest stays");
+        check(withSetting(mine, "EnableMacro", "True") == mine + "EnableMacro=True\n", "a missing key is added");
+        check(withSetting("#SpellCheck=True\n", "SpellCheck", "False") == "#SpellCheck=True\nSpellCheck=False\n", "a commented key is left alone");
+        check(readSettings(parseIni(withSetting("SpellCheck=True\nSpellCheck=True\n", "SpellCheck", "False"))).options.spellCheck == false, "every copy of the key changes");
+        check(withSetting("A=1\n[Macro/0]\nKey=x\n", "SpellCheck", "False") == "A=1\nSpellCheck=False\n[Macro/0]\nKey=x\n", "a new key goes before the first section");
+        check(withSetting("[S]\nSpellCheck=True\n", "SpellCheck", "False") == "SpellCheck=False\n[S]\nSpellCheck=True\n", "a key inside a section is not the setting");
+        check(parseIni(withSetting("", "OutputCharset", "TCVN3 (ABC)")).top.at("OutputCharset") == "TCVN3 (ABC)", "a value with spaces is quoted");
+    }
+
+    IBusProperty* findItem(IBusPropList* list, const std::string& key) {
+        for (guint i = 0; IBusProperty* item = ibus_prop_list_get(list, i); ++i) {
+            if (key == ibus_property_get_key(item))
+                return item;
+            if (IBusProperty* inner = findItem(ibus_property_get_sub_props(item), key))
+                return inner;
+        }
+        return nullptr;
+    }
+
+    bool isChecked(IBusPropList* menu, const std::string& key) {
+        IBusProperty* item = findItem(menu, key);
+        return item != nullptr && ibus_property_get_state(item) == PROP_STATE_CHECKED;
+    }
+
+    void testMenu() {
+        IBusSettings settings                           = defaultSettings();
+        settings.options.inputMethod                    = "VNI";
+        settings.options.spellCheck                     = false;
+        settings.options.capitalizeStartOfText          = true;
+        settings.options.autoCapitalizeAfterPunctuation = false;
+        IBusPropList* menu                              = newSettingsMenu(settings);
+        g_object_ref_sink(menu);
+        check(isChecked(menu, "InputMethod/VNI") && !isChecked(menu, "InputMethod/Telex"), "the menu checks the input method in use");
+        check(isChecked(menu, "OutputCharset/Unicode"), "the menu checks the charset in use");
+        check(!isChecked(menu, "SpellCheck") && findItem(menu, "SpellCheck") != nullptr, "the menu shows spell check off");
+        check(isChecked(menu, "CapitalizeStartOfText") && !isChecked(menu, "AutoCapitalizeAfterPunctuation"), "the capitalize items show their own settings");
+        check(findItem(menu, SettingsWindowItem) != nullptr, "the menu opens the settings window");
+        g_object_unref(menu);
+
+        std::string key;
+        std::string value;
+        check(settingForClick("InputMethod/Telex", true, key, value) && key == "InputMethod" && value == "Telex", "choosing Telex");
+        check(!settingForClick("InputMethod/Telex", false, key, value), "a radio item being unchecked changes nothing");
+        check(!settingForClick("InputMethod/Custom", true, key, value), "a method the menu does not offer");
+        check(settingForClick("OutputCharset/TCVN3 (ABC)", true, key, value) && key == "OutputCharset" && value == "TCVN3 (ABC)", "choosing a charset");
+        check(!settingForClick("OutputCharset/Nope", true, key, value), "an unknown charset");
+        check(settingForClick("SpellCheck", false, key, value) && key == "SpellCheck" && value == "False", "turning spell check off");
+        check(settingForClick("EnableDictionary", true, key, value) && value == "True", "turning the dictionary on");
+        check(settingForClick("DirectTyping", true, key, value) && key == "DirectTyping" && value == "True", "turning Sen on");
+        check(!settingForClick("Mode", true, key, value) && !settingForClick(SettingsWindowItem, true, key, value), "items that are not settings");
+    }
+
+    void testImport(const fs::path& root) {
+        const SettingsPaths paths = pathsIn(root);
+        write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
+        write(paths.fcitxConfigDir + "/ngosen-macro-table.conf", FcitxMacros);
+        write(paths.fcitxDataDir + "/vietnamese.cm.dict", "người dùng\n");
+        check(prepareSettings(paths), "import succeeds");
+        const IniFile settings = parseIni(read(paths.settingsFile()));
+        check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
+        check(settings.top.count("Mode") == 0, "Mode not imported");
+        check(settings.top.count("SettingsVersion") == 0, "the fcitx5 SettingsVersion not imported");
+        check(read(paths.macroFile()) == FcitxMacros, "macros copied as they are");
+        check(read(paths.dictionaryFile()) == "người dùng\n", "the user's dictionary copied");
+        check(!fs::exists(paths.keymapFile()), "no keymap file without one to copy");
+
+        write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
+        check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");
+
+        write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
+        fs::remove(paths.settingsFile());
+        check(prepareSettings(paths) && read(paths.settingsFile()) == settingsText(defaultSettings()), "a deleted ngosen.conf comes back as the defaults");
+    }
+
+    void testNoOverwrite(const fs::path& root) {
+        const SettingsPaths paths = pathsIn(root);
+        write(paths.fcitxConfigDir + "/ngosen-macro-table.conf", FcitxMacros);
+        write(paths.macroFile(), "[Macro/0]\nKey=a\nValue=b\n");
+        check(prepareSettings(paths), "prepare with a macro file already there");
+        check(read(paths.macroFile()) == "[Macro/0]\nKey=a\nValue=b\n", "an existing file is kept");
+    }
+
+    void testDefaults(const fs::path& root) {
+        const SettingsPaths paths = pathsIn(root);
+        check(prepareSettings(paths), "defaults written");
+        check(read(paths.settingsFile()) == settingsText(defaultSettings()), "nothing to import writes the defaults");
+    }
+
+    // A run killed after any write leaves files the next run finishes into the same result.
+    void testKilledHalfway(const fs::path& root) {
+        const auto fill = [](const SettingsPaths& paths) {
+            write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
+            write(paths.fcitxConfigDir + "/ngosen-macro-table.conf", FcitxMacros);
+            write(paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", "[CustomKeymap/0]\nKey=z\nValue=XoaDauThanh\n");
+            write(paths.fcitxDataDir + "/vietnamese.cm.dict", "từ\n");
+        };
+        const auto result = [](const SettingsPaths& paths) {
+            return read(paths.settingsFile()) + read(paths.macroFile()) + read(paths.keymapFile()) + read(paths.dictionaryFile()) + read(paths.importedMark());
+        };
+        const SettingsPaths clean = pathsIn(root / "clean");
+        fill(clean);
+        prepareSettings(clean);
+        for (int stopAt = 0; stopAt < 5; ++stopAt) {
+            const SettingsPaths paths = pathsIn(root / std::to_string(stopAt));
+            fill(paths);
+            int        writes = 0;
+            const bool done = prepareSettings(paths, [&](const std::string& path, const std::string& content) { return writes++ < stopAt && writeFileAtomically(path, content); });
+            check(!done && !fs::exists(paths.importedMark()), "stopped after " + std::to_string(stopAt) + " writes");
+            prepareSettings(paths);
+            check(result(paths) == result(clean), "finished after stopping at write " + std::to_string(stopAt));
+        }
+    }
+
+} // namespace
+
+int main() {
+    Init();
+    char        pattern[] = "/tmp/ngosen-config-XXXXXX";
+    const char* dir       = mkdtemp(pattern);
+    if (dir == nullptr)
+        return 2;
+    const fs::path root(dir);
+    testValues();
+    testLists();
+    testSettings();
+    testOneSetting();
+    testMenu();
+    testImport(root / "import");
+    testNoOverwrite(root / "keep");
+    testDefaults(root / "defaults");
+    testKilledHalfway(root / "killed");
+    fs::remove_all(root);
+    if (failures == 0)
+        std::cout << "all settings checks passed\n";
+    return failures == 0 ? 0 : 1;
+}
