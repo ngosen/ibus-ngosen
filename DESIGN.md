@@ -41,11 +41,12 @@ Xanh Mono.
 - Header bar: icon and wordmark on the left, the page switcher in the middle. Below 550sp wide the
   switcher moves to a bar at the bottom.
 - Gõ chữ: Kiểu gõ (with a keys-to-result example such as `vieetj → việt`), Bảng mã, Keymap tuỳ chỉnh,
-  the Gõ thử field; then the "Cách bỏ dấu" and "Gõ nhanh" groups.
+  the Gõ thử field; then the "Cách bỏ dấu" and "Gõ nhanh" groups; last "Có ở bản fcitx5": what the
+  GNOME edition does not have, a row that shows the fcitx5 install command to copy (the window never
+  runs it), and a link to Ngó Sen đầy đủ.
 - Gõ tắt: the switches and $TIME/$DATE formats; two entries and a Thêm button (Cập nhật when the
   abbreviation exists); a searchable list, click a row to edit it, the bin to remove it.
-- Giới thiệu: icon, wordmark, version; what the GNOME edition does not have, with a link to Ngó Sen
-  đầy đủ; bug report and source links; the credit line.
+- Giới thiệu: icon, wordmark, version; bug report and source links; the credit line.
 
 ## Opening the window
 
