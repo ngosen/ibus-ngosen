@@ -386,7 +386,7 @@ with open(log_path) as f:
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
-    app = App("direct", app_commits=app_commits)
+    app = App("gnome-shell", app_commits=app_commits)
     app.type("vieetj ")
     check(app.text == "việt ", f"direct ({who}): the word", app.text)
     check(app.preedits == [], f"direct ({who}): no underline", app.preedits)
@@ -420,7 +420,7 @@ for keys in (1, 2):
     app.close()
 
 # Qt reports the text around the cursor only once the field has text.
-app = App("flag later", surrounding=False)
+app = App("gnome-shell", surrounding=False)
 app.type("vieetj ")
 app.ic.set_capabilities(
     IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.SURROUNDING_TEXT
@@ -432,7 +432,7 @@ check(app.text == "việt nam tiếng ", "direct, flag after the first word: the
 app.close()
 
 # A click the app does not announce: the text stays and only the cursor moves.
-app = App("click")
+app = App("gnome-shell")
 app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
 pump(100)
@@ -440,7 +440,7 @@ app.type("a")
 check(app.text == "viea", "direct, unannounced click: the next key deletes nothing", app.text)
 app.close()
 
-app = App("click inside")
+app = App("gnome-shell")
 app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 1, 1)
 pump(100)
@@ -449,7 +449,7 @@ check(app.text == "viee", "direct, click inside the word: the next key deletes n
 app.close()
 
 # VS Code reports the cursor at the start and then back after the word.
-app = App("back and forth")
+app = App("gnome-shell")
 app.type("v")
 for cursor in (0, 1):
     app.ic.set_surrounding_text(IBus.Text.new_from_string("vv"), cursor, cursor)
@@ -458,10 +458,17 @@ app.type("ieetj ")
 check(app.text == "việt ", "direct, cursor reported back and forth: the word", app.text)
 app.close()
 
-app = App("no surrounding", surrounding=False)
+app = App("gnome-shell", surrounding=False)
 app.type("vieetj ")
 check(app.text == "việt ", "direct, terminal: the word", app.text)
 check("việt" in app.preedits, "direct, terminal: underlined", app.preedits)
+app.close()
+
+# The IBus GTK module on X11 claims surrounding text even for a terminal.
+app = App("gtk3-im:gnome-terminal-server")
+app.type("vieetj ")
+check(app.text == "việt ", "direct, X11 app: the word", app.text)
+check("việt" in app.preedits, "direct, X11 app: underlined", app.preedits)
 app.close()
 set_setting("DirectTyping", "False")
 
