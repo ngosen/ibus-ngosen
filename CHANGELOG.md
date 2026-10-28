@@ -16,6 +16,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   `sudo dnf copr enable nguyenphi/ngosen` rồi `sudo dnf install ibus-ngosen`, và `dnf upgrade` tự lên version mới (#26).
 - Có package cho openSUSE Tumbleweed (x86_64), cài từ repo zypper chung với bản fcitx5 (#27).
 
+### Thay đổi
+
+- Biểu tượng mới: chữ V ngó sen có gạch chân, dễ phân biệt với bản fcitx5 trong menu nguồn nhập và
+  lưới ứng dụng.
+
 ## [1.0.0-1] — 27/10/2026
 
 Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1`. Tải gói ở
