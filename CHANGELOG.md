@@ -14,6 +14,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   fcitx5" mở hộp thoại có lệnh cài cùng nút "Chép lệnh". Cửa sổ không tự chạy lệnh (#25).
 - Fedora: mỗi version phát hành được dựng trên kho COPR `nguyenphi/ngosen`, cài bằng
   `sudo dnf copr enable nguyenphi/ngosen` rồi `sudo dnf install ibus-ngosen`, và `dnf upgrade` tự lên version mới (#26).
+- Có package cho openSUSE Tumbleweed (x86_64), cài từ repo zypper chung với bản fcitx5 (#27).
 
 ## [1.0.0-1] — 27/10/2026
 

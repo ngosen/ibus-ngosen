@@ -22,9 +22,9 @@ curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bas
 Lệnh tải package `ibus-ngosen` đúng distro từ [release mới nhất](https://github.com/ngosen/ibus-ngosen/releases/latest),
 so hash SHA-256 và hỏi lại trước khi cài.
 
-Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch và CachyOS. Linux Mint 22 dùng package
-của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch chỉ có x86_64. Không có package cho
-openSUSE, Debian 12 và Ubuntu 22.04.
+Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch, CachyOS và openSUSE Tumbleweed. Linux
+Mint 22 dùng package của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch và openSUSE chỉ có
+x86_64. Không có package cho Debian 12 và Ubuntu 22.04.
 
 Trên GNOME, lệnh thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập, đặt app dùng IBus rồi khởi động lại IBus. Nếu tài
 khoản đang dùng fcitx5, lệnh hỏi có bỏ fcitx5 để chuyển sang bản cho GNOME không. Hai bản không chạy cùng lúc trong
@@ -42,6 +42,15 @@ như trên:
 ```
 sudo dnf copr enable nguyenphi/ngosen
 sudo dnf install ibus-ngosen
+```
+
+openSUSE Tumbleweed có repo zypper chung với bản fcitx5. zypper hỏi một lần có tin cậy key không; đối chiếu
+fingerprint rồi chọn tin cậy:
+
+```
+sudo zypper addrepo https://ngosen.github.io/ngosen/opensuse/ngosen.repo
+sudo zypper refresh
+sudo zypper install ibus-ngosen
 ```
 
 Muốn cài bằng tay, tải package đúng distro và kiến trúc từ trang
