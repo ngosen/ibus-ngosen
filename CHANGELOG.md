@@ -19,7 +19,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Thay đổi
 
 - Biểu tượng mới: chữ V ngó sen có gạch chân, dễ phân biệt với bản fcitx5 trong menu nguồn nhập và
-  lưới ứng dụng.
+  lưới ứng dụng (#29).
 
 ## [1.0.0-1] — 27/10/2026
 
