@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Super+Space trên GNOME 46 chuyển được sang nguồn nhập khác, không còn gõ ra dấu cách. Lõi Ngó Sen lên
+  `ngosen-1.6.4-1` (#30).
+
 ## [1.0.0-1] — 27/10/2026
 
 Bản đầu tiên của Ngó Sen cho GNOME, dùng lõi Ngó Sen `ngosen-1.6.1-1`. Tải gói ở
