@@ -18,6 +18,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Thay đổi
 
+- Tuỳ chọn "Gõ Sen ở app cho phép" nay ghi "(thử nghiệm)" trong menu và cửa sổ cài đặt, vì chữ có thể sai ở vài
+  app; tuỳ chọn vẫn mặc định tắt (#31).
 - Biểu tượng mới: chữ V ngó sen có gạch chân, dễ phân biệt với bản fcitx5 trong menu nguồn nhập và
   lưới ứng dụng (#29).
 

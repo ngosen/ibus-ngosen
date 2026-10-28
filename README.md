@@ -7,8 +7,9 @@ Bản này hướng đến sự đơn giản và ổn định, dùng những gì
 không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
 
 Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là cách gõ mà IBus và GNOME hỗ trợ chính, nên chạy
-được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép" (mặc định tắt)
-cho chữ hiện thẳng vào ô, không gạch chân, ở những app trên GNOME Wayland báo được chữ quanh con trỏ.
+được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép (thử nghiệm)"
+(mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở những app trên GNOME Wayland báo được chữ quanh con
+trỏ. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
 
 Nếu cần Cứu chữ, Cứu dấu, phím chuyển Anh/Việt riêng, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
 mode, chèn emoji hay Gõ Sen trên X11, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).

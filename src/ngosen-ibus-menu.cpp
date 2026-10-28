@@ -20,7 +20,7 @@ namespace ngosen {
             bool (*isOn)(const IBusSettings&);
         };
 
-        const Toggle        DirectTyping     = {"DirectTyping", N_("Type with Sen where the app allows"), [](const IBusSettings& s) { return s.directTyping; }};
+        const Toggle        DirectTyping     = {"DirectTyping", N_("Type with Sen where the app allows (experimental)"), [](const IBusSettings& s) { return s.directTyping; }};
         const Toggle        SpellCheck       = {"SpellCheck", N_("Spell Check"), [](const IBusSettings& s) { return s.options.spellCheck; }};
         const Toggle        Macro            = {"EnableMacro", N_("Macro"), [](const IBusSettings& s) { return s.options.enableMacro; }};
         const Toggle        CapitalizeMacro  = {"CapitalizeMacro", N_("Capitalize Macro"), [](const IBusSettings& s) { return s.options.capitalizeMacro; }};

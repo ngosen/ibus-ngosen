@@ -358,8 +358,8 @@ msgid "Settings"
 msgstr "Cài đặt"
 
 #: settings/ngosen_settings/options.py
-msgid "Type with Sen where the app allows"
-msgstr "Gõ Sen ở app cho phép"
+msgid "Type with Sen where the app allows (experimental)"
+msgstr "Gõ Sen ở app cho phép (thử nghiệm)"
 
 #: settings/ngosen_settings/options.py
 msgid ""
