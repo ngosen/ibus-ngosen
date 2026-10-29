@@ -31,11 +31,13 @@ Trên GNOME, lệnh thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập, đặ
 khoản đang dùng fcitx5, lệnh hỏi có bỏ fcitx5 để chuyển sang bản cho GNOME không. Hai bản không chạy cùng lúc trong
 một tài khoản; mỗi tài khoản chọn một.
 
-Trên desktop khác GNOME như Cinnamon, Xfce, lệnh chỉ cài package rồi in các bước tự làm:
+Trên Xfce, Cinnamon, MATE (X11, Debian, Ubuntu, Linux Mint), lệnh dùng `im-config` đặt IBus làm bộ gõ và thêm
+Ngó Sen; đăng xuất rồi đăng nhập lại, bấm Ctrl+Space để chuyển qua lại Ngó Sen và bàn phím thường. Desktop khác
+không có `im-config` thì lệnh chỉ cài package rồi in các bước tự làm: mở IBus Preferences bằng `ibus-setup`, thêm
+"Tiếng Việt (Ngó Sen)", rồi đăng xuất và đăng nhập lại.
 
-1. Chạy `im-config -n ibus` nếu máy có `im-config`.
-2. Mở IBus Preferences bằng `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)".
-3. Đăng xuất rồi đăng nhập lại.
+Muốn quay lại bản fcitx5 thì chạy lệnh cài [bản fcitx5](https://github.com/ngosen/ngosen); lệnh hỏi lại rồi gỡ
+bản cho GNOME.
 
 Trên Fedora, có thể cài từ kho COPR, để `dnf upgrade` tự lên version mới. Sau đó thiết lập IBus và thêm nguồn nhập
 như trên:
