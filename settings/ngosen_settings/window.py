@@ -30,8 +30,10 @@ class Window(Adw.ApplicationWindow):
         self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)
 
         stack = Adw.ViewStack()
+        typing = pages.typing_page(self.rows)
+        typing.add(pages.fcitx5_group(self._show))
         for page in (
-            pages.typing_page(self.rows),
+            typing,
             self.macros.page,
             self.dictionary.page,
             pages.about_page(version),

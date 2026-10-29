@@ -29,7 +29,7 @@ DATE_FORMATS = [
 
 LABELS = {
     "InputMethod": N_("Input Method"),
-    "DirectTyping": N_("Type with Sen where the app allows"),
+    "DirectTyping": N_("Type with Sen where the app allows (experimental)"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),

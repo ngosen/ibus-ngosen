@@ -181,6 +181,11 @@ namespace ngosen {
         return focus_;
     }
 
+    // IBus gives an engine no access to the X11 selection.
+    std::optional<std::string> IBusHost::takeSelection() {
+        return std::nullopt;
+    }
+
     void IBusHost::showPreedit(const std::string& text, bool /*underline*/) {
         preedit_ = text;
     }
