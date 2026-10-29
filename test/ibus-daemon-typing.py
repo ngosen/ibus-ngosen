@@ -195,6 +195,15 @@ check(app.commits == ["việt "], "space: commits", app.commits)
 check(app.preedit == "", "space: preedit", app.preedit)
 app.close()
 
+# GNOME Shell sends its Super+Space shortcut with only MOD4 set, not SUPER_MASK.
+app = App("super-space")
+app.type("vieetj ")
+app.key(IBus.KEY_space, IBus.ModifierType.MOD4_MASK)
+pump(200)
+check(app.commits == ["việt "], "super space: no extra commit", app.commits)
+check(app.passed == ["space"], "super space: the shortcut reaches GNOME Shell", app.passed)
+app.close()
+
 app = App("ctrl-tap")
 app.type("viee")
 check(app.preedit == "viê", "ctrl tap: preedit while typing", app.preedit)
