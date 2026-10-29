@@ -8,8 +8,16 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.1.0-1] — 29/10/2026
+
+Biểu tượng mới, Super+Space chạy đúng trên GNOME 46, Backspace mở lại chữ vừa gõ để sửa dấu; có gói
+COPR và openSUSE. Dùng lõi Ngó Sen `ngosen-1.7.0-1`. Tải gói ở
+[release ibus-ngosen-1.1.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.0-1).
+
 ### Thêm
 
+- Bấm Backspace ngay sau chữ vừa gõ thì chữ đó mở lại dưới gạch chân để sửa: `việt`, Backspace, `s` ra
+  `viết`. Cần app báo chữ quanh con trỏ (ngosen/ngosen#344).
 - Cuối trang Gõ chữ có nhóm "Có ở bản fcitx5": những gì chỉ bản fcitx5 có, và dòng "Chuyển sang bản
   fcitx5" mở hộp thoại có lệnh cài cùng nút "Chép lệnh". Cửa sổ không tự chạy lệnh (#25).
 - Fedora: mỗi version phát hành được dựng trên kho COPR `nguyenphi/ngosen`, cài bằng
@@ -22,6 +30,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   app; tuỳ chọn vẫn mặc định tắt (#31).
 - Biểu tượng mới: chữ V ngó sen có gạch chân, dễ phân biệt với bản fcitx5 trong menu nguồn nhập và
   lưới ứng dụng (#29).
+
+### Sửa
+
+- Super+Space trên GNOME 46 chuyển được sang nguồn nhập khác, không còn gõ ra dấu cách (#30).
 
 ## [1.0.0-1] — 27/10/2026
 
