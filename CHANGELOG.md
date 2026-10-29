@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.1.1-1] — 29/10/2026
+
+Sửa chữ lặp ở ô địa chỉ Chrome khi bật Gõ Sen, thêm mục "Lưu nhật ký gõ" để gửi kèm báo lỗi. Dùng lõi Ngó Sen
+`ngosen-1.7.0-1`. Tải gói ở
+[release ibus-ngosen-1.1.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.1-1).
+
 ### Thêm
 
 - Mục "Lưu nhật ký gõ" trong menu nguồn nhập: lưu những gì vừa gõ vào `~/.local/state/ngosen/` để gửi kèm

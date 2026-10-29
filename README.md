@@ -100,6 +100,9 @@ Lần chạy đầu, nếu máy đã có Ngó Sen cho fcitx5 thì kiểu gõ, g�
 chép sang (từ điển vào `~/.local/share/ngosen/`); file của fcitx5 giữ nguyên. Sửa `ngosen.conf`, bảng gõ
 tắt hay bảng phím thì có hiệu lực từ chữ gõ tiếp theo. Xoá `ngosen.conf` là về cài đặt mặc định.
 
+Gõ ra chữ sai thì chọn "Lưu nhật ký gõ" trong menu nguồn nhập ngay sau đó: những gì vừa gõ được lưu vào
+`~/.local/state/ngosen/`, chỉ tài khoản của mình đọc được. Đọc lại file rồi gửi kèm báo lỗi.
+
 Log của engine nằm trong journal (`journalctl -t ibus-engine-ngosen`). Muốn có cả log gỡ lỗi thì
 chạy ibus-daemon với `NGOSEN_DEBUG=1`; chữ gõ trong ô mật khẩu không bao giờ được ghi.
 
