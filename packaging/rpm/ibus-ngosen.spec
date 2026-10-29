@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.1.0
+Version:        1.1.1
 Release:        1%{?dist}
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later AND OFL-1.1
@@ -51,6 +51,9 @@ with. The word being typed is underlined until it is done.
 %{_datadir}/icons/hicolor/scalable/apps/io.github.ngosen.IBusNgoSen.svg
 
 %changelog
+* Thu Oct 29 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.1-1
+- Address bars type with the preedit when typing with Sen is on, Save typing log in the menu.
+
 * Thu Oct 29 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.0-1
 - New icon, Super+Space fix on GNOME 46, Backspace reopens the last word, core ngosen-1.7.0-1.
 
