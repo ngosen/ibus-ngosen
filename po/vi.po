@@ -354,6 +354,18 @@ msgid "Start of text or line"
 msgstr "Đầu văn bản, đầu dòng"
 
 #: src/ngosen-ibus-menu.cpp
+msgid "Save typing log"
+msgstr "Lưu nhật ký gõ"
+
+#: src/ngosen-ibus-typing-log.cpp
+msgid "Typing log saved: "
+msgstr "Đã lưu nhật ký gõ: "
+
+#: src/ngosen-ibus-typing-log.cpp
+msgid "Could not save the typing log to "
+msgstr "Không lưu được nhật ký gõ vào "
+
+#: src/ngosen-ibus-menu.cpp
 msgid "Settings"
 msgstr "Cài đặt"
 

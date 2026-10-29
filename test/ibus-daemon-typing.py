@@ -1,6 +1,7 @@
 # Types into the engine through a real ibus-daemon, as an IBus client that keeps the text a simple
 # app would show. The daemon commits the preedit itself on reset and focus out, as an app does when
 # the engine asks for it. Run by run-with-daemon.sh.
+import glob
 import os
 import sys
 import time
@@ -593,6 +594,16 @@ check(
     gnome.checked(),
 )
 set_setting("EnableMacro", "True")
+app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
+pump(500)
+state_dir = os.path.join(os.environ["HOME"], ".local", "state", "ngosen")
+saved_logs = sorted(glob.glob(os.path.join(state_dir, "typing-*.log")))
+check(len(saved_logs) == 1, "menu: saves a typing log", saved_logs)
+if saved_logs:
+    with open(saved_logs[0]) as f:
+        check("việt" in f.read(), "menu: the typing log holds the last words", saved_logs[0])
+    modes = (os.stat(state_dir).st_mode & 0o777, os.stat(saved_logs[0]).st_mode & 0o777)
+    check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
 app.close()
 
 if failures == 0:

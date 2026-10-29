@@ -71,6 +71,7 @@ namespace ngosen {
         ibus_prop_list_append(menu, newItem("AutoCapitalize", PROP_TYPE_MENU, _("Auto Capitalize"), false, capitalize));
         ibus_prop_list_append(menu, newToggle(Restore, settings));
         ibus_prop_list_append(menu, newToggle(Dictionary, settings));
+        ibus_prop_list_append(menu, newItem(SaveTypingLogItem, PROP_TYPE_NORMAL, _("Save typing log")));
         ibus_prop_list_append(menu, newItem(SettingsWindowItem, PROP_TYPE_NORMAL, _("Settings")));
         return menu;
     }

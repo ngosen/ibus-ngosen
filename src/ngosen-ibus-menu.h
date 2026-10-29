@@ -16,6 +16,7 @@ namespace ngosen {
     IBusPropList*         newSettingsMenu(const IBusSettings& settings);
 
     constexpr const char* SettingsWindowItem = "Settings";
+    constexpr const char* SaveTypingLogItem  = "SaveTypingLog";
 
     // The ngosen.conf change a click on an item asks for. False when it changes nothing: a radio
     // item being unchecked, or a name the menu does not have.
