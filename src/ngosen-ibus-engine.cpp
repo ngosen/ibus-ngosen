@@ -9,6 +9,7 @@
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-resources.h"
+#include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
 #include "ngosen-state.h"
 
@@ -139,6 +140,10 @@ namespace {
                 NGOSEN_WARN("Cannot open the settings window: " << error->message);
                 g_error_free(error);
             }
+            return;
+        }
+        if (g_strcmp0(name, ngosen::SaveTypingLogItem) == 0) {
+            ngosen::saveTypingLog(resources().recorder());
             return;
         }
         std::string key;
