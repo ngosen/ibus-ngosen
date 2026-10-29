@@ -479,6 +479,13 @@ app.type("vieetj ")
 check(app.text == "việt ", "direct, X11 app: the word", app.text)
 check("việt" in app.preedits, "direct, X11 app: underlined", app.preedits)
 app.close()
+
+# The Chrome address bar drops some deletions, which leaves letters of the old word behind.
+app = App("gnome-shell", IBus.InputPurpose.URL)
+app.type("vieetj ")
+check(app.text == "việt ", "direct, address bar: the word", app.text)
+check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
+app.close()
 set_setting("DirectTyping", "False")
 
 
