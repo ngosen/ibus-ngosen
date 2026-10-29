@@ -8,6 +8,16 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Mục "Lưu nhật ký gõ" trong menu nguồn nhập: lưu những gì vừa gõ vào `~/.local/state/ngosen/` để gửi kèm
+  báo lỗi, chỉ tài khoản của mình đọc được; thông báo cho biết file nằm ở đâu (#35).
+
+### Sửa
+
+- Bật "Gõ Sen ở app cho phép", ô địa chỉ Chrome không còn ra chữ lặp như `vềề`: ô địa chỉ web gõ gạch chân
+  (#35).
+
 ## [1.1.0-1] — 29/10/2026
 
 Biểu tượng mới, Super+Space chạy đúng trên GNOME 46, Backspace mở lại chữ vừa gõ để sửa dấu; có gói
