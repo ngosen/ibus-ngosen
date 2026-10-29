@@ -2,10 +2,9 @@
 #
 # Builds the checked-out tree this file sits in, so nothing is downloaded:
 #   cd packaging/arch && makepkg -si
-# packaging/aur/PKGBUILD builds the release tarball instead.
 
 pkgname=ibus-ngosen
-pkgver=1.0.0
+pkgver=1.1.0
 pkgrel=1
 pkgdesc="Ngó Sen for GNOME, a Vietnamese input method for IBus"
 arch=('x86_64')

@@ -147,6 +147,45 @@ jobs:
           path: output/*.rpm
           retention-days: 3
 
+  build-rpm-opensuse:
+    name: RPM [opensuse-tumbleweed]
+    needs: [scope, source]
+    if: needs.scope.outputs.full == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: source
+          path: sources/
+
+      - name: Build openSUSE RPM
+        uses: addnab/docker-run-action@4f65fabd2431ebc8d299f8e5a018d79a769ae185 # v3
+        with:
+          image: opensuse/tumbleweed
+          options: -v ${{ github.workspace }}:/work
+          run: |
+            set -euo pipefail
+            zypper -n dup
+            zypper -n install rpm-build rpmdevtools
+            rpmdev-setuptree
+            cp /work/packaging/rpm/opensuse/ibus-ngosen.spec ~/rpmbuild/SPECS/
+            cp /work/sources/*.tar.gz ~/rpmbuild/SOURCES/
+            # zypper has no builddep for a bare spec.
+            zypper -n install $(rpmspec -P ~/rpmbuild/SPECS/ibus-ngosen.spec |
+                sed -n 's/^BuildRequires: *//p' | sed 's/ *>=.*//')
+            rpmbuild -bb ~/rpmbuild/SPECS/ibus-ngosen.spec
+            mkdir -p /work/output
+            find ~/rpmbuild/RPMS -name '*.rpm' -exec cp {} /work/output/ \;
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: rpm-opensuse-tumbleweed
+          path: output/*.rpm
+          retention-days: 3
+
   build-arch:
     name: Arch Linux (pacman)
     runs-on: ubuntu-latest
@@ -184,7 +223,7 @@ jobs:
   # at release time.
   collect:
     name: Release files
-    needs: [scope, source, build-deb, build-rpm-fedora, build-arch]
+    needs: [scope, source, build-deb, build-rpm-fedora, build-rpm-opensuse, build-arch]
     if: needs.scope.outputs.full == 'true'
     runs-on: ubuntu-latest
     steps:

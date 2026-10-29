@@ -107,6 +107,14 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.store.macros, [("kg", "khô gà")])
         self.assertIsNotNone(macros.list.get_row_at_index(0))
 
+    def test_switch_dialog_copies_the_command(self):
+        dialog = window.pages.show_switch_dialog(self.window, self.window._show)
+        dialog.emit("response", "close")
+        self.assertIsNone(self.window.toast)
+        dialog = window.pages.show_switch_dialog(self.window, self.window._show)
+        dialog.emit("response", "copy")
+        self.assertEqual(self.window.toast.get_title(), "Command copied.")
+
     def test_dictionary_add_and_remove(self):
         page = self.window.dictionary
         page.word_row.set_text("ngo ãy")

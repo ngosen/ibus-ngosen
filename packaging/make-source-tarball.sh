@@ -1,5 +1,5 @@
 #!/bin/bash
-# Writes ibus-ngosen-<version>.tar.gz with the ngosen submodule inside, for the RPM and AUR builds.
+# Writes ibus-ngosen-<version>.tar.gz with the ngosen submodule inside, for the RPM build.
 #
 #   packaging/make-source-tarball.sh <output-dir>
 set -euo pipefail
