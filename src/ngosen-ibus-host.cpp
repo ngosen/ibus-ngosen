@@ -203,9 +203,10 @@ namespace ngosen {
         // Decided once per word, so a word never moves between the preedit and the app. A terminal
         // cannot delete around the cursor and keeps the preedit. So do X11 apps: the IBus GTK module
         // claims surrounding text before it knows the widget has it, and Firefox resets after each commit.
+        // The Chrome address bar, a URL field, drops some deletions.
         const bool wordStarts = typed_.empty() && !preeditVisible_;
         if (wordStarts && !preedit_.empty())
-            direct_ = directTyping_ && client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+            direct_ = directTyping_ && client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 && purpose_ != IBUS_INPUT_PURPOSE_URL;
         if (direct_ && (wordStarts || !typed_.empty())) {
             replaceTypedWord(preedit_);
             return;
