@@ -55,7 +55,6 @@ def click():
     pump(100)
 
 
-
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
     # IBus do; otherwise ibus-daemon does it for the app.
@@ -611,7 +610,9 @@ app.text = "abc def"
 app.report()
 pump(100)
 app.type("e")
-check(app.text == "abc defe", "direct, X11 app: a click onto another line deletes nothing", app.text)
+check(
+    app.text == "abc defe", "direct, X11 app: a click onto another line deletes nothing", app.text
+)
 app.close()
 
 # VTE claims surrounding text and never reports any.
@@ -632,7 +633,11 @@ click()
 app.ic.reset()
 pump(100)
 app.type("e")
-check(app.text == "xin viee", "direct, X11 app without text: a click mid-word deletes nothing", app.text)
+check(
+    app.text == "xin viee",
+    "direct, X11 app without text: a click mid-word deletes nothing",
+    app.text,
+)
 app.close()
 
 set_setting("CapitalizeStartOfText", "True")
