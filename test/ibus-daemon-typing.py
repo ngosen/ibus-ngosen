@@ -72,6 +72,7 @@ class App:
         self.ic.connect("commit-text", self.on_commit)
         self.ic.connect("delete-surrounding-text", self.on_delete)
         self.ic.connect("require-surrounding-text", self.on_require)
+        self.ic.connect("forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -117,6 +118,11 @@ class App:
 
     def on_require(self, _ic):
         self.requests += 1
+
+    def on_forward(self, _ic, keyval, _keycode, state):
+        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
+            self.text = self.text[:-1]
+            self.report()
 
     def on_preedit(self, _ic, text, _cursor, visible):
         self.preedit = text.get_text() if visible else ""
@@ -548,12 +554,23 @@ check(app.text == "việt ", "direct, terminal: the word", app.text)
 check("việt" in app.preedits, "direct, terminal: underlined", app.preedits)
 app.close()
 
-# The IBus GTK module on X11 claims surrounding text even for a terminal.
+# On X11 the engine's BackSpace reaches the app, so the word goes straight in even where the IBus
+# GTK module claims surrounding text it does not have, as in a terminal.
 app = App("gtk3-im:gnome-terminal-server")
 app.type("vieetj ")
 check(app.text == "việt ", "direct, X11 app: the word", app.text)
-check("việt" in app.preedits, "direct, X11 app: underlined", app.preedits)
+check(app.preedits == [], "direct, X11 app: no underline", app.preedits)
 app.close()
+
+set_setting("CapitalizeStartOfText", "True")
+app = App("gtk3-im:gedit")
+app.text = "abc\n"
+app.report()
+pump(100)
+app.type("vieetj ")
+check(app.text == "abc\nViệt ", "direct, X11 app: capitalizes at the start of a line", app.text)
+app.close()
+set_setting("CapitalizeStartOfText", "False")
 
 # The Chrome address bar drops some deletions, which leaves letters of the old word behind.
 app = App("gnome-shell", IBus.InputPurpose.URL)
