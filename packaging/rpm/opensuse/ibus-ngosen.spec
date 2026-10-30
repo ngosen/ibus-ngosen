@@ -16,6 +16,9 @@ BuildRequires:  python3
 BuildRequires:  gettext-tools
 
 Requires:       ibus >= 1.5.27
+# Loaded with dlopen to watch clicks on X11, which the automatic requires miss.
+Requires:       libxcb1
+Requires:       libxcb-xinput0
 Requires:       python3-gobject
 # The settings window loads these through GObject introspection, which the automatic requires miss.
 Requires:       typelib(Gtk) = 4.0

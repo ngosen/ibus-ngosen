@@ -11,7 +11,7 @@ arch=('x86_64')
 url="https://github.com/ngosen/ibus-ngosen"
 license=('GPL-3.0-or-later' 'LGPL-2.1-or-later' 'MIT' 'GPL-2.0-or-later' 'OFL-1.1')
 depends=('ibus' 'python' 'python-gobject' 'gtk4' 'libadwaita' 'hicolor-icon-theme'
-         'glibc' 'gcc-libs')
+         'glibc' 'gcc-libs' 'libxcb')
 makedepends=('cmake' 'rust')
 options=('!debug')
 
