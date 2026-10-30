@@ -3,6 +3,9 @@ target_link_libraries(ibus-config-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_config COMMAND ibus-config-test)
 set_tests_properties(ibus_config PROPERTIES LABELS "unit;ibus")
 
+add_test(NAME install_environment COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install-environment.sh ${PROJECT_BINARY_DIR})
+set_tests_properties(install_environment PROPERTIES LABELS "unit")
+
 # The engine runs in its own process under ibus-daemon, so it is tested through a real daemon.
 option(NGOSEN_IBUS_DAEMON_TESTS "Test the engine through ibus-daemon" ON)
 if (NOT NGOSEN_IBUS_DAEMON_TESTS)
