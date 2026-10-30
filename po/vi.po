@@ -401,3 +401,153 @@ msgstr "Không tìm thấy từ nào."
 
 msgid "Showing {} of {} words found."
 msgstr "Đang hiện {} trên {} từ tìm thấy."
+
+msgid "Check my machine"
+msgstr "Kiểm tra máy tôi"
+
+msgid "Check again"
+msgstr "Kiểm tra lại"
+
+msgid "Fixing…"
+msgstr "Đang sửa…"
+
+msgid "Steps to type Vietnamese"
+msgstr "Các bước để gõ tiếng Việt"
+
+msgid "Try typing here"
+msgstr "Gõ thử ngay tại đây"
+
+msgid "In Telex, vieetj becomes việt."
+msgstr "Kiểu Telex: gõ vieetj sẽ ra việt."
+
+msgid "Type here to test"
+msgstr "Gõ vào đây để test"
+
+msgid "Send the result to Ngó Sen"
+msgstr "Gửi kết quả cho Ngó Sen"
+
+msgid "The result lists the steps above. Nothing is sent until you press a button below."
+msgstr "Kết quả liệt kê các bước ở trên. Chưa có gì được gửi đi cho tới khi bấm một nút bên dưới."
+
+msgid "Message on Facebook…"
+msgstr "Nhắn qua Facebook…"
+
+msgid "Report on GitHub…"
+msgstr "Báo lỗi trên GitHub…"
+
+msgid "Copy result"
+msgstr "Chép kết quả"
+
+msgid "Copied the result."
+msgstr "Đã chép kết quả."
+
+msgid "Copied the result. Paste it into the message and say what went wrong."
+msgstr "Đã chép kết quả. Dán vào tin nhắn rồi kể lỗi gặp phải."
+
+msgid "Fix all ({})"
+msgstr "Sửa cả {} việc"
+
+msgid "Copied: {}"
+msgstr "Đã chép: {}"
+
+msgid "This machine is ready"
+msgstr "Máy đã sẵn sàng"
+
+msgid "Try typing in any app."
+msgstr "Gõ để test trong app bất kỳ."
+
+msgid "Steps left to fix: {}"
+msgstr "Còn {} việc cần sửa"
+
+msgid "Use the button on a step, or fix them all at once. Ngó Sen only changes this account's settings."
+msgstr "Bấm nút ở từng bước, hoặc sửa hết một lần. Ngó Sen chỉ đổi cài đặt của tài khoản này."
+
+msgid "Use the button on the step. Ngó Sen only changes this account's settings."
+msgstr "Bấm nút ở bước đó. Ngó Sen chỉ đổi cài đặt của tài khoản này."
+
+msgid "Each step says what to do."
+msgstr "Mỗi bước ghi rõ việc cần làm."
+
+msgid "Could not fix this."
+msgstr "Không sửa được."
+
+msgid "IBus is not running"
+msgstr "IBus không chạy"
+
+msgid "Log out and back in, or run ibus start."
+msgstr "Đăng xuất rồi đăng nhập lại, hoặc chạy ibus start."
+
+msgid "IBus is running"
+msgstr "IBus đang chạy"
+
+msgid "IBus still runs Ngó Sen from before the update"
+msgstr "IBus vẫn chạy Ngó Sen version cũ, trước khi cập nhật"
+
+msgid "IBus started before Ngó Sen was installed"
+msgstr "IBus đã chạy từ trước khi cài Ngó Sen"
+
+msgid "Restart IBus, or log out and back in, to start the installed version."
+msgstr "Khởi động lại IBus, hoặc đăng xuất rồi đăng nhập lại, để chạy version vừa cài."
+
+msgid "Ngó Sen is in the input sources"
+msgstr "Ngó Sen đã có trong nguồn nhập"
+
+msgid "Ngó Sen is not in the input sources"
+msgstr "Ngó Sen chưa có trong nguồn nhập"
+
+msgid "Settings › Keyboard › Input Sources: add “Vietnamese (Ngó Sen)”."
+msgstr "Cài đặt › Bàn phím › Nguồn nhập: thêm “Tiếng Việt (Ngó Sen)”."
+
+msgid "GTK apps"
+msgstr "App GTK"
+
+msgid "Qt apps"
+msgstr "App Qt"
+
+msgid "{apps} use another input method ({value})"
+msgstr "{apps} gõ qua bộ gõ khác ({value})"
+
+msgid "Remove {} from the session environment."
+msgstr "Bỏ {} khỏi môi trường của phiên đăng nhập."
+
+msgid "Set {} in the session environment."
+msgstr "Đặt {} trong môi trường của phiên đăng nhập."
+
+msgid "GTK apps may pick fcitx5, which is not running"
+msgstr "App GTK có thể chọn nhầm fcitx5, mà fcitx5 không chạy"
+
+msgid "Set {} in the session environment, or remove fcitx5."
+msgstr "Đặt {} trong môi trường của phiên đăng nhập, hoặc gỡ fcitx5."
+
+msgid "Older X11 apps use IBus"
+msgstr "App X11 cũ gõ qua IBus"
+
+msgid "Older X11 apps (xterm, Alacritty) have no input method"
+msgstr "App X11 cũ (xterm, Alacritty) không có bộ gõ"
+
+msgid "fcitx5 is running next to IBus"
+msgstr "fcitx5 đang chạy song song với IBus"
+
+msgid "Two input methods compete for keys; stop fcitx5 from starting at login."
+msgstr "Hai bộ gõ tranh nhau phím; hãy tắt fcitx5 tự chạy khi đăng nhập."
+
+msgid "Start IBus"
+msgstr "Chạy IBus"
+
+msgid "Restart IBus"
+msgstr "Khởi động lại IBus"
+
+msgid "Add Ngó Sen"
+msgstr "Thêm Ngó Sen"
+
+msgid "Started IBus."
+msgstr "Đã chạy IBus."
+
+msgid "Restarted IBus."
+msgstr "Đã khởi động lại IBus."
+
+msgid "Added Ngó Sen to the input sources."
+msgstr "Đã thêm Ngó Sen vào nguồn nhập."
+
+msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
+msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"

@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
+  nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
+
 ### Thay đổi
 
 - "Gõ Sen ở app cho phép" giờ chạy bằng lõi Ngó Sen như bản fcitx5: mỗi chữ tự chọn gõ thẳng hay gạch chân,

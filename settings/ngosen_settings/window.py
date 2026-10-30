@@ -13,7 +13,7 @@ gi.require_version("PangoCairo", "1.0")
 
 from gi.repository import Adw, GLib, Gtk  # noqa: E402,F401
 
-from . import brand, i18n, options, pages  # noqa: E402
+from . import brand, check_page, i18n, options, pages  # noqa: E402
 from .i18n import _  # noqa: E402
 from .store import Engine, Store  # noqa: E402
 
@@ -21,13 +21,17 @@ APP_ID = "io.github.ngosen.IBusNgoSen"
 
 
 class Window(Adw.ApplicationWindow):
-    def __init__(self, app, store, names, version):
+    def __init__(self, app, store, names, version, sources=None):
         super().__init__(application=app, title="Ngó Sen", default_width=800, default_height=720)
         self.store = store
         self.toast = None
+        self.check_tab = None
         self.rows = pages.SettingRows(store, names, self.save)
         self.macros = pages.MacroPage(store, self.rows, self.save_macros)
         self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)
+        self.check = check_page.CheckPage(
+            sources or check_page.GnomeSources(), version, self.notify, self._count
+        )
 
         stack = Adw.ViewStack()
         typing = pages.typing_page(self.rows)
@@ -36,9 +40,13 @@ class Window(Adw.ApplicationWindow):
             typing,
             self.macros.page,
             self.dictionary.page,
+            self.check.page,
             pages.about_page(version),
         ):
-            stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
+            tab = stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
+            if page is self.check.page:
+                self.check_tab = tab
+        self._count(len(self.check.findings))
         switcher = Adw.ViewSwitcher(stack=stack, policy=Adw.ViewSwitcherPolicy.WIDE)
         header = Adw.HeaderBar(title_widget=switcher)
         header.pack_start(brand_mark())
@@ -86,6 +94,18 @@ class Window(Adw.ApplicationWindow):
         toast.connect("button-clicked", lambda _t: self.undo())
         self._show(toast)
         return True
+
+    def _count(self, left):
+        if self.check_tab is not None:
+            self.check_tab.set_badge_number(left)
+            self.check_tab.set_needs_attention(left > 0)
+
+    def notify(self, text, undo):
+        toast = Adw.Toast(title=text)
+        if undo is not None:
+            toast.set_button_label(_("_Undo"))
+            toast.connect("button-clicked", lambda _t: undo())
+        self._show(toast)
 
     def _show(self, toast):
         if self.toast is not None:
