@@ -47,6 +47,20 @@ CAN_RUN = bool(window and os.environ.get("DISPLAY"))
 REQUIRED = os.environ.get("NGOSEN_WINDOW_TESTS") == "required"
 
 
+class FakeSources:
+    """GNOME input sources kept in memory, so no test changes the desktop it runs on."""
+
+    def __init__(self, sources=None):
+        self.sources = sources
+
+    def get(self):
+        return self.sources
+
+    def set(self, sources):
+        self.sources = list(sources)
+        return True
+
+
 class RequiredTest(unittest.TestCase):
     @unittest.skipUnless(REQUIRED, "not required here")
     def test_window_tests_run(self):
@@ -68,7 +82,7 @@ class WindowTest(unittest.TestCase):
             "InputMethod": ["Telex", "VNI", "Telex + VNI"],
             "OutputCharset": ["Unicode", "TCVN3 (ABC)"],
         }
-        self.window = window.Window(None, self.store, names, "1.0.0")
+        self.window = window.Window(None, self.store, names, "1.0.0", FakeSources())
 
     def settings(self):
         return ini.parse(read_text(self.store.settings_file))[0]
@@ -135,6 +149,12 @@ class WindowTest(unittest.TestCase):
         self.assertTrue(page.editor.get_sensitive())
         self.window.rows.rows["EnableDictionary"].set_active(False)
         self.assertFalse(page.editor.get_sensitive())
+
+    def test_check_page_counts_the_steps_left(self):
+        check = self.window.check
+        self.assertEqual(self.window.check_tab.get_badge_number(), len(check.findings))
+        self.assertEqual(len(check.rows), len(check.found))
+        self.assertIn("Ngó Sen", check.report_text())
 
     def tearDown(self):
         self.window.destroy()
