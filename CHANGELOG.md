@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Màn hình không còn giật 1–2 giây mỗi lần bấm phím Windows hay chuyển tab khi đang bật Ngó Sen: đổi ô
+  không còn gửi lại menu nguồn nhập cho GNOME Shell khi menu không đổi (#28, #39).
+
 ## [1.1.1-1] — 29/10/2026
 
 Sửa chữ lặp ở ô địa chỉ Chrome khi bật Gõ Sen, thêm mục "Lưu nhật ký gõ" để gửi kèm báo lỗi. Dùng lõi Ngó Sen
