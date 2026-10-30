@@ -8,8 +8,25 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
 - Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
+
+### Thay đổi
+
+- "Gõ Sen ở app cho phép" giờ chạy bằng lõi Ngó Sen như bản fcitx5: mỗi chữ tự chọn gõ thẳng hay gạch chân,
+  chữ đầu tiên trong ô còn trống vẫn gạch chân; lõi `ngosen-1.7.2-1` (#41).
+- "Gõ Sen ở app cho phép" giờ gõ thẳng cả ở app X11 (GTK, Qt, Firefox, LibreOffice, terminal của GNOME, KDE,
+  Xfce) và vẫn tự viết hoa đầu dòng ở đó, thay vì gạch chân mọi chữ; bấm chuột giữa chữ không xoá chữ khác.
+  Chrome, app Electron, xterm, Alacritty và kitty vẫn gạch chân. Bấm chuột trong Alacritty và app XIM không còn làm mất chữ đang gạch chân (#44).
+- Báo lỗi, báo lỗi cài đặt và đề xuất tính năng qua form có sẵn như kho fcitx5; nút "Báo lỗi" trong cửa sổ cài
+  đặt mở trang chọn form (#45).
+
+### Sửa
+
+- kitty trên X11 gõ được tiếng Việt, không còn ra chữ thô như `vieejt`: gói đặt `GLFW_IM_MODULE=ibus` cho phiên
+  đăng nhập (đã thử GNOME, Cinnamon và Xfce), có hiệu lực sau khi đăng nhập lại (#47).
 
 ## [1.1.2-1] — 30/10/2026
 

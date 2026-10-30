@@ -1,6 +1,7 @@
 # Types into the engine through a real ibus-daemon, as an IBus client that keeps the text a simple
 # app would show. The daemon commits the preedit itself on reset and focus out, as an app does when
 # the engine asks for it. Run by run-with-daemon.sh.
+import ctypes
 import glob
 import os
 import sys
@@ -35,6 +36,25 @@ def connect():
 
 bus = connect()
 
+xlib = ctypes.CDLL("libX11.so.6")
+xtst = ctypes.CDLL("libXtst.so.6")
+xlib.XOpenDisplay.restype = ctypes.c_void_p
+xlib.XOpenDisplay.argtypes = [ctypes.c_char_p]
+xlib.XFlush.argtypes = [ctypes.c_void_p]
+xtst.XTestFakeButtonEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
+# The private X server run-with-daemon.sh starts, where the engine watches clicks.
+no_x = bool(os.environ.get("NGOSEN_TEST_NO_X"))
+display = None if no_x else xlib.XOpenDisplay(None)
+if not no_x and not display:
+    sys.exit("cannot open the X display")
+
+
+def click():
+    xtst.XTestFakeButtonEvent(display, 1, True, 0)
+    xtst.XTestFakeButtonEvent(display, 1, False, 0)
+    xlib.XFlush(display)
+    pump(100)
+
 
 class App:
     # app_commits: the app commits the preedit itself on reset and focus out, as the GTK modules of
@@ -47,6 +67,7 @@ class App:
         hints=0,
         surrounding=True,
         qt_through_shell=False,
+        resets_after_key=False,
     ):
         self.text = ""
         self.commits = []
@@ -57,11 +78,14 @@ class App:
         # moving on screen: qt_through_shell is how many keys in a row must delete before the
         # report stops.
         self.qt_through_shell = qt_through_shell
+        # Firefox on X11 resets the input context after each key the engine lets through.
+        self.resets_after_key = resets_after_key
         self.reported = ""
         self.deleted = False
         self.deleting_keys = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
+        self.requests = 0
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
         caps = IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT
@@ -70,6 +94,8 @@ class App:
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
         self.ic.connect("delete-surrounding-text", self.on_delete)
+        self.ic.connect("require-surrounding-text", self.on_require)
+        self.ic.connect("forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -113,6 +139,14 @@ class App:
         self.text = self.text[:start] + self.text[start + count :]
         self.report()
 
+    def on_require(self, _ic):
+        self.requests += 1
+
+    def on_forward(self, _ic, keyval, _keycode, state):
+        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
+            self.text = self.text[:-1]
+            self.report()
+
     def on_preedit(self, _ic, text, _cursor, visible):
         self.preedit = text.get_text() if visible else ""
         if self.preedit:
@@ -151,9 +185,13 @@ class App:
                 char = IBus.keyval_to_unicode(keyval)
                 if keyval in (IBus.KEY_Return, IBus.KEY_KP_Enter):
                     self.text += "\n"
+                elif keyval == IBus.KEY_BackSpace:
+                    self.text = self.text[:-1]
                 elif char and char != "\0":
                     self.text += char
                 self.report()
+                if self.resets_after_key:
+                    ic.reset()
 
         if not self.deleted:
             self.deleting_keys = 0
@@ -317,6 +355,20 @@ with open(settings_path) as f:
         settings_path,
     )
 
+# Without a click watcher a reset may be a click, so X11 apps keep the preedit.
+if no_x:
+    set_setting("DirectTyping", "True")
+    app = App("gtk3-im:firefox", resets_after_key=True)
+    app.type("xin vieetj ")
+    check(
+        app.text == "xin việt ",
+        "no click watcher, X11 app resetting after each key: the words",
+        app.text,
+    )
+    check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
+    app.close()
+    sys.exit(1 if failures else 0)
+
 open(log_path, "w").close()
 write_file(os.path.join(config_dir, "notes.txt"), "not a setting\n")
 app = App("stray file")
@@ -342,6 +394,17 @@ check(
 )
 app.close()
 set_setting("InputMethod", "Telex")
+
+# The X11 IBus modules report the text around the cursor, which tells where a line starts.
+set_setting("CapitalizeStartOfText", "True")
+app = App("gtk3-im:gedit")
+app.text = "abc\n"
+app.report()
+pump(100)
+app.type("vieetj ")
+check(app.commits == ["Việt "], "preedit, X11 app: capitalizes at the start of a line", app.commits)
+app.close()
+set_setting("CapitalizeStartOfText", "False")
 
 write_file(os.path.join(config_dir, "ngosen-macro-table.conf"), "[Macro/0]\nKey=ko\nValue=không\n")
 app = App("macro")
@@ -395,22 +458,42 @@ with open(log_path) as f:
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
+
+
+# An empty field has reported no text yet, so the core underlines its first word.
+def field_with_text(**kwargs):
+    app = App("gnome-shell", **kwargs)
+    app.type("xin ")
+    app.preedits.clear()
+    return app
+
+
+app = App("gnome-shell")
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "direct, empty field: the words", app.text)
+check(
+    "xin" in app.preedits and not any("v" in p for p in app.preedits),
+    "direct, empty field: only the first word underlined",
+    app.preedits,
+)
+app.close()
+
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
-    app = App("gnome-shell", app_commits=app_commits)
+    app = field_with_text(app_commits=app_commits)
     app.type("vieetj ")
-    check(app.text == "việt ", f"direct ({who}): the word", app.text)
+    check(app.text == "xin việt ", f"direct ({who}): the word", app.text)
     check(app.preedits == [], f"direct ({who}): no underline", app.preedits)
     app.type("a")
     app.key(IBus.KEY_BackSpace)
     pump(200)
-    check(app.text == "việt ", f"direct ({who}): BackSpace removes the word", app.text)
+    check(app.text == "xin việt ", f"direct ({who}): BackSpace removes the word", app.text)
     app.type("ko ")
-    check(app.text == "việt không ", f"direct ({who}): a macro replaces the word", app.text)
+    check(app.text == "xin việt không ", f"direct ({who}): a macro replaces the word", app.text)
     app.type("vie")
     app.reset()
     app.type("e ")
     check(
-        app.text == "việt không viee ",
+        app.text == "xin việt không viee ",
         f"direct ({who}): after a click the next key deletes nothing",
         app.text,
     )
@@ -427,6 +510,11 @@ for keys in (1, 2):
     app.key(IBus.KEY_BackSpace)
     app.type("ng ")
     check(app.text == "nam tiếng ", f"direct, Qt through GNOME Shell ({keys}): the words", app.text)
+    check(
+        not any("t" in p for p in app.preedits),
+        f"direct, Qt through GNOME Shell ({keys}): the second word not underlined",
+        app.preedits,
+    )
     app.close()
 
 # Qt reports the text around the cursor only once the field has text.
@@ -437,35 +525,66 @@ app.ic.set_capabilities(
 )
 app.report()
 pump(100)
+app.preedits.clear()
 app.type("nam tieesng ")
 check(app.text == "việt nam tiếng ", "direct, flag after the first word: the words", app.text)
+check(app.preedits == [], "direct, flag after the first word: no underline after it", app.preedits)
 app.close()
 
 # A click the app does not announce: the text stays and only the cursor moves.
-app = App("gnome-shell")
+app = field_with_text()
 app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
 pump(100)
 app.type("a")
-check(app.text == "viea", "direct, unannounced click: the next key deletes nothing", app.text)
+check(app.text == "xin viea", "direct, unannounced click: the next key deletes nothing", app.text)
 app.close()
 
-app = App("gnome-shell")
+app = field_with_text()
 app.type("vie")
-app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 1, 1)
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 5, 5)
 pump(100)
 app.type("e")
-check(app.text == "viee", "direct, click inside the word: the next key deletes nothing", app.text)
+# The core underlines a word begun inside another one.
+check(
+    app.text == "xin vie" and app.preedit == "e",
+    "direct, click inside the word: the next key deletes nothing",
+    (app.text, app.preedit),
+)
+app.close()
+
+# GNOME Shell keeps one input context for every field, so its engine moves between fields.
+app = field_with_text()
+app.ic.focus_out()
+pump(100)
+app.text = ""
+requests = app.requests
+app.ic.focus_in()
+app.report()
+pump(100)
+# libibus clients such as GNOME Shell send the text only after a request.
+check(
+    app.requests > requests,
+    "direct, next field on the same engine: the app is asked for its text",
+    app.requests,
+)
+app.type("vieetj nam ")
+check(
+    app.text == "việt nam " and "việt" in app.preedits,
+    "direct, next field on the same engine: its first word underlined",
+    (app.text, app.preedits),
+)
 app.close()
 
 # VS Code reports the cursor at the start and then back after the word.
-app = App("gnome-shell")
+app = field_with_text()
 app.type("v")
-for cursor in (0, 1):
-    app.ic.set_surrounding_text(IBus.Text.new_from_string("vv"), cursor, cursor)
+for cursor in (0, 5):
+    app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), cursor, cursor)
     pump(100)
 app.type("ieetj ")
-check(app.text == "việt ", "direct, cursor reported back and forth: the word", app.text)
+check(app.text == "xin việt ", "direct, cursor reported back and forth: the word", app.text)
+check(app.preedits == [], "direct, cursor reported back and forth: no underline", app.preedits)
 app.close()
 
 app = App("gnome-shell", surrounding=False)
@@ -474,12 +593,84 @@ check(app.text == "việt ", "direct, terminal: the word", app.text)
 check("việt" in app.preedits, "direct, terminal: underlined", app.preedits)
 app.close()
 
-# The IBus GTK module on X11 claims surrounding text even for a terminal.
+# On X11 the engine's BackSpace reaches the app, so the word goes straight in even where the IBus
+# GTK module claims surrounding text it does not have, as in a terminal.
 app = App("gtk3-im:gnome-terminal-server")
 app.type("vieetj ")
 check(app.text == "việt ", "direct, X11 app: the word", app.text)
-check("việt" in app.preedits, "direct, X11 app: underlined", app.preedits)
+check(app.preedits == [], "direct, X11 app: no underline", app.preedits)
 app.close()
+
+# Chromium and Electron report no text on X11.
+app = App("gtk3-im:google-chrome", surrounding=False)
+app.type("vieetj ")
+check(app.text == "việt ", "direct, X11 app without text: the word", app.text)
+check("việt" in app.preedits, "direct, X11 app without text: underlined", app.preedits)
+app.close()
+
+app = App("gtk3-im:firefox", resets_after_key=True)
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "direct, X11 app resetting after each key: the words", app.text)
+app.close()
+
+# A click on X11 resets the context and moves the cursor the app reports.
+app = App("gtk3-im:gedit")
+app.type("xin vie")
+click()
+app.ic.reset()
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
+pump(100)
+app.type("e")
+check(app.text == "xin viee", "direct, X11 app: a click mid-word deletes nothing", app.text)
+app.close()
+
+app = App("gtk3-im:gedit")
+app.type("xin vie")
+click()
+app.ic.reset()
+app.text = "abc def"
+app.report()
+pump(100)
+app.type("e")
+check(
+    app.text == "abc defe", "direct, X11 app: a click onto another line deletes nothing", app.text
+)
+app.close()
+
+# VTE claims surrounding text and never reports any.
+app = App("gtk3-im:gnome-terminal-server")
+app.report = lambda: None
+app.type("xin vie")
+click()
+app.ic.reset()
+pump(100)
+app.type("e")
+check(app.text == "xin viee", "direct, terminal claiming text: a click deletes nothing", app.text)
+app.close()
+
+# Without the text, the reset is all that tells a click.
+app = App("gtk3-im:xterm", surrounding=False)
+app.type("xin vie")
+click()
+app.ic.reset()
+pump(100)
+app.type("e ")
+check(
+    app.text == "xin viee ",
+    "direct, X11 app without text: a click mid-word deletes nothing",
+    app.text,
+)
+app.close()
+
+set_setting("CapitalizeStartOfText", "True")
+app = App("gtk3-im:gedit")
+app.text = "abc\n"
+app.report()
+pump(100)
+app.type("vieetj ")
+check(app.text == "abc\nViệt ", "direct, X11 app: capitalizes at the start of a line", app.text)
+app.close()
+set_setting("CapitalizeStartOfText", "False")
 
 # The Chrome address bar drops some deletions, which leaves letters of the old word behind.
 app = App("gnome-shell", IBus.InputPurpose.URL)
@@ -488,6 +679,14 @@ check(app.text == "việt ", "direct, address bar: the word", app.text)
 check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
 app.close()
 set_setting("DirectTyping", "False")
+
+# XIM clients such as Alacritty keep the preedit across a click and send no reset.
+app = App("xim", surrounding=False)
+app.type("xin vie")
+click()
+app.type("e ")
+check(app.text == "xin viee ", "XIM app: a click mid-word keeps the word", app.text)
+app.close()
 
 
 def labels(props):

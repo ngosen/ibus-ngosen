@@ -1,0 +1,99 @@
+name: Lỗi cài đặt hoặc cập nhật
+description: Lỗi khi cài, cập nhật, gỡ, hoặc Ngó Sen không hiện hay không chạy sau khi cài.
+labels: ['cài đặt']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Sau khi cài hoặc cập nhật, hãy đăng xuất rồi đăng nhập lại trước khi báo lỗi; IBus chỉ nạp bản mới khi khởi động lại.
+        Nếu gõ ra sai chữ, dùng form "Báo lỗi".
+
+  - type: dropdown
+    id: step
+    attributes:
+      label: Bạn gặp lỗi ở bước nào?
+      options:
+        - Cài lần đầu
+        - Cập nhật
+        - Gỡ
+        - Sau khi cài, không gõ được / không thấy Ngó Sen
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Cách cài Ngó Sen
+      options:
+        - Lệnh cài một dòng (install.sh --ibus)
+        - Kho COPR (dnf) hoặc repo zypper
+        - Gói tải từ trang Releases
+        - Tự build từ source
+        - Khác
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Toàn bộ output trong terminal
+      description: Dán lệnh đã chạy và toàn bộ output, từ đầu đến cuối.
+      placeholder: curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --ibus
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: setup
+    attributes:
+      label: Thiết lập IBus
+      description: |
+        Chạy trong terminal rồi dán toàn bộ kết quả:
+        ```sh
+        ibus version; ibus engine; echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP"
+        gsettings get org.gnome.desktop.input-sources sources
+        env | grep -E 'IM_MODULE|XMODIFIERS'
+        ```
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: Version ibus-ngosen đã thử cài
+      placeholder: 1.1.2-1
+
+  - type: input
+    id: distro
+    attributes:
+      label: Distro
+      description: Ghi tên và version distro, kèm kết quả lệnh `uname -m` (x86_64 hoặc aarch64).
+    validations:
+      required: true
+
+  - type: dropdown
+    id: desktop_env
+    attributes:
+      label: Desktop
+      options:
+        - GNOME
+        - Xfce
+        - Cinnamon
+        - MATE
+        - Khác
+
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session
+      options:
+        - Wayland
+        - X11
+        - Không rõ
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Thông tin thêm
+      description: Ảnh chụp màn hình và những cách đã thử.

@@ -11,8 +11,12 @@
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
+#include "ngosen-pointer.h"
 #include "ngosen-state.h"
 
+#include <atomic>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -21,6 +25,12 @@ namespace {
     ngosen::IBusResources& resources() {
         static ngosen::IBusResources instance(ngosen::SettingsPaths::fromEnvironment());
         return instance;
+    }
+
+    // Off, every word goes into the preedit; on, the core picks for each word whether it goes
+    // straight into the field or into the preedit.
+    ngosen::Mode typingMode() {
+        return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
     }
 
     struct Session {
@@ -33,9 +43,10 @@ namespace {
             if (host->hasPreedit())
                 return;
             resources().reloadIfChanged();
-            host->setDirectTyping(resources().settings().directTyping);
             if (generation == resources().generation())
                 return;
+            realMode = typingMode();
+            host->setDirectTyping(realMode == ngosen::Mode::Sen);
             state->setEngine();
             generation = resources().generation();
         }
@@ -77,9 +88,9 @@ namespace {
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
-        // The core saw the cursor leave the word, so the word in the app is no longer ours to change.
-        if (g_mouse_clicked.load(std::memory_order_acquire))
-            session->host->forgetTypedWord();
+        // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
+        else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
+            session->state->commitBuffer();
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -148,6 +159,9 @@ namespace {
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
             session->applyNewSettings();
+            // The per-field checks of Sen start over, as the fcitx5 frontend does on focus-in.
+            if (realMode == ngosen::Mode::Sen)
+                session->state->activate(ngosen::Mode::Sen, true);
         }
         showMenu(engine, resources().settings());
     }
@@ -181,9 +195,9 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->host->forgetTypedWord();
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
+        session->host->forgetReportedText();
     }
 
     void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
@@ -200,10 +214,15 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine)) {
-            session->host->forgetTypedWord();
-            session->state->resetAfterAppCommit(false);
-        }
+        Session* session = sessionOf(engine);
+        if (session == nullptr)
+            return;
+        // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
+        // straight in survives that while the engine sees clicks itself.
+        const ngosen::IBusHost& host = *session->host;
+        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
+            return;
+        session->state->resetAfterAppCommit(false);
     }
 
     void disable(IBusEngine* engine) {
@@ -213,15 +232,8 @@ namespace {
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
         if (Session* session = sessionOf(engine)) {
-            session->host->setReportedText(ibus_text_get_text(text), cursor);
-            const bool clicked = g_mouse_clicked.load(std::memory_order_acquire);
-            const bool reset   = needEngineReset.load(std::memory_order_acquire);
+            session->host->setReportedText(ibus_text_get_text(text), cursor, anchor);
             session->state->surroundingUpdated();
-            // VS Code reports the cursor at the start of the field and then back after the word.
-            if (!clicked && session->host->backAfterTypedWord() && g_mouse_clicked.load(std::memory_order_acquire)) {
-                g_mouse_clicked.store(false, std::memory_order_release);
-                needEngineReset.store(reset, std::memory_order_release);
-            }
         }
     }
 
@@ -241,12 +253,13 @@ namespace {
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
     }
 
-    // The factory's own engines never get focus_in_id, which names the app.
+    // The factory's own engines never get focus_in_id, which names the app. GNOME Shell sends the text
+    // around the cursor only after a request, which active-surrounding-text makes IBus send on each focus-in.
     IBusEngine* createEngine(IBusFactory* factory, const gchar* name, gpointer /*data*/) {
         static guint id     = 0;
         gchar*       path   = g_strdup_printf("/org/freedesktop/IBus/Engine/NgoSen/%u", ++id);
         auto*        engine = IBUS_ENGINE(g_object_new(ngosen_engine_get_type(), "engine-name", name, "object-path", path, "connection",
-                                                       ibus_service_get_connection(IBUS_SERVICE(factory)), "has-focus-id", TRUE, nullptr));
+                                                       ibus_service_get_connection(IBUS_SERVICE(factory)), "has-focus-id", TRUE, "active-surrounding-text", TRUE, nullptr));
         g_free(path);
         return engine;
     }
@@ -274,17 +287,35 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->host       = host.get();
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
-    session->host->setDirectTyping(resources().settings().directTyping);
+    // A settings change seen by no engine yet still reaches the new one.
+    realMode = typingMode();
+    session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
     self->session = session;
 }
 
 namespace ngosen {
 
     void addEngine(IBusFactory* factory) {
-        // The IBus edition only types into the preedit, which the app commits itself.
-        realMode = Mode::Preedit;
+        realMode = typingMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
+    }
+
+    std::thread watchClicks(const std::atomic<bool>& stop) {
+        // On Wayland the X server sees clicks on X11 windows only, and a missed click would let a
+        // reset be ignored after the cursor moved.
+        const char* wayland = std::getenv("WAYLAND_DISPLAY");
+        const char* session = std::getenv("XDG_SESSION_TYPE");
+        if ((wayland != nullptr && *wayland != 0) || (session != nullptr && std::strcmp(session, "wayland") == 0))
+            return {};
+        return std::thread([&stop] {
+            clicksWatched.store(true, std::memory_order_release);
+            watchX11PointerClicks(stop, [] {
+                needEngineReset.store(true, std::memory_order_release);
+                g_mouse_clicked.store(true, std::memory_order_release);
+            });
+            clicksWatched.store(false, std::memory_order_release);
+        });
     }
 
 } // namespace ngosen
