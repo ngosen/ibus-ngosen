@@ -613,6 +613,14 @@ app.ic.focus_out()
 app.ic.focus_in()
 pump(300)
 check(gnome.states is not None, "menu: GNOME gets the menu", gnome.states)
+# GNOME Shell rebuilds its menu on each item update, which stalls it when every focus change sends them.
+updates = []
+app.ic.connect("update-property", lambda _ic, prop: updates.append(prop.get_key()))
+for _ in range(3):
+    app.ic.focus_out()
+    app.ic.focus_in()
+    pump(100)
+check(updates == [], "menu: a focus change resends no unchanged item", len(updates))
 app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
