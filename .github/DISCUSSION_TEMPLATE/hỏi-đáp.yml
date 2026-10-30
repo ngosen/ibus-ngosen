@@ -1,0 +1,46 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hỏi về cách cài hoặc dùng Ngó Sen cho GNOME ở đây.
+        Nếu Ngó Sen gõ sai chữ hoặc treo, mở issue bằng form [Báo lỗi](https://github.com/ngosen/ibus-ngosen/issues/new/choose).
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Bạn muốn làm gì?
+      description: Ghi việc bạn muốn làm và những cách đã thử.
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version ibus-ngosen
+      placeholder: 1.1.2-1
+
+  - type: input
+    id: distro
+    attributes:
+      label: Distro
+      description: Ghi tên và version distro.
+
+  - type: dropdown
+    id: desktop_env
+    attributes:
+      label: Desktop
+      options:
+        - GNOME
+        - Xfce
+        - Cinnamon
+        - MATE
+        - Khác
+
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session
+      options:
+        - Wayland
+        - X11
+        - Không rõ
