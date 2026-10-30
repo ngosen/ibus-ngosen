@@ -62,6 +62,13 @@ class StepsTest(unittest.TestCase):
         wayland = facts({**READY, "XDG_SESSION_TYPE": "wayland"}, fcitx_gtk_module=True)
         self.assertEqual(titles(sc.steps(wayland), sc.WARN), [])
 
+    def test_gtk_module_ibus_warns_on_gnome_wayland_only(self):
+        title = "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
+        wayland = {**READY, "XDG_SESSION_TYPE": "wayland", "GTK_IM_MODULE": "ibus"}
+        self.assertEqual(titles(sc.steps(facts(wayland)), sc.WARN), [title])
+        x11 = {**READY, "GTK_IM_MODULE": "ibus"}
+        self.assertEqual(titles(sc.steps(facts(x11)), sc.WARN), [])
+
     def test_xim_and_fcitx5_warnings(self):
         warned = titles(sc.steps(facts(GNOME_X11, fcitx_running=True)), sc.WARN)
         self.assertEqual(len(warned), 2)

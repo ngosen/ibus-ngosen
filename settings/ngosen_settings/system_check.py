@@ -132,6 +132,16 @@ def _variable_findings(facts):
                 fix = _("Set {} in the session environment.").format(f"{variable}=ibus")
             title = _("{apps} use another input method ({value})").format(apps=apps, value=value)
             found.append(Finding(FAIL, title, fix))
+    # Apps that talk to IBus themselves on Wayland bypass GNOME Shell, and no click can be told apart
+    # from a reset there, so Sen keeps the underline in them.
+    if facts.gnome and facts.session == "wayland" and facts.env.get("GTK_IM_MODULE") == "ibus":
+        found.append(
+            Finding(
+                WARN,
+                _("GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"),
+                _("Remove {} from the session environment.").format("GTK_IM_MODULE"),
+            )
+        )
     if (
         facts.session == "x11"
         and facts.fcitx_gtk_module

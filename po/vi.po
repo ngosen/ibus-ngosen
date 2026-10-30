@@ -549,3 +549,6 @@ msgstr "Đã khởi động lại IBus."
 
 msgid "Added Ngó Sen to the input sources."
 msgstr "Đã thêm Ngó Sen vào nguồn nhập."
+
+msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
+msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"
