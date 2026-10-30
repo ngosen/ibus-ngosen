@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.1.2-1] — 30/10/2026
+
+Sửa màn hình giật khi đổi cửa sổ hay bấm phím Windows trên GNOME X11. Dùng lõi Ngó Sen `ngosen-1.7.0-1`. Tải
+gói ở [release ibus-ngosen-1.1.2-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.2-1).
+
 ### Sửa
 
 - Màn hình không còn giật 1–2 giây mỗi lần bấm phím Windows hay chuyển tab khi đang bật Ngó Sen: đổi ô

@@ -1,3 +1,11 @@
+ibus-ngosen (1.1.2-1) unstable; urgency=medium
+
+  * Stop resending unchanged menu items on focus changes, which stalled
+    GNOME Shell on X11.
+  * Core ngosen-1.7.0-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Fri, 30 Oct 2026 15:00:00 +0700
+
 ibus-ngosen (1.1.1-1) unstable; urgency=medium
 
   * Address bars type with the preedit when typing with Sen is on.
