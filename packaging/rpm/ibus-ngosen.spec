@@ -16,6 +16,8 @@ BuildRequires:  python3
 BuildRequires:  gettext
 
 Requires:       ibus >= 1.5.27
+# Loaded with dlopen to watch clicks on X11, which the automatic requires miss.
+Requires:       libxcb
 Requires:       python3-gobject
 Requires:       gtk4
 Requires:       libadwaita >= 1.5

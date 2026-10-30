@@ -11,8 +11,12 @@
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
+#include "ngosen-pointer.h"
 #include "ngosen-state.h"
 
+#include <atomic>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <string>
 
@@ -83,6 +87,9 @@ namespace {
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
+            session->state->commitBuffer();
+        // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
+        else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
             session->state->commitBuffer();
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
@@ -207,8 +214,15 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
-            session->state->resetAfterAppCommit(false);
+        Session* session = sessionOf(engine);
+        if (session == nullptr)
+            return;
+        // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
+        // straight in survives that while the engine sees clicks itself.
+        const ngosen::IBusHost& host = *session->host;
+        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
+            return;
+        session->state->resetAfterAppCommit(false);
     }
 
     void disable(IBusEngine* engine) {
@@ -285,6 +299,23 @@ namespace ngosen {
         realMode = typingMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
+    }
+
+    std::thread watchClicks(const std::atomic<bool>& stop) {
+        // On Wayland the X server sees clicks on X11 windows only, and a missed click would let a
+        // reset be ignored after the cursor moved.
+        const char* wayland = std::getenv("WAYLAND_DISPLAY");
+        const char* session = std::getenv("XDG_SESSION_TYPE");
+        if ((wayland != nullptr && *wayland != 0) || (session != nullptr && std::strcmp(session, "wayland") == 0))
+            return {};
+        return std::thread([&stop] {
+            clicksWatched.store(true, std::memory_order_release);
+            watchX11PointerClicks(stop, [] {
+                needEngineReset.store(true, std::memory_order_release);
+                g_mouse_clicked.store(true, std::memory_order_release);
+            });
+            clicksWatched.store(false, std::memory_order_release);
+        });
     }
 
 } // namespace ngosen

@@ -8,6 +8,7 @@
 #include "ngosen-ibus-engine.h"
 #include "ngosen-ibus-resources.h"
 
+#include <atomic>
 #include <clocale>
 #include <cstdio>
 #include <cstdlib>
@@ -15,6 +16,7 @@
 #include <glib/gi18n-lib.h>
 #include <ibus.h>
 #include <syslog.h>
+#include <thread>
 
 namespace {
 
@@ -84,6 +86,11 @@ int main(int argc, char** argv) {
             return 1;
         }
     }
+    std::atomic<bool> stopWatching{false};
+    std::thread       clickWatcher = ngosen::watchClicks(stopWatching);
     ibus_main();
+    stopWatching.store(true, std::memory_order_release);
+    if (clickWatcher.joinable())
+        clickWatcher.join();
     return 0;
 }

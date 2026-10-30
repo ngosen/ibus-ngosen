@@ -18,6 +18,8 @@ namespace ngosen {
     static_assert(key::Shift_L == IBUS_KEY_Shift_L);
     static_assert(modifier::Ctrl == IBUS_CONTROL_MASK);
 
+    std::atomic<bool> clicksWatched{false};
+
     namespace {
         // IBus keycodes are evdev codes: KEY_BACKSPACE, KEY_RIGHT, KEY_LEFTSHIFT, KEY_ENTER.
         constexpr guint BackSpaceKeycode = 14;
@@ -100,7 +102,7 @@ namespace ngosen {
     }
 
     Surrounding IBusHost::surrounding() const {
-        if (direct_)
+        if (throughShell())
             return reportsText() ? reported_ : Surrounding();
         if ((engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) == 0)
             return {};
@@ -115,8 +117,15 @@ namespace ngosen {
         return copy;
     }
 
-    // X11 apps keep the preedit: the IBus GTK module claims surrounding text before it knows the
-    // widget has it, and Firefox resets after each commit.
+    // Only GNOME Shell drops the keys an engine forwards; X11 apps delete with BackSpace as usual.
+    bool IBusHost::throughShell() const {
+        return direct_ && client_ == "gnome-shell";
+    }
+
+    bool IBusHost::typesWithKeysBesideText() const {
+        return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+    }
+
     bool IBusHost::reportsText() const {
         return client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }
@@ -126,15 +135,18 @@ namespace ngosen {
         // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
         f.frontend        = "ibus";
         f.program         = client_;
-        f.surroundingText = direct_ ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+        f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
         f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
-        // Keys an engine forwards are dropped by GNOME 50.0 to 50.3, so the core deletes only through
-        // the text, and falls back to the preedit where it cannot.
-        f.sendsNoKeys     = direct_;
-        f.preeditFallback = direct_ && f.preedit;
-        f.password        = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        // GNOME 50.0 to 50.3 drop the keys an engine forwards. Elsewhere only a click watcher tells a click
+        // from a reset; Chromium and Electron report no text and show the preedit well.
+        if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
+            f.surroundingText = false;
+        const bool preeditOnly = throughShell() || (direct_ && !f.surroundingText);
+        f.sendsNoKeys          = preeditOnly;
+        f.preeditFallback      = preeditOnly && f.preedit;
+        f.password             = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 
