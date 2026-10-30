@@ -124,7 +124,8 @@ def _variable_findings(facts):
     found = []
     for variable, apps in (("GTK_IM_MODULE", _("GTK apps")), ("QT_IM_MODULE", _("Qt apps"))):
         value = facts.env.get(variable, "")
-        if value and value != "ibus":
+        # The wayland module reaches IBus through the compositor.
+        if value and value != "ibus" and not (value == "wayland" and facts.session == "wayland"):
             # GNOME connects apps to IBus itself; elsewhere the variable has to name it.
             if facts.gnome:
                 fix = _("Remove {} from the session environment.").format(variable)
@@ -235,12 +236,18 @@ def run_fix(action, sources):
         before = sources.get()
         if before is None or not sources.set(with_ngosen(before)):
             return False, None
-        return True, lambda: sources.set(before)
+        return True, lambda: _remove_ngosen(sources)
     if action == RESTART_IBUS:
         return _succeeds(["ibus", "restart"]), None
     if action == START_IBUS:
         return _succeeds(["ibus", "start"]), None
     return False, None
+
+
+def _remove_ngosen(sources):
+    # Only the added source goes, so changes made in GNOME Settings since then stay.
+    current = sources.get()
+    return current is not None and sources.set([s for s in current if s != ("ibus", ENGINE)])
 
 
 def _succeeds(cmd):
@@ -294,6 +301,10 @@ class Fixes:
         left = {f.action for f in findings}
         # A fix that ran but left its step did not work.
         self.failed |= left & set(done)
+        # A restart that left IBus stopped shows only the start step.
+        if RESTART_IBUS in done and START_IBUS in left:
+            self.failed.add(RESTART_IBUS)
+            left = left | {RESTART_IBUS}
         self.failed &= left
         fixed = [a for a in done if a not in left]
         if not fixed:
@@ -343,7 +354,7 @@ def collect(sources, ngosen_version="", env=None, proc="/proc"):
     facts.ibus_running = ibus_owns_session(env, proc)
     if facts.ibus_running:
         facts.ibus_version = _output(["ibus", "version"]).strip().removeprefix("IBus ")
-        facts.engine_known = ENGINE in engine_names(_output(["ibus", "list-engine"]))
+        facts.engine_known = engine_listed(_output(["ibus", "list-engine"]))
     facts.engine_replaced = runs_replaced_engine(proc)
     facts.fcitx_running = bool(_pids_named("fcitx5", proc))
     facts.fcitx_gtk_module = bool(_fcitx_gtk_modules())
@@ -353,6 +364,12 @@ def collect(sources, ngosen_version="", env=None, proc="/proc"):
         current = sources.get()
         facts.in_gnome_sources = None if current is None else ("ibus", ENGINE) in current
     return facts
+
+
+def engine_listed(text):
+    """Whether ibus list-engine names Ngó Sen; a list that could not be read does not count."""
+    names = engine_names(text)
+    return not names or ENGINE in names
 
 
 def engine_names(text):
@@ -440,8 +457,14 @@ def ibus_owns_session(env, proc="/proc", machine_id=None):
     try:
         with open(path, encoding="utf-8", errors="replace") as f:
             match = re.search(r"^IBUS_DAEMON_PID=(\d+)", f.read(), re.M)
-        if match is None:
-            return False
+    except FileNotFoundError:
+        # IBus started with IBUS_ADDRESS or under another display name writes no file found here.
+        return bool(_pids_named("ibus-daemon", proc))
+    except OSError:
+        return False
+    if match is None:
+        return False
+    try:
         with open(
             os.path.join(proc, match.group(1), "comm"), encoding="utf-8", errors="replace"
         ) as f:

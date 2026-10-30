@@ -69,6 +69,13 @@ class StepsTest(unittest.TestCase):
         x11 = {**READY, "GTK_IM_MODULE": "ibus"}
         self.assertEqual(titles(sc.steps(facts(x11)), sc.WARN), [])
 
+    def test_wayland_module_is_fine_on_wayland(self):
+        wayland = {**READY, "XDG_SESSION_TYPE": "wayland"}
+        both = {**wayland, "GTK_IM_MODULE": "wayland", "QT_IM_MODULE": "wayland"}
+        self.assertEqual(titles(sc.steps(facts(both)), sc.FAIL), [])
+        x11 = {**READY, "GTK_IM_MODULE": "wayland"}
+        self.assertEqual(len(titles(sc.steps(facts(x11)), sc.FAIL)), 1)
+
     def test_xim_and_fcitx5_warnings(self):
         warned = titles(sc.steps(facts(GNOME_X11, fcitx_running=True)), sc.WARN)
         self.assertEqual(len(warned), 2)
@@ -86,6 +93,22 @@ class FixesTest(unittest.TestCase):
         self.assertEqual(message, "Added Ngó Sen to the input sources.")
         self.assertTrue(undo())
         self.assertEqual(sources.get(), [("xkb", "us")])
+
+    def test_undo_keeps_later_source_changes(self):
+        sources = FakeSources([("xkb", "us")])
+        fixes = sc.Fixes(sources)
+        done, undos, _settle = fixes.run([sc.ADD_SOURCE])
+        sources.set(sources.get() + [("xkb", "fr")])
+        _message, undo = fixes.finish(done, undos, [])
+        self.assertTrue(undo())
+        self.assertEqual(sources.get(), [("xkb", "us"), ("xkb", "fr")])
+
+    def test_restart_that_left_ibus_stopped_failed(self):
+        fixes = sc.Fixes(FakeSources([]))
+        stopped = sc.Finding(sc.FAIL, "x", action=sc.START_IBUS)
+        message, _undo = fixes.finish([sc.RESTART_IBUS], {}, [stopped])
+        self.assertEqual(message, "")
+        self.assertIn(sc.RESTART_IBUS, fixes.failed)
 
     def test_add_source_fails_without_gnome_settings(self):
         fixes = sc.Fixes(FakeSources(None))
@@ -105,6 +128,10 @@ class FactsTest(unittest.TestCase):
     def test_engine_names_from_list_engine(self):
         text = "language: vi\n  ngosen - Ngó Sen\n  Unikey - Unikey\nlanguage: en\n  xkb:us::eng - Eng\n"
         self.assertEqual(sc.engine_names(text), ["ngosen", "Unikey", "xkb:us::eng"])
+
+    def test_unread_engine_list_is_not_unknown(self):
+        self.assertTrue(sc.engine_listed(""))
+        self.assertFalse(sc.engine_listed("language: en\n  xkb:us::eng - Eng\n"))
 
     def make_proc(self, pid, comm, exe=None):
         os.makedirs(os.path.join(self.proc, pid))
@@ -131,6 +158,13 @@ class FactsTest(unittest.TestCase):
             with open(address, "w", encoding="utf-8") as f:
                 f.write(f"IBUS_ADDRESS=unix:path=/x\nIBUS_DAEMON_PID={pid}\n")
             self.assertEqual(sc.ibus_owns_session(env, self.proc), expected, pid)
+
+    def test_ibus_running_without_an_address_file(self):
+        env = {"IBUS_ADDRESS_FILE": os.path.join(self.proc, "missing")}
+        self.make_proc(str(os.getpid()), "fcitx5")
+        self.assertFalse(sc.ibus_owns_session(env, self.proc))
+        self.make_proc("1" + str(os.getpid()), "ibus-daemon")
+        self.assertTrue(sc.ibus_owns_session(env, self.proc))
 
 
 class ReportTest(unittest.TestCase):

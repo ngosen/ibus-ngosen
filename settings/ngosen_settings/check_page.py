@@ -165,6 +165,9 @@ class CheckPage:
         if self.fixes.busy or not actions:
             return
         self.fixes.busy = set(actions)
+        # IBus shows as stopped while it restarts.
+        if system_check.RESTART_IBUS in actions:
+            self.fixes.busy.add(system_check.START_IBUS)
         self._show_steps()
         # Let the spinner show before the fix holds the main loop.
         GLib.timeout_add(50, self._run_fixes, list(actions))
@@ -199,7 +202,7 @@ class CheckPage:
         self.notify(_("Copied: {}").format(command), None)
 
     def report_text(self):
-        return system_check.report(self.facts, self.findings)
+        return system_check.report(self.facts, self.found)
 
     def copy_report(self):
         _copy(self.report_text())
