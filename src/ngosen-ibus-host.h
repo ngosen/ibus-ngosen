@@ -8,12 +8,16 @@
 #include "ngosen-host.h"
 #include "ngosen-key.h"
 
+#include <atomic>
 #include <functional>
 #include <ibus.h>
 #include <memory>
 #include <string>
 
 namespace ngosen {
+
+    // Set while the X server reports mouse clicks to the engine, so a reset is not all that tells one.
+    extern std::atomic<bool> clicksWatched;
 
     // The field as the IBus engine sees it. IBus tells the engine about the field piece by piece;
     // the engine passes each piece on.

@@ -18,6 +18,8 @@ namespace ngosen {
     static_assert(key::Shift_L == IBUS_KEY_Shift_L);
     static_assert(modifier::Ctrl == IBUS_CONTROL_MASK);
 
+    std::atomic<bool> clicksWatched{false};
+
     namespace {
         // IBus keycodes are evdev codes: KEY_BACKSPACE, KEY_RIGHT, KEY_LEFTSHIFT, KEY_ENTER.
         constexpr guint BackSpaceKeycode = 14;
@@ -137,8 +139,10 @@ namespace ngosen {
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
         f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
-        // GNOME 50.0 to 50.3 drop the keys an engine forwards. On X11, Chromium and Electron report no
-        // text and show the preedit well, while the Chromium address bar loses focus mid-deletion.
+        // GNOME 50.0 to 50.3 drop the keys an engine forwards. Elsewhere only a click watcher tells a click
+        // from a reset; Chromium and Electron report no text and show the preedit well.
+        if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
+            f.surroundingText = false;
         const bool preeditOnly = throughShell() || (direct_ && !f.surroundingText);
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;

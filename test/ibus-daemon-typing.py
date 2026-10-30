@@ -43,8 +43,9 @@ xlib.XOpenDisplay.argtypes = [ctypes.c_char_p]
 xlib.XFlush.argtypes = [ctypes.c_void_p]
 xtst.XTestFakeButtonEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
 # The private X server run-with-daemon.sh starts, where the engine watches clicks.
-display = xlib.XOpenDisplay(None)
-if not display:
+no_x = bool(os.environ.get("NGOSEN_TEST_NO_X"))
+display = None if no_x else xlib.XOpenDisplay(None)
+if not no_x and not display:
     sys.exit("cannot open the X display")
 
 
@@ -443,6 +444,19 @@ with open(log_path) as f:
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
+
+# Without a click watcher a reset may be a click, so X11 apps keep the preedit.
+if no_x:
+    app = App("gtk3-im:firefox", resets_after_key=True)
+    app.type("xin vieetj ")
+    check(
+        app.text == "xin việt ",
+        "no click watcher, X11 app resetting after each key: the words",
+        app.text,
+    )
+    check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
+    app.close()
+    sys.exit(1 if failures else 0)
 
 
 # An empty field has reported no text yet, so the core underlines its first word.

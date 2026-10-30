@@ -22,9 +22,6 @@
 
 namespace {
 
-    // Set once the X server reports mouse clicks to the engine, so a reset is not all that tells one.
-    std::atomic<bool>      clicksWatched{false};
-
     ngosen::IBusResources& resources() {
         static ngosen::IBusResources instance(ngosen::SettingsPaths::fromEnvironment());
         return instance;
@@ -220,7 +217,7 @@ namespace {
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
-        if (clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
+        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
     }
