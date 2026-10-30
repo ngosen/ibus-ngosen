@@ -465,6 +465,11 @@ for keys in (1, 2):
     app.key(IBus.KEY_BackSpace)
     app.type("ng ")
     check(app.text == "nam tiếng ", f"direct, Qt through GNOME Shell ({keys}): the words", app.text)
+    check(
+        not any("t" in p for p in app.preedits),
+        f"direct, Qt through GNOME Shell ({keys}): the second word not underlined",
+        app.preedits,
+    )
     app.close()
 
 # Qt reports the text around the cursor only once the field has text.
@@ -475,8 +480,10 @@ app.ic.set_capabilities(
 )
 app.report()
 pump(100)
+app.preedits.clear()
 app.type("nam tieesng ")
 check(app.text == "việt nam tiếng ", "direct, flag after the first word: the words", app.text)
+check(app.preedits == [], "direct, flag after the first word: no underline after it", app.preedits)
 app.close()
 
 # A click the app does not announce: the text stays and only the cursor moves.
@@ -532,6 +539,7 @@ for cursor in (0, 5):
     pump(100)
 app.type("ieetj ")
 check(app.text == "xin việt ", "direct, cursor reported back and forth: the word", app.text)
+check(app.preedits == [], "direct, cursor reported back and forth: no underline", app.preedits)
 app.close()
 
 app = App("gnome-shell", surrounding=False)
