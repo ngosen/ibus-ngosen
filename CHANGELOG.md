@@ -21,7 +21,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Sửa
 
 - kitty trên X11 gõ được tiếng Việt, không còn ra chữ thô như `vieejt`: gói đặt `GLFW_IM_MODULE=ibus` cho phiên
-  đăng nhập, có hiệu lực sau khi đăng nhập lại (#47).
+  đăng nhập (đã thử GNOME, Cinnamon và Xfce), có hiệu lực sau khi đăng nhập lại (#47).
 
 ## [1.1.2-1] — 30/10/2026
 

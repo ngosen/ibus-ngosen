@@ -10,3 +10,5 @@ install(FILES ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict
         DESTINATION ${CMAKE_INSTALL_DATADIR}/ibus-ngosen)
 # systemd reads environment.d from /usr/lib on every distro, whatever the libdir.
 install(FILES 60-ibus-ngosen.conf DESTINATION lib/environment.d)
+# LightDM sessions (Cinnamon, Xfce, MATE) do not take the systemd user environment.
+install(FILES ibus-ngosen.sh DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR}/profile.d)
