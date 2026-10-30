@@ -51,6 +51,7 @@ with. The word being typed is underlined until it is done.
 %{_datadir}/metainfo/io.github.ngosen.IBusNgoSen.metainfo.xml
 %{_datadir}/icons/hicolor/scalable/apps/ibus-ngosen.svg
 %{_datadir}/icons/hicolor/scalable/apps/io.github.ngosen.IBusNgoSen.svg
+%{_prefix}/lib/environment.d/60-ibus-ngosen.conf
 
 %changelog
 * Fri Oct 30 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.2-1
