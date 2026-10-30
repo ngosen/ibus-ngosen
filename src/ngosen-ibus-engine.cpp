@@ -14,6 +14,7 @@
 #include "ngosen-state.h"
 
 #include <memory>
+#include <string>
 
 namespace {
 
@@ -98,12 +99,31 @@ namespace {
         }
     }
 
-    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings) {
+    std::string itemStates(IBusPropList* items) {
+        std::string states;
+        for (guint i = 0; IBusProperty* item = ibus_prop_list_get(items, i); ++i) {
+            states += ibus_property_get_key(item);
+            states += ibus_property_get_state(item) == PROP_STATE_CHECKED ? "+" : "-";
+            states += itemStates(ibus_property_get_sub_props(item));
+        }
+        return states;
+    }
+
+    // What the panel was last told, the same for every engine since the settings are shared.
+    std::string shownStates;
+
+    // clicked: the panel already flipped the item itself, so its state goes out even when unchanged.
+    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false) {
         IBusPropList* menu = ngosen::newSettingsMenu(settings);
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
         // GNOME Shell takes the whole menu only once after the engine is chosen, then single items.
-        updateItems(engine, menu);
+        // It rebuilds the menu on each item, so resending them on every focus change stalls it (#28).
+        std::string states = itemStates(menu);
+        if (clicked || states != shownStates) {
+            updateItems(engine, menu);
+            shownStates = std::move(states);
+        }
         g_object_unref(menu);
     }
 
@@ -152,7 +172,7 @@ namespace {
             return;
         ngosen::IBusSettings saved;
         // A failed write shows the old state again, so the menu never claims a setting that is not saved.
-        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().settings());
+        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().settings(), true);
     }
 
     void focusOut(IBusEngine* engine) {
