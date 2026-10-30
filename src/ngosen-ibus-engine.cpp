@@ -88,7 +88,7 @@ namespace {
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
-        // XIM clients keep the preedit across a click, and the core would drop it on seeing the click.
+        // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
         else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
             session->state->commitBuffer();
         ngosen::IBusKeyPress key(keyval, keycode, state);
