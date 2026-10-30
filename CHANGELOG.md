@@ -18,6 +18,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Báo lỗi, báo lỗi cài đặt và đề xuất tính năng qua form có sẵn như kho fcitx5; nút "Báo lỗi" trong cửa sổ cài
   đặt mở trang chọn form (#45).
 
+### Sửa
+
+- kitty trên X11 gõ được tiếng Việt, không còn ra chữ thô như `vieejt`: gói đặt `GLFW_IM_MODULE=ibus` cho phiên
+  đăng nhập, có hiệu lực sau khi đăng nhập lại (#47).
+
 ## [1.1.2-1] — 30/10/2026
 
 Sửa màn hình giật khi đổi cửa sổ hay bấm phím Windows trên GNOME X11. Dùng lõi Ngó Sen `ngosen-1.7.0-1`. Tải
