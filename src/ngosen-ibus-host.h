@@ -24,6 +24,13 @@ namespace ngosen {
         void setFocus(bool focus) {
             focus_ = focus;
         }
+        void setDirectTyping(bool on) {
+            direct_ = on;
+        }
+        // GNOME Shell keeps one input context for every field, so the next field starts with no text.
+        void forgetReportedText() {
+            reported_ = Surrounding();
+        }
         void setClient(std::string client) {
             client_ = std::move(client);
         }
@@ -75,6 +82,7 @@ namespace ngosen {
 
         IBusEngine* engine_;
         bool        focus_   = false;
+        bool        direct_  = false;
         guint       purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
         guint       hints_   = IBUS_INPUT_HINT_NONE;
         std::string client_;

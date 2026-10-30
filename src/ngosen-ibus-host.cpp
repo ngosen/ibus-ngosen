@@ -100,7 +100,19 @@ namespace ngosen {
     }
 
     Surrounding IBusHost::surrounding() const {
-        return reportsText() ? reported_ : Surrounding();
+        if (direct_)
+            return reportsText() ? reported_ : Surrounding();
+        if ((engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) == 0)
+            return {};
+        IBusText* text   = nullptr;
+        guint     cursor = 0;
+        guint     anchor = 0;
+        ibus_engine_get_surrounding_text(engine_, &text, &cursor, &anchor);
+        if (text == nullptr)
+            return {};
+        Surrounding copy(ibus_text_get_text(text), cursor, anchor);
+        g_object_unref(text);
+        return copy;
     }
 
     // X11 apps keep the preedit: the IBus GTK module claims surrounding text before it knows the
@@ -114,14 +126,14 @@ namespace ngosen {
         // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
         f.frontend        = "ibus";
         f.program         = client_;
-        f.surroundingText = reportsText();
+        f.surroundingText = direct_ ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
         f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
         // Keys an engine forwards are dropped by GNOME 50.0 to 50.3, so the core deletes only through
         // the text, and falls back to the preedit where it cannot.
-        f.sendsNoKeys     = true;
-        f.preeditFallback = f.preedit;
+        f.sendsNoKeys     = direct_;
+        f.preeditFallback = direct_ && f.preedit;
         f.password        = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }

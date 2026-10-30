@@ -41,6 +41,7 @@ namespace {
             if (generation == resources().generation())
                 return;
             realMode = typingMode();
+            host->setDirectTyping(realMode == ngosen::Mode::Sen);
             state->setEngine();
             generation = resources().generation();
         }
@@ -130,12 +131,10 @@ namespace {
         focusedEngine = engine;
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
-            // The client sends an engine the text around the cursor only after the engine asks for it.
-            IBusText* text   = nullptr;
-            guint     cursor = 0;
-            guint     anchor = 0;
-            ibus_engine_get_surrounding_text(engine, &text, &cursor, &anchor);
             session->applyNewSettings();
+            // The per-field checks of Sen start over, as the fcitx5 frontend does on focus-in.
+            if (realMode == ngosen::Mode::Sen)
+                session->state->activate(ngosen::Mode::Sen, true);
         }
         showMenu(engine, resources().settings());
     }
@@ -171,6 +170,7 @@ namespace {
             return;
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
+        session->host->forgetReportedText();
     }
 
     void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
@@ -189,6 +189,11 @@ namespace {
     void reset(IBusEngine* engine) {
         if (Session* session = sessionOf(engine))
             session->state->resetAfterAppCommit(false);
+    }
+
+    // The client sends an engine the text around the cursor only after the engine asks for it here.
+    void enable(IBusEngine* engine) {
+        ibus_engine_get_surrounding_text(engine, nullptr, nullptr, nullptr);
     }
 
     void disable(IBusEngine* engine) {
@@ -237,6 +242,7 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->focus_in             = focusIn;
     engineClass->focus_out            = focusOut;
     engineClass->reset                = reset;
+    engineClass->enable               = enable;
     engineClass->disable              = disable;
     engineClass->set_surrounding_text = setSurroundingText;
     engineClass->set_content_type     = setContentType;
@@ -252,7 +258,10 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->host       = host.get();
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
-    self->session       = session;
+    // A settings change seen by no engine yet still reaches the new one.
+    realMode = typingMode();
+    session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
+    self->session = session;
 }
 
 namespace ngosen {

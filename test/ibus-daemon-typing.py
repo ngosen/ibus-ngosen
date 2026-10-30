@@ -345,6 +345,17 @@ check(
 app.close()
 set_setting("InputMethod", "Telex")
 
+# The X11 IBus modules report the text around the cursor, which tells where a line starts.
+set_setting("CapitalizeStartOfText", "True")
+app = App("gtk3-im:gedit")
+app.text = "abc\n"
+app.report()
+pump(100)
+app.type("vieetj ")
+check(app.commits == ["Việt "], "preedit, X11 app: capitalizes at the start of a line", app.commits)
+app.close()
+set_setting("CapitalizeStartOfText", "False")
+
 write_file(os.path.join(config_dir, "ngosen-macro-table.conf"), "[Macro/0]\nKey=ko\nValue=không\n")
 app = App("macro")
 app.type("ko ")
@@ -479,9 +490,25 @@ pump(100)
 app.type("e")
 # The core underlines a word begun inside another one.
 check(
-    app.text + app.preedit == "xin viee",
+    app.text == "xin vie" and app.preedit == "e",
     "direct, click inside the word: the next key deletes nothing",
     (app.text, app.preedit),
+)
+app.close()
+
+# GNOME Shell keeps one input context for every field, so its engine moves between fields.
+app = field_with_text()
+app.ic.focus_out()
+pump(100)
+app.text = ""
+app.ic.focus_in()
+app.report()
+pump(100)
+app.type("vieetj ")
+check(
+    app.text == "việt " and "việt" in app.preedits,
+    "direct, next field on the same engine: its first word underlined",
+    (app.text, app.preedits),
 )
 app.close()
 
