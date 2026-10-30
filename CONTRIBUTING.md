@@ -49,6 +49,10 @@ Dùng lại thư mục `build/` cho mỗi lần dựng; không tạo thư mục 
 - `patch`: sửa lỗi của version đang phát hành, ra thành version X.Y.Z+1 rồi được đưa sang `next`.
 - Không chắc thì gửi vào `next`; maintainer sẽ chuyển nếu cần.
 
+## Quy tắc ứng xử
+
+Mọi người tham gia tuân thủ [Quy tắc ứng xử](CODE_OF_CONDUCT.md).
+
 ## Giấy phép
 
 Bằng cách đóng góp, bạn đồng ý code của bạn được cấp phép theo cùng giấy phép với dự án (GPL-3.0-or-later).
