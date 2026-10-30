@@ -100,6 +100,9 @@ Lần chạy đầu, nếu máy đã có Ngó Sen cho fcitx5 thì kiểu gõ, g�
 chép sang (từ điển vào `~/.local/share/ngosen/`); file của fcitx5 giữ nguyên. Sửa `ngosen.conf`, bảng gõ
 tắt hay bảng phím thì có hiệu lực từ chữ gõ tiếp theo. Xoá `ngosen.conf` là về cài đặt mặc định.
 
+Không gõ được tiếng Việt thì mở tab "Kiểm tra máy tôi" trong cửa sổ cài đặt: nó kiểm IBus, nguồn nhập và
+biến môi trường, sửa được vài bước bằng một nút, và chép kết quả để gửi kèm báo lỗi.
+
 Gõ ra chữ sai thì chọn "Lưu nhật ký gõ" trong menu nguồn nhập ngay sau đó: những gì vừa gõ được lưu vào
 `~/.local/state/ngosen/`, chỉ tài khoản của mình đọc được. Đọc lại file rồi gửi kèm báo lỗi.
 
