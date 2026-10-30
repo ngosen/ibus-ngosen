@@ -679,6 +679,14 @@ check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
 app.close()
 set_setting("DirectTyping", "False")
 
+# XIM clients such as Alacritty keep the preedit across a click and send no reset.
+app = App("xim", surrounding=False)
+app.type("xin vie")
+click()
+app.type("e ")
+check(app.text == "xin viee ", "XIM app: a click mid-word keeps the word", app.text)
+app.close()
+
 
 def labels(props):
     found = {}
