@@ -22,6 +22,12 @@ namespace {
         return instance;
     }
 
+    // Off, every word goes into the preedit; on, the core picks for each word whether it goes
+    // straight into the field or into the preedit.
+    ngosen::Mode typingMode() {
+        return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
+    }
+
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
         std::unique_ptr<ngosen::TypingState> state;
@@ -32,9 +38,9 @@ namespace {
             if (host->hasPreedit())
                 return;
             resources().reloadIfChanged();
-            host->setDirectTyping(resources().settings().directTyping);
             if (generation == resources().generation())
                 return;
+            realMode = typingMode();
             state->setEngine();
             generation = resources().generation();
         }
@@ -76,9 +82,6 @@ namespace {
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
             session->state->commitBuffer();
-        // The core saw the cursor leave the word, so the word in the app is no longer ours to change.
-        if (g_mouse_clicked.load(std::memory_order_acquire))
-            session->host->forgetTypedWord();
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -127,6 +130,11 @@ namespace {
         focusedEngine = engine;
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
+            // The client sends an engine the text around the cursor only after the engine asks for it.
+            IBusText* text   = nullptr;
+            guint     cursor = 0;
+            guint     anchor = 0;
+            ibus_engine_get_surrounding_text(engine, &text, &cursor, &anchor);
             session->applyNewSettings();
         }
         showMenu(engine, resources().settings());
@@ -161,7 +169,6 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->host->forgetTypedWord();
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
     }
@@ -180,10 +187,8 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine)) {
-            session->host->forgetTypedWord();
+        if (Session* session = sessionOf(engine))
             session->state->resetAfterAppCommit(false);
-        }
     }
 
     void disable(IBusEngine* engine) {
@@ -193,15 +198,8 @@ namespace {
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
         if (Session* session = sessionOf(engine)) {
-            session->host->setReportedText(ibus_text_get_text(text), cursor);
-            const bool clicked = g_mouse_clicked.load(std::memory_order_acquire);
-            const bool reset   = needEngineReset.load(std::memory_order_acquire);
+            session->host->setReportedText(ibus_text_get_text(text), cursor, anchor);
             session->state->surroundingUpdated();
-            // VS Code reports the cursor at the start of the field and then back after the word.
-            if (!clicked && session->host->backAfterTypedWord() && g_mouse_clicked.load(std::memory_order_acquire)) {
-                g_mouse_clicked.store(false, std::memory_order_release);
-                needEngineReset.store(reset, std::memory_order_release);
-            }
         }
     }
 
@@ -254,15 +252,13 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->host       = host.get();
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
-    session->host->setDirectTyping(resources().settings().directTyping);
-    self->session = session;
+    self->session       = session;
 }
 
 namespace ngosen {
 
     void addEngine(IBusFactory* factory) {
-        // The IBus edition only types into the preedit, which the app commits itself.
-        realMode = Mode::Preedit;
+        realMode = typingMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
     }

@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- "Gõ Sen ở app cho phép" giờ chạy bằng lõi Ngó Sen như bản fcitx5: mỗi chữ tự chọn gõ thẳng hay gạch chân,
+  chữ đầu tiên trong ô còn trống vẫn gạch chân; lõi `ngosen-1.7.2-1` (#41).
+
 ## [1.1.1-1] — 29/10/2026
 
 Sửa chữ lặp ở ô địa chỉ Chrome khi bật Gõ Sen, thêm mục "Lưu nhật ký gõ" để gửi kèm báo lỗi. Dùng lõi Ngó Sen

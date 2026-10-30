@@ -151,6 +151,8 @@ class App:
                 char = IBus.keyval_to_unicode(keyval)
                 if keyval in (IBus.KEY_Return, IBus.KEY_KP_Enter):
                     self.text += "\n"
+                elif keyval == IBus.KEY_BackSpace:
+                    self.text = self.text[:-1]
                 elif char and char != "\0":
                     self.text += char
                 self.report()
@@ -395,22 +397,42 @@ with open(log_path) as f:
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
+
+
+# An empty field has reported no text yet, so the core underlines its first word.
+def field_with_text(**kwargs):
+    app = App("gnome-shell", **kwargs)
+    app.type("xin ")
+    app.preedits.clear()
+    return app
+
+
+app = App("gnome-shell")
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "direct, empty field: the words", app.text)
+check(
+    "xin" in app.preedits and not any("v" in p for p in app.preedits),
+    "direct, empty field: only the first word underlined",
+    app.preedits,
+)
+app.close()
+
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
-    app = App("gnome-shell", app_commits=app_commits)
+    app = field_with_text(app_commits=app_commits)
     app.type("vieetj ")
-    check(app.text == "việt ", f"direct ({who}): the word", app.text)
+    check(app.text == "xin việt ", f"direct ({who}): the word", app.text)
     check(app.preedits == [], f"direct ({who}): no underline", app.preedits)
     app.type("a")
     app.key(IBus.KEY_BackSpace)
     pump(200)
-    check(app.text == "việt ", f"direct ({who}): BackSpace removes the word", app.text)
+    check(app.text == "xin việt ", f"direct ({who}): BackSpace removes the word", app.text)
     app.type("ko ")
-    check(app.text == "việt không ", f"direct ({who}): a macro replaces the word", app.text)
+    check(app.text == "xin việt không ", f"direct ({who}): a macro replaces the word", app.text)
     app.type("vie")
     app.reset()
     app.type("e ")
     check(
-        app.text == "việt không viee ",
+        app.text == "xin việt không viee ",
         f"direct ({who}): after a click the next key deletes nothing",
         app.text,
     )
@@ -442,30 +464,35 @@ check(app.text == "việt nam tiếng ", "direct, flag after the first word: the
 app.close()
 
 # A click the app does not announce: the text stays and only the cursor moves.
-app = App("gnome-shell")
+app = field_with_text()
 app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
 pump(100)
 app.type("a")
-check(app.text == "viea", "direct, unannounced click: the next key deletes nothing", app.text)
+check(app.text == "xin viea", "direct, unannounced click: the next key deletes nothing", app.text)
 app.close()
 
-app = App("gnome-shell")
+app = field_with_text()
 app.type("vie")
-app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 1, 1)
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 5, 5)
 pump(100)
 app.type("e")
-check(app.text == "viee", "direct, click inside the word: the next key deletes nothing", app.text)
+# The core underlines a word begun inside another one.
+check(
+    app.text + app.preedit == "xin viee",
+    "direct, click inside the word: the next key deletes nothing",
+    (app.text, app.preedit),
+)
 app.close()
 
 # VS Code reports the cursor at the start and then back after the word.
-app = App("gnome-shell")
+app = field_with_text()
 app.type("v")
-for cursor in (0, 1):
-    app.ic.set_surrounding_text(IBus.Text.new_from_string("vv"), cursor, cursor)
+for cursor in (0, 5):
+    app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), cursor, cursor)
     pump(100)
 app.type("ieetj ")
-check(app.text == "việt ", "direct, cursor reported back and forth: the word", app.text)
+check(app.text == "xin việt ", "direct, cursor reported back and forth: the word", app.text)
 app.close()
 
 app = App("gnome-shell", surrounding=False)
