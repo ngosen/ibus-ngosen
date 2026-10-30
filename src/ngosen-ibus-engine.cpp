@@ -207,8 +207,15 @@ namespace {
     // A click in the field or a change the app made itself; the app has committed the preedit. A
     // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
-        if (Session* session = sessionOf(engine))
-            session->state->resetAfterAppCommit(false);
+        Session* session = sessionOf(engine);
+        if (session == nullptr)
+            return;
+        // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
+        // straight in survives that where a click still shows in the text the app reports.
+        const ngosen::IBusHost& host = *session->host;
+        if (realMode == ngosen::Mode::Sen && !host.throughShell() && host.field().surroundingText && !host.hasPreedit() && !session->state->isEmptyHistory())
+            return;
+        session->state->resetAfterAppCommit(false);
     }
 
     void disable(IBusEngine* engine) {

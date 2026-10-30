@@ -47,6 +47,7 @@ class App:
         hints=0,
         surrounding=True,
         qt_through_shell=False,
+        resets_after_key=False,
     ):
         self.text = ""
         self.commits = []
@@ -57,6 +58,8 @@ class App:
         # moving on screen: qt_through_shell is how many keys in a row must delete before the
         # report stops.
         self.qt_through_shell = qt_through_shell
+        # Firefox on X11 resets the input context after each key the engine lets through.
+        self.resets_after_key = resets_after_key
         self.reported = ""
         self.deleted = False
         self.deleting_keys = 0
@@ -167,6 +170,8 @@ class App:
                 elif char and char != "\0":
                     self.text += char
                 self.report()
+                if self.resets_after_key:
+                    ic.reset()
 
         if not self.deleted:
             self.deleting_keys = 0
@@ -560,6 +565,30 @@ app = App("gtk3-im:gnome-terminal-server")
 app.type("vieetj ")
 check(app.text == "việt ", "direct, X11 app: the word", app.text)
 check(app.preedits == [], "direct, X11 app: no underline", app.preedits)
+app.close()
+
+app = App("gtk3-im:firefox", resets_after_key=True)
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "direct, X11 app resetting after each key: the words", app.text)
+app.close()
+
+# A click on X11 resets the context and moves the cursor the app reports.
+app = App("gtk3-im:gedit")
+app.type("xin vie")
+app.ic.reset()
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
+pump(100)
+app.type("e")
+check(app.text == "xin viee", "direct, X11 app: a click mid-word deletes nothing", app.text)
+app.close()
+
+# Without the text, the reset is all that tells a click.
+app = App("gtk3-im:xterm", surrounding=False)
+app.type("xin vie")
+app.ic.reset()
+pump(100)
+app.type("e")
+check(app.text == "xin viee", "direct, X11 app without text: a click mid-word deletes nothing", app.text)
 app.close()
 
 set_setting("CapitalizeStartOfText", "True")

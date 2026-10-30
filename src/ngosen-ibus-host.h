@@ -77,8 +77,9 @@ namespace ngosen {
 
         std::string                  keyText(uint32_t sym) const override;
 
+        bool                         throughShell() const;
+
       private:
-        bool        throughShell() const;
         bool        reportsText() const;
 
         IBusEngine* engine_;
