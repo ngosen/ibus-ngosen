@@ -5,6 +5,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-config.cpp
     ngosen-ibus-engine.cpp
     ngosen-ibus-host.cpp
+    ngosen-ibus-keys.cpp
     ngosen-ibus-log.cpp
     ngosen-ibus-menu.cpp
     ngosen-ibus-resources.cpp

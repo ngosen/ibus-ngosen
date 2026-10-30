@@ -10,6 +10,12 @@ POSITIONS = [
     ("Non-Start", N_("Non-Start")),
     ("Everywhere", N_("Everywhere")),
 ]
+# Stored as the fcitx5 edition stores key lists: Ctrl+Shift in either order, with either key.
+TOGGLE_KEYS = [
+    ("Control+Shift_L Control+Shift_R Shift+Control_L Shift+Control_R", "Ctrl+Shift"),
+    ("Alt+z", "Alt+Z"),
+    ("", N_("Disabled")),
+]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -29,6 +35,7 @@ DATE_FORMATS = [
 
 LABELS = {
     "InputMethod": N_("Input Method"),
+    "ToggleKey": N_("Switch Between English and Vietnamese"),
     "DirectTyping": N_("Type with Sen where the app allows (experimental)"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
@@ -53,6 +60,9 @@ LABELS = {
 }
 
 HINTS = {
+    "ToggleKey": N_(
+        "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+    ),
     "DirectTyping": N_(
         "Text goes straight into fields that report the text around the cursor, without an underline. Elsewhere words keep the underline."
     ),
@@ -96,7 +106,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
+    (None, ["InputMethod", "ToggleKey", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
     (
         N_("Tone marks"),
         [
@@ -116,6 +126,7 @@ TYPING_GROUPS = [
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]
 
 CHOICES = {
+    "ToggleKey": TOGGLE_KEYS,
     "W2U": POSITIONS,
     "BracketTransform": POSITIONS,
     "LockWordModifier": LOCK_KEYS,

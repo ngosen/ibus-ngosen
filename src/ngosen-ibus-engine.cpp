@@ -7,6 +7,7 @@
 
 #include "ngosen-globals.h"
 #include "ngosen-ibus-host.h"
+#include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-typing-log.h"
@@ -14,6 +15,8 @@
 #include "ngosen-pointer.h"
 #include "ngosen-state.h"
 
+#include <glib/gi18n-lib.h>
+#include <algorithm>
 #include <atomic>
 #include <cstdlib>
 #include <cstring>
@@ -27,16 +30,53 @@ namespace {
         return instance;
     }
 
+    // What the toggle key last chose, shared by every field as in the fcitx5 edition.
+    bool englishOn = false;
+
     // Off, every word goes into the preedit; on, the core picks for each word whether it goes
     // straight into the field or into the preedit.
     ngosen::Mode typingMode() {
+        if (englishOn)
+            return ngosen::Mode::Off;
         return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
     }
+
+    const std::vector<ngosen::KeyChord>& toggleChords() {
+        static std::vector<ngosen::KeyChord> chords;
+        static unsigned                      generation = ~0U;
+        if (generation != resources().generation()) {
+            chords.clear();
+            for (const auto& key : resources().settings().toggleKeys) {
+                if (const auto chord = ngosen::parseToggleKey(key))
+                    chords.push_back(*chord);
+            }
+            generation = resources().generation();
+        }
+        return chords;
+    }
+
+    bool isToggleKey(guint keyval, guint state) {
+        const auto& chords = toggleChords();
+        return std::any_of(chords.begin(), chords.end(), [&](const ngosen::KeyChord& chord) { return ngosen::matchesKey(chord, keyval, state); });
+    }
+
+    // A tap of a modifier-only key such as Ctrl+Shift toggles on release, so Ctrl+Shift+T does not.
+    // A key with a letter such as Alt+Z toggles on press, and the app sees neither its press nor its release.
+    struct ToggleTap {
+        bool   armed        = false;
+        gint64 since        = 0;
+        guint  swallowedKey = 0;
+    };
+
+    // Longer than this is a hold, such as Ctrl+Shift with a click.
+    constexpr gint64 TapMicroseconds = 500000;
 
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
         std::unique_ptr<ngosen::TypingState> state;
         unsigned                             generation = 0;
+        ToggleTap                            tap;
+        bool                                 showsLanguage = false;
 
         // Only between words: a new engine would drop the word being typed.
         void applyNewSettings() {
@@ -71,6 +111,64 @@ namespace {
         return reinterpret_cast<NgoSenEngine*>(engine)->session;
     }
 
+    void showLanguage(IBusEngine* engine) {
+        IBusText* text = ibus_text_new_from_string(englishOn ? _("English") : _("Vietnamese"));
+        ibus_engine_update_auxiliary_text(engine, text, TRUE);
+    }
+
+    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
+
+    void toggleLanguage(IBusEngine* engine, Session& session) {
+        // The word ends in the mode it was typed in, and the core drops what it held for it.
+        session.state->commitBuffer();
+        session.state->resetAfterAppCommit(false);
+        englishOn = !englishOn;
+        ngosen::saveEnglishOn(resources().paths(), englishOn);
+        realMode = typingMode();
+        session.host->setDirectTyping(realMode == ngosen::Mode::Sen);
+        // As on focus-in: the per-field checks of Sen start over.
+        if (realMode == ngosen::Mode::Sen)
+            session.state->activate(ngosen::Mode::Sen, true);
+        NGOSEN_INFO("Toggle key: " << (englishOn ? "English" : "Vietnamese"));
+        showMenu(engine, resources().settings(), true);
+        showLanguage(engine);
+        session.showsLanguage = true;
+    }
+
+    bool isModifierKey(guint keyval) {
+        return (keyval >= IBUS_KEY_Shift_L && keyval <= IBUS_KEY_Hyper_R) || keyval == IBUS_KEY_ISO_Level3_Shift;
+    }
+
+    // True when the app must not see this key.
+    bool handleToggleKey(IBusEngine* engine, Session& session, guint keyval, guint state) {
+        ToggleTap& tap     = session.tap;
+        const bool release = (state & IBUS_RELEASE_MASK) != 0;
+        if (release && tap.swallowedKey != 0 && ibus_keyval_to_lower(keyval) == tap.swallowedKey) {
+            tap.swallowedKey = 0;
+            return true;
+        }
+        const bool matched  = isToggleKey(keyval, state);
+        const bool modifier = isModifierKey(keyval);
+        if (!release) {
+            if (matched && !modifier) {
+                tap.armed        = false;
+                tap.swallowedKey = ibus_keyval_to_lower(keyval);
+                toggleLanguage(engine, session);
+                return true;
+            }
+            // A held key repeats; the hold counts from the first press.
+            if (matched && !tap.armed)
+                tap.since = g_get_monotonic_time();
+            tap.armed = matched;
+            return false;
+        }
+        if (modifier && tap.armed && matched && g_get_monotonic_time() - tap.since <= TapMicroseconds)
+            toggleLanguage(engine, session);
+        if (modifier)
+            tap.armed = false;
+        return false;
+    }
+
     bool isPlainEnter(guint keyval, guint state) {
         constexpr guint modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_RELEASE_MASK;
         return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
@@ -81,9 +179,17 @@ namespace {
         if (session == nullptr)
             return FALSE;
         session->applyNewSettings();
+        if (session->showsLanguage) {
+            ibus_engine_hide_auxiliary_text(engine);
+            session->showsLanguage = false;
+        }
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
-        if (session->host->takesPassword())
+        if (session->host->takesPassword()) {
+            session->tap = {};
             return FALSE;
+        }
+        if (handleToggleKey(engine, *session, keyval, state))
+            return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
         if (isPlainEnter(keyval, state) && session->host->hasPreedit())
@@ -124,8 +230,8 @@ namespace {
     std::string shownStates;
 
     // clicked: the panel already flipped the item itself, so its state goes out even when unchanged.
-    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false) {
-        IBusPropList* menu = ngosen::newSettingsMenu(settings);
+    void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked) {
+        IBusPropList* menu = ngosen::newSettingsMenu(settings, englishOn);
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
         // GNOME Shell takes the whole menu only once after the engine is chosen, then single items.
@@ -180,6 +286,12 @@ namespace {
             ngosen::saveTypingLog(resources().recorder());
             return;
         }
+        if (g_strcmp0(name, ngosen::InputModeItem) == 0) {
+            // Checked means Vietnamese; a click that asks for the language in use changes nothing.
+            if (Session* session = sessionOf(engine); session != nullptr && (state == PROP_STATE_CHECKED) == englishOn)
+                toggleLanguage(engine, *session);
+            return;
+        }
         std::string key;
         std::string value;
         if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, key, value))
@@ -195,6 +307,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
+        session->tap = {};
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
         session->host->forgetReportedText();
@@ -220,6 +333,7 @@ namespace {
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
+        session->tap                 = {};
         if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
@@ -296,7 +410,8 @@ static void ngosen_engine_init(NgoSenEngine* self) {
 namespace ngosen {
 
     void addEngine(IBusFactory* factory) {
-        realMode = typingMode();
+        englishOn = readEnglishOn(resources().paths());
+        realMode  = typingMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
     }

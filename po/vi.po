@@ -14,6 +14,22 @@ msgid "Input Method"
 msgstr "Kiểu gõ"
 
 #: settings/ngosen_settings/options.py
+msgid "Switch Between English and Vietnamese"
+msgstr "Phím chuyển Anh/Việt"
+
+#: settings/ngosen_settings/options.py
+msgid "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+msgstr "Nhấn cùng lúc rồi thả ra; thanh trên cùng hiện V hoặc E. Super+Space vẫn đổi nguồn nhập như cũ."
+
+#: src/ngosen-ibus-menu.cpp src/ngosen-ibus-engine.cpp
+msgid "Vietnamese"
+msgstr "Tiếng Việt"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "English"
+msgstr "Tiếng Anh"
+
+#: settings/ngosen_settings/options.py
 msgid "Output Charset"
 msgstr "Bảng mã"
 
@@ -184,10 +200,6 @@ msgstr "Hai dấu cách ra dấu chấm, -- ra —"
 #: settings/ngosen_settings/pages.py
 msgid "The emoji picker and rules for each app"
 msgstr "Bảng chọn emoji và luật theo app"
-
-#: settings/ngosen_settings/pages.py
-msgid "Its own English/Vietnamese key, tapped like UniKey's Ctrl+Shift"
-msgstr "Phím chuyển Anh/Việt riêng, nhấp Ctrl+Shift như UniKey"
 
 #: settings/ngosen_settings/pages.py
 msgid "Vim mode for each app"

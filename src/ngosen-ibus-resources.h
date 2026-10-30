@@ -51,6 +51,9 @@ namespace ngosen {
         const IBusSettings& settings() const {
             return settings_;
         }
+        const SettingsPaths& paths() const {
+            return paths_;
+        }
         // Writes one setting and returns what the file now says. The file monitor reloads it
         // between words, as for a change the settings window makes.
         bool saveSetting(const std::string& key, const std::string& value, IBusSettings& saved) const;

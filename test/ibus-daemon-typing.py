@@ -739,6 +739,105 @@ class GnomeMenu:
         }
 
 
+english_mark = os.path.join(os.environ["HOME"], ".local", "state", "ngosen", "english")
+
+
+# Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
+def tap_ctrl_shift(app, extra=0, hold_ms=0):
+    ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
+    release = IBus.ModifierType.RELEASE_MASK
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl)
+    pump(hold_ms)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl | shift | release)
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra | ctrl | release)
+    pump(200)
+
+
+app = App("toggle")
+app.type("vieetj")
+tap_ctrl_shift(app)
+check(app.commits == ["việt"], "toggle: the word being typed is committed once", app.commits)
+check(os.path.exists(english_mark), "toggle: English is remembered", english_mark)
+app.type(" vieetj")
+check(
+    app.commits == ["việt"] and app.text == "việt vieetj", "toggle: English goes through", app.text
+)
+tap_ctrl_shift(app, IBus.ModifierType.MOD2_MASK)
+check(not os.path.exists(english_mark), "toggle: a tap with NumLock on switches back", english_mark)
+app.type(" vieetj ")
+check(app.text == "việt vieetj việt ", "toggle: Vietnamese again", app.text)
+app.close()
+
+app = App("toggle-not-a-tap")
+ctrl_shift = IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK
+app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, IBus.ModifierType.CONTROL_MASK)
+app.key(IBus.KEY_T, ctrl_shift)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl_shift | IBus.ModifierType.RELEASE_MASK)
+app.ic.process_key_event(
+    IBus.KEY_Control_L, 0, IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.RELEASE_MASK
+)
+pump(200)
+check(not os.path.exists(english_mark), "toggle: Ctrl+Shift+T is not a tap", english_mark)
+tap_ctrl_shift(app, hold_ms=800)
+check(not os.path.exists(english_mark), "toggle: a long hold is not a tap", english_mark)
+app.close()
+
+app = App("toggle-password", purpose=IBus.InputPurpose.PASSWORD)
+tap_ctrl_shift(app)
+check(not os.path.exists(english_mark), "toggle: nothing in a password field", english_mark)
+app.close()
+
+# Each settings change rebuilds the engine, which must keep typing English.
+app = App("toggle-settings")
+tap_ctrl_shift(app)
+set_setting("SpellCheck", "True")
+app.type("vieetj ")
+check(
+    app.text == "vieetj " and app.commits == [],
+    "toggle: English stays after a settings change",
+    app.text,
+)
+app.close()
+app = App("toggle-new-field")
+app.type("vieetj ")
+check(app.text == "vieetj ", "toggle: English in a field opened after the switch", app.text)
+tap_ctrl_shift(app)
+app.close()
+
+set_setting("DirectTyping", "True")
+app = App("toggle-direct")
+app.type("vieetj")
+tap_ctrl_shift(app)
+app.type(" abc")
+check(app.text == "việt abc", "toggle: a word typed straight in stays once", app.text)
+tap_ctrl_shift(app)
+app.close()
+set_setting("DirectTyping", "False")
+
+set_setting("ToggleKey", "Alt+z")
+app = App("toggle-alt-z")
+app.type("vieetj")
+app.key(IBus.KEY_z, IBus.ModifierType.MOD1_MASK)
+check(os.path.exists(english_mark), "toggle: Alt+Z switches on the press", english_mark)
+check(app.commits == ["việt"], "toggle: Alt+Z commits the word being typed once", app.commits)
+check("z" not in app.passed, "toggle: the app never sees Alt+Z", app.passed)
+app.key(IBus.KEY_z, IBus.ModifierType.MOD1_MASK)
+tap_ctrl_shift(app)
+check(
+    not os.path.exists(english_mark),
+    "toggle: Ctrl+Shift does nothing once Alt+Z is set",
+    english_mark,
+)
+app.close()
+set_setting("ToggleKey", "")
+app = App("toggle-off")
+tap_ctrl_shift(app)
+check(not os.path.exists(english_mark), "toggle: no key when turned off", english_mark)
+app.close()
+set_setting("ToggleKey", "Control+Shift_L Control+Shift_R Shift+Control_L Shift+Control_R")
+
 # A click in the GNOME input source menu, which the panel sends as a property activation.
 menus = []
 menu_labels = {}
@@ -754,6 +853,13 @@ app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_it
 app.ic.connect("register-properties", lambda _ic, props: menu_labels.update(labels(props)))
 app.ic.connect("register-properties", lambda _ic, props: gnome.register(props))
 app.ic.connect("update-property", lambda _ic, prop: gnome.update(prop))
+symbols = []
+app.ic.connect(
+    "update-property",
+    lambda _ic, prop: (
+        symbols.append(prop.get_symbol().get_text()) if prop.get_key() == "InputMode" else None
+    ),
+)
 app.ic.focus_out()
 app.ic.focus_in()
 pump(300)
@@ -801,6 +907,24 @@ check(
     gnome.checked(),
 )
 set_setting("EnableMacro", "True")
+tap_ctrl_shift(app)
+check(symbols[-1:] == ["E"], "menu: the top bar shows E in English", symbols)
+check("InputMode" not in gnome.checked(), "menu: the Vietnamese item is unchecked", gnome.checked())
+app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
+pump(500)
+check(symbols[-1:] == ["V"], "menu: clicking the item switches back", symbols)
+check(not os.path.exists(english_mark), "menu: the click is remembered", english_mark)
+before = len(app.commits)
+app.type("vie65t")
+app.ic.property_activate("InputMode", IBus.PropState.UNCHECKED)
+pump(500)
+check(
+    app.commits[before:] == ["việt"],
+    "menu: the click commits the word being typed once",
+    app.commits,
+)
+app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
+pump(500)
 app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
 pump(500)
 state_dir = os.path.join(os.environ["HOME"], ".local", "state", "ngosen")

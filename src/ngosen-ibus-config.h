@@ -25,6 +25,8 @@ namespace ngosen {
     std::string              escapeIniValue(const std::string& value);
 
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
+    // The values of [name], keyed 0, 1, …, as fcitx5 stores a key list.
+    std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name);
 
     // The names the Vietnamese engine knows, for the settings window to offer.
     const std::vector<std::string>& inputMethodNames();
@@ -36,6 +38,8 @@ namespace ngosen {
         bool    enableCustomKeymap = false;
         // Straight into fields that can delete around the cursor, underlined elsewhere.
         bool directTyping = false;
+        // Switches between English and Vietnamese; empty when the user turned the key off.
+        std::vector<std::string> toggleKeys;
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.
@@ -52,6 +56,7 @@ namespace ngosen {
         std::string          dataDir;        // ~/.local/share/ngosen
         std::string          fcitxConfigDir; // ~/.config/fcitx5/conf
         std::string          fcitxDataDir;   // ~/.local/share/fcitx5/ngosen
+        std::string          stateDir;       // ~/.local/state/ngosen
 
         static SettingsPaths fromEnvironment();
         std::string          settingsFile() const;
@@ -60,6 +65,8 @@ namespace ngosen {
         std::string          dictionaryFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
+        // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
+        std::string englishMark() const;
     };
 
     bool readFile(const std::string& path, std::string& content);
@@ -71,6 +78,9 @@ namespace ngosen {
     // On the first run, copies the fcitx5 edition's settings, or writes the defaults when it has none.
     // Never overwrites a file. The import is marked done last, so a run stopped halfway is finished
     // by the next one. Returns false when a write failed.
+    bool readEnglishOn(const SettingsPaths& paths);
+    bool saveEnglishOn(const SettingsPaths& paths, bool on);
+
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write = writeFileAtomically);
 
 } // namespace ngosen

@@ -6,6 +6,7 @@
 #include "ngosen-ibus-config.h"
 
 #include "bamboo-core.h"
+#include "ngosen-ibus-keys.h"
 #include "ngosen-log.h"
 
 #include <algorithm>
@@ -70,6 +71,36 @@ namespace ngosen {
 
         bool contains(const std::vector<std::string>& list, const std::string& value) {
             return std::find(list.begin(), list.end(), value) != list.end();
+        }
+
+        // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
+        // in its own section, which is read when importing its settings.
+        const char* const        ToggleKeyName = "ToggleKey";
+
+        std::vector<std::string> splitWords(const std::string& text) {
+            std::istringstream       words(text);
+            std::vector<std::string> out;
+            for (std::string word; words >> word;)
+                out.push_back(word);
+            return out;
+        }
+
+        // fcitx5 allows a single key, which the IBus edition does not: a bare Shift would switch on every
+        // capital. A list with only such keys falls back to the default; an empty one turns the key off.
+        std::vector<std::string> readToggleKeys(const IniFile& ini) {
+            std::vector<std::string> keys;
+            if (const auto line = ini.top.find(ToggleKeyName); line != ini.top.end())
+                keys = splitWords(line->second);
+            else if (ini.sections.count(ToggleKeyName) != 0)
+                keys = iniKeyList(ini, ToggleKeyName);
+            else
+                return defaultToggleKeys();
+            std::vector<std::string> usable;
+            for (const auto& key : keys) {
+                if (parseToggleKey(key))
+                    usable.push_back(key);
+            }
+            return usable.empty() && !keys.empty() ? defaultToggleKeys() : usable;
         }
 
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
@@ -181,9 +212,21 @@ namespace ngosen {
         }
     }
 
+    std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name) {
+        std::vector<std::string> keys;
+        const auto               section = ini.sections.find(name);
+        if (section == ini.sections.end())
+            return keys;
+        // fcitx5 stops at the first missing index.
+        for (auto it = section->second.find("0"); it != section->second.end(); it = section->second.find(std::to_string(keys.size())))
+            keys.push_back(it->second);
+        return keys;
+    }
+
     IBusSettings defaultSettings() {
         IBusSettings settings;
-        auto&        o         = settings.options;
+        settings.toggleKeys    = defaultToggleKeys();
+        auto& o                = settings.options;
         o.retypeAfterSwitch    = false;
         o.retoneSelection      = false;
         o.enableMacroInOffMode = false;
@@ -218,6 +261,7 @@ namespace ngosen {
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
+        settings.toggleKeys = readToggleKeys(ini);
         return settings;
     }
 
@@ -245,6 +289,10 @@ namespace ngosen {
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
+        std::string toggleKeys;
+        for (const auto& key : settings.toggleKeys)
+            toggleKeys += (toggleKeys.empty() ? "" : " ") + key;
+        line(ToggleKeyName, toggleKeys);
         return out.str();
     }
 
@@ -279,7 +327,7 @@ namespace ngosen {
     SettingsPaths SettingsPaths::fromEnvironment() {
         const std::string config = g_get_user_config_dir();
         const std::string data   = g_get_user_data_dir();
-        return {config + "/ngosen", data + "/ngosen", config + "/fcitx5/conf", data + "/fcitx5/ngosen"};
+        return {config + "/ngosen", data + "/ngosen", config + "/fcitx5/conf", data + "/fcitx5/ngosen", std::string(g_get_user_state_dir()) + "/ngosen"};
     }
 
     std::string SettingsPaths::settingsFile() const {
@@ -296,6 +344,25 @@ namespace ngosen {
     }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
+    }
+
+    std::string SettingsPaths::englishMark() const {
+        return stateDir + "/english";
+    }
+
+    bool readEnglishOn(const SettingsPaths& paths) {
+        return fileExists(paths.englishMark());
+    }
+
+    bool saveEnglishOn(const SettingsPaths& paths, bool on) {
+        // The typing log shares the folder, which only the user may read.
+        if (on)
+            return g_mkdir_with_parents(paths.stateDir.c_str(), 0700) == 0 && writeFileAtomically(paths.englishMark(), "");
+        std::error_code error;
+        std::filesystem::remove(paths.englishMark(), error);
+        if (error)
+            NGOSEN_WARN("Cannot remove " << paths.englishMark() << ": " << error.message());
+        return !error;
     }
 
     bool readFile(const std::string& path, std::string& content) {
