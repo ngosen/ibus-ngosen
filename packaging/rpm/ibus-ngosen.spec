@@ -16,6 +16,8 @@ BuildRequires:  python3
 BuildRequires:  gettext
 
 Requires:       ibus >= 1.5.27
+# Loaded with dlopen to watch clicks on X11, which the automatic requires miss.
+Requires:       libxcb
 Requires:       python3-gobject
 Requires:       gtk4
 Requires:       libadwaita >= 1.5
@@ -49,6 +51,8 @@ with. The word being typed is underlined until it is done.
 %{_datadir}/metainfo/io.github.ngosen.IBusNgoSen.metainfo.xml
 %{_datadir}/icons/hicolor/scalable/apps/ibus-ngosen.svg
 %{_datadir}/icons/hicolor/scalable/apps/io.github.ngosen.IBusNgoSen.svg
+%{_prefix}/lib/environment.d/60-ibus-ngosen.conf
+%config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
 * Fri Oct 30 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.2-1

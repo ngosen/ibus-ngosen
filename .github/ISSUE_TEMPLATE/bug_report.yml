@@ -1,0 +1,147 @@
+name: Báo lỗi
+description: Báo lỗi khi gõ bằng Ngó Sen cho GNOME (ibus-ngosen).
+labels: ['lỗi']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Form này dành cho bản IBus (`ibus-ngosen`). Lỗi của bản fcitx5 báo ở [kho ngosen](https://github.com/ngosen/ngosen/issues/new/choose).
+        Nếu cài xong mà không thấy hay không bật được Ngó Sen, dùng form "Lỗi cài đặt hoặc cập nhật".
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bạn gặp lỗi gì?
+      description: Ghi đúng các phím đã gõ, kết quả thực tế và kết quả mong đợi. Nếu lỗi không liên quan đến gõ chữ, ghi cách làm xuất hiện lỗi.
+      placeholder: |
+        Phím đã gõ: tieengs vieetj
+        Kết quả thực tế:
+        Kết quả mong đợi: tiếng việt
+    validations:
+      required: true
+
+  - type: input
+    id: app
+    attributes:
+      label: App gặp lỗi
+      description: Ghi tên app và cách cài (Flatpak, Snap, gói của distro, AppImage). Nếu là trang web, ghi trình duyệt và trang web.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Cách gõ
+      description: Xem trong menu nguồn nhập trên thanh trên cùng, mục "Gõ Sen ở app cho phép (thử nghiệm)".
+      options:
+        - Gạch chân (mặc định)
+        - Gõ thẳng ("Gõ Sen ở app cho phép" đang bật)
+        - Không rõ
+    validations:
+      required: true
+
+  - type: input
+    id: input_type
+    attributes:
+      label: Kiểu gõ
+      placeholder: Telex, VNI, VIQR, ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequency
+    attributes:
+      label: Lỗi xảy ra bao lâu một lần?
+      options:
+        - Lần nào cũng bị
+        - Thỉnh thoảng
+        - Mới bị một lần
+
+  - type: textarea
+    id: typing_log
+    attributes:
+      label: Nhật ký gõ
+      description: |
+        Đây là thông tin hữu ích nhất khi Ngó Sen gõ sai chữ. Gõ một câu test; ngay sau khi lỗi xảy ra, chọn "Lưu nhật ký gõ" trong menu nguồn nhập trên thanh trên cùng.
+        File `~/.local/state/ngosen/typing-<ngày>-<giờ>.log` lưu các phím gần nhất, những gì Ngó Sen gửi cho app và app báo lại.
+        File chứa nội dung vừa gõ (không ghi nội dung trong ô mật khẩu). Đọc file trước khi chia sẻ, rồi kéo file vào ô này.
+
+  - type: textarea
+    id: setup
+    attributes:
+      label: Thiết lập IBus
+      description: |
+        Chạy trong terminal rồi dán toàn bộ kết quả:
+        ```sh
+        ibus version; ibus engine; echo "$XDG_SESSION_TYPE $XDG_CURRENT_DESKTOP"
+        gsettings get org.gnome.desktop.input-sources sources
+        env | grep -E 'IM_MODULE|XMODIFIERS'
+        ```
+      render: shell
+
+  - type: input
+    id: version
+    attributes:
+      label: Version ibus-ngosen
+      description: Xem ở "Cài đặt Ngó Sen" → "Giới thiệu", hoặc chạy `dpkg -l ibus-ngosen` / `rpm -q ibus-ngosen` / `pacman -Q ibus-ngosen`.
+      placeholder: 1.1.2-1
+    validations:
+      required: true
+
+  - type: input
+    id: distro
+    attributes:
+      label: Distro
+      description: Ghi tên và version distro.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: desktop_env
+    attributes:
+      label: Desktop
+      options:
+        - GNOME
+        - Xfce
+        - Cinnamon
+        - MATE
+        - Khác
+
+  - type: dropdown
+    id: session
+    attributes:
+      label: Session
+      options:
+        - Wayland
+        - X11
+        - Không rõ
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install_method
+    attributes:
+      label: Cách cài Ngó Sen
+      options:
+        - Lệnh cài một dòng (install.sh --ibus)
+        - Kho COPR (dnf) hoặc repo zypper
+        - Gói tải từ trang Releases
+        - Tự build từ source
+        - Khác
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Log của bộ gõ
+      description: |
+        Khi Ngó Sen treo, mất khỏi menu hoặc không gõ được nữa, chạy trong terminal rồi dán kết quả:
+        ```sh
+        journalctl -b -t ibus-engine-ngosen --no-pager | tail -100
+        ```
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Thông tin thêm
+      description: Ảnh chụp màn hình, video hoặc version cũ từng dùng không gặp lỗi.

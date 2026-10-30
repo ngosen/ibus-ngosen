@@ -16,7 +16,8 @@ Homepage: https://github.com/ngosen/ibus-ngosen
 
 Package: ibus-ngosen
 Architecture: any
-Depends: ibus (>= 1.5.27), ibus-gtk3, ibus-gtk4, python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1 (>= 1.5), ${misc:Depends}, ${shlibs:Depends}
+# libxcb and libxcb-xinput are loaded with dlopen to watch clicks on X11, so shlibs cannot see them.
+Depends: ibus (>= 1.5.27), ibus-gtk3, ibus-gtk4, libxcb1, libxcb-xinput0, python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1 (>= 1.5), ${misc:Depends}, ${shlibs:Depends}
 Description: Ngó Sen for GNOME, a Vietnamese input method for IBus
  Ngó Sen for GNOME types Vietnamese through IBus, the input method GNOME
  comes with. The word being typed is underlined until it is done.

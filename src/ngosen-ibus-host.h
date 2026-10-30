@@ -8,12 +8,16 @@
 #include "ngosen-host.h"
 #include "ngosen-key.h"
 
+#include <atomic>
 #include <functional>
 #include <ibus.h>
 #include <memory>
 #include <string>
 
 namespace ngosen {
+
+    // Set while the X server reports mouse clicks to the engine, so a reset is not all that tells one.
+    extern std::atomic<bool> clicksWatched;
 
     // The field as the IBus engine sees it. IBus tells the engine about the field piece by piece;
     // the engine passes each piece on.
@@ -23,6 +27,13 @@ namespace ngosen {
 
         void setFocus(bool focus) {
             focus_ = focus;
+        }
+        void setDirectTyping(bool on) {
+            direct_ = on;
+        }
+        // GNOME Shell keeps one input context for every field, so the next field starts with no text.
+        void forgetReportedText() {
+            reported_ = Surrounding();
         }
         void setClient(std::string client) {
             client_ = std::move(client);
@@ -38,18 +49,7 @@ namespace ngosen {
         bool hasPreedit() const {
             return !preedit_.empty();
         }
-        void setDirectTyping(bool on) {
-            directTyping_ = on;
-        }
-        void setReportedText(const gchar* text, guint cursor);
-        // The report puts the cursor exactly where an earlier report had it, right after the word we type.
-        bool backAfterTypedWord() const {
-            return backAfterTypedWord_;
-        }
-        // The app moved the cursor or took focus away, so the word in it is no longer ours to change.
-        void forgetTypedWord() {
-            typed_.clear();
-        }
+        void                         setReportedText(const gchar* text, guint cursor, guint anchor);
 
         void                         commitText(const std::string& text) override;
         void                         forwardKey(EditKey key, bool release, uint32_t time) override;
@@ -81,25 +81,22 @@ namespace ngosen {
 
         std::string                  keyText(uint32_t sym) const override;
 
+        bool                         throughShell() const;
+        // Typing straight in with forwarded keys, in a field that claims to report its text.
+        bool typesWithKeysBesideText() const;
+
       private:
-        void        replaceTypedWord(const std::string& word);
-        glong       countToDelete(size_t& from) const;
+        bool        reportsText() const;
 
         IBusEngine* engine_;
         bool        focus_   = false;
+        bool        direct_  = false;
         guint       purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
         guint       hints_   = IBUS_INPUT_HINT_NONE;
         std::string client_;
-        std::string reportedBeforeCursor_;
-        std::string wordEndBeforeCursor_;
-        bool        backAfterTypedWord_ = false;
+        Surrounding reported_;
         std::string preedit_;
         std::string status_;
-        bool        directTyping_   = false;
-        bool        direct_         = false;
-        bool        preeditVisible_ = false;
-        // The word as it now stands in the app, when it goes in without a preedit.
-        std::string typed_;
     };
 
     class IBusKeyPress final : public KeyPress {

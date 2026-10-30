@@ -35,6 +35,11 @@ Super+Space.
 - **Match surrounding code.** clang-format (`.clang-format`), `camelCase` functions, `snake_case_`
   members, functions under ~50 lines. Run clang-format before pushing; CI fails on any diff.
 - **Build as C++17.** Ubuntu 24.04 is the oldest system supported.
+- **Installing the package is all a user does.** As with ibus-unikey, the package plus adding the input
+  source in GNOME Settings must be enough: no settings to edit, no `input` group or other permission, no
+  service to enable. A library the engine loads at run time is still a dependency in every package
+  (`packaging/debian/control`, both RPM specs, `packaging/arch/PKGBUILD`), and without it the engine
+  falls back to a safe behaviour instead of failing.
 - **A bug fix comes with a test that fails without it.** Check this by undoing the fix and watching that
   test, and only that test, fail.
 - **Reuse one build directory.** Rebuild in `build/`; a new directory per experiment wears out the SSD.
