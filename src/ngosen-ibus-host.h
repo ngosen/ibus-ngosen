@@ -78,6 +78,8 @@ namespace ngosen {
         std::string                  keyText(uint32_t sym) const override;
 
         bool                         throughShell() const;
+        // Typing straight in with forwarded keys, in a field that claims to report its text.
+        bool typesWithKeysBesideText() const;
 
       private:
         bool        reportsText() const;

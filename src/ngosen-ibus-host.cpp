@@ -120,6 +120,10 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
+    bool IBusHost::typesWithKeysBesideText() const {
+        return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+    }
+
     bool IBusHost::reportsText() const {
         return client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }

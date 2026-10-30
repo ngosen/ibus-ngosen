@@ -1,6 +1,7 @@
 # Types into the engine through a real ibus-daemon, as an IBus client that keeps the text a simple
 # app would show. The daemon commits the preedit itself on reset and focus out, as an app does when
 # the engine asks for it. Run by run-with-daemon.sh.
+import ctypes
 import glob
 import os
 import sys
@@ -34,6 +35,25 @@ def connect():
 
 
 bus = connect()
+
+xlib = ctypes.CDLL("libX11.so.6")
+xtst = ctypes.CDLL("libXtst.so.6")
+xlib.XOpenDisplay.restype = ctypes.c_void_p
+xlib.XOpenDisplay.argtypes = [ctypes.c_char_p]
+xlib.XFlush.argtypes = [ctypes.c_void_p]
+xtst.XTestFakeButtonEvent.argtypes = [ctypes.c_void_p, ctypes.c_uint, ctypes.c_int, ctypes.c_ulong]
+# The private X server run-with-daemon.sh starts, where the engine watches clicks.
+display = xlib.XOpenDisplay(None)
+if not display:
+    sys.exit("cannot open the X display")
+
+
+def click():
+    xtst.XTestFakeButtonEvent(display, 1, True, 0)
+    xtst.XTestFakeButtonEvent(display, 1, False, 0)
+    xlib.XFlush(display)
+    pump(100)
+
 
 
 class App:
@@ -575,6 +595,7 @@ app.close()
 # A click on X11 resets the context and moves the cursor the app reports.
 app = App("gtk3-im:gedit")
 app.type("xin vie")
+click()
 app.ic.reset()
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
 pump(100)
@@ -582,9 +603,32 @@ app.type("e")
 check(app.text == "xin viee", "direct, X11 app: a click mid-word deletes nothing", app.text)
 app.close()
 
+app = App("gtk3-im:gedit")
+app.type("xin vie")
+click()
+app.ic.reset()
+app.text = "abc def"
+app.report()
+pump(100)
+app.type("e")
+check(app.text == "abc defe", "direct, X11 app: a click onto another line deletes nothing", app.text)
+app.close()
+
+# VTE claims surrounding text and never reports any.
+app = App("gtk3-im:gnome-terminal-server")
+app.report = lambda: None
+app.type("xin vie")
+click()
+app.ic.reset()
+pump(100)
+app.type("e")
+check(app.text == "xin viee", "direct, terminal claiming text: a click deletes nothing", app.text)
+app.close()
+
 # Without the text, the reset is all that tells a click.
 app = App("gtk3-im:xterm", surrounding=False)
 app.type("xin vie")
+click()
 app.ic.reset()
 pump(100)
 app.type("e")

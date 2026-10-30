@@ -11,12 +11,19 @@
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
+#include "ngosen-pointer.h"
 #include "ngosen-state.h"
 
+#include <atomic>
+#include <cstdlib>
+#include <cstring>
 #include <memory>
 #include <string>
 
 namespace {
+
+    // Set once the X server reports mouse clicks to the engine, so a reset is not all that tells one.
+    std::atomic<bool>      clicksWatched{false};
 
     ngosen::IBusResources& resources() {
         static ngosen::IBusResources instance(ngosen::SettingsPaths::fromEnvironment());
@@ -211,9 +218,9 @@ namespace {
         if (session == nullptr)
             return;
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
-        // straight in survives that where a click still shows in the text the app reports.
+        // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
-        if (realMode == ngosen::Mode::Sen && !host.throughShell() && host.field().surroundingText && !host.hasPreedit() && !session->state->isEmptyHistory())
+        if (clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
     }
@@ -292,6 +299,23 @@ namespace ngosen {
         realMode = typingMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
+    }
+
+    std::thread watchClicks(const std::atomic<bool>& stop) {
+        // On Wayland the X server sees clicks on X11 windows only, and a missed click would let a
+        // reset be ignored after the cursor moved.
+        const char* wayland = std::getenv("WAYLAND_DISPLAY");
+        const char* session = std::getenv("XDG_SESSION_TYPE");
+        if ((wayland != nullptr && *wayland != 0) || (session != nullptr && std::strcmp(session, "wayland") == 0))
+            return {};
+        return std::thread([&stop] {
+            clicksWatched.store(true, std::memory_order_release);
+            watchX11PointerClicks(stop, [] {
+                needEngineReset.store(true, std::memory_order_release);
+                g_mouse_clicked.store(true, std::memory_order_release);
+            });
+            clicksWatched.store(false, std::memory_order_release);
+        });
     }
 
 } // namespace ngosen
