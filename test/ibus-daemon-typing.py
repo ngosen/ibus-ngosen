@@ -586,6 +586,13 @@ check(app.text == "việt ", "direct, X11 app: the word", app.text)
 check(app.preedits == [], "direct, X11 app: no underline", app.preedits)
 app.close()
 
+# Chromium and Electron report no text on X11.
+app = App("gtk3-im:google-chrome", surrounding=False)
+app.type("vieetj ")
+check(app.text == "việt ", "direct, X11 app without text: the word", app.text)
+check("việt" in app.preedits, "direct, X11 app without text: underlined", app.preedits)
+app.close()
+
 app = App("gtk3-im:firefox", resets_after_key=True)
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, X11 app resetting after each key: the words", app.text)
@@ -632,9 +639,9 @@ app.type("xin vie")
 click()
 app.ic.reset()
 pump(100)
-app.type("e")
+app.type("e ")
 check(
-    app.text == "xin viee",
+    app.text == "xin viee ",
     "direct, X11 app without text: a click mid-word deletes nothing",
     app.text,
 )

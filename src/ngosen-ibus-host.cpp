@@ -137,11 +137,12 @@ namespace ngosen {
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
         f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
-        // Keys an engine forwards are dropped by GNOME 50.0 to 50.3, so the core deletes only through
-        // the text, and falls back to the preedit where it cannot.
-        f.sendsNoKeys     = throughShell();
-        f.preeditFallback = throughShell() && f.preedit;
-        f.password        = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        // GNOME 50.0 to 50.3 drop the keys an engine forwards. On X11, Chromium and Electron report no
+        // text and show the preedit well, while the Chromium address bar loses focus mid-deletion.
+        const bool preeditOnly = throughShell() || (direct_ && !f.surroundingText);
+        f.sendsNoKeys          = preeditOnly;
+        f.preeditFallback      = preeditOnly && f.preedit;
+        f.password             = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 
