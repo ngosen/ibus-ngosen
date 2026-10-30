@@ -8,8 +8,8 @@ không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn
 
 Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là cách gõ mà IBus và GNOME hỗ trợ chính, nên chạy
 được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép (thử nghiệm)"
-(mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở app X11 và ở những app trên GNOME Wayland báo được
-chữ quanh con trỏ. Trên Wayland, chữ đầu tiên trong ô còn trống, và chữ bắt đầu giữa một chữ khác, vẫn được
+(mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ quanh con trỏ (trên X11 là
+app GTK, Qt, Firefox và terminal; Chrome và app Electron vẫn gạch chân). Trên Wayland, chữ đầu tiên trong ô còn trống, và chữ bắt đầu giữa một chữ khác, vẫn được
 gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
 
 Nếu cần Cứu chữ, Cứu dấu, phím chuyển Anh/Việt riêng, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim

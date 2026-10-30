@@ -12,8 +12,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - "Gõ Sen ở app cho phép" giờ chạy bằng lõi Ngó Sen như bản fcitx5: mỗi chữ tự chọn gõ thẳng hay gạch chân,
   chữ đầu tiên trong ô còn trống vẫn gạch chân; lõi `ngosen-1.7.2-1` (#41).
-- "Gõ Sen ở app cho phép" giờ gõ thẳng cả ở app X11 (GTK, Firefox, Chrome, terminal) và vẫn tự viết hoa đầu
-  dòng ở đó, thay vì gạch chân mọi chữ (#44).
+- "Gõ Sen ở app cho phép" giờ gõ thẳng cả ở app X11 (GTK, Qt, Firefox, terminal) và vẫn tự viết hoa đầu
+  dòng ở đó, thay vì gạch chân mọi chữ; bấm chuột giữa chữ không xoá chữ khác. Chrome và app Electron vẫn
+  gạch chân (#44).
 
 ## [1.1.2-1] — 30/10/2026
 
