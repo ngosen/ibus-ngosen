@@ -50,10 +50,6 @@ Changes to how words are typed (tone marks, auto-correction, Gõ Sen) belong in 
 - `patch`: fixes for the current release, shipped as X.Y.Z+1 and then merged into `next`.
 - If unsure, target `next`; the maintainer will retarget if needed.
 
-## Code of conduct
-
-Everyone taking part follows the [Code of Conduct](CODE_OF_CONDUCT.en.md).
-
 ## License
 
 By contributing, you agree that your code is licensed under the project's license (GPL-3.0-or-later).
