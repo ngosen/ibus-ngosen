@@ -355,6 +355,20 @@ with open(settings_path) as f:
         settings_path,
     )
 
+# Without a click watcher a reset may be a click, so X11 apps keep the preedit.
+if no_x:
+    set_setting("DirectTyping", "True")
+    app = App("gtk3-im:firefox", resets_after_key=True)
+    app.type("xin vieetj ")
+    check(
+        app.text == "xin việt ",
+        "no click watcher, X11 app resetting after each key: the words",
+        app.text,
+    )
+    check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
+    app.close()
+    sys.exit(1 if failures else 0)
+
 open(log_path, "w").close()
 write_file(os.path.join(config_dir, "notes.txt"), "not a setting\n")
 app = App("stray file")
@@ -444,19 +458,6 @@ with open(log_path) as f:
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 set_setting("DirectTyping", "True")
-
-# Without a click watcher a reset may be a click, so X11 apps keep the preedit.
-if no_x:
-    app = App("gtk3-im:firefox", resets_after_key=True)
-    app.type("xin vieetj ")
-    check(
-        app.text == "xin việt ",
-        "no click watcher, X11 app resetting after each key: the words",
-        app.text,
-    )
-    check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
-    app.close()
-    sys.exit(1 if failures else 0)
 
 
 # An empty field has reported no text yet, so the core underlines its first word.
