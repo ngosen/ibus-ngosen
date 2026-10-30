@@ -6,13 +6,32 @@ import glob
 import os
 import sys
 import time
+import warnings
 
 import gi
 
 gi.require_version("IBus", "1.0")
-from gi.repository import GLib, IBus  # noqa: E402
+from gi.repository import GLib, GObject, IBus  # noqa: E402
 
 failures = 0
+
+# PyGObject reports GLib criticals as Python warnings. One here means the test touched a freed
+# object, which only sometimes crashes, so it fails every time instead.
+glib_warnings = []
+warnings.showwarning = lambda message, *_args, **_kwargs: glib_warnings.append(str(message))
+
+# IBus checks the text or property it passed to a signal once the handlers return, and frees it if
+# it is still floating. PyGObject takes that floating reference and drops it with the Python
+# object, so the check would read freed memory unless the test keeps the object.
+kept = []
+
+
+def listen(ic, signal, handler):
+    def keep(*args):
+        kept.extend(arg for arg in args if isinstance(arg, GObject.Object) and arg is not ic)
+        return handler(*args)
+
+    ic.connect(signal, keep)
 
 
 def pump(ms):
@@ -92,16 +111,16 @@ class App:
         if surrounding:
             caps |= IBus.Capabilite.SURROUNDING_TEXT
         self.ic.set_capabilities(caps)
-        self.ic.connect("commit-text", self.on_commit)
-        self.ic.connect("delete-surrounding-text", self.on_delete)
-        self.ic.connect("require-surrounding-text", self.on_require)
-        self.ic.connect("forward-key-event", self.on_forward)
+        listen(self.ic, "commit-text", self.on_commit)
+        listen(self.ic, "delete-surrounding-text", self.on_delete)
+        listen(self.ic, "require-surrounding-text", self.on_require)
+        listen(self.ic, "forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
-            self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
+            listen(self.ic, "update-preedit-text-with-mode", self.on_preedit_with_mode)
         else:
-            self.ic.connect("update-preedit-text", self.on_preedit)
-        self.ic.connect("hide-preedit-text", self.on_hide_preedit)
+            listen(self.ic, "update-preedit-text", self.on_preedit)
+        listen(self.ic, "hide-preedit-text", self.on_hide_preedit)
         self.ic.set_content_type(purpose, hints)
         self.ic.focus_in()
         # An input context of a plain client cannot pick its own engine.
@@ -226,6 +245,15 @@ def check(ok, what, got):
     if not ok:
         failures += 1
         print(f"FAIL {what}: {got!r}")
+
+
+def finish():
+    check(
+        glib_warnings == [], "GLib warnings", glib_warnings[:3] + [f"{len(glib_warnings)} in all"]
+    )
+    if failures == 0:
+        print("all IBus daemon checks passed")
+    sys.exit(1 if failures else 0)
 
 
 app = App("space")
@@ -367,7 +395,7 @@ if no_x:
     )
     check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
     app.close()
-    sys.exit(1 if failures else 0)
+    finish()
 
 open(log_path, "w").close()
 write_file(os.path.join(config_dir, "notes.txt"), "not a setting\n")
@@ -750,17 +778,17 @@ app.ic.set_capabilities(
     | IBus.Capabilite.SURROUNDING_TEXT
     | IBus.Capabilite.PROPERTY
 )
-app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
-app.ic.connect("register-properties", lambda _ic, props: menu_labels.update(labels(props)))
-app.ic.connect("register-properties", lambda _ic, props: gnome.register(props))
-app.ic.connect("update-property", lambda _ic, prop: gnome.update(prop))
+listen(app.ic, "register-properties", lambda _ic, props: menus.append(checked_items(props)))
+listen(app.ic, "register-properties", lambda _ic, props: menu_labels.update(labels(props)))
+listen(app.ic, "register-properties", lambda _ic, props: gnome.register(props))
+listen(app.ic, "update-property", lambda _ic, prop: gnome.update(prop))
 app.ic.focus_out()
 app.ic.focus_in()
 pump(300)
 check(gnome.states is not None, "menu: GNOME gets the menu", gnome.states)
 # GNOME Shell rebuilds its menu on each item update, which stalls it when every focus change sends them.
 updates = []
-app.ic.connect("update-property", lambda _ic, prop: updates.append(prop.get_key()))
+listen(app.ic, "update-property", lambda _ic, prop: updates.append(prop.get_key()))
 for _ in range(3):
     app.ic.focus_out()
     app.ic.focus_in()
@@ -812,7 +840,4 @@ if saved_logs:
     modes = (os.stat(state_dir).st_mode & 0o777, os.stat(saved_logs[0]).st_mode & 0o777)
     check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
 app.close()
-
-if failures == 0:
-    print("all IBus daemon checks passed")
-sys.exit(1 if failures else 0)
+finish()
