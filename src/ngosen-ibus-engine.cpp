@@ -211,11 +211,6 @@ namespace {
             session->state->resetAfterAppCommit(false);
     }
 
-    // The client sends an engine the text around the cursor only after the engine asks for it here.
-    void enable(IBusEngine* engine) {
-        ibus_engine_get_surrounding_text(engine, nullptr, nullptr, nullptr);
-    }
-
     void disable(IBusEngine* engine) {
         focusOut(engine);
     }
@@ -244,12 +239,13 @@ namespace {
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
     }
 
-    // The factory's own engines never get focus_in_id, which names the app.
+    // The factory's own engines never get focus_in_id, which names the app. GNOME Shell sends the text
+    // around the cursor only after a request, which active-surrounding-text makes IBus send on each focus-in.
     IBusEngine* createEngine(IBusFactory* factory, const gchar* name, gpointer /*data*/) {
         static guint id     = 0;
         gchar*       path   = g_strdup_printf("/org/freedesktop/IBus/Engine/NgoSen/%u", ++id);
         auto*        engine = IBUS_ENGINE(g_object_new(ngosen_engine_get_type(), "engine-name", name, "object-path", path, "connection",
-                                                       ibus_service_get_connection(IBUS_SERVICE(factory)), "has-focus-id", TRUE, nullptr));
+                                                       ibus_service_get_connection(IBUS_SERVICE(factory)), "has-focus-id", TRUE, "active-surrounding-text", TRUE, nullptr));
         g_free(path);
         return engine;
     }
@@ -262,7 +258,6 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->focus_in             = focusIn;
     engineClass->focus_out            = focusOut;
     engineClass->reset                = reset;
-    engineClass->enable               = enable;
     engineClass->disable              = disable;
     engineClass->set_surrounding_text = setSurroundingText;
     engineClass->set_content_type     = setContentType;

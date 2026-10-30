@@ -62,6 +62,7 @@ class App:
         self.deleting_keys = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
+        self.requests = 0
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
         caps = IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT
@@ -70,6 +71,7 @@ class App:
         self.ic.set_capabilities(caps)
         self.ic.connect("commit-text", self.on_commit)
         self.ic.connect("delete-surrounding-text", self.on_delete)
+        self.ic.connect("require-surrounding-text", self.on_require)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
             self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
@@ -112,6 +114,9 @@ class App:
         start = len(self.text) + offset
         self.text = self.text[:start] + self.text[start + count :]
         self.report()
+
+    def on_require(self, _ic):
+        self.requests += 1
 
     def on_preedit(self, _ic, text, _cursor, visible):
         self.preedit = text.get_text() if visible else ""
@@ -501,12 +506,19 @@ app = field_with_text()
 app.ic.focus_out()
 pump(100)
 app.text = ""
+requests = app.requests
 app.ic.focus_in()
 app.report()
 pump(100)
-app.type("vieetj ")
+# libibus clients such as GNOME Shell send the text only after a request.
 check(
-    app.text == "việt " and "việt" in app.preedits,
+    app.requests > requests,
+    "direct, next field on the same engine: the app is asked for its text",
+    app.requests,
+)
+app.type("vieetj nam ")
+check(
+    app.text == "việt nam " and "việt" in app.preedits,
     "direct, next field on the same engine: its first word underlined",
     (app.text, app.preedits),
 )
