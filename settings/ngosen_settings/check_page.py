@@ -15,7 +15,14 @@ ICONS = {
 }
 
 
-KEYBINDINGS = "org.gnome.desktop.wm.keybindings"
+# Where GNOME keeps its shortcuts; a toggle key on one of them would take it from GNOME or lose to it.
+KEYBINDINGS = [
+    "org.gnome.desktop.wm.keybindings",
+    "org.gnome.shell.keybindings",
+    "org.gnome.mutter.keybindings",
+    "org.gnome.mutter.wayland.keybindings",
+    "org.gnome.settings-daemon.plugins.media-keys",
+]
 
 
 class GnomeSources:
@@ -31,14 +38,19 @@ class GnomeSources:
             return None
         return [tuple(source) for source in self.settings.get_value("sources").unpack()]
 
-    def switch_keys(self):
-        """GNOME's keys for the next input source, as accelerators and xkb options."""
+    def gnome_keys(self):
+        """GNOME's shortcuts as accelerators, and the xkb options that may switch layouts."""
         schemas = Gio.SettingsSchemaSource.get_default()
         accelerators = []
-        if schemas is not None and schemas.lookup(KEYBINDINGS, True):
-            bindings = Gio.Settings.new(KEYBINDINGS)
-            for name in ("switch-input-source", "switch-input-source-backward"):
-                accelerators += bindings.get_strv(name)
+        for schema_id in KEYBINDINGS:
+            schema = schemas.lookup(schema_id, True) if schemas is not None else None
+            if schema is None:
+                continue
+            bindings = Gio.Settings.new(schema_id)
+            for name in schema.list_keys():
+                value = bindings.get_value(name)
+                if value.get_type_string() == "as":
+                    accelerators += value.unpack()
         options = self.settings.get_strv("xkb-options") if self.settings is not None else []
         return accelerators, options
 

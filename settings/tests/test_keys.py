@@ -50,15 +50,25 @@ class KeysTest(unittest.TestCase):
             keys.GNOME_USES,
         )
 
+    def test_ctrl_letter_warns(self):
+        self.assertEqual(
+            keys.problem(keys.from_pressed(["Control_L", "c"]), set()), (None, keys.TAKES_KEY)
+        )
+
     def test_xkb_toggles(self):
         xkb = [
             "grp:alt_shift_toggle",
             "grp:lctrl_lshift_toggle",
             "caps:none",
             "grp:caps_toggle",
+            "grp:ctrl_alt_toggle_bidir",
         ]
         self.assertEqual(
             keys.gnome_chords([], xkb),
-            {(frozenset({"Alt", "Shift"}), None), (frozenset({"Control", "Shift"}), None)},
+            {
+                (frozenset({"Alt", "Shift"}), None),
+                (frozenset({"Control", "Shift"}), None),
+                (frozenset({"Control", "Alt"}), None),
+            },
         )
         self.assertIn(keys.from_pressed(["Shift_L", "Alt_L"]), keys.gnome_chords([], xkb))

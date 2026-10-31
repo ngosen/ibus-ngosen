@@ -50,8 +50,12 @@ msgid "Shift with a key types a capital letter or a symbol."
 msgstr "Shift kèm một phím sẽ gõ ra chữ hoa hoặc ký hiệu."
 
 #: settings/ngosen_settings/keys.py
-msgid "GNOME already uses these keys to switch input sources."
-msgstr "GNOME đã dùng tổ hợp này để đổi nguồn nhập."
+msgid "GNOME already uses these keys."
+msgstr "GNOME đã dùng tổ hợp phím này."
+
+#: settings/ngosen_settings/keys.py
+msgid "Apps no longer get these keys: Ngó Sen takes them everywhere."
+msgstr "Các app sẽ không nhận tổ hợp này nữa: Ngó Sen dùng nó ở mọi nơi."
 
 #: settings/ngosen_settings/keys.py
 msgid "Firefox and some other apps open their menu bar when Alt is let go."

@@ -54,8 +54,9 @@ SYMBOLS = {
 
 NEEDS_TWO = N_("Press at least two keys together.")
 TYPES_TEXT = N_("Shift with a key types a capital letter or a symbol.")
-GNOME_USES = N_("GNOME already uses these keys to switch input sources.")
+GNOME_USES = N_("GNOME already uses these keys.")
 ALT_MENU = N_("Firefox and some other apps open their menu bar when Alt is let go.")
+TAKES_KEY = N_("Apps no longer get these keys: Ngó Sen takes them everywhere.")
 
 
 def _key_name(name):
@@ -129,7 +130,7 @@ def accelerator(text):
 
 def xkb_toggle(option):
     """An xkb option such as grp:alt_shift_toggle as a chord, if it is a two-key toggle."""
-    match = re.fullmatch(r"grp:(\w+)_toggle", option)
+    match = re.fullmatch(r"grp:(\w+?)_toggle(?:_bidir)?", option)
     if not match:
         return None
     modifiers, key = set(), None
@@ -162,6 +163,6 @@ def problem(keys, taken):
         return TYPES_TEXT, None
     if keys in taken:
         return GNOME_USES, None
-    if key is not None and modifiers == {"Alt"}:
-        return None, ALT_MENU
-    return None, None
+    if key is None:
+        return None, None
+    return None, ALT_MENU if modifiers == {"Alt"} else TAKES_KEY

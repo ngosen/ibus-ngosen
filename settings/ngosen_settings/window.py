@@ -28,7 +28,7 @@ class Window(Adw.ApplicationWindow):
         self.check_tab = None
         sources = sources or check_page.GnomeSources()
         self.rows = pages.SettingRows(
-            store, names, self.save, lambda: keys.gnome_chords(*sources.switch_keys())
+            store, names, self.save, lambda: keys.gnome_chords(*sources.gnome_keys())
         )
         self.macros = pages.MacroPage(store, self.rows, self.save_macros)
         self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)

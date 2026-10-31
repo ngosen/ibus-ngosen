@@ -10,6 +10,8 @@ from .i18n import N_, _
 
 # The last toggle key choice, which asks for keys instead of saving.
 OTHER_KEYS = "\0other"
+# Alone, or with Shift, these move between the buttons of the dialog instead of being recorded.
+NAVIGATION = {"Tab", "ISO_Left_Tab", "Return", "KP_Enter", "Escape"}
 
 
 class SettingRows:
@@ -67,15 +69,11 @@ class SettingRows:
             return
         if value == OTHER_KEYS:
             self.capture = KeyCapture(self.taken_keys(), self._save_toggle_key, self.refresh)
-            self.capture.dialog.present(self.rows[key].get_root())
+            self.capture.present(self.rows[key].get_root())
             return
         self.on_change(key, value)
 
     def _save_toggle_key(self, value):
-        # The same keys as a suggestion are saved as written there.
-        for suggested, _label in options.TOGGLE_KEYS:
-            if suggested and keys.parse(suggested) == keys.parse(value):
-                value = suggested
         self.on_change("ToggleKey", value)
         self.refresh()
 
@@ -107,9 +105,12 @@ class KeyCapture:
         self.taken = taken
         self.on_save = on_save
         self.on_cancel = on_cancel
-        self.held = set()  # Key codes, since a key can come up under another name (Alt as Meta).
-        self.pressed = []
+        # By key code, since a key can come up under another name (Alt as Meta, 1 as ! with Shift).
+        self.held = set()
+        self.pressed = {}
         self.value = None
+        self.parent = None
+        self.watch = None
         self.dialog = Adw.AlertDialog(
             heading=_("Press the new keys"), body=_("Hold the keys together, then let go.")
         )
@@ -134,23 +135,38 @@ class KeyCapture:
         keyboard.connect("key-released", lambda _c, _k, code, _s: self.release(code))
         self.dialog.add_controller(keyboard)
 
+    def present(self, parent):
+        self.parent = parent
+        # A release that went to another window, after Alt+Tab, would keep a key held forever.
+        self.watch = parent.connect("notify::is-active", lambda *_: self.forget())
+        self.dialog.present(parent)
+
+    def forget(self):
+        self.held.clear()
+        self.pressed.clear()
+
     def press(self, name, code):
+        if name in NAVIGATION and all(self.pressed[c].startswith("Shift") for c in self.held):
+            self.forget()
+            return False
         if not self.held:
-            self.pressed = []
+            self.pressed.clear()
         self.held.add(code)
-        if name not in self.pressed:
-            self.pressed.append(name)
+        self.pressed.setdefault(code, name)
         return True
 
     def release(self, code):
+        if code not in self.held:
+            return
         self.held.discard(code)
         if self.held:
             return
-        chord = keys.from_pressed(self.pressed)
+        chord = keys.from_pressed(list(self.pressed.values()))
         error, warning = keys.problem(chord, self.taken)
         self.value = None if error else keys.value(chord)
         self.shown.set_label(keys.label(keys.value(chord)) if chord else "")
-        self.note.set_label(_(error or warning or ""))
+        # gettext answers the empty string with the catalog header.
+        self.note.set_label(_(error or warning) if error or warning else "")
         if error:
             self.note.add_css_class("error")
         else:
@@ -158,6 +174,9 @@ class KeyCapture:
         self.dialog.set_response_enabled("save", self.value is not None)
 
     def _answer(self, response):
+        if self.watch is not None:
+            self.parent.disconnect(self.watch)
+            self.watch = None
         if response == "save" and self.value is not None:
             self.on_save(self.value)
         else:

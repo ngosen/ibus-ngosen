@@ -20,6 +20,9 @@ class Vietnamese:
     """Labels that differ from the saved values, as they do in the real window."""
 
     def gettext(self, text):
+        # A real catalog answers the empty string with its header.
+        if not text:
+            return "Project-Id-Version: ibus-ngosen"
         return {"Everywhere": "Mọi nơi", "Non-Start": "Không phải đầu từ"}.get(text, text)
 
 
@@ -60,8 +63,8 @@ class FakeSources:
         self.sources = list(sources)
         return True
 
-    def switch_keys(self):
-        return ["<Super>space", "<Shift><Super>space"], ["grp:alt_caps_toggle"]
+    def gnome_keys(self):
+        return ["<Super>space", "<Shift><Super>space", "<Super>a"], ["grp:ctrl_alt_toggle_bidir"]
 
 
 class RequiredTest(unittest.TestCase):
@@ -183,13 +186,61 @@ class WindowTest(unittest.TestCase):
             ["Control_L"],
             ["Shift_L", "a"],
             ["Super_L", "space"],
-            ["Alt_L", "Caps_Lock"],
         ):
             capture = self.capture(*names)
             self.assertFalse(capture.dialog.get_response_enabled("save"), names)
             capture.dialog.emit("response", "cancel")
         self.assertNotIn("ToggleKey", self.settings())
         self.assertEqual(row.get_selected(), before)
+
+    def test_toggle_key_note_empty_without_problem(self):
+        self.assertEqual(self.capture("Control_L", "Shift_L").note.get_label(), "")
+
+    def test_toggle_key_lost_release(self):
+        row = self.window.rows.rows["ToggleKey"]
+        row.set_selected(row.get_model().get_n_items() - 1)
+        capture = self.window.rows.capture
+        capture.press("Alt_L", 9)
+        # Alt+Tab to another window: the release of Alt goes there.
+        window.Gtk.Widget.notify(self.window, "is-active")
+        capture.press("Control_L", 1)
+        capture.press("Shift_L", 2)
+        capture.release(1)
+        capture.release(2)
+        self.assertEqual(capture.shown.get_label(), "Ctrl+Shift")
+
+    def test_toggle_key_gnome_shortcuts_refused(self):
+        for names in (["Super_L", "a"], ["Control_L", "Alt_L"]):
+            capture = self.capture(*names)
+            self.assertFalse(capture.dialog.get_response_enabled("save"), names)
+            capture.dialog.emit("response", "cancel")
+
+    def test_toggle_key_navigation_keys_pass(self):
+        capture = self.capture()
+        self.assertFalse(capture.press("Tab", 1))
+        capture.release(1)
+        self.assertEqual(capture.shown.get_label(), "")
+        self.assertTrue(capture.press("Control_L", 2))
+        self.assertTrue(capture.press("Tab", 1))
+
+    def test_toggle_key_shifted_repeat(self):
+        row = self.window.rows.rows["ToggleKey"]
+        row.set_selected(row.get_model().get_n_items() - 1)
+        capture = self.window.rows.capture
+        capture.press("Control_L", 0)
+        capture.press("1", 1)
+        capture.press("Shift_L", 2)
+        capture.press("exclam", 1)
+        for code in range(3):
+            capture.release(code)
+        self.assertEqual(capture.shown.get_label(), "Ctrl+Shift+1")
+        self.assertTrue(capture.dialog.get_response_enabled("save"))
+
+    def test_toggle_key_stray_release(self):
+        capture = self.capture()
+        capture.release(5)
+        self.assertEqual(capture.note.get_label(), "")
+        self.assertFalse(capture.dialog.get_response_enabled("save"))
 
     def test_toggle_key_alt_letter_warns(self):
         capture = self.capture("Alt_L", "z")
