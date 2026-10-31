@@ -597,9 +597,10 @@ check(
     app.requests,
 )
 app.type("vieetj nam ")
+# The empty report the field sends after focus is enough for its first word.
 check(
-    app.text == "việt nam " and "việt" in app.preedits,
-    "direct, next field on the same engine: its first word underlined",
+    app.text == "việt nam " and app.preedits == [],
+    "direct, next field on the same engine: its first word typed in the field",
     (app.text, app.preedits),
 )
 app.close()
