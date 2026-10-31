@@ -85,17 +85,39 @@ namespace {
         ToggleTap                            tap;
         bool                                 showsLanguage = false;
 
-        // Only between words: a new engine would drop the word being typed.
-        void applyNewSettings() {
+        // The word ends in the mode it was typed in, and the core drops what it held for it.
+        void setLanguage(bool english) {
+            state->commitBuffer();
+            state->resetAfterAppCommit(false);
+            englishOn = english;
+            realMode  = typingMode();
+            host->setDirectTyping(realMode == ngosen::Mode::Sen);
+            // As on focus-in: the per-field checks of Sen start over.
+            if (realMode == ngosen::Mode::Sen)
+                state->activate(ngosen::Mode::Sen, true);
+        }
+
+        // Only between words: a new engine would drop the word being typed. True when the
+        // language changed, which the menu has to show.
+        bool applyNewSettings() {
             if (host->hasPreedit())
-                return;
+                return false;
+            bool languageChanged = false;
+            // The toggle key writes the marker too; reading it back then changes nothing.
+            if (resources().takeEnglishChange()) {
+                if (const bool english = ngosen::readEnglishOn(resources().paths()); english != englishOn) {
+                    setLanguage(english);
+                    languageChanged = true;
+                }
+            }
             resources().reloadIfChanged();
             if (generation == resources().generation())
-                return;
+                return languageChanged;
             realMode = typingMode();
             host->setDirectTyping(realMode == ngosen::Mode::Sen);
             state->setEngine();
             generation = resources().generation();
+            return languageChanged;
         }
     };
 
@@ -127,16 +149,8 @@ namespace {
     void showLanguageItem(IBusEngine* engine);
 
     void toggleLanguage(IBusEngine* engine, Session& session) {
-        // The word ends in the mode it was typed in, and the core drops what it held for it.
-        session.state->commitBuffer();
-        session.state->resetAfterAppCommit(false);
-        englishOn = !englishOn;
+        session.setLanguage(!englishOn);
         ngosen::saveEnglishOn(resources().paths(), englishOn);
-        realMode = typingMode();
-        session.host->setDirectTyping(realMode == ngosen::Mode::Sen);
-        // As on focus-in: the per-field checks of Sen start over.
-        if (realMode == ngosen::Mode::Sen)
-            session.state->activate(ngosen::Mode::Sen, true);
         NGOSEN_INFO("Toggle key: " << (englishOn ? "English" : "Vietnamese"));
         showLanguageItem(engine);
         showLanguage(engine);
@@ -204,7 +218,8 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return FALSE;
-        session->applyNewSettings();
+        if (session->applyNewSettings())
+            showLanguageItem(engine);
         // Shown until the next key typed, not the release of the toggle key itself.
         if (session->showsLanguage && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
             ibus_engine_hide_auxiliary_text(engine);
