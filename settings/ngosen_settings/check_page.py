@@ -15,6 +15,16 @@ ICONS = {
 }
 
 
+# Where GNOME keeps its shortcuts; a toggle key on one of them would take it from GNOME or lose to it.
+KEYBINDINGS = [
+    "org.gnome.desktop.wm.keybindings",
+    "org.gnome.shell.keybindings",
+    "org.gnome.mutter.keybindings",
+    "org.gnome.mutter.wayland.keybindings",
+    "org.gnome.settings-daemon.plugins.media-keys",
+]
+
+
 class GnomeSources:
     """The GNOME input sources, or None where GNOME's settings are not installed."""
 
@@ -28,12 +38,40 @@ class GnomeSources:
             return None
         return [tuple(source) for source in self.settings.get_value("sources").unpack()]
 
+    def gnome_keys(self):
+        """GNOME's shortcuts as accelerators, and the xkb options that may switch layouts."""
+        schemas = Gio.SettingsSchemaSource.get_default()
+        accelerators = []
+        for schema_id in KEYBINDINGS:
+            schema = schemas.lookup(schema_id, True) if schemas is not None else None
+            if schema is None:
+                continue
+            bindings = Gio.Settings.new(schema_id)
+            for name in schema.list_keys():
+                value = bindings.get_value(name)
+                if name == "custom-keybindings":
+                    accelerators += [custom_binding(path) for path in value.unpack()]
+                elif value.get_type_string() == "as":
+                    accelerators += value.unpack()
+        options = self.settings.get_strv("xkb-options") if self.settings is not None else []
+        return accelerators, options
+
     def set(self, sources):
         if self.settings is None:
             return False
         ok = self.settings.set_value("sources", GLib.Variant("a(ss)", sources))
         Gio.Settings.sync()
         return ok
+
+
+def custom_binding(path):
+    """A shortcut the user added in GNOME Settings; GSettings aborts on a missing schema or bad path."""
+    schema_id = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
+    schemas = Gio.SettingsSchemaSource.get_default()
+    found = schemas.lookup(schema_id, True) if schemas is not None else None
+    if found is None or not (path.startswith("/") and path.endswith("/")) or "//" in path:
+        return ""
+    return Gio.Settings.new_with_path(schema_id, path).get_string("binding")
 
 
 def _text(css=None):

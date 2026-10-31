@@ -3,19 +3,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The pages of the window. Each control saves as soon as it changes."""
 
-from gi.repository import Adw, GLib, Gtk, Pango
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 
-from . import options
+from . import keys, options
 from .i18n import N_, _
+
+# The last toggle key choice, which asks for keys instead of saving.
+OTHER_KEYS = "\0other"
+# Alone, or with Shift, these move between the buttons of the dialog instead of being recorded.
+NAVIGATION = {"Tab", "ISO_Left_Tab", "Return", "KP_Enter", "Escape"}
 
 
 class SettingRows:
     """Builds a row for each setting and puts the saved values back into them."""
 
-    def __init__(self, store, names, on_change):
+    def __init__(self, store, names, on_change, taken_keys=set):
         self.store = store
         self.names = names  # Values the engine accepts for InputMethod and OutputCharset.
         self.on_change = on_change
+        self.taken_keys = taken_keys  # GNOME's shortcuts, which a toggle key may not use.
         self.loading = False
         self.rows = {}
         self.pairs = {}  # What each combo row lists, as (value, label).
@@ -44,7 +50,9 @@ class SettingRows:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
         if current not in (value for value, _label in pairs):
-            pairs.append((current, current))
+            pairs.append((current, keys.label(current) if key == "ToggleKey" else current))
+        if key == "ToggleKey":
+            pairs.append((OTHER_KEYS, _("Other keys…")))
         return pairs
 
     def _choice(self, key, row):
@@ -55,8 +63,17 @@ class SettingRows:
     def _changed(self, key, value):
         if key == "InputMethod":
             self._show_example()
-        if not self.loading and value is not None:
-            self.on_change(key, value)
+        if self.loading or value is None:
+            return
+        if value == OTHER_KEYS:
+            self.capture = KeyCapture(self.taken_keys(), self._save_toggle_key, self.refresh)
+            self.capture.present(self.rows[key].get_root())
+            return
+        self.on_change(key, value)
+
+    def _save_toggle_key(self, value):
+        self.on_change("ToggleKey", value)
+        self.refresh()
 
     def _show_example(self):
         row = self.rows.get("InputMethod")
@@ -79,6 +96,108 @@ class SettingRows:
             self.loading = False
 
 
+class KeyCapture:
+    """Asks for a toggle key: the keys held together when the last of them comes up."""
+
+    def __init__(self, taken, on_save, on_cancel):
+        self.taken = taken
+        self.on_save = on_save
+        self.on_cancel = on_cancel
+        # By key code, since a key can come up under another name (Alt as Meta, 1 as ! with Shift).
+        self.held = set()
+        self.pressed = {}
+        self.value = None
+        self.parent = None
+        self.watch = None
+        self.navigating = False
+        self.dialog = Adw.AlertDialog(
+            heading=_("Press the new keys"), body=_("Hold the keys together, then let go.")
+        )
+        self.shown = Gtk.Label()
+        self.shown.add_css_class("title-2")
+        self.note = Gtk.Label(wrap=True, justify=Gtk.Justification.CENTER)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.append(self.shown)
+        box.append(self.note)
+        self.dialog.set_extra_child(box)
+        self.dialog.add_response("cancel", _("Cancel"))
+        self.dialog.add_response("save", _("Save"))
+        self.dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        self.dialog.set_response_enabled("save", False)
+        self.dialog.set_close_response("cancel")
+        self.dialog.connect("response", lambda _d, response: self._answer(response))
+        # Captures keys before the buttons do; Tab, Enter and Escape alone still reach them.
+        keyboard = Gtk.EventControllerKey(propagation_phase=Gtk.PropagationPhase.CAPTURE)
+        keyboard.connect(
+            "key-pressed", lambda _c, k, code, _s: self.press(Gdk.keyval_name(k), code)
+        )
+        keyboard.connect("key-released", lambda _c, _k, code, _s: self.release(code))
+        self.dialog.add_controller(keyboard)
+
+    def present(self, parent):
+        self.parent = parent
+        # A release that went to another window, after Alt+Tab, would keep a key held forever.
+        self.watch = parent.connect("notify::is-active", lambda *_: self.forget())
+        self.dialog.present(parent)
+
+    def forget(self):
+        self.held.clear()
+        self.pressed.clear()
+        self.navigating = False
+
+    def press(self, name, code):
+        if name is None:
+            return True
+        if name in NAVIGATION and all(self.pressed[c].startswith("Shift") for c in self.held):
+            # These keys move between the buttons; the round they were in records nothing.
+            self.navigating = bool(self.held)
+            return False
+        if not self.held:
+            self.pressed.clear()
+        self.held.add(code)
+        self.pressed.setdefault(code, name)
+        return True
+
+    def release(self, code):
+        if code not in self.held:
+            return
+        self.held.discard(code)
+        if self.held:
+            return
+        if self.navigating:
+            self.navigating = False
+            return
+        names = list(self.pressed.values())
+        chord = keys.from_pressed(names)
+        error, warning = keys.problem(chord, self.taken)
+        if not error and not _modifiers_first(names):
+            error = keys.MODIFIERS_FIRST
+        self.value = None if error else keys.value(chord)
+        self.shown.set_label(keys.label(keys.value(chord)) if chord else "")
+        # gettext answers the empty string with the catalog header.
+        self.note.set_label(_(error or warning) if error or warning else "")
+        if error:
+            self.note.add_css_class("error")
+        else:
+            self.note.remove_css_class("error")
+        self.dialog.set_response_enabled("save", self.value is not None)
+
+    def _answer(self, response):
+        if self.watch is not None:
+            self.parent.disconnect(self.watch)
+            self.watch = None
+        if response == "save" and self.value is not None:
+            self.on_save(self.value)
+        else:
+            self.on_cancel()
+
+
+def _modifiers_first(names):
+    """The engine matches a key with the modifiers held at its press, and Shift changes its name."""
+    others = [i for i, n in enumerate(names) if n not in keys.MODIFIER_KEYS]
+    return not others or all(i < others[0] for i, n in enumerate(names) if n in keys.MODIFIER_KEYS)
+
+
 def preferences_group(title=None, description=None):
     group = Adw.PreferencesGroup()
     if title:
@@ -90,9 +209,9 @@ def preferences_group(title=None, description=None):
 
 def typing_page(rows):
     page = Adw.PreferencesPage(title=_("Typing"), icon_name="input-keyboard-symbolic")
-    for title, keys in options.TYPING_GROUPS:
+    for title, names in options.TYPING_GROUPS:
         group = preferences_group(title)
-        for key in keys:
+        for key in names:
             group.add(rows.build(key))
         if title is None:
             try_it = Adw.EntryRow(title=_("Try it"))

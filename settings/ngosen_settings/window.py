@@ -13,7 +13,7 @@ gi.require_version("PangoCairo", "1.0")
 
 from gi.repository import Adw, GLib, Gtk  # noqa: E402,F401
 
-from . import brand, check_page, i18n, options, pages  # noqa: E402
+from . import brand, check_page, i18n, keys, options, pages  # noqa: E402
 from .i18n import _  # noqa: E402
 from .store import Engine, Store  # noqa: E402
 
@@ -26,12 +26,13 @@ class Window(Adw.ApplicationWindow):
         self.store = store
         self.toast = None
         self.check_tab = None
-        self.rows = pages.SettingRows(store, names, self.save)
+        sources = sources or check_page.GnomeSources()
+        self.rows = pages.SettingRows(
+            store, names, self.save, lambda: keys.gnome_chords(*sources.gnome_keys())
+        )
         self.macros = pages.MacroPage(store, self.rows, self.save_macros)
         self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)
-        self.check = check_page.CheckPage(
-            sources or check_page.GnomeSources(), version, self.notify, self._count
-        )
+        self.check = check_page.CheckPage(sources, version, self.notify, self._count)
 
         stack = Adw.ViewStack()
         typing = pages.typing_page(self.rows)
