@@ -10,6 +10,7 @@
 #include "ngosen-log.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -75,7 +76,8 @@ namespace ngosen {
 
         // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
         // in its own section, which is read when importing its settings.
-        const char* const        ToggleKeyName = "ToggleKey";
+        const char* const        ToggleKeyName   = "ToggleKey";
+        const char* const        ModeMenuKeyName = "ModeMenuKey";
 
         std::vector<std::string> splitWords(const std::string& text) {
             std::istringstream       words(text);
@@ -85,22 +87,40 @@ namespace ngosen {
             return out;
         }
 
-        // fcitx5 allows a single key, which the IBus edition does not: a bare Shift would switch on every
-        // capital. A list with only such keys falls back to the default; an empty one turns the key off.
-        std::vector<std::string> readToggleKeys(const IniFile& ini) {
+        // A line of keys, or fcitx5's numbered list. A list with only keys the engine cannot use falls back
+        // to the default; an empty one turns the key off.
+        template <typename Parse>
+        std::vector<std::string> readKeys(const IniFile& ini, const char* name, const std::vector<std::string>& defaults, Parse parse) {
             std::vector<std::string> keys;
-            if (const auto line = ini.top.find(ToggleKeyName); line != ini.top.end())
+            if (const auto line = ini.top.find(name); line != ini.top.end())
                 keys = splitWords(line->second);
-            else if (ini.sections.count(ToggleKeyName) != 0)
-                keys = iniKeyList(ini, ToggleKeyName);
+            else if (ini.sections.count(name) != 0)
+                keys = iniKeyList(ini, name);
             else
-                return defaultToggleKeys();
+                return defaults;
             std::vector<std::string> usable;
             for (const auto& key : keys) {
-                if (parseToggleKey(key))
+                if (parse(key))
                     usable.push_back(key);
             }
-            return usable.empty() && !keys.empty() ? defaultToggleKeys() : usable;
+            return usable.empty() && !keys.empty() ? defaults : usable;
+        }
+
+        // fcitx5 allows a single key, which the IBus edition does not: a bare Shift would switch on every
+        // capital.
+        std::vector<std::string> readToggleKeys(const IniFile& ini) {
+            return readKeys(ini, ToggleKeyName, defaultToggleKeys(), parseToggleKey);
+        }
+
+        std::vector<std::string> readModeMenuKeys(const IniFile& ini) {
+            return readKeys(ini, ModeMenuKeyName, defaultModeMenuKeys(), parseMenuKey);
+        }
+
+        std::string joinWords(const std::vector<std::string>& words) {
+            std::string line;
+            for (const auto& word : words)
+                line += (line.empty() ? "" : " ") + word;
+            return line;
         }
 
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
@@ -120,6 +140,12 @@ namespace ngosen {
             void text(const char* key, std::string& out) const {
                 if (const auto* value = find(key))
                     out = *value;
+            }
+            // A key whose name is its own letter or digit, so the menu shows what to press.
+            void shortcut(const char* key, std::string& out) const {
+                // Lowercase, since the engine matches the key as typed without Shift.
+                if (const auto* value = find(key); value != nullptr && value->size() == 1 && std::isalnum(static_cast<unsigned char>((*value)[0])) != 0)
+                    out = std::string(1, static_cast<char>(std::tolower(static_cast<unsigned char>((*value)[0]))));
             }
             void choice(const char* key, std::string& out, const std::vector<std::string>& allowed) const {
                 if (const auto* value = find(key); value != nullptr && contains(allowed, *value))
@@ -227,6 +253,7 @@ namespace ngosen {
     IBusSettings defaultSettings() {
         IBusSettings settings;
         settings.toggleKeys    = defaultToggleKeys();
+        settings.modeMenuKeys  = defaultModeMenuKeys();
         auto& o                = settings.options;
         o.retypeAfterSwitch    = false;
         o.enableMacroInOffMode = false;
@@ -262,7 +289,11 @@ namespace ngosen {
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
-        settings.toggleKeys = readToggleKeys(ini);
+        settings.toggleKeys   = readToggleKeys(ini);
+        settings.modeMenuKeys = readModeMenuKeys(ini);
+        read.shortcut("ShortcutSen", settings.shortcutSen);
+        read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
+        read.shortcut("ShortcutOff", settings.shortcutOff);
         return settings;
     }
 
@@ -291,10 +322,11 @@ namespace ngosen {
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
-        std::string toggleKeys;
-        for (const auto& key : settings.toggleKeys)
-            toggleKeys += (toggleKeys.empty() ? "" : " ") + key;
-        line(ToggleKeyName, toggleKeys);
+        line(ToggleKeyName, joinWords(settings.toggleKeys));
+        line(ModeMenuKeyName, joinWords(settings.modeMenuKeys));
+        line("ShortcutSen", settings.shortcutSen);
+        line("ShortcutPreedit", settings.shortcutPreedit);
+        line("ShortcutOff", settings.shortcutOff);
         return out.str();
     }
 

@@ -1020,6 +1020,110 @@ tap_ctrl_shift(app)
 app.type("vieetj ")
 check(app.text == "việt ", "toggle: there and back before the first word", app.text)
 app.close()
+
+
+# The mode menu: its key ends the word, then a key picks Sen, underline or English for every app.
+def menu_app(name):
+    app = App(name)
+    # Without this capability IBus draws the menu in its own panel instead of telling the app.
+    app.ic.set_capabilities(
+        IBus.Capabilite.FOCUS
+        | IBus.Capabilite.PREEDIT_TEXT
+        | IBus.Capabilite.SURROUNDING_TEXT
+        | IBus.Capabilite.LOOKUP_TABLE
+    )
+    app.menu = None
+    # IBus frees the table after the signal, so keep its labels rather than the table.
+    app.ic.connect(
+        "update-lookup-table",
+        lambda _ic, table, visible: setattr(
+            app,
+            "menu",
+            [table.get_candidate(i).get_text() for i in range(table.get_number_of_candidates())]
+            if visible
+            else None,
+        ),
+    )
+    app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    return app
+
+
+def setting(key):
+    with open(settings_path) as f:
+        return next((line for line in f.read().splitlines() if line.startswith(key + "=")), "")
+
+
+app = menu_app("menu")
+app.type("vieetj")
+app.key(IBus.KEY_grave)
+pump(200)
+check(app.text == "việt", "menu: its key ends the word", app.text)
+items = app.menu or []
+check(items == ["Gõ Sen", "Gạch chân", "Tiếng Anh"], "menu: ` shows the three modes", items)
+app.key(IBus.KEY_q)
+pump(500)
+check(app.menu is None, "menu: a pick closes it", app.menu)
+check(
+    setting("DirectTyping") == "DirectTyping=False",
+    "menu: q turns Sen off",
+    setting("DirectTyping"),
+)
+app.type(" vieetj")
+check(
+    "việt" in app.preedits and app.text == "việt ",
+    "menu: the next word is underlined",
+    app.preedits,
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_1)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=True", "menu: 1 turns Sen on", setting("DirectTyping")
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_grave)
+pump(200)
+check(app.text == "việt việt`", "menu: ` twice types `", app.text)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_Escape)
+pump(200)
+check(
+    app.menu is None and app.text == "việt việt`", "menu: Esc closes it and types nothing", app.text
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_e)
+pump(500)
+check(os.path.exists(english_mark), "menu: e switches to English", english_mark)
+app.type(" vieetj`")
+check(app.text == "việt việt` vieetj`", "menu: in English ` types itself", app.text)
+tap_ctrl_shift(app)
+app.close()
+
+set_setting("ModeMenuKey", "Shift+asciitilde")
+app = menu_app("menu-tilde")
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_asciitilde, IBus.ModifierType.SHIFT_MASK)
+pump(200)
+check(app.text == "`" and app.menu is not None, "menu: Shift+~ opens it instead of `", app.text)
+app.key(IBus.KEY_asciitilde, IBus.ModifierType.SHIFT_MASK)
+pump(200)
+check(app.text == "`~" and app.menu is None, "menu: Shift+~ twice types ~", app.text)
+app.close()
+set_setting("ModeMenuKey", "grave")
+
+app = menu_app("menu-password")
+app.ic.set_content_type(IBus.InputPurpose.PASSWORD, 0)
+app.key(IBus.KEY_grave)
+pump(200)
+check(app.text == "`" and app.menu is None, "menu: a password field types `", app.text)
+app.close()
+
+set_setting("InputMethod", "VIQR")
+app = menu_app("menu-viqr")
+app.type("a` ")
+check(app.text == "à " and app.menu is None, "menu: VIQR keeps ` for its tone", app.text)
+app.close()
+set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
 
 set_setting("ToggleKey", "Alt+z")

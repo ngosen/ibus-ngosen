@@ -26,6 +26,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
 - Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
   nạp sẵn bảng phím Telex, VNI, VIQR… như bản fcitx5; không cần sang bản fcitx5 để soạn nữa (#53).
+- Bấm ` để mở menu chế độ gõ như bản fcitx5: 1 chọn Gõ Sen, q chọn gạch chân, e chọn tiếng Anh, đổi cho mọi app cùng
+  lúc. Bấm ` hai lần để gõ ra `; lúc gõ tiếng Anh ` gõ như thường, kiểu gõ VIQR hay keymap tuỳ chỉnh dùng phím
+  nào để bỏ dấu thì phím đó vẫn bỏ dấu. Cửa sổ cài đặt cho đổi phím mở menu sang Shift+~ như ibus-unikey hoặc
+  tắt, và đổi phím của từng chế độ (#55).
 
 ### Thay đổi
 

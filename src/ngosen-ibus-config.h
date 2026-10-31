@@ -40,6 +40,12 @@ namespace ngosen {
         bool directTyping = false;
         // Switches between English and Vietnamese; empty when the user turned the key off.
         std::vector<std::string> toggleKeys;
+        // Opens the menu of typing modes; empty when the user turned it off.
+        std::vector<std::string> modeMenuKeys;
+        // The keys that pick each mode in that menu: one letter or digit.
+        std::string shortcutSen     = "1";
+        std::string shortcutPreedit = "q";
+        std::string shortcutOff     = "e";
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.

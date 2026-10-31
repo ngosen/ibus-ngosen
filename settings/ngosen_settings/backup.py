@@ -13,8 +13,8 @@ from .i18n import N_, _
 from .store import KEYMAP_LIST, MACRO_LIST, read_words
 
 COMPONENTS = ("config", "macros", "keymaps", "rules", "dictionary")
-# The fcitx5 edition keeps these as Mode, VietnameseOn and an indexed ToggleKey list.
-IBUS_ONLY = ("DirectTyping", "ToggleKey")
+# The fcitx5 edition keeps these as Mode, VietnameseOn and indexed key lists.
+IBUS_ONLY = ("DirectTyping", "ToggleKey", "ModeMenuKey")
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
 DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
 NEEDS_MODIFIER = N_("A switch key here needs Ctrl, Alt, Shift or Super with another key.")
@@ -125,7 +125,8 @@ def export(engine, paths, target):
     values = engine.settings()
     config = {key: value for key, value in values.items() if key not in IBUS_ONLY}
     config["Mode"] = "Sen" if values.get("DirectTyping") == "True" else "Preedit"
-    config["ToggleKey"] = {str(i): key for i, key in enumerate(values.get("ToggleKey", "").split())}
+    for name in ("ToggleKey", "ModeMenuKey"):
+        config[name] = {str(i): key for i, key in enumerate(values.get(name, "").split())}
     config["VietnameseOn"] = "False" if os.path.exists(paths.english) else "True"
     backup = {
         "config": config,
@@ -258,6 +259,14 @@ def _settings(config, text, known, engine, taken, notes):
         toggle = _toggle_key(config["ToggleKey"], engine, taken, notes)
         if toggle is not None:
             text = ini.set_value(text, "ToggleKey", toggle)
+    if "ModeMenuKey" in config:
+        # The engine skips a key it cannot use; a key with a space would split the line.
+        menu = [
+            key
+            for key in _key_list(config["ModeMenuKey"])
+            if key and not any(c.isspace() for c in key)
+        ]
+        text = ini.set_value(text, "ModeMenuKey", " ".join(menu))
     return text.encode("utf-8", "surrogateescape")
 
 
