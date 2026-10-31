@@ -15,6 +15,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   Shift+Alt hoặc tắt phím này; Super+Space vẫn đổi nguồn nhập như cũ. Ô mật khẩu luôn gõ tiếng Anh (#50).
 - Chọn "Phím khác…" trong cửa sổ cài đặt để tự bấm tổ hợp phím chuyển Anh/Việt; phím tắt GNOME đã dùng, phím
   đơn và Shift kèm một phím bị từ chối (#51).
+- Cứu dấu: khi bật "Gõ Sen ở app cho phép", bấm chuột ngay sau một chữ rồi gõ phím dấu để sửa dấu chữ đó (chao,
+  f → chào); Tab hay Esc trả lại phím vừa gõ. Bôi đen chữ rồi gõ phím dấu cũng được, nhưng chỉ ở app X11: app đi
+  qua GNOME Shell gõ chữ trên vùng bôi đen bằng gạch chân (#52).
 - Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
 

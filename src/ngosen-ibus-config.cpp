@@ -223,12 +223,12 @@ namespace ngosen {
         return keys;
     }
 
+    // Options that delete text typed before stay off: IBus cannot check that text against the app yet.
     IBusSettings defaultSettings() {
         IBusSettings settings;
         settings.toggleKeys    = defaultToggleKeys();
         auto& o                = settings.options;
         o.retypeAfterSwitch    = false;
-        o.retoneSelection      = false;
         o.enableMacroInOffMode = false;
         o.doubleSpaceToPeriod  = false;
         o.doubleHyphenToEmDash = false;
@@ -249,6 +249,7 @@ namespace ngosen {
         read.boolean("AutoNonVnRestore", o.autoNonVnRestore);
         read.boolean("DdFreeStyle", o.ddFreeStyle);
         read.boolean("BackspaceRemovesTone", o.backspaceRemovesTone);
+        read.boolean("RetoneSelection", o.retoneSelection);
         read.boolean("EnableMacro", o.enableMacro);
         read.boolean("CapitalizeMacro", o.capitalizeMacro);
         int lockWordKey = static_cast<int>(o.lockWordKey);
@@ -279,6 +280,7 @@ namespace ngosen {
         line("AutoNonVnRestore", boolText(o.autoNonVnRestore));
         line("DdFreeStyle", boolText(o.ddFreeStyle));
         line("BackspaceRemovesTone", boolText(o.backspaceRemovesTone));
+        line("RetoneSelection", boolText(o.retoneSelection));
         line("EnableMacro", boolText(o.enableMacro));
         line("CapitalizeMacro", boolText(o.capitalizeMacro));
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
