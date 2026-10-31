@@ -223,6 +223,7 @@ namespace ngosen {
         return keys;
     }
 
+    // Options that delete text typed before stay off: IBus cannot check that text against the app yet.
     IBusSettings defaultSettings() {
         IBusSettings settings;
         settings.toggleKeys    = defaultToggleKeys();
