@@ -16,6 +16,14 @@ TOGGLE_KEYS = [
     ("Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R", "Shift+Alt"),
     ("", N_("Disabled")),
 ]
+# The fcitx5 edition's default, and Shift+~ as ibus-unikey uses.
+MODE_MENU_KEYS = [
+    ("grave", "`"),
+    ("Shift+asciitilde", "Shift+~"),
+    ("", N_("Disabled")),
+]
+# The keys that pick a mode in the menu, each one letter or digit.
+SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -36,6 +44,10 @@ DATE_FORMATS = [
 LABELS = {
     "InputMethod": N_("Input Method"),
     "ToggleKey": N_("Switch Between English and Vietnamese"),
+    "ModeMenuKey": N_("Mode Menu Hotkey"),
+    "ShortcutSen": N_("Shortcut for Sen"),
+    "ShortcutPreedit": N_("Shortcut for Preedit"),
+    "ShortcutOff": N_("Shortcut for English"),
     "DirectTyping": N_("Type with Sen where the app allows (experimental)"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
@@ -63,6 +75,9 @@ LABELS = {
 HINTS = {
     "ToggleKey": N_(
         "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+    ),
+    "ModeMenuKey": N_(
+        "Opens a menu to switch every app to Sen, underlined typing or English. Press it twice to type the key itself; in English it types as usual."
     ),
     "DirectTyping": N_(
         "Text goes straight into fields that report the text around the cursor, without an underline. Elsewhere words keep the underline."
@@ -110,7 +125,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "ToggleKey", "DirectTyping", "OutputCharset"]),
+    (None, ["InputMethod", "ToggleKey", "ModeMenuKey", "DirectTyping", "OutputCharset"]),
     (
         N_("Tone marks"),
         [
@@ -127,11 +142,13 @@ TYPING_GROUPS = [
         ],
     ),
     (N_("Quick typing"), ["AutoCapitalizeAfterPunctuation", "CapitalizeStartOfText"]),
+    (N_("Mode menu"), SHORTCUTS),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]
 
 CHOICES = {
     "ToggleKey": TOGGLE_KEYS,
+    "ModeMenuKey": MODE_MENU_KEYS,
     "W2U": POSITIONS,
     "BracketTransform": POSITIONS,
     "LockWordModifier": LOCK_KEYS,
@@ -141,7 +158,18 @@ CHOICES = {
 
 
 def is_switch(key):
-    return key not in CHOICES and key not in ("InputMethod", "OutputCharset")
+    return (
+        key not in CHOICES and key not in SHORTCUTS and key not in ("InputMethod", "OutputCharset")
+    )
+
+
+def shortcut_problem(key, value, values):
+    """Why value cannot pick the mode of key, given the saved values of the other shortcuts."""
+    if len(value) != 1 or not value.isascii() or not value.isalnum():
+        return N_("One letter or digit.")
+    if any(values.get(other, "").lower() == value.lower() for other in SHORTCUTS if other != key):
+        return N_("Another mode already uses this key.")
+    return None
 
 
 def valid_macro_key(key):

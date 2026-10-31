@@ -21,8 +21,14 @@ namespace ngosen {
     // Ctrl+Shift pressed in either order, with either Shift or Ctrl, as the fcitx5 edition stores it.
     const std::vector<std::string>& defaultToggleKeys();
 
+    // ` as in the fcitx5 edition.
+    const std::vector<std::string>& defaultModeMenuKeys();
+
     // Empty for a string IBus cannot read, or a single key: a bare Shift would switch on every capital.
     std::optional<KeyChord> parseToggleKey(const std::string& text);
+
+    // A key that opens the mode menu, which may be a single key such as ` but not a lone modifier.
+    std::optional<KeyChord> parseMenuKey(const std::string& text);
 
     // Whether a key event, pressed or released, is this chord. Lock keys such as NumLock do not count,
     // and a modifier being released does not count as held.

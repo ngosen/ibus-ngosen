@@ -20,6 +20,7 @@ DEFAULTS = {
     "EnableCustomKeymap": "False",
     "DirectTyping": "False",
     "ToggleKey": DEFAULT_TOGGLE,
+    "ModeMenuKey": "grave",
 }
 
 
@@ -110,13 +111,14 @@ class UserFiles:
 
 class BackupTest(UserFiles, unittest.TestCase):
     def test_fcitx5_backup_is_restored(self):
-        _, notes = self.restore(fcitx5_backup())
+        _, notes = self.restore(fcitx5_backup(ModeMenuKey={"0": "apostrophe"}))
         self.assertEqual(notes, [])
         settings = self.settings()
         self.assertEqual(settings["InputMethod"], "VNI")
         self.assertEqual(settings["SpellCheck"], "False")
         self.assertEqual(settings["DirectTyping"], "True")
         self.assertEqual(settings["ToggleKey"], "Shift+Alt_L Alt+Shift_L")
+        self.assertEqual(settings["ModeMenuKey"], "apostrophe")
         self.assertEqual(settings["FutureKey"], "kept")
         # fcitx5-only keys stay out of the IBus file.
         self.assertNotIn("SettingsVersion", settings)
@@ -314,7 +316,8 @@ class BackupTest(UserFiles, unittest.TestCase):
         write_text(
             self.paths.settings,
             "InputMethod=VNI\nSpellCheck=False\nEnableMacro=True\nEnableDictionary=True\n"
-            "EnableCustomKeymap=False\nDirectTyping=True\nToggleKey=Alt+z\n",
+            "EnableCustomKeymap=False\nDirectTyping=True\nToggleKey=Alt+z\n"
+            "ModeMenuKey=Shift+asciitilde\n",
         )
         write_text(self.paths.keymaps, "[CustomKeymap/0]\nKey=a\nValue=b\n\n")
         write_text(self.paths.dictionary, "khô\ngà\n")
@@ -326,6 +329,7 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertNotIn("rules", exported)
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["ToggleKey"], {"0": "Alt+z"})
+        self.assertEqual(exported["config"]["ModeMenuKey"], {"0": "Shift+asciitilde"})
         self.assertEqual(exported["config"]["VietnameseOn"], "False")
         self.assertNotIn("DirectTyping", exported["config"])
 

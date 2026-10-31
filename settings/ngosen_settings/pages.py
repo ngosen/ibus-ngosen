@@ -27,7 +27,10 @@ class SettingRows:
         self.pairs = {}  # What each combo row lists, as (value, label).
 
     def build(self, key):
-        if options.is_switch(key):
+        if key in options.SHORTCUTS:
+            row = Adw.EntryRow(max_length=1)
+            row.connect("changed", lambda r: self._shortcut_changed(key, r))
+        elif options.is_switch(key):
             row = Adw.SwitchRow()
             row.connect(
                 "notify::active",
@@ -50,7 +53,8 @@ class SettingRows:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
         if current not in (value for value, _label in pairs):
-            pairs.append((current, keys.label(current) if key == "ToggleKey" else current))
+            shown = keys.label(current) if key in ("ToggleKey", "ModeMenuKey") else current
+            pairs.append((current, shown))
         if key == "ToggleKey":
             pairs.append((OTHER_KEYS, _("Other keys…")))
         return pairs
@@ -71,6 +75,17 @@ class SettingRows:
             return
         self.on_change(key, value)
 
+    def _shortcut_changed(self, key, row):
+        value = row.get_text()
+        problem = options.shortcut_problem(key, value, self.store.values)
+        if problem and value:
+            row.add_css_class("error")
+        else:
+            row.remove_css_class("error")
+        row.set_tooltip_text(_(problem) if problem and value else None)
+        if not self.loading and not problem:
+            self.on_change(key, value)
+
     def _save_toggle_key(self, value):
         self.on_change("ToggleKey", value)
         self.refresh()
@@ -87,6 +102,9 @@ class SettingRows:
                 value = self.store.values.get(key, "")
                 if isinstance(row, Adw.SwitchRow):
                     row.set_active(value == "True")
+                    continue
+                if isinstance(row, Adw.EntryRow):
+                    row.set_text(value)
                     continue
                 pairs = self.pairs[key] = self.choices(key)
                 row.set_model(Gtk.StringList.new([label for _value, label in pairs]))

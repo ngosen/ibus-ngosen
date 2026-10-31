@@ -9,6 +9,7 @@
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-menu.h"
+#include "ngosen-ibus-mode-menu.h"
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
@@ -83,7 +84,11 @@ namespace {
         std::unique_ptr<ngosen::TypingState> state;
         unsigned                             generation = 0;
         ToggleTap                            tap;
-        bool                                 showsLanguage = false;
+        bool                                 showsNotice = false;
+        bool                                 menuOpen    = false;
+        guint                                menuCursor  = 0;
+        // The key whose release the app must not see, as it never saw the press.
+        guint menuKeyDown = 0;
 
         // The word ends in the mode it was typed in, and the core drops what it held for it.
         void setLanguage(bool english) {
@@ -148,13 +153,21 @@ namespace {
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
     void showLanguageItem(IBusEngine* engine);
 
+    void closeModeMenu(IBusEngine* engine, Session& session) {
+        if (!session.menuOpen)
+            return;
+        session.menuOpen = false;
+        ibus_engine_hide_lookup_table(engine);
+    }
+
     void toggleLanguage(IBusEngine* engine, Session& session) {
+        closeModeMenu(engine, session);
         session.setLanguage(!englishOn);
         ngosen::saveEnglishOn(resources().paths(), englishOn);
         NGOSEN_INFO("Toggle key: " << (englishOn ? "English" : "Vietnamese"));
         showLanguageItem(engine);
         showLanguage(engine);
-        session.showsLanguage = true;
+        session.showsNotice = true;
     }
 
     // True when the app must not see this key.
@@ -209,6 +222,91 @@ namespace {
         return false;
     }
 
+    void showModeMenu(IBusEngine* engine, const Session& session) {
+        ibus_engine_update_lookup_table(engine, ngosen::newModeMenuTable(ngosen::modeMenuItems(resources().settings()), session.menuCursor), TRUE);
+    }
+
+    void openModeMenu(IBusEngine* engine, Session& session) {
+        // The word ends before the menu, as in the fcitx5 edition.
+        session.state->commitBuffer();
+        session.state->resetAfterAppCommit(false);
+        session.menuOpen   = true;
+        session.menuCursor = realMode == ngosen::Mode::Sen ? 0 : 1;
+        showModeMenu(engine, session);
+    }
+
+    void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
+        closeModeMenu(engine, session);
+        const bool english = item.mode == ngosen::MenuMode::English;
+        if (english != englishOn) {
+            session.setLanguage(english);
+            ngosen::saveEnglishOn(resources().paths(), englishOn);
+            showLanguageItem(engine);
+        }
+        const bool           direct = item.mode == ngosen::MenuMode::Sen;
+        ngosen::IBusSettings saved;
+        // Applied at once, since the next key may come before the file monitor reports the write.
+        if (!english && resources().settings().directTyping != direct && resources().saveSetting("DirectTyping", direct ? "True" : "False", saved))
+            resources().noticeChange();
+        NGOSEN_INFO("Mode menu: " << item.label);
+        ibus_engine_update_auxiliary_text(engine, ibus_text_new_from_string(item.label.c_str()), TRUE);
+        session.showsNotice = true;
+    }
+
+    void moveMenuCursor(IBusEngine* engine, Session& session, int step) {
+        const auto count   = static_cast<int>(ngosen::modeMenuItems(resources().settings()).size());
+        session.menuCursor = static_cast<guint>((static_cast<int>(session.menuCursor) + step + count) % count);
+        showModeMenu(engine, session);
+    }
+
+    void applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
+        const auto items = ngosen::modeMenuItems(resources().settings());
+        switch (key.kind) {
+            case ngosen::MenuKey::Close: closeModeMenu(engine, session); return;
+            case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); return;
+            case ngosen::MenuKey::Down: moveMenuCursor(engine, session, 1); return;
+            case ngosen::MenuKey::PickCursor: pickMode(engine, session, items[session.menuCursor]); return;
+            case ngosen::MenuKey::Pick:
+                for (const auto& item : items) {
+                    if (item.mode == key.mode)
+                        pickMode(engine, session, item);
+                }
+                return;
+            case ngosen::MenuKey::TypeMenuKey: {
+                closeModeMenu(engine, session);
+                gchar text[8] = {};
+                if (const gunichar c = ibus_keyval_to_unicode(keyval); c != 0) {
+                    g_unichar_to_utf8(c, text);
+                    session.host->commitText(text);
+                }
+                return;
+            }
+            case ngosen::MenuKey::Swallow: return;
+        }
+    }
+
+    // True when the app must not see this key.
+    bool handleModeMenu(IBusEngine* engine, Session& session, guint keyval, guint keycode, guint state) {
+        if ((state & IBUS_RELEASE_MASK) != 0) {
+            if (session.menuKeyDown == 0 || keycode != session.menuKeyDown)
+                return false;
+            session.menuKeyDown = 0;
+            return true;
+        }
+        if (ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
+            return false;
+        if (session.menuOpen) {
+            applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval);
+        } else {
+            // In English the key types as usual, as in the fcitx5 edition.
+            if (englishOn || !ngosen::opensModeMenu(resources().settings(), keyval, state))
+                return false;
+            openModeMenu(engine, session);
+        }
+        session.menuKeyDown = keycode;
+        return true;
+    }
+
     bool isPlainEnter(guint keyval, guint state) {
         constexpr guint modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_RELEASE_MASK;
         return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
@@ -221,9 +319,9 @@ namespace {
         if (session->applyNewSettings())
             showLanguageItem(engine);
         // Shown until the next key typed, not the release of the toggle key itself.
-        if (session->showsLanguage && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
+        if (session->showsNotice && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
             ibus_engine_hide_auxiliary_text(engine);
-            session->showsLanguage = false;
+            session->showsNotice = false;
         }
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
         if (session->host->takesPassword()) {
@@ -231,6 +329,8 @@ namespace {
             return FALSE;
         }
         if (handleToggleKey(engine, *session, keyval, state))
+            return TRUE;
+        if (handleModeMenu(engine, *session, keyval, keycode, state))
             return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
@@ -366,6 +466,7 @@ namespace {
         if (session == nullptr)
             return;
         session->tap = {};
+        closeModeMenu(engine, *session);
         session->state->resetAfterAppCommit(true);
         session->host->setFocus(false);
         session->host->forgetReportedText();
@@ -388,6 +489,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
+        closeModeMenu(engine, *session);
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;

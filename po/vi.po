@@ -804,3 +804,33 @@ msgstr "Cứu chữ: Tab hoặc Esc để trả lại chữ đã gõ"
 
 msgid "Enter: retype in Vietnamese, Tab or Esc: keep"
 msgstr "Cứu chữ: Enter để đổi, Tab hoặc Esc để giữ nguyên"
+
+msgid "Sen"
+msgstr "Gõ Sen"
+
+msgid "Preedit"
+msgstr "Gạch chân"
+
+msgid "Mode Menu Hotkey"
+msgstr "Phím tắt menu chế độ gõ"
+
+msgid "Shortcut for Sen"
+msgstr "Phím tắt cho Gõ Sen"
+
+msgid "Shortcut for Preedit"
+msgstr "Phím tắt cho Gạch chân"
+
+msgid "Shortcut for English"
+msgstr "Phím tắt cho Tiếng Anh"
+
+msgid "Opens a menu to switch every app to Sen, underlined typing or English. Press it twice to type the key itself; in English it types as usual."
+msgstr "Mở menu để chuyển mọi app sang Gõ Sen, gạch chân hay tiếng Anh. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
+
+msgid "Mode menu"
+msgstr "Menu chế độ gõ"
+
+msgid "One letter or digit."
+msgstr "Một chữ cái hoặc chữ số."
+
+msgid "Another mode already uses this key."
+msgstr "Chế độ khác đã dùng phím này."

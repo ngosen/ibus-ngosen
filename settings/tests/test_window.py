@@ -42,6 +42,10 @@ class FakeEngine:
             "TimeFormat": "%H:%M:%S %Z",
             "EnableMacro": "True",
             "EnableDictionary": "True",
+            "ModeMenuKey": "grave",
+            "ShortcutSen": "1",
+            "ShortcutPreedit": "q",
+            "ShortcutOff": "e",
         }
 
 
@@ -118,6 +122,24 @@ class WindowTest(unittest.TestCase):
         self.window.rows.rows["InputMethod"].set_selected(2)
         self.assertEqual(self.settings()["W2U"], "Everywhere")
         self.assertEqual(self.settings()["InputMethod"], "Telex + VNI")
+
+    def test_mode_menu_key_choices(self):
+        row = self.window.rows.rows["ModeMenuKey"]
+        self.assertEqual(row.get_model().get_string(row.get_selected()), "`")
+        row.set_selected(1)
+        self.assertEqual(self.settings()["ModeMenuKey"], "Shift+asciitilde")
+
+    def test_mode_menu_shortcut_must_be_free(self):
+        row = self.window.rows.rows["ShortcutOff"]
+        self.assertEqual(row.get_text(), "e")
+        row.set_text("q")
+        self.assertNotIn("ShortcutOff", self.settings())
+        self.assertTrue(row.has_css_class("error"))
+        row.set_text(";")
+        self.assertNotIn("ShortcutOff", self.settings())
+        row.set_text("x")
+        self.assertEqual(self.settings()["ShortcutOff"], "x")
+        self.assertFalse(row.has_css_class("error"))
 
     def test_hand_written_value_is_kept(self):
         row = self.window.rows.rows["TimeFormat"]

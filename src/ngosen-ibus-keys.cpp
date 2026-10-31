@@ -54,6 +54,11 @@ namespace ngosen {
         return keys;
     }
 
+    const std::vector<std::string>& defaultModeMenuKeys() {
+        static const std::vector<std::string> keys = {"grave"};
+        return keys;
+    }
+
     std::optional<KeyChord> parseToggleKey(const std::string& text) {
         KeyChord chord;
         if (!ibus_key_event_from_string(text.c_str(), &chord.keyval, &chord.modifiers) || chord.keyval == IBUS_KEY_VoidSymbol)
@@ -63,6 +68,15 @@ namespace ngosen {
             return std::nullopt;
         // fcitx5 matches letters whatever their case, so "Alt+Z" is Alt with the z key.
         chord.keyval = canonicalKey(chord.keyval);
+        return chord;
+    }
+
+    std::optional<KeyChord> parseMenuKey(const std::string& text) {
+        KeyChord chord;
+        if (!ibus_key_event_from_string(text.c_str(), &chord.keyval, &chord.modifiers) || chord.keyval == IBUS_KEY_VoidSymbol || ownModifier(chord.keyval) != 0)
+            return std::nullopt;
+        chord.modifiers = heldModifiers(chord.modifiers);
+        chord.keyval    = canonicalKey(chord.keyval);
         return chord;
     }
 
