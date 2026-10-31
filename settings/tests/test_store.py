@@ -5,7 +5,7 @@ import os
 import tempfile
 import unittest
 
-from ngosen_settings import ini, options
+from ngosen_settings import ini, keymap, options
 from ngosen_settings.store import Engine, Store, read_text, write_text
 
 
@@ -111,6 +111,59 @@ class StoreTest(unittest.TestCase):
         store.undo()
         self.assertEqual(store.macros, [("ko", "không"), ("kg", "khô gà")])
         self.assertEqual(ini.read_list(ini.parse(read_text(self.macros))[1], "Macro"), store.macros)
+
+    def test_keymap_add_edit_remove_and_undo(self):
+        store = self.store()
+        self.assertEqual(store.keymap, [])
+        store.set_keymap([("s", "DauSac")])
+        store.set_keymap([("s", "DauSac"), ("f", "DauHuyen")])
+        store.set_keymap([("s", "DauHoi"), ("f", "DauHuyen")])
+        store.set_keymap([("f", "DauHuyen")])
+        self.assertEqual(self.store().keymap, [("f", "DauHuyen")])
+        store.undo()
+        self.assertEqual(store.keymap, [("s", "DauHoi"), ("f", "DauHuyen")])
+        self.assertEqual(self.store().keymap, store.keymap)
+
+    def test_keymap_written_by_fcitx5_keeps_everything_else(self):
+        keymap = os.path.join(self.folder, "ngosen-custom-keymap.conf")
+        # As fcitx5 writes the list, with a section of a newer version after it.
+        head = "# Written by fcitx5\n\n"
+        tail = "[Future]\n# Note\nKept=1\n\n"
+        write_text(
+            keymap,
+            head
+            + "[CustomKeymap/0]\n# Key\nKey=z\n# Value\nValue=XoaDauThanh\n\n"
+            + "[CustomKeymap/1]\n# Key\nKey=s\n# Value\nValue=DauSac\n\n"
+            + tail,
+        )
+        store = self.store()
+        self.assertEqual(store.keymap, [("z", "XoaDauThanh"), ("s", "DauSac")])
+        store.set_keymap([("s", "DauSac")])
+        self.assertEqual(
+            read_text(keymap), head + "[CustomKeymap/0]\nKey=s\nValue=DauSac\n\n" + tail
+        )
+        store.set_keymap([])
+        self.assertEqual(read_text(keymap), head + tail)
+
+    def test_keymap_appended_after_other_lines(self):
+        keymap = os.path.join(self.folder, "ngosen-custom-keymap.conf")
+        write_text(keymap, "# Custom Keymap\n# CustomKeymap=\n")
+        self.store().set_keymap([("\\", "D_Đ")])
+        text = read_text(keymap)
+        self.assertEqual(
+            text, '# Custom Keymap\n# CustomKeymap=\n\n[CustomKeymap/0]\nKey="\\\\"\nValue=D_Đ\n\n'
+        )
+        self.assertEqual(ini.read_list(ini.parse(text)[1], "CustomKeymap"), [("\\", "D_Đ")])
+
+    def test_keymap_presets_and_keys(self):
+        for name, entries in keymap.PRESETS:
+            for key, code in entries:
+                self.assertIn(code, keymap.ACTION_CODES, f"{name}: {key}")
+        self.assertTrue(keymap.valid_key("é"))
+        self.assertFalse(keymap.valid_key(""))
+        self.assertFalse(keymap.valid_key(" "))
+        self.assertFalse(keymap.valid_key("ss"))
+        self.assertEqual(keymap.action_label("Unknown"), "Unknown")
 
     def test_invalid_utf8(self):
         with open(self.macros, "wb") as f:
