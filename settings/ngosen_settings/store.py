@@ -10,6 +10,7 @@ import tempfile
 from . import ini
 
 MACRO_LIST = "Macro"
+KEYMAP_LIST = "CustomKeymap"
 
 
 def config_dir():
@@ -84,7 +85,7 @@ def read_words(path):
 
 
 class Store:
-    """The settings, the macro list and the dictionary, with one step of undo."""
+    """The settings, the macro list, the keymap and the dictionary, with one step of undo."""
 
     def __init__(self, engine, folder=None):
         self.folder = folder or config_dir()
@@ -95,6 +96,8 @@ class Store:
         self.dictionary_file, self.bundled_dictionary = engine.dictionary_paths()
         own = os.path.exists(self.dictionary_file)
         self.words = read_words(self.dictionary_file if own else self.bundled_dictionary)
+        self.keymap_file = os.path.join(self.folder, "ngosen-custom-keymap.conf")
+        self.keymap = ini.read_list(ini.parse(read_text(self.keymap_file) or "")[1], KEYMAP_LIST)
         self._undo = None
 
     def set(self, key, value):
@@ -128,6 +131,16 @@ class Store:
             write_text(self.dictionary_file, "".join(w + "\n" for w in words))
         self._undo = (self.dictionary_file, before, "words", list(self.words))
         self.words = list(words)
+
+    def set_keymap(self, keymap):
+        if list(keymap) == self.keymap:
+            return False
+        before = read_text(self.keymap_file)
+        # The file may be a copy of the fcitx5 one; lines outside the list stay as they were.
+        write_text(self.keymap_file, ini.replace_list(before or "", KEYMAP_LIST, keymap))
+        self._undo = (self.keymap_file, before, "keymap", list(self.keymap))
+        self.keymap = list(keymap)
+        return True
 
     def can_undo(self):
         return self._undo is not None

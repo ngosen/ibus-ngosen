@@ -70,7 +70,7 @@ HINTS = {
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
     ),
-    "EnableCustomKeymap": N_("The keys set in the full edition, used by the Custom input method."),
+    "EnableCustomKeymap": N_("The keys below, used when the input method is Custom."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
     "EnableDictionary": N_(
         "Check spelling against the list below. Off: the list that comes with Ngó Sen."
@@ -110,7 +110,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "ToggleKey", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
+    (None, ["InputMethod", "ToggleKey", "DirectTyping", "OutputCharset"]),
     (
         N_("Tone marks"),
         [

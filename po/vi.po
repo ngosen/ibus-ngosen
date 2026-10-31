@@ -154,8 +154,8 @@ msgid "Keep Unicode unless an old document or app needs another one, such as TCV
 msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã khác như TCVN3 (ABC)."
 
 #: settings/ngosen_settings/options.py
-msgid "The keys set in the full edition, used by the Custom input method."
-msgstr "Bảng phím đặt ở bản đầy đủ, dùng cho kiểu gõ Custom."
+msgid "The keys below, used when the input method is Custom."
+msgstr "Các phím bên dưới, dùng khi kiểu gõ là Custom."
 
 #: settings/ngosen_settings/options.py
 msgid "Words that are not Vietnamese get no tone marks."
@@ -615,6 +615,74 @@ msgstr "Đã thêm Ngó Sen vào nguồn nhập."
 
 msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
 msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"
+
+#: settings/ngosen_settings/pages.py
+msgid "Keymap"
+msgstr "Keymap"
+
+#: settings/ngosen_settings/pages.py
+msgid "Original Input Method:"
+msgstr "Kiểu gõ gốc:"
+
+#: settings/ngosen_settings/pages.py
+msgid "Apply Preset"
+msgstr "Áp dụng cài đặt sẵn"
+
+#: settings/ngosen_settings/pages.py
+msgid "Key (Example: s)"
+msgstr "Phím (Ví dụ: s)"
+
+#: settings/ngosen_settings/pages.py
+msgid "Action"
+msgstr "Hành động"
+
+#: settings/ngosen_settings/pages.py
+msgid "Search keys..."
+msgstr "Tìm phím..."
+
+#: settings/ngosen_settings/pages.py
+msgid "No keys yet."
+msgstr "Chưa có phím nào."
+
+#: settings/ngosen_settings/pages.py
+msgid "A key is one character, not a space."
+msgstr "Phím là một ký tự, không phải dấu cách."
+
+#: settings/ngosen_settings/pages.py
+msgid "{key} already does “{action}”; Update replaces it."
+msgstr "{key} đang dùng cho “{action}”; bấm Cập nhật để thay."
+
+#: settings/ngosen_settings/keymap.py
+msgid "Remove the tone mark"
+msgstr "Xoá dấu thanh"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Sắc tone"
+msgstr "Dấu sắc"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Huyền tone"
+msgstr "Dấu huyền"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Hỏi tone"
+msgstr "Dấu hỏi"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Ngã tone"
+msgstr "Dấu ngã"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Nặng tone"
+msgstr "Dấu nặng"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Microsoft layout"
+msgstr "Bố cục Microsoft"
+
+#: settings/ngosen_settings/keymap.py
+msgid "VNI on a French keyboard"
+msgstr "VNI bàn phím tiếng Pháp"
 
 msgid "Tab or Esc: put back the key"
 msgstr "Cứu dấu: Tab hoặc Esc để trả lại phím vừa gõ"

@@ -20,6 +20,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   qua GNOME Shell gõ chữ trên vùng bôi đen bằng gạch chân (#52).
 - Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
+- Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
+  nạp sẵn bảng phím Telex, VNI, VIQR… như bản fcitx5; không cần sang bản fcitx5 để soạn nữa (#53).
 
 ### Thay đổi
 

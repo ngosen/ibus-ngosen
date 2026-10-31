@@ -5,7 +5,7 @@ import os
 import tempfile
 import unittest
 
-from ngosen_settings import ini
+from ngosen_settings import ini, keymap
 from ngosen_settings.store import Store, read_text, write_text
 
 try:
@@ -48,6 +48,15 @@ class FakeEngine:
 CAN_RUN = bool(window and os.environ.get("DISPLAY"))
 # CI sets this, so a missing package fails the run instead of skipping these tests.
 REQUIRED = os.environ.get("NGOSEN_WINDOW_TESTS") == "required"
+
+
+def labels(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        if isinstance(child, window.Gtk.Label):
+            yield child
+        yield from labels(child)
+        child = child.get_next_sibling()
 
 
 class FakeSources:
@@ -129,6 +138,89 @@ class WindowTest(unittest.TestCase):
         self.window.undo()
         self.assertEqual(self.store.macros, [("kg", "khô gà")])
         self.assertIsNotNone(macros.list.get_row_at_index(0))
+
+    def test_keymap_add_edit_remove(self):
+        page = self.window.keymap
+        for bad in ("ss", " "):
+            page.key_row.set_text(bad)
+            self.assertFalse(page.add_button.get_sensitive(), bad)
+            self.assertTrue(page.key_row.has_css_class("error"), bad)
+        page.key_row.set_text("s")
+        page.action.set_selected(keymap.ACTION_CODES.index("DauSac"))
+        page._add()
+        self.assertEqual(self.store.keymap, [("s", "DauSac")])
+        self.assertEqual(page.key_row.get_text(), "")
+        self.assertEqual(page.list.get_row_at_index(0).get_subtitle(), "Sắc tone")
+        page.list.get_row_at_index(0).activate()
+        self.assertEqual(page.key_row.get_text(), "s")
+        page.action.set_selected(keymap.ACTION_CODES.index("DauHoi"))
+        page._add()
+        self.assertEqual(self.store.keymap, [("s", "DauHoi")])
+        page._remove("s")
+        self.assertEqual(self.store.keymap, [])
+        self.window.undo()
+        self.assertEqual(self.store.keymap, [("s", "DauHoi")])
+        self.assertEqual(page.list.get_row_at_index(0).get_title(), "s")
+
+    def test_keymap_duplicate_key_updates(self):
+        page = self.window.keymap
+        page.key_row.set_text("s")
+        page._add()
+        page.key_row.set_text("s")
+        self.assertEqual(page.add_button.get_label(), "Update")
+        self.assertIn("Update replaces it", page.editor.get_description())
+        page.action.set_selected(keymap.ACTION_CODES.index("DauNga"))
+        page._add()
+        self.assertEqual(self.store.keymap, [("s", "DauNga")])
+        self.assertFalse(page.editor.get_description())
+
+    def test_keymap_preset_and_switch(self):
+        page = self.window.keymap
+        page.preset.set_selected(1)
+        page.apply_preset()
+        self.assertEqual(self.store.keymap, keymap.PRESETS[1][1])
+        self.window.undo()
+        self.assertEqual(self.store.keymap, [])
+        self.window.rows.rows["EnableCustomKeymap"].set_active(True)
+        self.assertEqual(self.settings()["EnableCustomKeymap"], "True")
+
+    def test_keymap_hint_escapes_markup(self):
+        page = self.window.keymap
+        self.store.set_keymap([("&", "XoaDauThanh")])
+        page.refresh()
+        page.key_row.set_text("&")
+        # What the label shows: libadwaita 1.5 returns the parsed text from
+        # get_description(), and a label whose markup fails to parse keeps its old text.
+        shown = [label.get_text() for label in labels(page.editor)]
+        self.assertIn("& already does “Remove the tone mark”; Update replaces it.", shown)
+
+    def test_keymap_unknown_action_is_not_overwritten(self):
+        page = self.window.keymap
+        self.store.set_keymap([("q", "FutureAction")])
+        page.refresh()
+        page.action.set_selected(keymap.ACTION_CODES.index("DauSac"))
+        page.list.get_row_at_index(0).activate()
+        self.assertEqual(page.key_row.get_text(), "q")
+        shown = page.action.get_model().get_string(page.action.get_selected())
+        self.assertEqual(shown, "FutureAction")
+        self.assertFalse(page.add_button.get_sensitive())
+        page._add()
+        self.assertEqual(self.store.keymap, [("q", "FutureAction")])
+        page.action.set_selected(keymap.ACTION_CODES.index("DauNga"))
+        self.assertTrue(page.add_button.get_sensitive())
+        page._add()
+        self.assertEqual(self.store.keymap, [("q", "DauNga")])
+        self.assertEqual(page.action.get_model().get_n_items(), len(keymap.ACTION_CODES))
+
+    def test_keymap_same_preset_twice_keeps_undo(self):
+        page = self.window.keymap
+        page.preset.set_selected(1)
+        page.apply_preset()
+        toast = self.window.toast
+        page.apply_preset()
+        self.assertIs(self.window.toast, toast)
+        self.window.undo()
+        self.assertEqual(self.store.keymap, [])
 
     def test_switch_dialog_copies_the_command(self):
         dialog = window.pages.show_switch_dialog(self.window, self.window._show)
