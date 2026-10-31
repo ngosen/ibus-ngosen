@@ -15,6 +15,9 @@ ICONS = {
 }
 
 
+KEYBINDINGS = "org.gnome.desktop.wm.keybindings"
+
+
 class GnomeSources:
     """The GNOME input sources, or None where GNOME's settings are not installed."""
 
@@ -27,6 +30,17 @@ class GnomeSources:
         if self.settings is None:
             return None
         return [tuple(source) for source in self.settings.get_value("sources").unpack()]
+
+    def switch_keys(self):
+        """GNOME's keys for the next input source, as accelerators and xkb options."""
+        schemas = Gio.SettingsSchemaSource.get_default()
+        accelerators = []
+        if schemas is not None and schemas.lookup(KEYBINDINGS, True):
+            bindings = Gio.Settings.new(KEYBINDINGS)
+            for name in ("switch-input-source", "switch-input-source-backward"):
+                accelerators += bindings.get_strv(name)
+        options = self.settings.get_strv("xkb-options") if self.settings is not None else []
+        return accelerators, options
 
     def set(self, sources):
         if self.settings is None:

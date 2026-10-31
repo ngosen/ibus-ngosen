@@ -3,19 +3,25 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The pages of the window. Each control saves as soon as it changes."""
 
-from gi.repository import Adw, GLib, Gtk, Pango
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 
-from . import options
+from . import keys, options
 from .i18n import N_, _
+
+# The last toggle key choice, which asks for keys instead of saving.
+OTHER_KEYS = "\0other"
 
 
 class SettingRows:
     """Builds a row for each setting and puts the saved values back into them."""
 
-    def __init__(self, store, names, on_change):
+    def __init__(self, store, names, on_change, taken_keys=set):
         self.store = store
         self.names = names  # Values the engine accepts for InputMethod and OutputCharset.
         self.on_change = on_change
+        self.taken_keys = (
+            taken_keys  # GNOME's own input source keys, which a toggle key may not use.
+        )
         self.loading = False
         self.rows = {}
         self.pairs = {}  # What each combo row lists, as (value, label).
@@ -44,7 +50,9 @@ class SettingRows:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
         if current not in (value for value, _label in pairs):
-            pairs.append((current, current))
+            pairs.append((current, keys.label(current) if key == "ToggleKey" else current))
+        if key == "ToggleKey":
+            pairs.append((OTHER_KEYS, _("Other keys…")))
         return pairs
 
     def _choice(self, key, row):
@@ -55,8 +63,21 @@ class SettingRows:
     def _changed(self, key, value):
         if key == "InputMethod":
             self._show_example()
-        if not self.loading and value is not None:
-            self.on_change(key, value)
+        if self.loading or value is None:
+            return
+        if value == OTHER_KEYS:
+            self.capture = KeyCapture(self.taken_keys(), self._save_toggle_key, self.refresh)
+            self.capture.dialog.present(self.rows[key].get_root())
+            return
+        self.on_change(key, value)
+
+    def _save_toggle_key(self, value):
+        # The same keys as a suggestion are saved as written there.
+        for suggested, _label in options.TOGGLE_KEYS:
+            if suggested and keys.parse(suggested) == keys.parse(value):
+                value = suggested
+        self.on_change("ToggleKey", value)
+        self.refresh()
 
     def _show_example(self):
         row = self.rows.get("InputMethod")
@@ -79,6 +100,70 @@ class SettingRows:
             self.loading = False
 
 
+class KeyCapture:
+    """Asks for a toggle key: the keys held together when the last of them comes up."""
+
+    def __init__(self, taken, on_save, on_cancel):
+        self.taken = taken
+        self.on_save = on_save
+        self.on_cancel = on_cancel
+        self.held = set()  # Key codes, since a key can come up under another name (Alt as Meta).
+        self.pressed = []
+        self.value = None
+        self.dialog = Adw.AlertDialog(
+            heading=_("Press the new keys"), body=_("Hold the keys together, then let go.")
+        )
+        self.shown = Gtk.Label()
+        self.shown.add_css_class("title-2")
+        self.note = Gtk.Label(wrap=True, justify=Gtk.Justification.CENTER)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.append(self.shown)
+        box.append(self.note)
+        self.dialog.set_extra_child(box)
+        self.dialog.add_response("cancel", _("Cancel"))
+        self.dialog.add_response("save", _("Save"))
+        self.dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        self.dialog.set_response_enabled("save", False)
+        self.dialog.set_close_response("cancel")
+        self.dialog.connect("response", lambda _d, response: self._answer(response))
+        # Captures every key, so Escape and Enter can be part of the keys too.
+        keyboard = Gtk.EventControllerKey(propagation_phase=Gtk.PropagationPhase.CAPTURE)
+        keyboard.connect(
+            "key-pressed", lambda _c, k, code, _s: self.press(Gdk.keyval_name(k), code)
+        )
+        keyboard.connect("key-released", lambda _c, _k, code, _s: self.release(code))
+        self.dialog.add_controller(keyboard)
+
+    def press(self, name, code):
+        if not self.held:
+            self.pressed = []
+        self.held.add(code)
+        if name not in self.pressed:
+            self.pressed.append(name)
+        return True
+
+    def release(self, code):
+        self.held.discard(code)
+        if self.held:
+            return
+        chord = keys.from_pressed(self.pressed)
+        error, warning = keys.problem(chord, self.taken)
+        self.value = None if error else keys.value(chord)
+        self.shown.set_label(keys.label(keys.value(chord)) if chord else "")
+        self.note.set_label(_(error or warning or ""))
+        if error:
+            self.note.add_css_class("error")
+        else:
+            self.note.remove_css_class("error")
+        self.dialog.set_response_enabled("save", self.value is not None)
+
+    def _answer(self, response):
+        if response == "save" and self.value is not None:
+            self.on_save(self.value)
+        else:
+            self.on_cancel()
+
+
 def preferences_group(title=None, description=None):
     group = Adw.PreferencesGroup()
     if title:
@@ -90,9 +175,9 @@ def preferences_group(title=None, description=None):
 
 def typing_page(rows):
     page = Adw.PreferencesPage(title=_("Typing"), icon_name="input-keyboard-symbolic")
-    for title, keys in options.TYPING_GROUPS:
+    for title, names in options.TYPING_GROUPS:
         group = preferences_group(title)
-        for key in keys:
+        for key in names:
             group.add(rows.build(key))
         if title is None:
             try_it = Adw.EntryRow(title=_("Try it"))

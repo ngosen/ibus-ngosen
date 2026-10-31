@@ -21,6 +21,42 @@ msgstr "Phím chuyển Anh/Việt"
 msgid "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
 msgstr "Nhấn cùng lúc rồi thả ra; thanh trên cùng hiện V hoặc E. Super+Space vẫn đổi nguồn nhập như cũ."
 
+#: settings/ngosen_settings/pages.py
+msgid "Other keys…"
+msgstr "Phím khác…"
+
+#: settings/ngosen_settings/pages.py
+msgid "Press the new keys"
+msgstr "Bấm phím mới"
+
+#: settings/ngosen_settings/pages.py
+msgid "Hold the keys together, then let go."
+msgstr "Giữ các phím cùng lúc rồi thả ra."
+
+#: settings/ngosen_settings/pages.py
+msgid "Cancel"
+msgstr "Huỷ"
+
+#: settings/ngosen_settings/pages.py
+msgid "Save"
+msgstr "Lưu"
+
+#: settings/ngosen_settings/keys.py
+msgid "Press at least two keys together."
+msgstr "Cần bấm ít nhất hai phím cùng lúc."
+
+#: settings/ngosen_settings/keys.py
+msgid "Shift with a key types a capital letter or a symbol."
+msgstr "Shift kèm một phím sẽ gõ ra chữ hoa hoặc ký hiệu."
+
+#: settings/ngosen_settings/keys.py
+msgid "GNOME already uses these keys to switch input sources."
+msgstr "GNOME đã dùng tổ hợp này để đổi nguồn nhập."
+
+#: settings/ngosen_settings/keys.py
+msgid "Firefox and some other apps open their menu bar when Alt is let go."
+msgstr "Firefox và vài app khác sẽ mở thanh menu khi thả phím Alt."
+
 #: src/ngosen-ibus-menu.cpp src/ngosen-ibus-engine.cpp
 msgid "Vietnamese"
 msgstr "Tiếng Việt"

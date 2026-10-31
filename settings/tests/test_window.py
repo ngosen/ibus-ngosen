@@ -60,6 +60,9 @@ class FakeSources:
         self.sources = list(sources)
         return True
 
+    def switch_keys(self):
+        return ["<Super>space", "<Shift><Super>space"], ["grp:alt_caps_toggle"]
+
 
 class RequiredTest(unittest.TestCase):
     @unittest.skipUnless(REQUIRED, "not required here")
@@ -149,6 +152,49 @@ class WindowTest(unittest.TestCase):
         self.assertTrue(page.editor.get_sensitive())
         self.window.rows.rows["EnableDictionary"].set_active(False)
         self.assertFalse(page.editor.get_sensitive())
+
+    def capture(self, *names):
+        """Picks Other keys, then holds the keys named and lets them go."""
+        row = self.window.rows.rows["ToggleKey"]
+        row.set_selected(row.get_model().get_n_items() - 1)
+        capture = self.window.rows.capture
+        for code, name in enumerate(names):
+            capture.press(name, code)
+        for code in range(len(names)):
+            capture.release(code)
+        return capture
+
+    def test_toggle_key_from_pressed_keys(self):
+        capture = self.capture("Control_L", "grave")
+        self.assertEqual(capture.shown.get_label(), "Ctrl+Grave")
+        capture.dialog.emit("response", "save")
+        self.assertEqual(self.settings()["ToggleKey"], "Control+grave")
+        row = self.window.rows.rows["ToggleKey"]
+        self.assertEqual(row.get_model().get_string(row.get_selected()), "Ctrl+Grave")
+
+    def test_toggle_key_same_as_a_suggestion(self):
+        self.capture("Shift_L", "Meta_L").dialog.emit("response", "save")
+        self.assertEqual(self.settings()["ToggleKey"], window.options.TOGGLE_KEYS[1][0])
+
+    def test_toggle_key_refused(self):
+        row = self.window.rows.rows["ToggleKey"]
+        before = row.get_selected()
+        for names in (
+            ["Control_L"],
+            ["Shift_L", "a"],
+            ["Super_L", "space"],
+            ["Alt_L", "Caps_Lock"],
+        ):
+            capture = self.capture(*names)
+            self.assertFalse(capture.dialog.get_response_enabled("save"), names)
+            capture.dialog.emit("response", "cancel")
+        self.assertNotIn("ToggleKey", self.settings())
+        self.assertEqual(row.get_selected(), before)
+
+    def test_toggle_key_alt_letter_warns(self):
+        capture = self.capture("Alt_L", "z")
+        self.assertTrue(capture.dialog.get_response_enabled("save"))
+        self.assertIn("menu bar", capture.note.get_label())
 
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check
