@@ -39,7 +39,7 @@ namespace ngosen {
                 " session=" + env("XDG_SESSION_TYPE") + "\n" + recorder.dump();
             GError* error = nullptr;
             if (!g_file_set_contents_full(path.c_str(), text.data(), static_cast<gssize>(text.size()), G_FILE_SET_CONTENTS_CONSISTENT, 0600, &error)) {
-                NGOSEN_WARN("Cannot write " << path << ": " << error->message);
+                NGOSEN_WARN("Cannot write " + path + ": " + error->message);
                 g_error_free(error);
                 return {};
             }
