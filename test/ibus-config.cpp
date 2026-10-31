@@ -160,6 +160,9 @@ namespace {
         check(matches("Shift+Alt_L", IBUS_KEY_Meta_L, IBUS_SHIFT_MASK), "Alt pressed with Shift held reads as Meta");
         check(matches("Shift+Alt_L", IBUS_KEY_Meta_L, IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_RELEASE_MASK), "Meta released with Shift held");
         check(!otherModifierHeld(IBUS_KEY_Meta_R, IBUS_MOD1_MASK | IBUS_RELEASE_MASK), "Meta released alone holds nothing else");
+        // GTK 4 can report the Meta bit beside Mod1 while Alt is held.
+        check(matches("Alt+Shift_L", IBUS_KEY_Shift_L, IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_META_MASK | IBUS_RELEASE_MASK), "Shift released with Alt and its Meta bit held");
+        check(!otherModifierHeld(IBUS_KEY_Alt_L, IBUS_MOD1_MASK | IBUS_META_MASK | IBUS_RELEASE_MASK), "Alt released with its Meta bit holds nothing else");
     }
 
     IBusProperty* findItem(IBusPropList* list, const std::string& key) {

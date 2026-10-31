@@ -11,7 +11,8 @@ namespace ngosen {
 
     namespace {
 
-        constexpr guint HeldModifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
+        // Meta is left out: GTK 4 reports it beside the Mod1 of Alt, which already counts.
+        constexpr guint HeldModifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK;
 
         // The US layout puts Meta on the second level of Alt, so Shift then Alt arrives as Meta.
         guint canonicalKey(guint keyval) {
