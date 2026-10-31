@@ -124,6 +124,8 @@ namespace {
         // fcitx5 allows these; here a bare Shift would switch on every capital.
         check(readSettings(parseIni("ToggleKey=Shift_L Zenkaku_Hankaku\n")).toggleKeys == defaultToggleKeys(), "single keys fall back to the default");
         check(readSettings(parseIni("ToggleKey=Shift_L Alt+z Nope+x\n")).toggleKeys == std::vector<std::string>{"Alt+z"}, "single and unknown keys are dropped");
+        const std::vector<std::string> shiftAlt{"Shift+Alt_L", "Shift+Alt_R", "Alt+Shift_L", "Alt+Shift_R"};
+        check(readSettings(parseIni("ToggleKey=Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R\n")).toggleKeys == shiftAlt, "the Shift+Alt choice is read whole");
 
         IBusSettings changed = defaultSettings();
         changed.toggleKeys   = {"Alt+z", "Control+space"};

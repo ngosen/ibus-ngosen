@@ -11,8 +11,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Thêm
 
 - Nhấp Ctrl+Shift để đổi Anh/Việt như UniKey, ngay trong Ngó Sen: đổi cho mọi app cùng lúc, nhớ cả khi khởi động
-  lại; thanh trên cùng hiện V hoặc E và menu có mục "Tiếng Việt" để bấm. Tắt được phím này trong cửa sổ
-  cài đặt; Super+Space vẫn đổi nguồn nhập như cũ. Ô mật khẩu luôn gõ tiếng Anh (#50).
+  lại; thanh trên cùng hiện V hoặc E và menu có mục "Tiếng Việt" để bấm. Cửa sổ cài đặt cho đổi sang
+  Shift+Alt hoặc tắt phím này; Super+Space vẫn đổi nguồn nhập như cũ. Ô mật khẩu luôn gõ tiếng Anh (#50).
 - Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
 
