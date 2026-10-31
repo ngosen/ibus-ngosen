@@ -19,6 +19,12 @@ from .i18n import _  # noqa: E402
 from .store import Engine, Store  # noqa: E402
 
 APP_ID = "io.github.ngosen.IBusNgoSen"
+# A file dialog the user closed; older GTK has no CANCELLED.
+CLOSED_DIALOG = [
+    getattr(Gtk.DialogError, name)
+    for name in ("DISMISSED", "CANCELLED")
+    if hasattr(Gtk.DialogError, name)
+]
 
 
 class Window(Adw.ApplicationWindow):
@@ -160,8 +166,11 @@ class Window(Adw.ApplicationWindow):
     def _on_file(self, _dialog, result, finish, use):
         try:
             file = finish(result)
-        except GLib.Error:
-            return  # Cancelled.
+        except GLib.Error as error:
+            if not any(error.matches(Gtk.dialog_error_quark(), code) for code in CLOSED_DIALOG):
+                text = _("Cannot open the file dialog: {}").format(error.message)
+                self._show(Adw.Toast(title=text, timeout=0))
+            return
         if file is not None and file.get_path():
             use(file.get_path())
 
@@ -177,7 +186,9 @@ class Window(Adw.ApplicationWindow):
         """Checks the whole file before writing; what the user would lose is asked about first."""
         try:
             data = backup.load(path)
-            _changes, notes = backup.plan(data, backup.Paths(self.store), self.engine)
+            _changes, notes = backup.plan(
+                data, backup.Paths(self.store), self.engine, self.rows.taken_keys()
+            )
         except (OSError, ValueError, subprocess.SubprocessError) as error:
             self._cannot_restore(error)
             return None
@@ -199,7 +210,9 @@ class Window(Adw.ApplicationWindow):
     def apply_backup(self, data, name):
         try:
             # Planned again, so a change made while the dialog was open is not written over.
-            changes, _notes = backup.plan(data, backup.Paths(self.store), self.engine)
+            changes, _notes = backup.plan(
+                data, backup.Paths(self.store), self.engine, self.rows.taken_keys()
+            )
             before = backup.replace(changes)
         except backup.RestoreError as error:
             self._show(Adw.Toast(title=str(error), timeout=0))
@@ -210,12 +223,14 @@ class Window(Adw.ApplicationWindow):
             return
         self._reload()
         toast = Adw.Toast(title=_("Restored from {}.").format(name), button_label=_("_Undo"))
-        toast.connect("button-clicked", lambda _t: self.undo_restore(before))
+        toast.connect("button-clicked", lambda _t: self.undo_restore(before, changes))
         self._show(toast)
 
-    def undo_restore(self, before):
+    def undo_restore(self, before, restored):
         try:
-            backup.replace(before)
+            if not backup.undo(before, restored):
+                text = _("The settings changed after the restore, so nothing was undone.")
+                self._show(Adw.Toast(title=text, timeout=0))
         except OSError as error:
             self._show(Adw.Toast(title=_("Cannot save: {}").format(reason(error)), timeout=0))
         self._reload()

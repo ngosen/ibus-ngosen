@@ -166,7 +166,7 @@ class BackupTest(UserFiles, unittest.TestCase):
             with self.subTest(toggle):
                 _, notes = self.restore(fcitx5_backup(ToggleKey=toggle))
                 self.assertEqual(self.settings()["ToggleKey"], "Control+Alt_L")
-                self.assertEqual(len(notes), 1)
+                self.assertEqual(len(notes), 2)
                 self.assertIn("Shift" if "Shift_L" in toggle.values() else "F12", notes[0])
 
     def test_mixed_keys_keep_the_usable_ones(self):
@@ -176,6 +176,26 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(len(notes), 1)
         self.assertIn("F12", notes[0])
         self.assertNotIn("Control+Shift", notes[0])
+
+    def test_switch_keys_that_gnome_or_typing_need_are_left_out(self):
+        taken = keys.gnome_chords(["<Super>space"], [])
+        toggle = {
+            "0": "Super+space",
+            "1": "Shift+a",
+            "2": "Control+Shift_L",
+            "3": "Control+Shift_R",
+        }
+        changes, notes = backup.plan(
+            fcitx5_backup(ToggleKey=toggle), self.paths, self.engine, taken
+        )
+        backup.replace(changes)
+        self.assertEqual(self.settings()["ToggleKey"], "Control+Shift_L Control+Shift_R")
+        self.assertEqual(len(notes), 2)
+        self.assertIn("Super+Space", notes[0])
+        self.assertIn("Shift+A", notes[1])
+        # Without GNOME's shortcuts, Super+space is a key like any other.
+        changes, notes = backup.plan(fcitx5_backup(ToggleKey=toggle), self.paths, self.engine)
+        self.assertEqual(len(notes), 1)
 
     def test_key_list_stops_at_the_first_gap_as_fcitx5_does(self):
         self.restore(fcitx5_backup(ToggleKey={"0": "Alt+z", "2": "Alt+x"}))
@@ -324,10 +344,37 @@ class BackupTest(UserFiles, unittest.TestCase):
         target = os.path.join(self.home, "out.json")
         backup.export(self.engine, self.paths, target)
         exported = backup.load(target)
-        self.assertNotIn("dictionary", exported)
-        self.assertEqual(exported["meta"]["components"], ["config", "macros", "keymaps"])
+        self.assertEqual(exported["dictionary"], "việt\n")
+        self.assertEqual(
+            exported["meta"]["components"], ["config", "macros", "keymaps", "dictionary"]
+        )
         self.assertEqual(exported["config"]["Mode"], "Preedit")
         self.assertEqual(exported["config"]["VietnameseOn"], "True")
+        # A list edited after the backup goes back to the packaged one.
+        write_text(self.paths.dictionary, "việt\nkhô\n")
+        self.restore(exported)
+        self.assertFalse(os.path.exists(self.paths.dictionary))
+
+    def test_bundled_words_remove_the_own_file(self):
+        write_text(self.paths.bundled_dictionary, "việt\nnam\n")
+        write_text(self.paths.dictionary, "việt\nkhô\n")
+        self.restore({"dictionary": "nam\n\nviệt\n"})
+        self.assertFalse(os.path.exists(self.paths.dictionary))
+        self.restore({"dictionary": "nam\nkhô\n"})
+        self.assertEqual(read_text(self.paths.dictionary), "nam\nkhô\n")
+
+    def test_undo_only_while_the_files_hold_the_restore(self):
+        before = self.files()
+        changes, _ = backup.plan(fcitx5_backup(VietnameseOn="False"), self.paths, self.engine)
+        snapshot = backup.replace(changes)
+        # The language switched back from the menu after the restore.
+        backup.put(self.paths.english, None)
+        changed = self.files()
+        self.assertFalse(backup.undo(snapshot, changes))
+        self.assertEqual(self.files(), changed)
+        backup.put(self.paths.english, b"")
+        self.assertTrue(backup.undo(snapshot, changes))
+        self.assertEqual(self.files(), before)
 
 
 @unittest.skipUnless(CAN_RUN, "needs GTK 4, libadwaita and a display")
@@ -362,6 +409,36 @@ class WindowBackupTest(UserFiles, unittest.TestCase):
         self.window.restore_backup(path).emit("response", "restore")
         self.assertNotEqual(self.files(), before)
         self.assertEqual(self.window.toast.get_title(), "Restored from backup.json.")
+
+    def test_undo_skipped_after_a_later_change(self):
+        self.window.restore_backup(self.save(fcitx5_backup()))
+        undo = self.window.toast
+        self.window.save("SpellCheck", "True")
+        changed = self.files()
+        undo.emit("button-clicked")
+        self.assertEqual(self.files(), changed)
+        self.assertIn("nothing was undone", self.window.toast.get_title())
+
+    def test_gnome_shortcuts_are_not_restored_as_switch_keys(self):
+        path = self.save(fcitx5_backup(ToggleKey={"0": "Super+space", "1": "Alt+z"}))
+        dialog = self.window.restore_backup(path)
+        self.assertIn("Super+Space", dialog.get_body())
+        dialog.emit("response", "restore")
+        self.assertEqual(self.settings()["ToggleKey"], "Alt+z")
+
+    def test_file_dialog_errors(self):
+        def fail(code):
+            def finish(_result):
+                raise window.GLib.Error.new_literal(window.Gtk.dialog_error_quark(), "boom", code)
+
+            return finish
+
+        used = []
+        self.window._on_file(None, None, fail(window.Gtk.DialogError.DISMISSED), used.append)
+        self.assertIsNone(self.window.toast)
+        self.window._on_file(None, None, fail(window.Gtk.DialogError.FAILED), used.append)
+        self.assertIn("boom", self.window.toast.get_title())
+        self.assertEqual(used, [])
 
     def test_damaged_file_changes_nothing(self):
         before = self.files()

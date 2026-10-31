@@ -9,8 +9,8 @@ import tempfile
 from datetime import datetime
 
 from . import ini, keys
-from .i18n import _
-from .store import MACRO_LIST
+from .i18n import N_, _
+from .store import MACRO_LIST, read_words
 
 COMPONENTS = ("config", "macros", "keymaps", "rules", "dictionary")
 KEYMAP_FILE = "ngosen-custom-keymap.conf"
@@ -19,6 +19,7 @@ KEYMAP_LIST = "CustomKeymap"
 IBUS_ONLY = ("DirectTyping", "ToggleKey")
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
 DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
+NEEDS_MODIFIER = N_("A switch key here needs Ctrl, Alt, Shift or Super with another key.")
 
 
 class RestoreError(OSError):
@@ -42,6 +43,7 @@ class Paths:
         self.macros = store.macro_file
         self.keymaps = os.path.join(store.folder, KEYMAP_FILE)
         self.dictionary = store.dictionary_file
+        self.bundled_dictionary = store.bundled_dictionary
         self.english = english_mark()
 
 
@@ -103,6 +105,17 @@ def replace(changes, write=put):
     return before
 
 
+def undo(before, restored, write=put):
+    """Puts back the files a restore replaced, only while they still hold what it wrote.
+
+    Returns False and writes nothing when something changed one of them since.
+    """
+    if any(read_bytes(path) != restored[path] for path in before):
+        return False
+    replace(before, write)
+    return True
+
+
 def _entries(path, name):
     text = read_bytes(path)
     entries = ini.read_list(ini.parse((text or b"").decode("utf-8"))[1], name)
@@ -121,7 +134,10 @@ def export(engine, paths, target):
         "macros": _entries(paths.macros, MACRO_LIST),
         "keymaps": _entries(paths.keymaps, KEYMAP_LIST),
     }
+    # The list in effect, so restoring brings back the packaged one over a later own list.
     dictionary = read_bytes(paths.dictionary)
+    if dictionary is None:
+        dictionary = read_bytes(paths.bundled_dictionary)
     if dictionary is not None:
         backup["dictionary"] = dictionary.decode("utf-8")
     backup["meta"] = {
@@ -190,7 +206,7 @@ def _shown(names):
     return ", ".join(keys.label(name) or name for name in names)
 
 
-def _toggle_key(value, engine, notes):
+def _toggle_key(value, engine, taken, notes):
     """The ToggleKey line to write, or None to keep the current one."""
     wanted = _key_list(value)
     if not wanted:
@@ -198,23 +214,23 @@ def _toggle_key(value, engine, notes):
     # The setting is one line split at spaces, so a key with a space cannot be kept.
     candidates = [key for key in wanted if key and not any(c.isspace() for c in key)]
     usable = engine.usable_toggle_keys(candidates) if candidates else set()
-    kept = [key for key in wanted if key in usable]
-    dropped = [key for key in wanted if key not in usable]
+    kept, dropped = [], {}
+    for key in wanted:
+        # The rules of the key dialog: no GNOME shortcut, no Shift with a key that types.
+        reason = NEEDS_MODIFIER if key not in usable else keys.problem(keys.parse(key), taken)[0]
+        if reason:
+            dropped.setdefault(reason, []).append(key)
+        else:
+            kept.append(key)
+    for reason, names in dropped.items():
+        notes.append(
+            _("These switch keys in the backup are left out: {}. {}").format(
+                _shown(names), _(reason)
+            )
+        )
     if not kept:
-        notes.append(
-            _(
-                "The switch key in the backup ({}) does not work in this edition, so the current one"
-                " stays. It needs Ctrl, Alt, Shift or Super with another key."
-            ).format(_shown(dropped))
-        )
+        notes.append(_("The current switch key stays."))
         return None
-    if dropped:
-        notes.append(
-            _(
-                "These switch keys in the backup do not work in this edition and are left out: {}."
-                " They need Ctrl, Alt, Shift or Super with another key."
-            ).format(_shown(dropped))
-        )
     return " ".join(kept)
 
 
@@ -232,7 +248,7 @@ def _direct_typing(mode, notes):
     return value
 
 
-def _settings(config, text, known, engine, notes):
+def _settings(config, text, known, engine, taken, notes):
     for key in known:
         if key not in IBUS_ONLY and key in config:
             text = ini.set_value(text, key, _text(config[key]))
@@ -241,7 +257,7 @@ def _settings(config, text, known, engine, notes):
         if direct is not None:
             text = ini.set_value(text, "DirectTyping", direct)
     if "ToggleKey" in config:
-        toggle = _toggle_key(config["ToggleKey"], engine, notes)
+        toggle = _toggle_key(config["ToggleKey"], engine, taken, notes)
         if toggle is not None:
             text = ini.set_value(text, "ToggleKey", toggle)
     return text.encode("utf-8", "surrogateescape")
@@ -274,8 +290,10 @@ def _current(path):
     return None if data is None else data.decode("utf-8", "surrogateescape")
 
 
-def plan(backup, paths, engine):
+def plan(backup, paths, engine, taken=frozenset()):
     """The files to write for backup and what the user should know first. Writes nothing.
+
+    taken holds GNOME's shortcuts as keys.gnome_chords() gives them, which a switch key may not use.
 
     Raises ValueError for a damaged backup, and OSError or SubprocessError when a file or the
     engine cannot be read.
@@ -286,7 +304,7 @@ def plan(backup, paths, engine):
     if "config" in backup:
         known = list(engine.settings())
         changes[paths.settings] = _settings(
-            config, _current(paths.settings) or "", known, engine, notes
+            config, _current(paths.settings) or "", known, engine, taken, notes
         )
     for name, path, section in (
         ("macros", paths.macros, MACRO_LIST),
@@ -298,7 +316,11 @@ def plan(backup, paths, engine):
             # An empty list needs no new file.
             changes[path] = None if current is None and not data else data
     if "dictionary" in backup:
-        changes[paths.dictionary] = backup["dictionary"].encode("utf-8")
+        text = backup["dictionary"]
+        words = [w for w in (line.strip() for line in text.split("\n")) if w]
+        # As Store.set_words: a copy of the packaged list would hide later updates to it.
+        bundled = sorted(words) == sorted(read_words(paths.bundled_dictionary))
+        changes[paths.dictionary] = None if bundled else text.encode("utf-8")
     # Last, so the running engine switches language only once the rest is written.
     if "VietnameseOn" in config:
         changes[paths.english] = _english(config, paths, notes)

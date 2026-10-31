@@ -685,12 +685,16 @@ msgid "The file holds text that is not valid Unicode."
 msgstr "Tệp có chữ không phải Unicode hợp lệ."
 
 #: settings/ngosen_settings/backup.py
-msgid "The switch key in the backup ({}) does not work in this edition, so the current one stays. It needs Ctrl, Alt, Shift or Super with another key."
-msgstr "Phím chuyển Anh/Việt trong bản sao lưu ({}) không dùng được ở bản này, nên giữ phím đang dùng. Phím chuyển cần Ctrl, Alt, Shift hoặc Super đi kèm một phím khác."
+msgid "These switch keys in the backup are left out: {}. {}"
+msgstr "Bỏ qua các phím chuyển Anh/Việt này trong bản sao lưu: {}. {}"
 
 #: settings/ngosen_settings/backup.py
-msgid "These switch keys in the backup do not work in this edition and are left out: {}. They need Ctrl, Alt, Shift or Super with another key."
-msgstr "Bỏ qua các phím chuyển Anh/Việt không dùng được ở bản này: {}. Phím chuyển cần Ctrl, Alt, Shift hoặc Super đi kèm một phím khác."
+msgid "A switch key here needs Ctrl, Alt, Shift or Super with another key."
+msgstr "Ở bản này, phím chuyển cần Ctrl, Alt, Shift hoặc Super đi kèm một phím khác."
+
+#: settings/ngosen_settings/backup.py
+msgid "The current switch key stays."
+msgstr "Giữ phím chuyển Anh/Việt đang dùng."
 
 #: settings/ngosen_settings/backup.py
 msgid "The backup types in a mode this edition does not know ({}), so the current one stays."
@@ -707,3 +711,11 @@ msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen 
 #: settings/ngosen_settings/backup.py
 msgid "Rules for each app are left out: this edition has none."
 msgstr "Bỏ qua luật theo từng app: bản này không có."
+
+#: settings/ngosen_settings/window.py
+msgid "The settings changed after the restore, so nothing was undone."
+msgstr "Cài đặt đã đổi sau khi khôi phục, nên không hoàn tác gì."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot open the file dialog: {}"
+msgstr "Không mở được hộp chọn tệp: {}"
