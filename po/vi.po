@@ -607,3 +607,103 @@ msgstr "Đã thêm Ngó Sen vào nguồn nhập."
 
 msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
 msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"
+
+#: settings/ngosen_settings/window.py
+msgid "Menu"
+msgstr "Menu"
+
+#: settings/ngosen_settings/window.py
+msgid "Back _Up…"
+msgstr "Sao _lưu…"
+
+#: settings/ngosen_settings/window.py
+msgid "_Restore…"
+msgstr "_Khôi phục…"
+
+#: settings/ngosen_settings/window.py
+msgid "Back Up Settings"
+msgstr "Sao lưu cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "Restore Settings"
+msgstr "Khôi phục cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "Ngó Sen backup"
+msgstr "Bản sao lưu Ngó Sen"
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot back up: {}"
+msgstr "Không sao lưu được: {}"
+
+#: settings/ngosen_settings/window.py
+msgid "Backed up to {}."
+msgstr "Đã sao lưu vào {}."
+
+#: settings/ngosen_settings/window.py
+msgid "Restore {}?"
+msgstr "Khôi phục {}?"
+
+#: settings/ngosen_settings/window.py
+msgid "Restore"
+msgstr "Khôi phục"
+
+#: settings/ngosen_settings/window.py
+msgid "Restored from {}."
+msgstr "Đã khôi phục từ {}."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot restore: {}. Nothing was changed."
+msgstr "Không khôi phục được: {}. Chưa có gì thay đổi."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot read the settings: {}"
+msgstr "Không đọc được cài đặt: {}"
+
+#: settings/ngosen_settings/backup.py
+msgid "These files could not be put back: {}"
+msgstr "Không trả lại được các tệp này: {}"
+
+#: settings/ngosen_settings/backup.py
+msgid "No settings found in the file."
+msgstr "Tệp không có cài đặt nào."
+
+#: settings/ngosen_settings/backup.py
+msgid "The settings in the file are damaged."
+msgstr "Phần cài đặt trong tệp bị hỏng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The lists in the file are damaged."
+msgstr "Danh sách gõ tắt hoặc bảng phím trong tệp bị hỏng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The dictionary in the file is damaged."
+msgstr "Phần từ điển trong tệp bị hỏng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The file holds text that is not valid Unicode."
+msgstr "Tệp có chữ không phải Unicode hợp lệ."
+
+#: settings/ngosen_settings/backup.py
+msgid "The switch key in the backup ({}) does not work in this edition, so the current one stays. It needs Ctrl, Alt, Shift or Super with another key."
+msgstr "Phím chuyển Anh/Việt trong bản sao lưu ({}) không dùng được ở bản này, nên giữ phím đang dùng. Phím chuyển cần Ctrl, Alt, Shift hoặc Super đi kèm một phím khác."
+
+#: settings/ngosen_settings/backup.py
+msgid "These switch keys in the backup do not work in this edition and are left out: {}. They need Ctrl, Alt, Shift or Super with another key."
+msgstr "Bỏ qua các phím chuyển Anh/Việt không dùng được ở bản này: {}. Phím chuyển cần Ctrl, Alt, Shift hoặc Super đi kèm một phím khác."
+
+#: settings/ngosen_settings/backup.py
+msgid "The backup types in a mode this edition does not know ({}), so the current one stays."
+msgstr "Bản sao lưu gõ ở chế độ mà bản này không biết ({}), nên giữ chế độ đang dùng."
+
+#: settings/ngosen_settings/backup.py
+msgid "This edition has no emoji picker, so words are underlined instead."
+msgstr "Bản này không có bảng chọn emoji, nên chữ sẽ gõ có gạch chân."
+
+#: settings/ngosen_settings/backup.py
+msgid "The backup was made while typing English, so typing switches to English."
+msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
+
+#: settings/ngosen_settings/backup.py
+msgid "Rules for each app are left out: this edition has none."
+msgstr "Bỏ qua luật theo từng app: bản này không có."

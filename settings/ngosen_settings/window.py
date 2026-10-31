@@ -4,6 +4,7 @@
 import os
 import subprocess
 import sys
+from datetime import datetime
 
 import gi
 
@@ -11,9 +12,9 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 gi.require_version("PangoCairo", "1.0")
 
-from gi.repository import Adw, GLib, Gtk  # noqa: E402,F401
+from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402,F401
 
-from . import brand, check_page, i18n, keys, options, pages  # noqa: E402
+from . import backup, brand, check_page, i18n, keys, options, pages  # noqa: E402
 from .i18n import _  # noqa: E402
 from .store import Engine, Store  # noqa: E402
 
@@ -21,9 +22,10 @@ APP_ID = "io.github.ngosen.IBusNgoSen"
 
 
 class Window(Adw.ApplicationWindow):
-    def __init__(self, app, store, names, version, sources=None):
+    def __init__(self, app, store, names, version, sources=None, engine=None):
         super().__init__(application=app, title="Ngó Sen", default_width=800, default_height=720)
         self.store = store
+        self.engine = engine
         self.toast = None
         self.check_tab = None
         sources = sources or check_page.GnomeSources()
@@ -51,6 +53,7 @@ class Window(Adw.ApplicationWindow):
         switcher = Adw.ViewSwitcher(stack=stack, policy=Adw.ViewSwitcherPolicy.WIDE)
         header = Adw.HeaderBar(title_widget=switcher)
         header.pack_start(brand_mark())
+        header.pack_end(self._backup_menu())
         switcher_bar = Adw.ViewSwitcherBar(stack=stack)
 
         view = Adw.ToolbarView(content=stack)
@@ -124,6 +127,114 @@ class Window(Adw.ApplicationWindow):
             self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
         self.refresh()
 
+    def _backup_menu(self):
+        menu = Gio.Menu()
+        for label, name, run in (
+            (_("Back _Up…"), "backup", self.choose_backup_file),
+            (_("_Restore…"), "restore-backup", self.choose_restore_file),
+        ):
+            menu.append(label, f"win.{name}")
+            action = Gio.SimpleAction.new(name, None)
+            action.connect("activate", lambda *_args, run=run: run())
+            self.add_action(action)
+        return Gtk.MenuButton(
+            icon_name="open-menu-symbolic", menu_model=menu, tooltip_text=_("Menu")
+        )
+
+    def choose_backup_file(self):
+        dialog = self._file_dialog(_("Back Up Settings"))
+        dialog.set_initial_name(f"ngosen-backup-{datetime.now():%Y%m%d-%H%M%S}.json")
+        dialog.save(self, None, self._on_file, dialog.save_finish, self.export_backup)
+
+    def choose_restore_file(self):
+        dialog = self._file_dialog(_("Restore Settings"))
+        dialog.open(self, None, self._on_file, dialog.open_finish, self.restore_backup)
+
+    def _file_dialog(self, title):
+        json_files = Gtk.FileFilter(name=_("Ngó Sen backup"))
+        json_files.add_suffix("json")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(json_files)
+        return Gtk.FileDialog(title=title, modal=True, filters=filters, default_filter=json_files)
+
+    def _on_file(self, _dialog, result, finish, use):
+        try:
+            file = finish(result)
+        except GLib.Error:
+            return  # Cancelled.
+        if file is not None and file.get_path():
+            use(file.get_path())
+
+    def export_backup(self, path):
+        try:
+            backup.export(self.engine, backup.Paths(self.store), path)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            self._show(Adw.Toast(title=_("Cannot back up: {}").format(reason(error)), timeout=0))
+            return
+        self._show(Adw.Toast(title=_("Backed up to {}.").format(path)))
+
+    def restore_backup(self, path):
+        """Checks the whole file before writing; what the user would lose is asked about first."""
+        try:
+            data = backup.load(path)
+            _changes, notes = backup.plan(data, backup.Paths(self.store), self.engine)
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            self._cannot_restore(error)
+            return None
+        name = os.path.basename(path)
+        if not notes:
+            self.apply_backup(data, name)
+            return None
+        dialog = Adw.AlertDialog(heading=_("Restore {}?").format(name), body="\n\n".join(notes))
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("restore", _("Restore"))
+        dialog.set_default_response("cancel")
+        dialog.set_close_response("cancel")
+        dialog.connect(
+            "response", lambda _d, answer: answer == "restore" and self.apply_backup(data, name)
+        )
+        dialog.present(self)
+        return dialog
+
+    def apply_backup(self, data, name):
+        try:
+            # Planned again, so a change made while the dialog was open is not written over.
+            changes, _notes = backup.plan(data, backup.Paths(self.store), self.engine)
+            before = backup.replace(changes)
+        except backup.RestoreError as error:
+            self._show(Adw.Toast(title=str(error), timeout=0))
+            self._reload()
+            return
+        except (OSError, ValueError, subprocess.SubprocessError) as error:
+            self._cannot_restore(error)
+            return
+        self._reload()
+        toast = Adw.Toast(title=_("Restored from {}.").format(name), button_label=_("_Undo"))
+        toast.connect("button-clicked", lambda _t: self.undo_restore(before))
+        self._show(toast)
+
+    def undo_restore(self, before):
+        try:
+            backup.replace(before)
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Cannot save: {}").format(reason(error)), timeout=0))
+        self._reload()
+
+    def _cannot_restore(self, error):
+        text = _("Cannot restore: {}. Nothing was changed.").format(reason(error).rstrip("."))
+        self._show(Adw.Toast(title=text, timeout=0))
+
+    def _reload(self):
+        try:
+            self.store.reload(self.engine)
+        except (OSError, subprocess.SubprocessError) as error:
+            self._show(Adw.Toast(title=_("Cannot read the settings: {}").format(reason(error))))
+        self.refresh()
+
+
+def reason(error):
+    return getattr(error, "strerror", None) or str(error)
+
 
 def brand_mark():
     box = Gtk.Box(spacing=8)
@@ -166,8 +277,11 @@ def main(engine_path, localedir, font_path, version):
             return
         brand.load_font(font_path)
         brand.install_css()
-        store, names, error = load(Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path)))
-        window = error_window(app, error) if error else Window(app, store, names, version)
+        engine = Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path))
+        store, names, error = load(engine)
+        window = (
+            error_window(app, error) if error else Window(app, store, names, version, engine=engine)
+        )
         window.present()
 
     app.connect("activate", activate)
