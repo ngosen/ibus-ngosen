@@ -13,7 +13,6 @@ POSITIONS = [
 # Stored as the fcitx5 edition stores key lists: Ctrl+Shift in either order, with either key.
 TOGGLE_KEYS = [
     ("Control+Shift_L Control+Shift_R Shift+Control_L Shift+Control_R", "Ctrl+Shift"),
-    ("Alt+z", "Alt+Z"),
     ("", N_("Disabled")),
 ]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]

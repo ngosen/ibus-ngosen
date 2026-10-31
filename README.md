@@ -1,7 +1,7 @@
 # Ngó Sen cho GNOME
 
 Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Nhấp Ctrl+Shift để đổi
-Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Đổi phím này (Alt+Z, hoặc tắt) trong cửa sổ cài đặt. Super+Space
+Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Tắt phím này trong cửa sổ cài đặt nếu không cần. Super+Space
 vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME.
 
 Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
