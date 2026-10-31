@@ -62,6 +62,15 @@ class KeysTest(unittest.TestCase):
         self.assertEqual(keys.problem(alt_grave, taken)[0], keys.GNOME_USES)
         super_tab = keys.from_pressed(["Shift_L", "Super_L", "ISO_Left_Tab"])
         self.assertEqual(keys.problem(super_tab, taken)[0], keys.GNOME_USES)
+        # GNOME writes Shift shortcuts with the unshifted key; the dialog records the shifted one.
+        taken = keys.gnome_chords(["<Shift><Alt>Above_Tab", "<Shift><Super>1"], [])
+        alt_tilde = keys.from_pressed(["Alt_L", "Shift_L", "asciitilde"])
+        self.assertEqual(keys.problem(alt_tilde, taken)[0], keys.GNOME_USES)
+        super_exclam = keys.from_pressed(["Super_L", "Shift_L", "exclam"])
+        self.assertEqual(keys.problem(super_exclam, taken)[0], keys.GNOME_USES)
+
+    def test_label_iso_left_tab(self):
+        self.assertEqual(keys.label("Control+Shift+ISO_Left_Tab"), "Ctrl+Shift+Tab")
 
     def test_shifted_symbols(self):
         self.assertEqual(keys.label("Control+Shift+exclam"), "Ctrl+Shift+!")

@@ -110,8 +110,6 @@ class KeyCapture:
         self.parent = None
         self.watch = None
         self.navigating = False
-        # The engine gets a key as Shift makes it, whichever went down first.
-        self.translate = shifted_name
         self.dialog = Adw.AlertDialog(
             heading=_("Press the new keys"), body=_("Hold the keys together, then let go.")
         )
@@ -145,6 +143,7 @@ class KeyCapture:
     def forget(self):
         self.held.clear()
         self.pressed.clear()
+        self.navigating = False
 
     def press(self, name, code):
         if name is None:
@@ -168,8 +167,11 @@ class KeyCapture:
         if self.navigating:
             self.navigating = False
             return
-        chord = keys.from_pressed(self._names())
+        names = list(self.pressed.values())
+        chord = keys.from_pressed(names)
         error, warning = keys.problem(chord, self.taken)
+        if not error and not _modifiers_first(names):
+            error = keys.MODIFIERS_FIRST
         self.value = None if error else keys.value(chord)
         self.shown.set_label(keys.label(keys.value(chord)) if chord else "")
         # gettext answers the empty string with the catalog header.
@@ -179,15 +181,6 @@ class KeyCapture:
         else:
             self.note.remove_css_class("error")
         self.dialog.set_response_enabled("save", self.value is not None)
-
-    def _names(self):
-        names = list(self.pressed.values())
-        if not any(n.startswith("Shift") for n in names):
-            return names
-        return [
-            n if n in keys.MODIFIER_KEYS else (self.translate(code) or n)
-            for code, n in self.pressed.items()
-        ]
 
     def _answer(self, response):
         if self.watch is not None:
@@ -199,12 +192,10 @@ class KeyCapture:
             self.on_cancel()
 
 
-def shifted_name(code):
-    display = Gdk.Display.get_default()
-    if display is None:
-        return None
-    found, keyval, *_rest = display.translate_key(code, Gdk.ModifierType.SHIFT_MASK, 0)
-    return Gdk.keyval_name(keyval) if found else None
+def _modifiers_first(names):
+    """The engine matches a key with the modifiers held at its press, and Shift changes its name."""
+    others = [i for i, n in enumerate(names) if n not in keys.MODIFIER_KEYS]
+    return not others or all(i < others[0] for i, n in enumerate(names) if n in keys.MODIFIER_KEYS)
 
 
 def preferences_group(title=None, description=None):

@@ -231,16 +231,31 @@ class WindowTest(unittest.TestCase):
         row = self.window.rows.rows["ToggleKey"]
         row.set_selected(row.get_model().get_n_items() - 1)
         capture = self.window.rows.capture
-        # The engine gets the key as Shift makes it, whichever went down first.
-        capture.translate = lambda code: {1: "exclam"}.get(code)
         capture.press("Control_L", 0)
-        capture.press("1", 1)
-        capture.press("Shift_L", 2)
+        capture.press("Shift_L", 1)
+        capture.press("exclam", 2)
         for code in range(3):
             capture.release(code)
         self.assertEqual(capture.shown.get_label(), "Ctrl+Shift+!")
         capture.dialog.emit("response", "save")
         self.assertEqual(self.settings()["ToggleKey"], "Control+Shift+exclam")
+
+    def test_toggle_key_modifiers_first(self):
+        # The engine gets the key as the modifiers held at its press make it.
+        capture = self.capture("Control_L", "1", "Shift_L")
+        self.assertFalse(capture.dialog.get_response_enabled("save"))
+        self.assertEqual(capture.note.get_label(), window.keys.MODIFIERS_FIRST)
+
+    def test_toggle_key_forget_ends_navigation(self):
+        capture = self.capture()
+        capture.press("Shift_L", 0)
+        capture.press("ISO_Left_Tab", 1)
+        window.Gtk.Widget.notify(self.window, "is-active")
+        capture.press("Control_L", 2)
+        capture.press("Shift_L", 3)
+        capture.release(2)
+        capture.release(3)
+        self.assertEqual(capture.shown.get_label(), "Ctrl+Shift")
 
     def test_toggle_key_shift_tab_navigates(self):
         capture = self.capture()
@@ -259,7 +274,15 @@ class WindowTest(unittest.TestCase):
         capture.press("Tab", 1)
         capture.release(1)
         capture.release(3)
-        self.assertEqual(self.capture("Control_L", "Shift_L").shown.get_label(), "Ctrl+Shift")
+        capture.press("Control_L", 4)
+        capture.press("Shift_L", 5)
+        capture.release(4)
+        capture.release(5)
+        self.assertEqual(capture.shown.get_label(), "Ctrl+Shift")
+
+    def test_custom_binding_without_schema(self):
+        # GSettings aborts the app on a missing schema or a bad path.
+        self.assertEqual(window.check_page.custom_binding("not/a/path"), "")
 
     def test_toggle_key_stray_release(self):
         capture = self.capture()

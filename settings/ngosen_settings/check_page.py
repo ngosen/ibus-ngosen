@@ -50,7 +50,7 @@ class GnomeSources:
             for name in schema.list_keys():
                 value = bindings.get_value(name)
                 if name == "custom-keybindings":
-                    accelerators += [_custom_binding(path) for path in value.unpack()]
+                    accelerators += [custom_binding(path) for path in value.unpack()]
                 elif value.get_type_string() == "as":
                     accelerators += value.unpack()
         options = self.settings.get_strv("xkb-options") if self.settings is not None else []
@@ -64,9 +64,14 @@ class GnomeSources:
         return ok
 
 
-def _custom_binding(path):
-    schema = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
-    return Gio.Settings.new_with_path(schema, path).get_string("binding")
+def custom_binding(path):
+    """A shortcut the user added in GNOME Settings; GSettings aborts on a missing schema or bad path."""
+    schema_id = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
+    schemas = Gio.SettingsSchemaSource.get_default()
+    found = schemas.lookup(schema_id, True) if schemas is not None else None
+    if found is None or not (path.startswith("/") and path.endswith("/")) or "//" in path:
+        return ""
+    return Gio.Settings.new_with_path(schema_id, path).get_string("binding")
 
 
 def _text(css=None):

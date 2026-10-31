@@ -58,6 +58,10 @@ msgid "Apps no longer get these keys: Ngó Sen takes them everywhere."
 msgstr "Các app sẽ không nhận tổ hợp này nữa: Ngó Sen dùng nó ở mọi nơi."
 
 #: settings/ngosen_settings/keys.py
+msgid "Hold Ctrl, Alt, Shift or Super first, then press the other key."
+msgstr "Giữ Ctrl, Alt, Shift hoặc Super trước, rồi mới bấm phím còn lại."
+
+#: settings/ngosen_settings/keys.py
 msgid "Firefox and some other apps open their menu bar when Alt is let go."
 msgstr "Firefox và vài app khác sẽ mở thanh menu khi thả phím Alt."
 

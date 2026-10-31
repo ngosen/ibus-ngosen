@@ -70,13 +70,39 @@ SYMBOLS = {
     "less": "<",
     "greater": ">",
     "question": "?",
+    "ISO_Left_Tab": "Tab",
 }
 # GNOME names the key above Tab by its place, and Shift+Tab arrives as ISO_Left_Tab.
 SAME_KEY = {"Above_Tab": "grave", "ISO_Left_Tab": "Tab"}
+# GNOME writes a Shift shortcut with the key's own name, the dialog with what Shift makes of it (US layout).
+UNSHIFTED = {
+    "asciitilde": "grave",
+    "exclam": "1",
+    "at": "2",
+    "numbersign": "3",
+    "dollar": "4",
+    "percent": "5",
+    "asciicircum": "6",
+    "ampersand": "7",
+    "asterisk": "8",
+    "parenleft": "9",
+    "parenright": "0",
+    "underscore": "minus",
+    "plus": "equal",
+    "braceleft": "bracketleft",
+    "braceright": "bracketright",
+    "bar": "backslash",
+    "colon": "semicolon",
+    "quotedbl": "apostrophe",
+    "less": "comma",
+    "greater": "period",
+    "question": "slash",
+}
 
 NEEDS_TWO = N_("Press at least two keys together.")
 TYPES_TEXT = N_("Shift with a key types a capital letter or a symbol.")
 GNOME_USES = N_("GNOME already uses these keys.")
+MODIFIERS_FIRST = N_("Hold Ctrl, Alt, Shift or Super first, then press the other key.")
 ALT_MENU = N_("Firefox and some other apps open their menu bar when Alt is let go.")
 TAKES_KEY = N_("Apps no longer get these keys: Ngó Sen takes them everywhere.")
 
@@ -171,7 +197,10 @@ def xkb_toggle(option):
 
 def _compared(keys):
     modifiers, key = keys
-    return modifiers, SAME_KEY.get(key, key)
+    key = SAME_KEY.get(key, key)
+    if "Shift" in modifiers:
+        key = UNSHIFTED.get(key, key)
+    return modifiers, key
 
 
 def gnome_chords(accelerators, xkb_options):
