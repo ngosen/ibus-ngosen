@@ -81,6 +81,9 @@ class App:
         # Firefox on X11 resets the input context after each key the engine lets through.
         self.resets_after_key = resets_after_key
         self.reported = ""
+        # None keeps the cursor at the end of the text; select() moves it and sets an anchor.
+        self.cursor = None
+        self.anchor = None
         self.deleted = False
         self.deleting_keys = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
@@ -117,16 +120,45 @@ class App:
             self.qt_through_shell and self.deleted and self.deleting_keys >= self.qt_through_shell
         ):
             self.reported = self.text
-        n = len(self.reported)
-        self.ic.set_surrounding_text(IBus.Text.new_from_string(self.reported), n, n)
+        n = len(self.reported) if self.cursor is None else self.cursor
+        anchor = n if self.cursor is None else self.anchor
+        self.ic.set_surrounding_text(IBus.Text.new_from_string(self.reported), n, anchor)
+
+    def select(self, start, end):
+        self.cursor, self.anchor = end, start
+        self.report()
+        pump(200)
+
+    # Text typed or committed replaces the selection, as in a text field.
+    def insert(self, text):
+        if self.cursor is None:
+            self.text += text
+            return
+        start, end = sorted((self.cursor, self.anchor))
+        self.text = self.text[:start] + text + self.text[end:]
+        self.cursor = self.anchor = start + len(text)
+
+    def backspace(self):
+        if self.cursor is None:
+            self.text = self.text[:-1]
+        elif self.cursor != self.anchor:
+            self.insert("")
+        elif self.cursor > 0:
+            self.text = self.text[: self.cursor - 1] + self.text[self.cursor :]
+            self.cursor = self.anchor = self.cursor - 1
 
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
-        self.text += text.get_text()
+        self.insert(text.get_text())
         self.report()
 
-    # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
+        if self.cursor is not None:
+            start = self.cursor + offset
+            self.text = self.text[:start] + self.text[start + count :]
+            self.cursor = self.anchor = start
+            self.report()
+            return
         if self.qt_through_shell:
             if not self.deleted:
                 self.deleting_keys += 1
@@ -144,7 +176,7 @@ class App:
 
     def on_forward(self, _ic, keyval, _keycode, state):
         if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
-            self.text = self.text[:-1]
+            self.backspace()
             self.report()
 
     def on_preedit(self, _ic, text, _cursor, visible):
@@ -186,9 +218,9 @@ class App:
                 if keyval in (IBus.KEY_Return, IBus.KEY_KP_Enter):
                     self.text += "\n"
                 elif keyval == IBus.KEY_BackSpace:
-                    self.text = self.text[:-1]
+                    self.backspace()
                 elif char and char != "\0":
-                    self.text += char
+                    self.insert(char)
                 self.report()
                 if self.resets_after_key:
                     ic.reset()
@@ -690,6 +722,36 @@ app.type("vieetj ")
 check(app.text == "việt ", "direct, address bar: the word", app.text)
 check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
 app.close()
+
+
+# A tone key typed over a selected word puts the tone on that word. Only X11 apps get the key itself:
+# through GNOME Shell a word typed over a selection goes into the preedit.
+def retone_selection():
+    app = App("gtk3-im:gedit")
+    app.type("xin chao xyz")
+    # Selecting with the mouse clicks, and the app resets the context.
+    click()
+    app.ic.reset()
+    app.select(4, 8)
+    app.type("f")
+    return app
+
+
+app = retone_selection()
+check(app.text == "xin chào xyz", "direct, tone key over a selected word: retoned", app.text)
+app.key(IBus.KEY_Tab)
+pump(200)
+check(
+    app.text == "xin f xyz",
+    "direct, tone key over a selected word: Tab puts the key back",
+    app.text,
+)
+app.close()
+set_setting("RetoneSelection", "False")
+app = retone_selection()
+check(app.text == "xin f xyz", "direct, retone off: the key replaces the word", app.text)
+app.close()
+set_setting("RetoneSelection", "True")
 set_setting("DirectTyping", "False")
 
 # XIM clients such as Alacritty keep the preedit across a click and send no reset.

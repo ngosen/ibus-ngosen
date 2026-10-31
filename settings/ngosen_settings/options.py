@@ -47,6 +47,7 @@ LABELS = {
     "ModernStyle": N_("Use oà, uý (Instead Of òa, úy)"),
     "FreeMarking": N_("Allow Type With More Freedom"),
     "BackspaceRemovesTone": N_("Backspace Removes the Tone Mark"),
+    "RetoneSelection": N_("Change the tone of a selected word"),
     "W2U": N_("Type w to Produce ư"),
     "BracketTransform": N_("Type [ -> ơ, ] -> ư, { -> Ơ, } -> Ư"),
     "AutoCapitalizeAfterPunctuation": N_(
@@ -84,6 +85,9 @@ HINTS = {
     "BackspaceRemovesTone": N_(
         "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
     ),
+    "RetoneSelection": N_(
+        "Select chao and type f to get chào. Only with Sen on, in X11 apps; Tab or Esc puts the key back."
+    ),
     "W2U": N_(
         "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
     ),
@@ -117,6 +121,7 @@ TYPING_GROUPS = [
             "ModernStyle",
             "FreeMarking",
             "BackspaceRemovesTone",
+            "RetoneSelection",
             "W2U",
             "BracketTransform",
         ],
