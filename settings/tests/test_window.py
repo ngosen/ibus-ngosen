@@ -166,11 +166,11 @@ class WindowTest(unittest.TestCase):
 
     def test_toggle_key_from_pressed_keys(self):
         capture = self.capture("Control_L", "grave")
-        self.assertEqual(capture.shown.get_label(), "Ctrl+Grave")
+        self.assertEqual(capture.shown.get_label(), "Ctrl+`")
         capture.dialog.emit("response", "save")
         self.assertEqual(self.settings()["ToggleKey"], "Control+grave")
         row = self.window.rows.rows["ToggleKey"]
-        self.assertEqual(row.get_model().get_string(row.get_selected()), "Ctrl+Grave")
+        self.assertEqual(row.get_model().get_string(row.get_selected()), "Ctrl+`")
 
     def test_toggle_key_same_as_a_suggestion(self):
         self.capture("Shift_L", "Meta_L").dialog.emit("response", "save")

@@ -36,6 +36,21 @@ ACCELERATOR_MODIFIERS = {
 }
 XKB_WORDS = {"ctrl": "Control", "shift": "Shift", "alt": "Alt", "win": "Super"}
 XKB_KEYS = {"space": "space", "caps": "Caps_Lock", "menu": "Menu", "tab": "Tab"}
+# Keys shown as the character they type rather than their key name.
+SYMBOLS = {
+    "grave": "`",
+    "asciitilde": "~",
+    "minus": "-",
+    "equal": "=",
+    "bracketleft": "[",
+    "bracketright": "]",
+    "backslash": "\\",
+    "semicolon": ";",
+    "apostrophe": "'",
+    "comma": ",",
+    "period": ".",
+    "slash": "/",
+}
 
 NEEDS_TWO = N_("Press at least two keys together.")
 TYPES_TEXT = N_("Shift with a key types a capital letter or a symbol.")
@@ -97,7 +112,9 @@ def label(text):
     modifiers, key = keys
     shown = [SHOWN.get(m, m) for m in _sorted(modifiers)]
     if key is not None:
-        shown.append(key.upper() if len(key) == 1 else key[:1].upper() + key[1:])
+        shown.append(
+            SYMBOLS.get(key) or (key.upper() if len(key) == 1 else key[:1].upper() + key[1:])
+        )
     return "+".join(shown)
 
 
