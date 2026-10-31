@@ -13,10 +13,12 @@
 namespace ngosen {
 
     // The items of the fcitx5 edition's tray menu, shown in the GNOME input source menu.
-    IBusPropList*         newSettingsMenu(const IBusSettings& settings);
+    IBusPropList*         newSettingsMenu(const IBusSettings& settings, bool english = false);
 
     constexpr const char* SettingsWindowItem = "Settings";
     constexpr const char* SaveTypingLogItem  = "SaveTypingLog";
+    // GNOME Shell shows the symbol of the item with this key in the top bar.
+    constexpr const char* InputModeItem = "InputMode";
 
     // The ngosen.conf change a click on an item asks for. False when it changes nothing: a radio
     // item being unchecked, or a name the menu does not have.

@@ -57,8 +57,11 @@ namespace ngosen {
 
     } // namespace
 
-    IBusPropList* newSettingsMenu(const IBusSettings& settings) {
-        IBusPropList* menu = ibus_prop_list_new();
+    IBusPropList* newSettingsMenu(const IBusSettings& settings, bool english) {
+        IBusPropList* menu      = ibus_prop_list_new();
+        IBusProperty* inputMode = newItem(InputModeItem, PROP_TYPE_TOGGLE, _("Vietnamese"), !english);
+        ibus_property_set_symbol(inputMode, ibus_text_new_from_static_string(english ? "E" : "V"));
+        ibus_prop_list_append(menu, inputMode);
         ibus_prop_list_append(menu, newChoice("InputMethod", _("Input Method"), MenuInputMethods, settings.options.inputMethod));
         ibus_prop_list_append(menu, newToggle(DirectTyping, settings));
         ibus_prop_list_append(menu, newChoice("OutputCharset", _("Charset"), charsetNames(), settings.options.outputCharset));

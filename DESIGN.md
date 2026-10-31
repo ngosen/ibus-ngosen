@@ -40,7 +40,7 @@ Xanh Mono.
 
 - Header bar: icon and wordmark on the left, the page switcher in the middle. Below 550sp wide the
   switcher moves to a bar at the bottom.
-- Gõ chữ: Kiểu gõ (with a keys-to-result example such as `vieetj → việt`), Bảng mã, Keymap tuỳ chỉnh,
+- Gõ chữ: Kiểu gõ (with a keys-to-result example such as `vieetj → việt`), Phím chuyển Anh/Việt, Bảng mã, Keymap tuỳ chỉnh,
   the Gõ thử field; then the "Cách bỏ dấu" and "Gõ nhanh" groups; last "Có ở bản fcitx5": what the
   GNOME edition does not have, a row that shows the fcitx5 install command to copy (the window never
   runs it), and a link to Ngó Sen đầy đủ.

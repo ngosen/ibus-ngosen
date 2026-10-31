@@ -8,7 +8,7 @@ trap 'rm -rf "$tmp"' EXIT
 mkdir "$tmp/component"
 cp "$2"/*.xml "$tmp/component/"
 cp "${NGOSEN_IBUS_SIMPLE_COMPONENT:-/usr/share/ibus/component/simple.xml}" "$tmp/component/"
-export HOME="$tmp" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_DATA_HOME="$tmp/data"
+export HOME="$tmp" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_DATA_HOME="$tmp/data" XDG_STATE_HOME="$tmp/state"
 export IBUS_ADDRESS="unix:path=$tmp/ibus" IBUS_COMPONENT_PATH="$tmp/component" NGOSEN_IBUS_DICTIONARY="$3"
 export NGOSEN_DEBUG=1 NGOSEN_IBUS_LOG_FILE="$tmp/engine.log"
 # A private X server, so the engine watches the clicks the test makes and never the desktop's.

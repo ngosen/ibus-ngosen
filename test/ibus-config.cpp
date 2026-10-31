@@ -5,6 +5,7 @@
  */
 #include "bamboo-core.h"
 #include "ngosen-ibus-config.h"
+#include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-menu.h"
 
 #include <cstdio>
@@ -100,7 +101,7 @@ namespace {
         changed.directTyping             = true;
         const std::string text           = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 20, "the file has every key");
+        check(parseIni(text).top.size() == 21, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -114,6 +115,55 @@ namespace {
         check(withSetting("A=1\n[Macro/0]\nKey=x\n", "SpellCheck", "False") == "A=1\nSpellCheck=False\n[Macro/0]\nKey=x\n", "a new key goes before the first section");
         check(withSetting("[S]\nSpellCheck=True\n", "SpellCheck", "False") == "SpellCheck=False\n[S]\nSpellCheck=True\n", "a key inside a section is not the setting");
         check(parseIni(withSetting("", "OutputCharset", "TCVN3 (ABC)")).top.at("OutputCharset") == "TCVN3 (ABC)", "a value with spaces is quoted");
+    }
+
+    void testToggleKeys() {
+        check(readSettings(parseIni("")).toggleKeys == defaultToggleKeys(), "no toggle key reads as Ctrl+Shift");
+        check(readSettings(parseIni("ToggleKey=\n")).toggleKeys.empty(), "an empty toggle key turns the key off");
+        check(readSettings(parseIni("ToggleKey=Alt+z Control+space\n")).toggleKeys == std::vector<std::string>{"Alt+z", "Control+space"}, "toggle keys are read");
+        // fcitx5 allows these; here a bare Shift would switch on every capital.
+        check(readSettings(parseIni("ToggleKey=Shift_L Zenkaku_Hankaku\n")).toggleKeys == defaultToggleKeys(), "single keys fall back to the default");
+        check(readSettings(parseIni("ToggleKey=Shift_L Alt+z Nope+x\n")).toggleKeys == std::vector<std::string>{"Alt+z"}, "single and unknown keys are dropped");
+        const std::vector<std::string> shiftAlt{"Shift+Alt_L", "Shift+Alt_R", "Alt+Shift_L", "Alt+Shift_R"};
+        check(readSettings(parseIni("ToggleKey=Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R\n")).toggleKeys == shiftAlt, "the Shift+Alt choice is read whole");
+
+        IBusSettings changed = defaultSettings();
+        changed.toggleKeys   = {"Alt+z", "Control+space"};
+        check(readSettings(parseIni(settingsText(changed))).toggleKeys == changed.toggleKeys, "toggle keys round trip");
+        changed.toggleKeys = {};
+        check(readSettings(parseIni(settingsText(changed))).toggleKeys.empty(), "a key turned off stays off");
+        check(parseIni(settingsText(defaultSettings()) + "SpellCheck=False\n").top.at("SpellCheck") == "False", "a key appended to the file is still a setting");
+
+        const char* const fcitxKeys = "[ToggleKey]\n0=Alt+z\n2=Control+space\n";
+        check(readSettings(parseIni(std::string(FcitxSettings) + fcitxKeys)).toggleKeys == std::vector<std::string>{"Alt+z"},
+              "the fcitx5 edition's key list is imported, up to its first missing index");
+        check(readSettings(parseIni(std::string(FcitxSettings) + "[ToggleKey]\n")).toggleKeys.empty(), "a key turned off in the fcitx5 edition stays off");
+    }
+
+    bool matches(const std::string& key, guint keyval, guint state) {
+        const auto chord = parseToggleKey(key);
+        return chord && matchesKey(*chord, keyval, state);
+    }
+
+    void testKeyMatching() {
+        check(!parseToggleKey("Shift_L") && !parseToggleKey("Shift+Shift_L") && !parseToggleKey("space") && !parseToggleKey("Nope+x"), "single and unknown keys");
+        check(matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK), "Ctrl held, Shift pressed");
+        check(matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK | IBUS_SHIFT_MASK | IBUS_RELEASE_MASK), "Shift released with Ctrl held");
+        check(matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK | IBUS_MOD2_MASK | IBUS_LOCK_MASK), "NumLock and Caps Lock do not count");
+        check(!matches("Control+Shift_L", IBUS_KEY_Shift_R, IBUS_CONTROL_MASK), "the other Shift is another entry");
+        check(!matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK | IBUS_MOD1_MASK), "Ctrl+Alt+Shift is not Ctrl+Shift");
+        check(matches("Alt+Z", IBUS_KEY_z, IBUS_MOD1_MASK) && matches("Alt+z", IBUS_KEY_z, IBUS_MOD1_MASK), "letters match whatever their case");
+        check(!matches("Alt+z", IBUS_KEY_Z, IBUS_MOD1_MASK | IBUS_SHIFT_MASK), "Alt+Shift+z is not Alt+z");
+        check(matches("Super+space", IBUS_KEY_space, IBUS_MOD4_MASK), "GNOME reports Super as Mod4");
+        check(matches("Shift+asciitilde", IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "keysym names as fcitx5 stores them");
+        // The US layout puts Meta on the second level of Alt, so Shift then Alt arrives as Meta.
+        check(matches("Shift+Alt_L", IBUS_KEY_Meta_L, IBUS_SHIFT_MASK), "Alt pressed with Shift held reads as Meta");
+        check(matches("Shift+Alt_L", IBUS_KEY_Meta_L, IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_RELEASE_MASK), "Meta released with Shift held");
+        check(!otherModifierHeld(IBUS_KEY_Meta_R, IBUS_MOD1_MASK | IBUS_RELEASE_MASK), "Meta released alone holds nothing else");
+        // GTK 4 can report the Meta bit beside Mod1 while Alt is held.
+        check(matches("Alt+Shift_L", IBUS_KEY_Shift_L, IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_META_MASK | IBUS_RELEASE_MASK), "Shift released with Alt and its Meta bit held");
+        check(!otherModifierHeld(IBUS_KEY_Alt_L, IBUS_MOD1_MASK | IBUS_META_MASK | IBUS_RELEASE_MASK), "Alt released with its Meta bit holds nothing else");
+        check(matches("Meta+space", IBUS_KEY_space, IBUS_MOD1_MASK), "a Meta chord reads as Alt");
     }
 
     IBusProperty* findItem(IBusPropList* list, const std::string& key) {
@@ -233,6 +283,8 @@ int main() {
     testLists();
     testSettings();
     testOneSetting();
+    testToggleKeys();
+    testKeyMatching();
     testMenu();
     testImport(root / "import");
     testNoOverwrite(root / "keep");
