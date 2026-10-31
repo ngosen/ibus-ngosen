@@ -154,6 +154,10 @@ namespace {
         check(!matches("Alt+z", IBUS_KEY_Z, IBUS_MOD1_MASK | IBUS_SHIFT_MASK), "Alt+Shift+z is not Alt+z");
         check(matches("Super+space", IBUS_KEY_space, IBUS_MOD4_MASK), "GNOME reports Super as Mod4");
         check(matches("Shift+asciitilde", IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "keysym names as fcitx5 stores them");
+        // The US layout puts Meta on the second level of Alt, so Shift then Alt arrives as Meta.
+        check(matches("Shift+Alt_L", IBUS_KEY_Meta_L, IBUS_SHIFT_MASK), "Alt pressed with Shift held reads as Meta");
+        check(matches("Shift+Alt_L", IBUS_KEY_Meta_L, IBUS_SHIFT_MASK | IBUS_MOD1_MASK | IBUS_RELEASE_MASK), "Meta released with Shift held");
+        check(!otherModifierHeld(IBUS_KEY_Meta_R, IBUS_MOD1_MASK | IBUS_RELEASE_MASK), "Meta released alone holds nothing else");
     }
 
     IBusProperty* findItem(IBusPropList* list, const std::string& key) {

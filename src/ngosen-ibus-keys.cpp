@@ -13,9 +13,18 @@ namespace ngosen {
 
         constexpr guint HeldModifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
 
+        // The US layout puts Meta on the second level of Alt, so Shift then Alt arrives as Meta.
+        guint canonicalKey(guint keyval) {
+            switch (keyval) {
+                case IBUS_KEY_Meta_L: return IBUS_KEY_Alt_L;
+                case IBUS_KEY_Meta_R: return IBUS_KEY_Alt_R;
+                default: return ibus_keyval_to_lower(keyval);
+            }
+        }
+
         // The modifier a key itself sets, so releasing Shift_L is not read as Shift held.
         guint ownModifier(guint keyval) {
-            switch (keyval) {
+            switch (canonicalKey(keyval)) {
                 case IBUS_KEY_Shift_L:
                 case IBUS_KEY_Shift_R: return IBUS_SHIFT_MASK;
                 case IBUS_KEY_Control_L:
@@ -50,7 +59,7 @@ namespace ngosen {
         if (chord.modifiers == 0)
             return std::nullopt;
         // fcitx5 matches letters whatever their case, so "Alt+Z" is Alt with the z key.
-        chord.keyval = ibus_keyval_to_lower(chord.keyval);
+        chord.keyval = canonicalKey(chord.keyval);
         return chord;
     }
 
@@ -59,7 +68,7 @@ namespace ngosen {
     }
 
     bool matchesKey(const KeyChord& chord, guint keyval, guint state) {
-        return ibus_keyval_to_lower(keyval) == chord.keyval && (heldModifiers(state) & ~ownModifier(keyval)) == chord.modifiers;
+        return canonicalKey(keyval) == chord.keyval && (heldModifiers(state) & ~ownModifier(keyval)) == chord.modifiers;
     }
 
 } // namespace ngosen
