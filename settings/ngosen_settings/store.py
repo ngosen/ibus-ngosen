@@ -133,11 +133,14 @@ class Store:
         self.words = list(words)
 
     def set_keymap(self, keymap):
+        if list(keymap) == self.keymap:
+            return False
         before = read_text(self.keymap_file)
         # The file may be a copy of the fcitx5 one; lines outside the list stay as they were.
         write_text(self.keymap_file, ini.replace_list(before or "", KEYMAP_LIST, keymap))
         self._undo = (self.keymap_file, before, "keymap", list(self.keymap))
         self.keymap = list(keymap)
+        return True
 
     def can_undo(self):
         return self._undo is not None

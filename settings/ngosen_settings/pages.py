@@ -462,6 +462,7 @@ class KeymapPage:
         self.editor.add(self.key_row)
         self.action = Adw.ComboRow(title=_("Action"), use_markup=False)
         self.action.set_model(Gtk.StringList.new([_(label) for _code, label in keymap.ACTIONS]))
+        self.action.connect("notify::selected", lambda _r, _p: self._check())
         self.editor.add(self.action)
         return self.editor
 
@@ -491,19 +492,22 @@ class KeymapPage:
         # Adding a key that is already listed replaces its action instead of adding it twice.
         self.editor.set_description(
             _("{key} already does “{action}”; Update replaces it.").format(
-                key=key, action=_(keymap.action_label(action))
+                key=GLib.markup_escape_text(key),
+                action=GLib.markup_escape_text(_(keymap.action_label(action))),
             )
             if action is not None
             else None
         )
         self.add_button.set_label(_("Update") if action is not None else _("Add"))
-        self.add_button.set_sensitive(bool(key) and not bad)
+        chosen = self.action.get_selected() < len(keymap.ACTION_CODES)
+        self.add_button.set_sensitive(bool(key) and not bad and chosen)
 
     def _add(self):
-        if not self.add_button.get_sensitive():
+        selected = self.action.get_selected()
+        if not self.add_button.get_sensitive() or selected >= len(keymap.ACTION_CODES):
             return
         key = self.key_row.get_text()
-        action = keymap.ACTION_CODES[self.action.get_selected()]
+        action = keymap.ACTION_CODES[selected]
         entries = list(self.store.keymap)
         index = next((i for i, (k, _v) in enumerate(entries) if k == key), None)
         if index is None:
@@ -519,9 +523,22 @@ class KeymapPage:
 
     def _edit(self, key, action):
         self.key_row.set_text(key)
+        self._drop_unknown_action()
         if action in keymap.ACTION_CODES:
             self.action.set_selected(keymap.ACTION_CODES.index(action))
+        else:
+            # ComboRow cannot show no choice; an action this window does not know is shown as
+            # is and must be replaced by a listed one before Update, so it is not lost unseen.
+            self.action.get_model().append(action)
+            self.action.set_selected(len(keymap.ACTION_CODES))
         self.action.grab_focus()
+
+    def _drop_unknown_action(self):
+        actions = self.action.get_model()
+        if actions.get_n_items() > len(keymap.ACTION_CODES):
+            if self.action.get_selected() >= len(keymap.ACTION_CODES):
+                self.action.set_selected(0)
+            actions.remove(len(keymap.ACTION_CODES))
 
     def apply_preset(self):
         # The toast offers to undo, so replacing the list needs no confirmation.
@@ -536,6 +553,7 @@ class KeymapPage:
         self.list.remove_all()
         for key, action in self.store.keymap:
             self.list.append(self._key_row(key, action))
+        self._drop_unknown_action()
         self._check()
 
     def _key_row(self, key, action):

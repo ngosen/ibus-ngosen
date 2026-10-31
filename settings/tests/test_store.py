@@ -159,6 +159,20 @@ class StoreTest(unittest.TestCase):
         for name, entries in keymap.PRESETS:
             for key, code in entries:
                 self.assertIn(code, keymap.ACTION_CODES, f"{name}: {key}")
+
+    def test_keymap_preset_keys_are_editable(self):
+        # A key the editor refuses cannot be edited, and typing it again would add a second rule.
+        for name, entries in keymap.PRESETS:
+            for key, _code in entries:
+                self.assertTrue(keymap.valid_key(key), f"{name}: {key!r}")
+
+    def test_keymap_unchanged_keeps_undo(self):
+        store = self.store()
+        self.assertTrue(store.set_keymap([("s", "DauSac")]))
+        self.assertFalse(store.set_keymap([("s", "DauSac")]))
+        store.undo()
+        self.assertEqual(store.keymap, [])
+        self.assertFalse(os.path.exists(store.keymap_file))
         self.assertTrue(keymap.valid_key("é"))
         self.assertFalse(keymap.valid_key(""))
         self.assertFalse(keymap.valid_key(" "))

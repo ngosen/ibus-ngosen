@@ -103,8 +103,8 @@ PRESETS = [
         ],
     ),
     ("Telex + VNI", TELEX + VNI),
-    # The engine reads the first character of a key, so the doubled backslash is a backslash.
-    ("Telex + VNI + VIQR", TELEX + VNI + VIQR_MARKS + [("\\\\", "D_Đ")]),
+    # fcitx5 lists a doubled backslash; the engine reads only its first character.
+    ("Telex + VNI + VIQR", TELEX + VNI + VIQR_MARKS + [("\\", "D_Đ")]),
     (
         N_("VNI on a French keyboard"),
         [

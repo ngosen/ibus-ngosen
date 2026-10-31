@@ -175,6 +175,41 @@ class WindowTest(unittest.TestCase):
         self.window.rows.rows["EnableCustomKeymap"].set_active(True)
         self.assertEqual(self.settings()["EnableCustomKeymap"], "True")
 
+    def test_keymap_hint_escapes_markup(self):
+        page = self.window.keymap
+        self.store.set_keymap([("&", "XoaDauThanh")])
+        page.refresh()
+        page.key_row.set_text("&")
+        self.assertTrue(page.editor.get_description().startswith("&amp; already does"))
+
+    def test_keymap_unknown_action_is_not_overwritten(self):
+        page = self.window.keymap
+        self.store.set_keymap([("q", "FutureAction")])
+        page.refresh()
+        page.action.set_selected(keymap.ACTION_CODES.index("DauSac"))
+        page.list.get_row_at_index(0).activate()
+        self.assertEqual(page.key_row.get_text(), "q")
+        shown = page.action.get_model().get_string(page.action.get_selected())
+        self.assertEqual(shown, "FutureAction")
+        self.assertFalse(page.add_button.get_sensitive())
+        page._add()
+        self.assertEqual(self.store.keymap, [("q", "FutureAction")])
+        page.action.set_selected(keymap.ACTION_CODES.index("DauNga"))
+        self.assertTrue(page.add_button.get_sensitive())
+        page._add()
+        self.assertEqual(self.store.keymap, [("q", "DauNga")])
+        self.assertEqual(page.action.get_model().get_n_items(), len(keymap.ACTION_CODES))
+
+    def test_keymap_same_preset_twice_keeps_undo(self):
+        page = self.window.keymap
+        page.preset.set_selected(1)
+        page.apply_preset()
+        toast = self.window.toast
+        page.apply_preset()
+        self.assertIs(self.window.toast, toast)
+        self.window.undo()
+        self.assertEqual(self.store.keymap, [])
+
     def test_switch_dialog_copies_the_command(self):
         dialog = window.pages.show_switch_dialog(self.window, self.window._show)
         dialog.emit("response", "close")

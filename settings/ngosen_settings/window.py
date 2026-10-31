@@ -87,7 +87,7 @@ class Window(Adw.ApplicationWindow):
         return saved
 
     def save_keymap(self, entries):
-        saved = self._write(lambda: self.store.set_keymap(entries) or True, _("Keymap"))
+        saved = self._write(lambda: self.store.set_keymap(entries), _("Keymap"))
         self.keymap.refresh()
         return saved
 
