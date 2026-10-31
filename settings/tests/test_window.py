@@ -50,6 +50,15 @@ CAN_RUN = bool(window and os.environ.get("DISPLAY"))
 REQUIRED = os.environ.get("NGOSEN_WINDOW_TESTS") == "required"
 
 
+def labels(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        if isinstance(child, window.Gtk.Label):
+            yield child
+        yield from labels(child)
+        child = child.get_next_sibling()
+
+
 class FakeSources:
     """GNOME input sources kept in memory, so no test changes the desktop it runs on."""
 
@@ -180,7 +189,10 @@ class WindowTest(unittest.TestCase):
         self.store.set_keymap([("&", "XoaDauThanh")])
         page.refresh()
         page.key_row.set_text("&")
-        self.assertTrue(page.editor.get_description().startswith("&amp; already does"))
+        # What the label shows: libadwaita 1.5 returns the parsed text from
+        # get_description(), and a label whose markup fails to parse keeps its old text.
+        shown = [label.get_text() for label in labels(page.editor)]
+        self.assertIn("& already does “Remove the tone mark”; Update replaces it.", shown)
 
     def test_keymap_unknown_action_is_not_overwritten(self):
         page = self.window.keymap
