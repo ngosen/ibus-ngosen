@@ -367,6 +367,18 @@ if no_x:
     )
     check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
     app.close()
+    app = App("toggle-reset")
+    ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+    app.ic.reset()
+    pump(20)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+    pump(200)
+    mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
+    check(not os.path.exists(mark), "no click watcher: a reset between the keys is a click", mark)
+    app.close()
     sys.exit(1 if failures else 0)
 
 open(log_path, "w").close()
@@ -784,19 +796,75 @@ tap_ctrl_shift(app, hold_ms=800)
 check(not os.path.exists(english_mark), "toggle: a long hold is not a tap", english_mark)
 app.close()
 
-# Firefox on X11 resets after every key it is let through, the modifiers too.
+# Firefox on X11 resets after every key it is let through, the modifiers too. The engine tells those
+# resets from clicks only where it watches clicks itself.
 app = App("toggle-reset")
 ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
+release = IBus.ModifierType.RELEASE_MASK
+
+
+def reset_quickly():
+    app.ic.reset()
+    pump(20)
+
+
 app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
-app.reset()
+reset_quickly()
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
-app.reset()
-app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
-app.reset()
-app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+reset_quickly()
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
+reset_quickly()
+app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
 pump(200)
 check(os.path.exists(english_mark), "toggle: a reset between the keys still taps", english_mark)
 # Leave Vietnamese on even when the check failed, so later checks fail only for their own reason.
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+app.close()
+
+app = App("toggle-click")
+app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+click()
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
+app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
+pump(200)
+check(
+    not os.path.exists(english_mark),
+    "toggle: a click while Ctrl+Shift is held does not switch",
+    english_mark,
+)
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+app.close()
+
+# A thumb resting on Ctrl may let go of it well after the Shift tap.
+app = App("toggle-slow-ctrl")
+app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
+pump(700)
+app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
+pump(200)
+check(
+    os.path.exists(english_mark),
+    "toggle: a slow Ctrl release after a quick Shift still taps",
+    english_mark,
+)
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+app.close()
+
+# A compositor grab can eat the last release; the next tap must not depend on it.
+app = App("toggle-lost-release")
+app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
+pump(700)
+tap_ctrl_shift(app)
+check(
+    os.path.exists(english_mark), "toggle: a tap after a lost release still switches", english_mark
+)
 if os.path.exists(english_mark):
     tap_ctrl_shift(app)
 app.close()
@@ -805,9 +873,9 @@ app.close()
 app = App("toggle-ctrl-v")
 app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
-app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
 app.key(IBus.KEY_v, ctrl)
-app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
 pump(200)
 check(
     not os.path.exists(english_mark), "toggle: Ctrl+Shift then Ctrl+V does not switch", english_mark

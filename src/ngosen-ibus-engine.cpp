@@ -64,15 +64,18 @@ namespace {
     // fcitx5 edition, so Ctrl+Shift+T or Ctrl+Shift then Ctrl+V does not. A key with a letter such as
     // Alt+Z toggles on its first press, and the app sees neither its press nor its release.
     struct ToggleTap {
-        bool   armed        = false;
-        bool   pending      = false;
-        gint64 since        = 0;
-        guint  swallowedKey = 0;
-        bool   chordHeld    = false;
+        bool     armed        = false;
+        bool     pending      = false;
+        gint64   since        = 0;
+        unsigned clicks       = 0;
+        guint    swallowedKey = 0;
     };
 
     // Longer than this is a hold, such as Ctrl+Shift with a click.
     constexpr gint64 TapMicroseconds = 500000;
+
+    // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
+    std::atomic<unsigned> clicksSeen{0};
 
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
@@ -146,7 +149,6 @@ namespace {
         const bool modifier = ngosen::IBusKeyPress(keyval, 0, state).isModifier();
         if (release && tap.swallowedKey != 0 && ibus_keyval_to_lower(keyval) == tap.swallowedKey) {
             tap.swallowedKey = 0;
-            tap.chordHeld    = false;
             return true;
         }
         if (!release && !modifier) {
@@ -154,32 +156,35 @@ namespace {
             if (!isToggleKey(keyval, state))
                 return false;
             // A held chord repeats; only its first press switches.
-            if (!tap.chordHeld)
+            if (tap.swallowedKey != ibus_keyval_to_lower(keyval))
                 toggleLanguage(engine, session);
-            tap.chordHeld    = true;
             tap.swallowedKey = ibus_keyval_to_lower(keyval);
             return true;
         }
         if (!modifier)
             return false;
         if (!release) {
-            if (tap.pending)
+            // Nothing else held means every key went up, even if a grab ate the last release.
+            if (tap.pending && ngosen::otherModifierHeld(keyval, state))
                 return false;
+            tap.pending = false;
             // A held key repeats; the hold counts from the first press.
             const bool matched = isToggleKey(keyval, state);
-            if (matched && !tap.armed)
-                tap.since = g_get_monotonic_time();
+            if (matched && !tap.armed) {
+                tap.since  = g_get_monotonic_time();
+                tap.clicks = clicksSeen.load(std::memory_order_acquire);
+            }
             tap.armed = matched;
             return false;
         }
-        tap.chordHeld = false;
+        // The hold ends at the toggle key itself; the other modifier may come up later.
         if (tap.armed && isToggleKey(keyval, state)) {
             tap.armed   = false;
-            tap.pending = true;
+            tap.pending = g_get_monotonic_time() - tap.since <= TapMicroseconds;
         }
         if (tap.pending && !ngosen::otherModifierHeld(keyval, state)) {
             tap.pending = false;
-            if (g_get_monotonic_time() - tap.since <= TapMicroseconds)
+            if (clicksSeen.load(std::memory_order_acquire) == tap.clicks)
                 toggleLanguage(engine, session);
         }
         return false;
@@ -366,6 +371,9 @@ namespace {
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
+        // Where the engine watches clicks, a reset during a tap is the app's own and the tap goes on.
+        if (!ngosen::clicksWatched.load(std::memory_order_acquire))
+            session->tap = {};
         if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
@@ -460,6 +468,7 @@ namespace ngosen {
             watchX11PointerClicks(stop, [] {
                 needEngineReset.store(true, std::memory_order_release);
                 g_mouse_clicked.store(true, std::memory_order_release);
+                clicksSeen.fetch_add(1, std::memory_order_acq_rel);
             });
             clicksWatched.store(false, std::memory_order_release);
         });
