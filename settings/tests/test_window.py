@@ -140,6 +140,8 @@ class WindowTest(unittest.TestCase):
         row.set_text("x")
         self.assertEqual(self.settings()["ShortcutOff"], "x")
         self.assertFalse(row.has_css_class("error"))
+        row.set_text("Z")
+        self.assertEqual(self.settings()["ShortcutOff"], "z")
 
     def test_hand_written_value_is_kept(self):
         row = self.window.rows.rows["TimeFormat"]

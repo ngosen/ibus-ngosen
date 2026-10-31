@@ -1033,9 +1033,16 @@ def menu_app(name):
         | IBus.Capabilite.LOOKUP_TABLE
     )
     app.menu = None
+    # IBus frees the table after the signal, so keep its labels rather than the table.
     app.ic.connect(
         "update-lookup-table",
-        lambda _ic, table, visible: setattr(app, "menu", table if visible else None),
+        lambda _ic, table, visible: setattr(
+            app,
+            "menu",
+            [table.get_candidate(i).get_text() for i in range(table.get_number_of_candidates())]
+            if visible
+            else None,
+        ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
     return app
@@ -1051,7 +1058,7 @@ app.type("vieetj")
 app.key(IBus.KEY_grave)
 pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
-items = [app.menu.get_candidate(i).get_text() for i in range(3)] if app.menu else []
+items = app.menu or []
 check(items == ["Gõ Sen", "Gạch chân", "Tiếng Anh"], "menu: ` shows the three modes", items)
 app.key(IBus.KEY_q)
 pump(500)
@@ -1110,6 +1117,13 @@ app.key(IBus.KEY_grave)
 pump(200)
 check(app.text == "`" and app.menu is None, "menu: a password field types `", app.text)
 app.close()
+
+set_setting("InputMethod", "VIQR")
+app = menu_app("menu-viqr")
+app.type("a` ")
+check(app.text == "à " and app.menu is None, "menu: VIQR keeps ` for its tone", app.text)
+app.close()
+set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
 
 set_setting("ToggleKey", "Alt+z")

@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include "ngosen-engine-resources.h"
 #include "ngosen-ibus-config.h"
 
 #include <glib.h>
@@ -30,7 +31,8 @@ namespace ngosen {
 
     std::vector<MenuItem> modeMenuItems(const IBusSettings& settings);
 
-    bool                  opensModeMenu(const IBusSettings& settings, guint keyval, guint state);
+    // keymap is the custom keymap in use, if any.
+    bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state);
 
     // What a key pressed while the menu is open does.
     struct MenuKey {

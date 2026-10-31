@@ -9,6 +9,7 @@
 
 #include <glib/gi18n-lib.h>
 #include <ibus.h>
+#include <string_view>
 
 namespace ngosen {
 
@@ -24,6 +25,21 @@ namespace ngosen {
             return false;
         }
 
+        // VIQR puts tones on ` and ~, so a menu on those keys would take them from every word.
+        bool typesWithKey(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval) {
+            const gunichar ch = ibus_keyval_to_unicode(keyval);
+            if (ch == 0 || ch > 0x7f)
+                return false;
+            const std::string text(1, static_cast<char>(ch));
+            if (settings.options.inputMethod.find("VIQR") != std::string::npos && std::string_view("0'`?~.^+*(d").find(text) != std::string_view::npos)
+                return true;
+            for (const auto& entry : keymap) {
+                if (entry.key == text)
+                    return true;
+            }
+            return false;
+        }
+
     } // namespace
 
     std::vector<MenuItem> modeMenuItems(const IBusSettings& settings) {
@@ -34,8 +50,8 @@ namespace ngosen {
         };
     }
 
-    bool opensModeMenu(const IBusSettings& settings, guint keyval, guint state) {
-        return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.modeMenuKeys, keyval, state);
+    bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state) {
+        return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.modeMenuKeys, keyval, state) && !typesWithKey(settings, keymap, keyval);
     }
 
     MenuKey menuKey(const IBusSettings& settings, guint keyval, guint state) {

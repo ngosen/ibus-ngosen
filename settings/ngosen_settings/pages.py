@@ -28,7 +28,7 @@ class SettingRows:
 
     def build(self, key):
         if key in options.SHORTCUTS:
-            row = Adw.EntryRow(max_length=1)
+            row = Adw.EntryRow()
             row.connect("changed", lambda r: self._shortcut_changed(key, r))
         elif options.is_switch(key):
             row = Adw.SwitchRow()
@@ -84,7 +84,8 @@ class SettingRows:
             row.remove_css_class("error")
         row.set_tooltip_text(_(problem) if problem and value else None)
         if not self.loading and not problem:
-            self.on_change(key, value)
+            # The engine matches the key as typed without Shift.
+            self.on_change(key, value.lower())
 
     def _save_toggle_key(self, value):
         self.on_change("ToggleKey", value)

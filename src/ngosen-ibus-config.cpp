@@ -143,8 +143,9 @@ namespace ngosen {
             }
             // A key whose name is its own letter or digit, so the menu shows what to press.
             void shortcut(const char* key, std::string& out) const {
+                // Lowercase, since the engine matches the key as typed without Shift.
                 if (const auto* value = find(key); value != nullptr && value->size() == 1 && std::isalnum(static_cast<unsigned char>((*value)[0])) != 0)
-                    out = *value;
+                    out = std::string(1, static_cast<char>(std::tolower(static_cast<unsigned char>((*value)[0]))));
             }
             void choice(const char* key, std::string& out, const std::vector<std::string>& allowed) const {
                 if (const auto* value = find(key); value != nullptr && contains(allowed, *value))

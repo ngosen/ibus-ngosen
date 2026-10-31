@@ -299,7 +299,8 @@ namespace {
             applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval);
         } else {
             // In English the key types as usual, as in the fcitx5 edition.
-            if (englishOn || !ngosen::opensModeMenu(resources().settings(), keyval, state))
+            const auto keymap = resources().settings().options.inputMethod == "Custom" ? resources().customKeymap() : std::vector<ngosen::KeymapEntry>{};
+            if (englishOn || !ngosen::opensModeMenu(resources().settings(), keymap, keyval, state))
                 return false;
             openModeMenu(engine, session);
         }
