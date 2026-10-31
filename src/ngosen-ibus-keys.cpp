@@ -11,7 +11,6 @@ namespace ngosen {
 
     namespace {
 
-        // Meta is left out: GTK 4 reports it beside the Mod1 of Alt, which already counts.
         constexpr guint HeldModifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK;
 
         // The US layout puts Meta on the second level of Alt, so Shift then Alt arrives as Meta.
@@ -38,10 +37,13 @@ namespace ngosen {
             }
         }
 
-        // GNOME reports Super as Mod4, while "Super+space" parses to the Super bit.
+        // GNOME reports Super as Mod4, while "Super+space" parses to the Super bit. GTK 4 reports
+        // the Meta bit beside the Mod1 of Alt.
         guint heldModifiers(guint state) {
             if ((state & IBUS_MOD4_MASK) != 0)
                 state |= IBUS_SUPER_MASK;
+            if ((state & IBUS_META_MASK) != 0)
+                state |= IBUS_MOD1_MASK;
             return state & HeldModifiers;
         }
 

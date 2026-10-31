@@ -377,7 +377,7 @@ if no_x:
     app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
     pump(200)
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
-    check(not os.path.exists(mark), "no click watcher: a reset between the keys is a click", mark)
+    check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
     sys.exit(1 if failures else 0)
 
@@ -838,8 +838,8 @@ if os.path.exists(english_mark):
     tap_ctrl_shift(app)
 app.close()
 
-# A thumb resting on Ctrl may let go of it well after the Shift tap.
-app = App("toggle-slow-ctrl")
+# Ctrl stays down for a Ctrl+click after the Shift tap, a click the engine cannot see on Wayland.
+app = App("toggle-ctrl-held")
 app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
@@ -847,8 +847,8 @@ pump(700)
 app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
 pump(200)
 check(
-    os.path.exists(english_mark),
-    "toggle: a slow Ctrl release after a quick Shift still taps",
+    not os.path.exists(english_mark),
+    "toggle: Ctrl held long after a quick Shift is a hold",
     english_mark,
 )
 if os.path.exists(english_mark):
@@ -964,6 +964,14 @@ app.ic.process_key_event(IBus.KEY_z, 0, alt | IBus.ModifierType.RELEASE_MASK)
 app.ic.process_key_event(IBus.KEY_Alt_L, 0, alt | IBus.ModifierType.RELEASE_MASK)
 pump(200)
 check(os.path.exists(english_mark), "toggle: holding Alt+Z switches once", english_mark)
+# A grab can eat the release of Z too; the next Alt+Z must still switch.
+app.ic.process_key_event(IBus.KEY_z, 0, alt)
+app.ic.process_key_event(IBus.KEY_Alt_L, 0, alt | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+app.key(IBus.KEY_z, alt)
+check(os.path.exists(english_mark), "toggle: Alt+Z after a lost Z release switches", english_mark)
+if not os.path.exists(english_mark):
+    app.key(IBus.KEY_z, alt)
 app.key(IBus.KEY_z, IBus.ModifierType.MOD1_MASK)
 tap_ctrl_shift(app)
 check(

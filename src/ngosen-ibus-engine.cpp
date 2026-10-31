@@ -69,6 +69,7 @@ namespace {
         gint64   since        = 0;
         unsigned clicks       = 0;
         guint    swallowedKey = 0;
+        bool     chordHeld    = false;
     };
 
     // Longer than this is a hold, such as Ctrl+Shift with a click.
@@ -149,6 +150,7 @@ namespace {
         const bool modifier = ngosen::IBusKeyPress(keyval, 0, state).isModifier();
         if (release && tap.swallowedKey != 0 && ibus_keyval_to_lower(keyval) == tap.swallowedKey) {
             tap.swallowedKey = 0;
+            tap.chordHeld    = false;
             return true;
         }
         if (!release && !modifier) {
@@ -156,8 +158,9 @@ namespace {
             if (!isToggleKey(keyval, state))
                 return false;
             // A held chord repeats; only its first press switches.
-            if (tap.swallowedKey != ibus_keyval_to_lower(keyval))
+            if (!tap.chordHeld)
                 toggleLanguage(engine, session);
+            tap.chordHeld    = true;
             tap.swallowedKey = ibus_keyval_to_lower(keyval);
             return true;
         }
@@ -177,14 +180,16 @@ namespace {
             tap.armed = matched;
             return false;
         }
-        // The hold ends at the toggle key itself; the other modifier may come up later.
+        // A grab can eat the release of the letter, so a modifier release ends the chord too.
+        tap.chordHeld = false;
         if (tap.armed && isToggleKey(keyval, state)) {
             tap.armed   = false;
-            tap.pending = g_get_monotonic_time() - tap.since <= TapMicroseconds;
+            tap.pending = true;
         }
         if (tap.pending && !ngosen::otherModifierHeld(keyval, state)) {
             tap.pending = false;
-            if (clicksSeen.load(std::memory_order_acquire) == tap.clicks)
+            // Where clicks are not watched, only the time tells a tap from Ctrl+Shift with a click.
+            if (g_get_monotonic_time() - tap.since <= TapMicroseconds && clicksSeen.load(std::memory_order_acquire) == tap.clicks)
                 toggleLanguage(engine, session);
         }
         return false;
@@ -371,9 +376,6 @@ namespace {
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
-        // Where the engine watches clicks, a reset during a tap is the app's own and the tap goes on.
-        if (!ngosen::clicksWatched.load(std::memory_order_acquire))
-            session->tap = {};
         if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
