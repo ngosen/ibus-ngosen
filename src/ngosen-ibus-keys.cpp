@@ -54,6 +54,10 @@ namespace ngosen {
         return chord;
     }
 
+    bool otherModifierHeld(guint keyval, guint state) {
+        return (heldModifiers(state) & ~ownModifier(keyval)) != 0;
+    }
+
     bool matchesKey(const KeyChord& chord, guint keyval, guint state) {
         return ibus_keyval_to_lower(keyval) == chord.keyval && (heldModifiers(state) & ~ownModifier(keyval)) == chord.modifiers;
     }

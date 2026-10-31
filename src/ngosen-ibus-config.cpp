@@ -355,9 +355,17 @@ namespace ngosen {
     }
 
     bool saveEnglishOn(const SettingsPaths& paths, bool on) {
-        // The typing log shares the folder, which only the user may read.
-        if (on)
-            return g_mkdir_with_parents(paths.stateDir.c_str(), 0700) == 0 && writeFileAtomically(paths.englishMark(), "");
+        // The typing log shares the folder, which only the user may read. An empty marker needs no
+        // sync: losing it in a crash only starts the next session in Vietnamese.
+        if (on) {
+            const int fd = g_mkdir_with_parents(paths.stateDir.c_str(), 0700) == 0 ? ::open(paths.englishMark().c_str(), O_WRONLY | O_CREAT | O_CLOEXEC, 0600) : -1;
+            if (fd == -1) {
+                NGOSEN_WARN("Cannot write " << paths.englishMark() << ": " << std::strerror(errno));
+                return false;
+            }
+            ::close(fd);
+            return true;
+        }
         std::error_code error;
         std::filesystem::remove(paths.englishMark(), error);
         if (error)

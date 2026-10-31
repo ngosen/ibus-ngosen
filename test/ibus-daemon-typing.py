@@ -739,7 +739,7 @@ class GnomeMenu:
         }
 
 
-english_mark = os.path.join(os.environ["HOME"], ".local", "state", "ngosen", "english")
+english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
 # Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
@@ -784,6 +784,38 @@ tap_ctrl_shift(app, hold_ms=800)
 check(not os.path.exists(english_mark), "toggle: a long hold is not a tap", english_mark)
 app.close()
 
+# Firefox on X11 resets after every key it is let through, the modifiers too.
+app = App("toggle-reset")
+ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
+app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+app.reset()
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+app.reset()
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+app.reset()
+app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+check(os.path.exists(english_mark), "toggle: a reset between the keys still taps", english_mark)
+# Leave Vietnamese on even when the check failed, so later checks fail only for their own reason.
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+app.close()
+
+# As in the fcitx5 edition, the tap counts once every modifier is up.
+app = App("toggle-ctrl-v")
+app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+app.key(IBus.KEY_v, ctrl)
+app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+check(
+    not os.path.exists(english_mark), "toggle: Ctrl+Shift then Ctrl+V does not switch", english_mark
+)
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+app.close()
+
 app = App("toggle-password", purpose=IBus.InputPurpose.PASSWORD)
 tap_ctrl_shift(app)
 check(not os.path.exists(english_mark), "toggle: nothing in a password field", english_mark)
@@ -817,12 +849,45 @@ app.close()
 set_setting("DirectTyping", "False")
 
 set_setting("ToggleKey", "Alt+z")
+app = App("toggle-note")
+# Without this capability IBus shows the note in its own panel instead of telling the app.
+app.ic.set_capabilities(
+    IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.AUXILIARY_TEXT
+)
+note = []
+app.ic.connect(
+    "update-auxiliary-text",
+    lambda _ic, text, visible: note.append(text.get_text() if visible else ""),
+)
+app.ic.connect("hide-auxiliary-text", lambda _ic: note.append(""))
+# Alt+Z switches on the press, so its releases come after the note.
+alt = IBus.ModifierType.MOD1_MASK
+app.ic.process_key_event(IBus.KEY_Alt_L, 0, 0)
+app.key(IBus.KEY_z, alt)
+app.ic.process_key_event(IBus.KEY_Alt_L, 0, alt | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+check(note[-1:] == ["Tiếng Anh"], "toggle: the note stays after the keys are let go", note)
+app.type("a")
+check(note[-1:] == [""], "toggle: the note goes at the next key", note)
+app.key(IBus.KEY_z, alt)
+app.close()
+
 app = App("toggle-alt-z")
 app.type("vieetj")
 app.key(IBus.KEY_z, IBus.ModifierType.MOD1_MASK)
 check(os.path.exists(english_mark), "toggle: Alt+Z switches on the press", english_mark)
 check(app.commits == ["việt"], "toggle: Alt+Z commits the word being typed once", app.commits)
 check("z" not in app.passed, "toggle: the app never sees Alt+Z", app.passed)
+app.key(IBus.KEY_z, IBus.ModifierType.MOD1_MASK)
+check(not os.path.exists(english_mark), "toggle: Alt+Z again switches back", english_mark)
+# A held key repeats its press before any release.
+alt = IBus.ModifierType.MOD1_MASK
+app.ic.process_key_event(IBus.KEY_z, 0, alt)
+app.ic.process_key_event(IBus.KEY_z, 0, alt)
+app.ic.process_key_event(IBus.KEY_z, 0, alt | IBus.ModifierType.RELEASE_MASK)
+app.ic.process_key_event(IBus.KEY_Alt_L, 0, alt | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+check(os.path.exists(english_mark), "toggle: holding Alt+Z switches once", english_mark)
 app.key(IBus.KEY_z, IBus.ModifierType.MOD1_MASK)
 tap_ctrl_shift(app)
 check(
@@ -927,7 +992,7 @@ app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
 pump(500)
 app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
 pump(500)
-state_dir = os.path.join(os.environ["HOME"], ".local", "state", "ngosen")
+state_dir = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen")
 saved_logs = sorted(glob.glob(os.path.join(state_dir, "typing-*.log")))
 check(len(saved_logs) == 1, "menu: saves a typing log", saved_logs)
 if saved_logs:

@@ -28,4 +28,7 @@ namespace ngosen {
     // and a modifier being released does not count as held.
     bool matchesKey(const KeyChord& chord, guint keyval, guint state);
 
+    // Whether a modifier other than the key itself is still down.
+    bool otherModifierHeld(guint keyval, guint state);
+
 } // namespace ngosen

@@ -60,12 +60,15 @@ namespace {
         return std::any_of(chords.begin(), chords.end(), [&](const ngosen::KeyChord& chord) { return ngosen::matchesKey(chord, keyval, state); });
     }
 
-    // A tap of a modifier-only key such as Ctrl+Shift toggles on release, so Ctrl+Shift+T does not.
-    // A key with a letter such as Alt+Z toggles on press, and the app sees neither its press nor its release.
+    // A tap of a modifier-only key such as Ctrl+Shift toggles once every modifier is up, as in the
+    // fcitx5 edition, so Ctrl+Shift+T or Ctrl+Shift then Ctrl+V does not. A key with a letter such as
+    // Alt+Z toggles on its first press, and the app sees neither its press nor its release.
     struct ToggleTap {
         bool   armed        = false;
+        bool   pending      = false;
         gint64 since        = 0;
         guint  swallowedKey = 0;
+        bool   chordHeld    = false;
     };
 
     // Longer than this is a hold, such as Ctrl+Shift with a click.
@@ -135,37 +138,49 @@ namespace {
         session.showsLanguage = true;
     }
 
-    bool isModifierKey(guint keyval) {
-        return (keyval >= IBUS_KEY_Shift_L && keyval <= IBUS_KEY_Hyper_R) || keyval == IBUS_KEY_ISO_Level3_Shift;
-    }
-
     // True when the app must not see this key.
     bool handleToggleKey(IBusEngine* engine, Session& session, guint keyval, guint state) {
-        ToggleTap& tap     = session.tap;
-        const bool release = (state & IBUS_RELEASE_MASK) != 0;
+        ToggleTap& tap      = session.tap;
+        const bool release  = (state & IBUS_RELEASE_MASK) != 0;
+        const bool modifier = ngosen::IBusKeyPress(keyval, 0, state).isModifier();
         if (release && tap.swallowedKey != 0 && ibus_keyval_to_lower(keyval) == tap.swallowedKey) {
             tap.swallowedKey = 0;
+            tap.chordHeld    = false;
             return true;
         }
-        const bool matched  = isToggleKey(keyval, state);
-        const bool modifier = isModifierKey(keyval);
-        if (!release) {
-            if (matched && !modifier) {
-                tap.armed        = false;
-                tap.swallowedKey = ibus_keyval_to_lower(keyval);
+        if (!release && !modifier) {
+            tap.armed = tap.pending = false;
+            if (!isToggleKey(keyval, state))
+                return false;
+            // A held chord repeats; only its first press switches.
+            if (!tap.chordHeld)
                 toggleLanguage(engine, session);
-                return true;
-            }
+            tap.chordHeld    = true;
+            tap.swallowedKey = ibus_keyval_to_lower(keyval);
+            return true;
+        }
+        if (!modifier)
+            return false;
+        if (!release) {
+            if (tap.pending)
+                return false;
             // A held key repeats; the hold counts from the first press.
+            const bool matched = isToggleKey(keyval, state);
             if (matched && !tap.armed)
                 tap.since = g_get_monotonic_time();
             tap.armed = matched;
             return false;
         }
-        if (modifier && tap.armed && matched && g_get_monotonic_time() - tap.since <= TapMicroseconds)
-            toggleLanguage(engine, session);
-        if (modifier)
-            tap.armed = false;
+        tap.chordHeld = false;
+        if (tap.armed && isToggleKey(keyval, state)) {
+            tap.armed   = false;
+            tap.pending = true;
+        }
+        if (tap.pending && !ngosen::otherModifierHeld(keyval, state)) {
+            tap.pending = false;
+            if (g_get_monotonic_time() - tap.since <= TapMicroseconds)
+                toggleLanguage(engine, session);
+        }
         return false;
     }
 
@@ -179,7 +194,8 @@ namespace {
         if (session == nullptr)
             return FALSE;
         session->applyNewSettings();
-        if (session->showsLanguage) {
+        // Shown until the next key typed, not the release of the toggle key itself.
+        if (session->showsLanguage && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
             ibus_engine_hide_auxiliary_text(engine);
             session->showsLanguage = false;
         }
@@ -265,6 +281,8 @@ namespace {
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
             session->applyNewSettings();
+            // With use-global-engine off each field has its own engine, and the toggle key may have switched elsewhere.
+            session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
             // The per-field checks of Sen start over, as the fcitx5 frontend does on focus-in.
             if (realMode == ngosen::Mode::Sen)
                 session->state->activate(ngosen::Mode::Sen, true);
@@ -333,7 +351,6 @@ namespace {
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
-        session->tap                 = {};
         if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);

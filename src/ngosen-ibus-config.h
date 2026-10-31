@@ -75,12 +75,12 @@ namespace ngosen {
 
     using FileWriter = std::function<bool(const std::string& path, const std::string& content)>;
 
-    // On the first run, copies the fcitx5 edition's settings, or writes the defaults when it has none.
-    // Never overwrites a file. The import is marked done last, so a run stopped halfway is finished
-    // by the next one. Returns false when a write failed.
     bool readEnglishOn(const SettingsPaths& paths);
     bool saveEnglishOn(const SettingsPaths& paths, bool on);
 
+    // On the first run, copies the fcitx5 edition's settings, or writes the defaults when it has none.
+    // Never overwrites a file. The import is marked done last, so a run stopped halfway is finished
+    // by the next one. Returns false when a write failed.
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write = writeFileAtomically);
 
 } // namespace ngosen
