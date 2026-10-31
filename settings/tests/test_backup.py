@@ -355,6 +355,18 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.restore(exported)
         self.assertFalse(os.path.exists(self.paths.dictionary))
 
+    def test_restored_keymap_is_what_the_keymap_page_reads(self):
+        self.assertEqual(self.paths.keymaps, self.store.keymap_file)
+        write_text(self.paths.keymaps, "# mine\n[CustomKeymap/0]\nKey=a\nValue=DauHoi\n\n")
+        self.restore(
+            {"keymaps": [{"Key": "s", "Value": "DauSac"}, {"Key": "f", "Value": "DauHuyen"}]}
+        )
+        self.store.reload(self.engine)
+        self.assertEqual(self.store.keymap, [("s", "DauSac"), ("f", "DauHuyen")])
+        self.assertTrue(read_text(self.paths.keymaps).startswith("# mine\n"))
+        # The page saving the same list changes nothing.
+        self.assertFalse(self.store.set_keymap(self.store.keymap))
+
     def test_bundled_words_remove_the_own_file(self):
         write_text(self.paths.bundled_dictionary, "việt\nnam\n")
         write_text(self.paths.dictionary, "việt\nkhô\n")
@@ -393,10 +405,14 @@ class WindowBackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(self.window.toast.get_title(), "Restored from backup.json.")
         self.assertFalse(self.window.rows.rows["SpellCheck"].get_active())
         self.assertEqual(self.store.macros, [("kg", "khô gà")])
+        self.assertEqual(self.store.keymap, [("z", "Tone0")])
+        self.assertIsNotNone(self.window.keymap.list.get_row_at_index(0))
         self.window.toast.emit("button-clicked")
         self.assertEqual(self.files(), before)
         self.assertTrue(self.window.rows.rows["SpellCheck"].get_active())
         self.assertEqual(self.store.macros, [("dt", "điện thoại")])
+        self.assertEqual(self.store.keymap, [])
+        self.assertIsNone(self.window.keymap.list.get_row_at_index(0))
 
     def test_losses_are_asked_about_first(self):
         before = self.files()

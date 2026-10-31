@@ -10,11 +10,9 @@ from datetime import datetime
 
 from . import ini, keys
 from .i18n import N_, _
-from .store import MACRO_LIST, read_words
+from .store import KEYMAP_LIST, MACRO_LIST, read_words
 
 COMPONENTS = ("config", "macros", "keymaps", "rules", "dictionary")
-KEYMAP_FILE = "ngosen-custom-keymap.conf"
-KEYMAP_LIST = "CustomKeymap"
 # The fcitx5 edition keeps these as Mode, VietnameseOn and an indexed ToggleKey list.
 IBUS_ONLY = ("DirectTyping", "ToggleKey")
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
@@ -41,7 +39,7 @@ class Paths:
     def __init__(self, store):
         self.settings = store.settings_file
         self.macros = store.macro_file
-        self.keymaps = os.path.join(store.folder, KEYMAP_FILE)
+        self.keymaps = store.keymap_file
         self.dictionary = store.dictionary_file
         self.bundled_dictionary = store.bundled_dictionary
         self.english = english_mark()
@@ -285,6 +283,12 @@ def _list_file(text, name, items):
     return (kept + ini.list_text(name, entries)).encode("utf-8", "surrogateescape")
 
 
+def _keymap_file(text, items):
+    """text with the keymap replaced as the Keymap page writes it."""
+    entries = [(item.get("Key", ""), item.get("Value", "")) for item in items]
+    return ini.replace_list(text, KEYMAP_LIST, entries).encode("utf-8", "surrogateescape")
+
+
 def _current(path):
     data = read_bytes(path)
     return None if data is None else data.decode("utf-8", "surrogateescape")
@@ -306,13 +310,13 @@ def plan(backup, paths, engine, taken=frozenset()):
         changes[paths.settings] = _settings(
             config, _current(paths.settings) or "", known, engine, taken, notes
         )
-    for name, path, section in (
-        ("macros", paths.macros, MACRO_LIST),
-        ("keymaps", paths.keymaps, KEYMAP_LIST),
+    for name, path, write_list in (
+        ("macros", paths.macros, lambda text, items: _list_file(text, MACRO_LIST, items)),
+        ("keymaps", paths.keymaps, _keymap_file),
     ):
         if name in backup:
             current = _current(path)
-            data = _list_file(current or "", section, backup[name])
+            data = write_list(current or "", backup[name])
             # An empty list needs no new file.
             changes[path] = None if current is None and not data else data
     if "dictionary" in backup:
