@@ -120,6 +120,7 @@ namespace {
     }
 
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
+    void showLanguageItem(IBusEngine* engine);
 
     void toggleLanguage(IBusEngine* engine, Session& session) {
         // The word ends in the mode it was typed in, and the core drops what it held for it.
@@ -133,7 +134,7 @@ namespace {
         if (realMode == ngosen::Mode::Sen)
             session.state->activate(ngosen::Mode::Sen, true);
         NGOSEN_INFO("Toggle key: " << (englishOn ? "English" : "Vietnamese"));
-        showMenu(engine, resources().settings(), true);
+        showLanguageItem(engine);
         showLanguage(engine);
         session.showsLanguage = true;
     }
@@ -257,6 +258,20 @@ namespace {
             updateItems(engine, menu);
             shownStates = std::move(states);
         }
+        g_object_unref(menu);
+    }
+
+    // Only the language item changed; the whole menu would stall GNOME Shell for a second, and the
+    // keys typed meanwhile reach the core in one burst.
+    void showLanguageItem(IBusEngine* engine) {
+        IBusPropList* menu = ngosen::newSettingsMenu(resources().settings(), englishOn);
+        g_object_ref_sink(menu);
+        ibus_engine_register_properties(engine, menu);
+        for (guint i = 0; IBusProperty* item = ibus_prop_list_get(menu, i); ++i) {
+            if (g_strcmp0(ibus_property_get_key(item), ngosen::InputModeItem) == 0)
+                ibus_engine_update_property(engine, item);
+        }
+        shownStates = itemStates(menu);
         g_object_unref(menu);
     }
 
