@@ -171,7 +171,7 @@ namespace {
             gchar*  argv[] = {const_cast<gchar*>(NGOSEN_SETUP_EXEC), nullptr}; //NOLINT
             GError* error  = nullptr;
             if (!g_spawn_async(nullptr, argv, nullptr, G_SPAWN_DEFAULT, nullptr, nullptr, nullptr, &error)) {
-                NGOSEN_WARN("Cannot open the settings window: " << error->message);
+                NGOSEN_WARN(std::string("Cannot open the settings window: ") + error->message);
                 g_error_free(error);
             }
             return;
@@ -203,7 +203,7 @@ namespace {
     void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
         if (Session* session = sessionOf(engine))
             session->host->setClient(client != nullptr ? client : "");
-        NGOSEN_INFO("Focus in: " << (client != nullptr ? client : ""));
+        NGOSEN_INFO(std::string("Focus in: ") + (client != nullptr ? client : ""));
         focusIn(engine);
     }
 
@@ -239,7 +239,7 @@ namespace {
 
     void setContentType(IBusEngine* engine, guint purpose, guint hints) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_content_type(engine, purpose, hints);
-        NGOSEN_DEBUG("Content type: purpose " << purpose << ", hints " << hints);
+        NGOSEN_DEBUG("Content type: purpose " + std::to_string(purpose) + ", hints " + std::to_string(hints));
         if (Session* session = sessionOf(engine))
             session->host->setContentType(purpose, hints);
     }

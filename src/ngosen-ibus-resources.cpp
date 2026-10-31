@@ -132,16 +132,16 @@ namespace ngosen {
     uintptr_t IBusResources::openDictionary() const {
         if (settings_.enableDictionary) {
             if (const uintptr_t dictionary = openDictionaryAt(paths_.dictionaryFile())) {
-                NGOSEN_INFO("Dictionary: " << paths_.dictionaryFile());
+                NGOSEN_INFO("Dictionary: " + paths_.dictionaryFile());
                 return dictionary;
             }
         }
         const std::string path       = bundledDictionaryFile();
         const uintptr_t   dictionary = openDictionaryAt(path);
         if (dictionary != 0)
-            NGOSEN_INFO("Dictionary: " << path);
+            NGOSEN_INFO("Dictionary: " + path);
         else
-            NGOSEN_WARN("No dictionary at " << path);
+            NGOSEN_WARN("No dictionary at " + path);
         return dictionary;
     }
 
