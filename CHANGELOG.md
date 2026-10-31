@@ -22,6 +22,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - kitty trên X11 gõ được tiếng Việt, không còn ra chữ thô như `vieejt`: gói đặt `GLFW_IM_MODULE=ibus` cho phiên
   đăng nhập (đã thử GNOME, Cinnamon và Xfce), có hiệu lực sau khi đăng nhập lại (#47).
+- Gõ Sen trên GNOME: gõ hai phím dấu sát nhau (như w và f trong "nguowfi") không còn làm mất lần thêm dấu
+  đầu và ra "ngời"; Ngó Sen chờ app hiện xong lần sửa trước, tối đa 20 ms (#56).
+- Gõ Sen trên GNOME: chữ đầu tiên trong ô còn trống không còn bị gạch chân mà gõ thẳng vào ô như các chữ sau
+  (#56).
 
 ## [1.1.2-1] — 30/10/2026
 
