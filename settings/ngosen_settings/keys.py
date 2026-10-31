@@ -50,7 +50,29 @@ SYMBOLS = {
     "comma": ",",
     "period": ".",
     "slash": "/",
+    "exclam": "!",
+    "at": "@",
+    "numbersign": "#",
+    "dollar": "$",
+    "percent": "%",
+    "asciicircum": "^",
+    "ampersand": "&",
+    "asterisk": "*",
+    "parenleft": "(",
+    "parenright": ")",
+    "underscore": "_",
+    "plus": "+",
+    "braceleft": "{",
+    "braceright": "}",
+    "bar": "|",
+    "colon": ":",
+    "quotedbl": '"',
+    "less": "<",
+    "greater": ">",
+    "question": "?",
 }
+# GNOME names the key above Tab by its place, and Shift+Tab arrives as ISO_Left_Tab.
+SAME_KEY = {"Above_Tab": "grave", "ISO_Left_Tab": "Tab"}
 
 NEEDS_TWO = N_("Press at least two keys together.")
 TYPES_TEXT = N_("Shift with a key types a capital letter or a symbol.")
@@ -147,9 +169,14 @@ def xkb_toggle(option):
     return frozenset(modifiers), key
 
 
+def _compared(keys):
+    modifiers, key = keys
+    return modifiers, SAME_KEY.get(key, key)
+
+
 def gnome_chords(accelerators, xkb_options):
     found = [accelerator(a) for a in accelerators] + [xkb_toggle(o) for o in xkb_options]
-    return {c for c in found if c is not None}
+    return {_compared(c) for c in found if c is not None}
 
 
 def problem(keys, taken):
@@ -161,7 +188,7 @@ def problem(keys, taken):
         return NEEDS_TWO, None
     if key is not None and modifiers == {"Shift"}:
         return TYPES_TEXT, None
-    if keys in taken:
+    if _compared(keys) in taken:
         return GNOME_USES, None
     if key is None:
         return None, None

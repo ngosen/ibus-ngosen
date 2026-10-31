@@ -21,9 +21,7 @@ class SettingRows:
         self.store = store
         self.names = names  # Values the engine accepts for InputMethod and OutputCharset.
         self.on_change = on_change
-        self.taken_keys = (
-            taken_keys  # GNOME's own input source keys, which a toggle key may not use.
-        )
+        self.taken_keys = taken_keys  # GNOME's shortcuts, which a toggle key may not use.
         self.loading = False
         self.rows = {}
         self.pairs = {}  # What each combo row lists, as (value, label).
@@ -111,6 +109,9 @@ class KeyCapture:
         self.value = None
         self.parent = None
         self.watch = None
+        self.navigating = False
+        # The engine gets a key as Shift makes it, whichever went down first.
+        self.translate = shifted_name
         self.dialog = Adw.AlertDialog(
             heading=_("Press the new keys"), body=_("Hold the keys together, then let go.")
         )
@@ -127,7 +128,7 @@ class KeyCapture:
         self.dialog.set_response_enabled("save", False)
         self.dialog.set_close_response("cancel")
         self.dialog.connect("response", lambda _d, response: self._answer(response))
-        # Captures every key, so Escape and Enter can be part of the keys too.
+        # Captures keys before the buttons do; Tab, Enter and Escape alone still reach them.
         keyboard = Gtk.EventControllerKey(propagation_phase=Gtk.PropagationPhase.CAPTURE)
         keyboard.connect(
             "key-pressed", lambda _c, k, code, _s: self.press(Gdk.keyval_name(k), code)
@@ -146,8 +147,11 @@ class KeyCapture:
         self.pressed.clear()
 
     def press(self, name, code):
+        if name is None:
+            return True
         if name in NAVIGATION and all(self.pressed[c].startswith("Shift") for c in self.held):
-            self.forget()
+            # These keys move between the buttons; the round they were in records nothing.
+            self.navigating = bool(self.held)
             return False
         if not self.held:
             self.pressed.clear()
@@ -161,7 +165,10 @@ class KeyCapture:
         self.held.discard(code)
         if self.held:
             return
-        chord = keys.from_pressed(list(self.pressed.values()))
+        if self.navigating:
+            self.navigating = False
+            return
+        chord = keys.from_pressed(self._names())
         error, warning = keys.problem(chord, self.taken)
         self.value = None if error else keys.value(chord)
         self.shown.set_label(keys.label(keys.value(chord)) if chord else "")
@@ -173,6 +180,15 @@ class KeyCapture:
             self.note.remove_css_class("error")
         self.dialog.set_response_enabled("save", self.value is not None)
 
+    def _names(self):
+        names = list(self.pressed.values())
+        if not any(n.startswith("Shift") for n in names):
+            return names
+        return [
+            n if n in keys.MODIFIER_KEYS else (self.translate(code) or n)
+            for code, n in self.pressed.items()
+        ]
+
     def _answer(self, response):
         if self.watch is not None:
             self.parent.disconnect(self.watch)
@@ -181,6 +197,14 @@ class KeyCapture:
             self.on_save(self.value)
         else:
             self.on_cancel()
+
+
+def shifted_name(code):
+    display = Gdk.Display.get_default()
+    if display is None:
+        return None
+    found, keyval, *_rest = display.translate_key(code, Gdk.ModifierType.SHIFT_MASK, 0)
+    return Gdk.keyval_name(keyval) if found else None
 
 
 def preferences_group(title=None, description=None):

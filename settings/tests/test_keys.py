@@ -55,6 +55,17 @@ class KeysTest(unittest.TestCase):
             keys.problem(keys.from_pressed(["Control_L", "c"]), set()), (None, keys.TAKES_KEY)
         )
 
+    def test_gnome_key_names(self):
+        # GNOME names the key above Tab by place, and Shift+Tab arrives as ISO_Left_Tab.
+        taken = keys.gnome_chords(["<Alt>Above_Tab", "<Shift><Super>Tab"], [])
+        alt_grave = keys.from_pressed(["Alt_L", "grave"])
+        self.assertEqual(keys.problem(alt_grave, taken)[0], keys.GNOME_USES)
+        super_tab = keys.from_pressed(["Shift_L", "Super_L", "ISO_Left_Tab"])
+        self.assertEqual(keys.problem(super_tab, taken)[0], keys.GNOME_USES)
+
+    def test_shifted_symbols(self):
+        self.assertEqual(keys.label("Control+Shift+exclam"), "Ctrl+Shift+!")
+
     def test_xkb_toggles(self):
         xkb = [
             "grp:alt_shift_toggle",

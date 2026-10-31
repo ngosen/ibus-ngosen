@@ -49,7 +49,9 @@ class GnomeSources:
             bindings = Gio.Settings.new(schema_id)
             for name in schema.list_keys():
                 value = bindings.get_value(name)
-                if value.get_type_string() == "as":
+                if name == "custom-keybindings":
+                    accelerators += [_custom_binding(path) for path in value.unpack()]
+                elif value.get_type_string() == "as":
                     accelerators += value.unpack()
         options = self.settings.get_strv("xkb-options") if self.settings is not None else []
         return accelerators, options
@@ -60,6 +62,11 @@ class GnomeSources:
         ok = self.settings.set_value("sources", GLib.Variant("a(ss)", sources))
         Gio.Settings.sync()
         return ok
+
+
+def _custom_binding(path):
+    schema = "org.gnome.settings-daemon.plugins.media-keys.custom-keybinding"
+    return Gio.Settings.new_with_path(schema, path).get_string("binding")
 
 
 def _text(css=None):

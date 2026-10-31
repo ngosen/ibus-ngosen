@@ -64,7 +64,10 @@ class FakeSources:
         return True
 
     def gnome_keys(self):
-        return ["<Super>space", "<Shift><Super>space", "<Super>a"], ["grp:ctrl_alt_toggle_bidir"]
+        return ["<Super>space", "<Shift><Super>space", "<Super>a"], [
+            "grp:ctrl_alt_toggle_bidir",
+            "grp:alt_caps_toggle",
+        ]
 
 
 class RequiredTest(unittest.TestCase):
@@ -186,6 +189,7 @@ class WindowTest(unittest.TestCase):
             ["Control_L"],
             ["Shift_L", "a"],
             ["Super_L", "space"],
+            ["Alt_L", "Caps_Lock"],
         ):
             capture = self.capture(*names)
             self.assertFalse(capture.dialog.get_response_enabled("save"), names)
@@ -227,14 +231,35 @@ class WindowTest(unittest.TestCase):
         row = self.window.rows.rows["ToggleKey"]
         row.set_selected(row.get_model().get_n_items() - 1)
         capture = self.window.rows.capture
+        # The engine gets the key as Shift makes it, whichever went down first.
+        capture.translate = lambda code: {1: "exclam"}.get(code)
         capture.press("Control_L", 0)
         capture.press("1", 1)
         capture.press("Shift_L", 2)
-        capture.press("exclam", 1)
         for code in range(3):
             capture.release(code)
-        self.assertEqual(capture.shown.get_label(), "Ctrl+Shift+1")
-        self.assertTrue(capture.dialog.get_response_enabled("save"))
+        self.assertEqual(capture.shown.get_label(), "Ctrl+Shift+!")
+        capture.dialog.emit("response", "save")
+        self.assertEqual(self.settings()["ToggleKey"], "Control+Shift+exclam")
+
+    def test_toggle_key_shift_tab_navigates(self):
+        capture = self.capture()
+        capture.press("Shift_L", 0)
+        self.assertFalse(capture.press("ISO_Left_Tab", 1))
+        capture.release(1)
+        capture.press("Control_L", 2)
+        capture.release(2)
+        capture.release(0)
+        self.assertEqual(capture.note.get_label(), "")
+        self.assertFalse(capture.dialog.get_response_enabled("save"))
+
+    def test_toggle_key_unnamed_key(self):
+        capture = self.capture()
+        capture.press(None, 3)
+        capture.press("Tab", 1)
+        capture.release(1)
+        capture.release(3)
+        self.assertEqual(self.capture("Control_L", "Shift_L").shown.get_label(), "Ctrl+Shift")
 
     def test_toggle_key_stray_release(self):
         capture = self.capture()
