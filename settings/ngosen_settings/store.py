@@ -78,6 +78,17 @@ class Engine:
             raise subprocess.SubprocessError("the engine did not print the dictionary paths")
         return paths[0], paths[1]
 
+    def usable_toggle_keys(self, keys):
+        """The keys the engine can switch with, out of keys in the fcitx5 format."""
+        result = subprocess.run(
+            [self.program, "--usable-toggle-keys", *keys],
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=10,
+        )
+        return set(result.stdout.split("\n")[:-1]) & set(keys)
+
 
 def read_words(path):
     text = read_text(path)
@@ -150,3 +161,7 @@ class Store:
         restore_text(path, text)
         setattr(self, field, value)
         self._undo = None
+
+    def reload(self, engine):
+        """Reads every file again, after something other than this store wrote them."""
+        self.__init__(engine, self.folder)
