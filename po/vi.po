@@ -114,6 +114,10 @@ msgid "Backspace Removes the Tone Mark"
 msgstr "Backspace xóa dấu thanh"
 
 #: settings/ngosen_settings/options.py
+msgid "Change the tone of a typed word"
+msgstr "Cứu dấu: sửa dấu chữ đã gõ"
+
+#: settings/ngosen_settings/options.py
 msgid "Type w to Produce ư"
 msgstr "Gõ w ra ư"
 
@@ -150,8 +154,8 @@ msgid "Keep Unicode unless an old document or app needs another one, such as TCV
 msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã khác như TCVN3 (ABC)."
 
 #: settings/ngosen_settings/options.py
-msgid "The keys set in the full edition, used by the Custom input method."
-msgstr "Bảng phím đặt ở bản đầy đủ, dùng cho kiểu gõ Custom."
+msgid "The keys below, used when the input method is Custom."
+msgstr "Các phím bên dưới, dùng khi kiểu gõ là Custom."
 
 #: settings/ngosen_settings/options.py
 msgid "Words that are not Vietnamese get no tone marks."
@@ -184,6 +188,10 @@ msgstr "Gõ dấu ở cuối từ cũng được."
 #: settings/ngosen_settings/options.py
 msgid "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
 msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xóa dấu thanh. Chữ không có dấu thanh thì Backspace xóa chữ như thường."
+
+#: settings/ngosen_settings/options.py
+msgid "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
+msgstr "Bấm chuột ngay sau chao (hay bôi đen chao ở app X11) rồi gõ f để ra chào. Chỉ khi bật Gõ Sen; Tab hay Esc trả lại phím vừa gõ."
 
 #: settings/ngosen_settings/options.py
 msgid "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
@@ -234,8 +242,8 @@ msgid "Sen in every app, with its fixes for each app"
 msgstr "Gõ Sen ở mọi app, kèm sửa lỗi riêng từng app"
 
 #: settings/ngosen_settings/pages.py
-msgid "Cứu chữ and Cứu dấu"
-msgstr "Cứu chữ, Cứu dấu"
+msgid "Cứu chữ, and Cứu dấu in every app"
+msgstr "Cứu chữ, và Cứu dấu ở mọi app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Two spaces to a period, -- to —"
@@ -719,3 +727,80 @@ msgstr "Cài đặt đã đổi sau khi khôi phục, nên không hoàn tác gì
 #: settings/ngosen_settings/window.py
 msgid "Cannot open the file dialog: {}"
 msgstr "Không mở được hộp chọn tệp: {}"
+
+#: settings/ngosen_settings/pages.py
+msgid "Keymap"
+msgstr "Keymap"
+
+#: settings/ngosen_settings/pages.py
+msgid "Original Input Method:"
+msgstr "Kiểu gõ gốc:"
+
+#: settings/ngosen_settings/pages.py
+msgid "Apply Preset"
+msgstr "Áp dụng cài đặt sẵn"
+
+#: settings/ngosen_settings/pages.py
+msgid "Key (Example: s)"
+msgstr "Phím (Ví dụ: s)"
+
+#: settings/ngosen_settings/pages.py
+msgid "Action"
+msgstr "Hành động"
+
+#: settings/ngosen_settings/pages.py
+msgid "Search keys..."
+msgstr "Tìm phím..."
+
+#: settings/ngosen_settings/pages.py
+msgid "No keys yet."
+msgstr "Chưa có phím nào."
+
+#: settings/ngosen_settings/pages.py
+msgid "A key is one character, not a space."
+msgstr "Phím là một ký tự, không phải dấu cách."
+
+#: settings/ngosen_settings/pages.py
+msgid "{key} already does “{action}”; Update replaces it."
+msgstr "{key} đang dùng cho “{action}”; bấm Cập nhật để thay."
+
+#: settings/ngosen_settings/keymap.py
+msgid "Remove the tone mark"
+msgstr "Xoá dấu thanh"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Sắc tone"
+msgstr "Dấu sắc"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Huyền tone"
+msgstr "Dấu huyền"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Hỏi tone"
+msgstr "Dấu hỏi"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Ngã tone"
+msgstr "Dấu ngã"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Nặng tone"
+msgstr "Dấu nặng"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Microsoft layout"
+msgstr "Bố cục Microsoft"
+
+#: settings/ngosen_settings/keymap.py
+msgid "VNI on a French keyboard"
+msgstr "VNI bàn phím tiếng Pháp"
+
+msgid "Tab or Esc: put back the key"
+msgstr "Cứu dấu: Tab hoặc Esc để trả lại phím vừa gõ"
+
+msgid "Tab or Esc: put back what was typed"
+msgstr "Cứu chữ: Tab hoặc Esc để trả lại chữ đã gõ"
+
+msgid "Enter: retype in Vietnamese, Tab or Esc: keep"
+msgstr "Cứu chữ: Enter để đổi, Tab hoặc Esc để giữ nguyên"

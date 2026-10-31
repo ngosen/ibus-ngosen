@@ -40,6 +40,7 @@ class Window(Adw.ApplicationWindow):
         )
         self.macros = pages.MacroPage(store, self.rows, self.save_macros)
         self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)
+        self.keymap = pages.KeymapPage(store, self.rows, self.save_keymap)
         self.check = check_page.CheckPage(sources, version, self.notify, self._count)
 
         stack = Adw.ViewStack()
@@ -49,6 +50,7 @@ class Window(Adw.ApplicationWindow):
             typing,
             self.macros.page,
             self.dictionary.page,
+            self.keymap.page,
             self.check.page,
             pages.about_page(version),
         ):
@@ -78,6 +80,7 @@ class Window(Adw.ApplicationWindow):
         self.rows.refresh()
         self.macros.refresh()
         self.dictionary.refresh()
+        self.keymap.refresh()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
@@ -90,6 +93,11 @@ class Window(Adw.ApplicationWindow):
     def save_words(self, words):
         saved = self._write(lambda: self.store.set_words(words) or True, _("Dictionary"))
         self.dictionary.refresh()
+        return saved
+
+    def save_keymap(self, entries):
+        saved = self._write(lambda: self.store.set_keymap(entries), _("Keymap"))
+        self.keymap.refresh()
         return saved
 
     def _write(self, write, label):

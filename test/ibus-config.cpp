@@ -48,7 +48,7 @@ namespace {
 
     // As the fcitx5 edition writes them: defaults are commented out.
     const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\nDoubleSpaceToPeriod=True\n"
-                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\n";
+                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\nRetypeAfterSwitch=True\n";
     const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
 
     void              testValues() {
@@ -74,16 +74,17 @@ namespace {
         check(sameOptions(readSettings(parseIni("")), defaults), "an empty file reads as the defaults");
         Options fcitxDefaults           = defaultOptions;
         fcitxDefaults.retypeAfterSwitch = false;
-        fcitxDefaults.retoneSelection   = false;
         IBusSettings expected           = defaults;
         expected.options                = fcitxDefaults;
         check(sameOptions(defaults, expected), "the defaults are the fcitx5 edition's");
+        check(defaults.options.retoneSelection, "RetoneSelection is on by default, as in fcitx5");
 
         const IBusSettings read = readSettings(parseIni(FcitxSettings));
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
         check(!read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod stays off");
-        check(!read.options.retypeAfterSwitch && !read.options.retoneSelection, "retyping stays off");
+        check(!read.options.retypeAfterSwitch, "RetypeAfterSwitch stays off");
+        check(!read.options.retoneSelection, "RetoneSelection is read");
 
         const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nSpellCheck=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
         check(odd.options.inputMethod == "Telex" && odd.options.spellCheck && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
@@ -96,12 +97,14 @@ namespace {
         changed.options.lockWordKey      = LockWordKey::Alt;
         changed.options.timeFormat       = "%H giờ %M";
         changed.options.spellCheck       = false;
+        changed.options.retoneSelection  = false;
         changed.enableDictionary         = true;
         changed.enableCustomKeymap       = true;
         changed.directTyping             = true;
         const std::string text           = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
-        check(parseIni(text).top.size() == 21, "the file has every key");
+        check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
+        check(parseIni(text).top.size() == 22, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }

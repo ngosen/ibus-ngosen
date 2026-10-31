@@ -5,7 +5,7 @@
 
 from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 
-from . import keys, options
+from . import keymap, keys, options
 from .i18n import N_, _
 
 # The last toggle key choice, which asks for keys instead of saving.
@@ -428,9 +428,152 @@ class DictionaryPage:
         return row
 
 
+class KeymapPage:
+    """The custom keymap switch, its presets and the key list, saved on every change."""
+
+    def __init__(self, store, rows, on_list_change):
+        self.store = store
+        self.on_list_change = on_list_change
+        self.page = Adw.PreferencesPage(
+            title=_("Keymap"), icon_name="preferences-desktop-keyboard-symbolic"
+        )
+        group = preferences_group()
+        group.add(rows.build("EnableCustomKeymap"))
+        self.preset = Adw.ComboRow(title=_("Original Input Method:").rstrip(":"), use_markup=False)
+        self.preset.set_model(Gtk.StringList.new([_(name) for name, _keys in keymap.PRESETS]))
+        apply = Gtk.Button(label=_("Apply Preset"), valign=Gtk.Align.CENTER)
+        apply.connect("clicked", lambda _b: self.apply_preset())
+        self.preset.add_suffix(apply)
+        group.add(self.preset)
+        self.page.add(group)
+        self.page.add(self._editor())
+        self.page.add(self._list())
+
+    def _editor(self):
+        self.editor = preferences_group()
+        self.key_row = Adw.EntryRow(title=_("Key (Example: s)"))
+        self.key_row.add_css_class("typed")
+        self.add_button = Gtk.Button(label=_("Add"), valign=Gtk.Align.CENTER)
+        self.add_button.add_css_class("suggested-action")
+        self.add_button.connect("clicked", lambda _b: self._add())
+        self.key_row.add_suffix(self.add_button)
+        self.key_row.connect("changed", lambda _r: self._check())
+        self.key_row.connect("entry-activated", lambda _r: self._add())
+        self.editor.add(self.key_row)
+        self.action = Adw.ComboRow(title=_("Action"), use_markup=False)
+        self.action.set_model(Gtk.StringList.new([_(label) for _code, label in keymap.ACTIONS]))
+        self.action.connect("notify::selected", lambda _r, _p: self._check())
+        self.editor.add(self.action)
+        return self.editor
+
+    def _list(self):
+        group = preferences_group()
+        self.search = Gtk.SearchEntry(placeholder_text=_("Search keys..."))
+        self.search.connect("search-changed", lambda _s: self.list.invalidate_filter())
+        group.set_header_suffix(self.search)
+        self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.add_css_class("boxed-list")
+        self.list.set_placeholder(
+            Gtk.Label(label=_("No keys yet."), margin_top=12, margin_bottom=12)
+        )
+        self.list.set_filter_func(self._matches)
+        group.add(self.list)
+        return group
+
+    def _check(self):
+        key = self.key_row.get_text()
+        bad = bool(key) and not keymap.valid_key(key)
+        if bad:
+            self.key_row.add_css_class("error")
+        else:
+            self.key_row.remove_css_class("error")
+        self.key_row.set_tooltip_text(_("A key is one character, not a space.") if bad else None)
+        action = next((v for k, v in self.store.keymap if k == key), None) if key else None
+        # Adding a key that is already listed replaces its action instead of adding it twice.
+        self.editor.set_description(
+            _("{key} already does “{action}”; Update replaces it.").format(
+                key=GLib.markup_escape_text(key),
+                action=GLib.markup_escape_text(_(keymap.action_label(action))),
+            )
+            if action is not None
+            else None
+        )
+        self.add_button.set_label(_("Update") if action is not None else _("Add"))
+        chosen = self.action.get_selected() < len(keymap.ACTION_CODES)
+        self.add_button.set_sensitive(bool(key) and not bad and chosen)
+
+    def _add(self):
+        selected = self.action.get_selected()
+        if not self.add_button.get_sensitive() or selected >= len(keymap.ACTION_CODES):
+            return
+        key = self.key_row.get_text()
+        action = keymap.ACTION_CODES[selected]
+        entries = list(self.store.keymap)
+        index = next((i for i, (k, _v) in enumerate(entries) if k == key), None)
+        if index is None:
+            entries.append((key, action))
+        else:
+            entries[index] = (key, action)
+        if self.on_list_change(entries):
+            self.key_row.set_text("")
+            self.key_row.grab_focus()
+
+    def _remove(self, key):
+        self.on_list_change([(k, v) for k, v in self.store.keymap if k != key])
+
+    def _edit(self, key, action):
+        self.key_row.set_text(key)
+        self._drop_unknown_action()
+        if action in keymap.ACTION_CODES:
+            self.action.set_selected(keymap.ACTION_CODES.index(action))
+        else:
+            # ComboRow cannot show no choice; an action this window does not know is shown as
+            # is and must be replaced by a listed one before Update, so it is not lost unseen.
+            self.action.get_model().append(action)
+            self.action.set_selected(len(keymap.ACTION_CODES))
+        self.action.grab_focus()
+
+    def _drop_unknown_action(self):
+        actions = self.action.get_model()
+        if actions.get_n_items() > len(keymap.ACTION_CODES):
+            if self.action.get_selected() >= len(keymap.ACTION_CODES):
+                self.action.set_selected(0)
+            actions.remove(len(keymap.ACTION_CODES))
+
+    def apply_preset(self):
+        # The toast offers to undo, so replacing the list needs no confirmation.
+        self.on_list_change(list(keymap.PRESETS[self.preset.get_selected()][1]))
+
+    def _matches(self, row):
+        needle = self.search.get_text().casefold()
+        key = row.entry[0]
+        return not needle or needle in key.casefold() or needle in row.get_subtitle().casefold()
+
+    def refresh(self):
+        self.list.remove_all()
+        for key, action in self.store.keymap:
+            self.list.append(self._key_row(key, action))
+        self._drop_unknown_action()
+        self._check()
+
+    def _key_row(self, key, action):
+        row = Adw.ActionRow(use_markup=False, activatable=True)
+        row.set_title(key)
+        row.set_subtitle(_(keymap.action_label(action)))
+        row.entry = (key, action)
+        row.connect("activated", lambda _r: self._edit(key, action))
+        remove = Gtk.Button(
+            icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER, tooltip_text=_("Remove")
+        )
+        remove.add_css_class("flat")
+        remove.connect("clicked", lambda _b: self._remove(key))
+        row.add_suffix(remove)
+        return row
+
+
 FCITX5_ONLY = [
     N_("Sen in every app, with its fixes for each app"),
-    N_("Cứu chữ and Cứu dấu"),
+    N_("Cứu chữ, and Cứu dấu in every app"),
     N_("Vim mode for each app"),
     N_("Two spaces to a period, -- to —"),
     N_("The emoji picker and rules for each app"),

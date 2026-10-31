@@ -47,6 +47,7 @@ LABELS = {
     "ModernStyle": N_("Use oà, uý (Instead Of òa, úy)"),
     "FreeMarking": N_("Allow Type With More Freedom"),
     "BackspaceRemovesTone": N_("Backspace Removes the Tone Mark"),
+    "RetoneSelection": N_("Change the tone of a typed word"),
     "W2U": N_("Type w to Produce ư"),
     "BracketTransform": N_("Type [ -> ơ, ] -> ư, { -> Ơ, } -> Ư"),
     "AutoCapitalizeAfterPunctuation": N_(
@@ -69,7 +70,7 @@ HINTS = {
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
     ),
-    "EnableCustomKeymap": N_("The keys set in the full edition, used by the Custom input method."),
+    "EnableCustomKeymap": N_("The keys below, used when the input method is Custom."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
     "EnableDictionary": N_(
         "Check spelling against the list below. Off: the list that comes with Ngó Sen."
@@ -83,6 +84,9 @@ HINTS = {
     "FreeMarking": N_("Tone marks can also go at the end of the word."),
     "BackspaceRemovesTone": N_(
         "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
+    ),
+    "RetoneSelection": N_(
+        "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
     ),
     "W2U": N_(
         "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
@@ -106,7 +110,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "ToggleKey", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
+    (None, ["InputMethod", "ToggleKey", "DirectTyping", "OutputCharset"]),
     (
         N_("Tone marks"),
         [
@@ -117,6 +121,7 @@ TYPING_GROUPS = [
             "ModernStyle",
             "FreeMarking",
             "BackspaceRemovesTone",
+            "RetoneSelection",
             "W2U",
             "BracketTransform",
         ],

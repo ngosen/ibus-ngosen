@@ -19,8 +19,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   tệp JSON với bản fcitx5 nên chuyển qua lại được giữa hai bản. Khôi phục kiểm cả tệp trước khi ghi, báo trước những
   gì bản IBus không giữ được (luật theo app, chế độ emoji, phím chuyển chỉ một phím) và có nút Hoàn tác trả lại
   đúng như cũ; Ngó Sen đang chạy đổi Anh/Việt theo bản sao lưu ngay (#54).
+- Cứu dấu: khi bật "Gõ Sen ở app cho phép", bấm chuột ngay sau một chữ rồi gõ phím dấu để sửa dấu chữ đó (chao,
+  f → chào); Tab hay Esc trả lại phím vừa gõ. Bôi đen chữ rồi gõ phím dấu cũng được, nhưng chỉ ở app X11: app đi
+  qua GNOME Shell gõ chữ trên vùng bôi đen bằng gạch chân (#52).
 - Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
+- Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
+  nạp sẵn bảng phím Telex, VNI, VIQR… như bản fcitx5; không cần sang bản fcitx5 để soạn nữa (#53).
 
 ### Thay đổi
 
