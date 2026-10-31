@@ -114,6 +114,10 @@ msgid "Backspace Removes the Tone Mark"
 msgstr "Backspace xóa dấu thanh"
 
 #: settings/ngosen_settings/options.py
+msgid "Change the tone of a typed word"
+msgstr "Cứu dấu: sửa dấu chữ đã gõ"
+
+#: settings/ngosen_settings/options.py
 msgid "Type w to Produce ư"
 msgstr "Gõ w ra ư"
 
@@ -186,6 +190,10 @@ msgid "z in Telex (0 in VNI) removes the tone mark even with this off. On a word
 msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xóa dấu thanh. Chữ không có dấu thanh thì Backspace xóa chữ như thường."
 
 #: settings/ngosen_settings/options.py
+msgid "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
+msgstr "Bấm chuột ngay sau chao (hay bôi đen chao ở app X11) rồi gõ f để ra chào. Chỉ khi bật Gõ Sen; Tab hay Esc trả lại phím vừa gõ."
+
+#: settings/ngosen_settings/options.py
 msgid "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
 msgstr "Không phải đầu từ: nhw → như, còn w đứng riêng vẫn là w. Mọi nơi: w đứng riêng cũng ra ư. uw thì luôn ra ư."
 
@@ -234,8 +242,8 @@ msgid "Sen in every app, with its fixes for each app"
 msgstr "Gõ Sen ở mọi app, kèm sửa lỗi riêng từng app"
 
 #: settings/ngosen_settings/pages.py
-msgid "Cứu chữ and Cứu dấu"
-msgstr "Cứu chữ, Cứu dấu"
+msgid "Cứu chữ, and Cứu dấu in every app"
+msgstr "Cứu chữ, và Cứu dấu ở mọi app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Two spaces to a period, -- to —"
@@ -675,3 +683,12 @@ msgstr "Bố cục Microsoft"
 #: settings/ngosen_settings/keymap.py
 msgid "VNI on a French keyboard"
 msgstr "VNI bàn phím tiếng Pháp"
+
+msgid "Tab or Esc: put back the key"
+msgstr "Cứu dấu: Tab hoặc Esc để trả lại phím vừa gõ"
+
+msgid "Tab or Esc: put back what was typed"
+msgstr "Cứu chữ: Tab hoặc Esc để trả lại chữ đã gõ"
+
+msgid "Enter: retype in Vietnamese, Tab or Esc: keep"
+msgstr "Cứu chữ: Enter để đổi, Tab hoặc Esc để giữ nguyên"

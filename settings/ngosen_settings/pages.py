@@ -573,7 +573,7 @@ class KeymapPage:
 
 FCITX5_ONLY = [
     N_("Sen in every app, with its fixes for each app"),
-    N_("Cứu chữ and Cứu dấu"),
+    N_("Cứu chữ, and Cứu dấu in every app"),
     N_("Vim mode for each app"),
     N_("Two spaces to a period, -- to —"),
     N_("The emoji picker and rules for each app"),
