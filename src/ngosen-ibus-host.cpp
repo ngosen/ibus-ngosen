@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-host.h"
 
+#include "ngosen-ibus-shell.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
 
@@ -121,7 +122,7 @@ namespace ngosen {
         return copy;
     }
 
-    // Only GNOME Shell drops the keys an engine forwards; X11 apps delete with BackSpace as usual.
+    // Only GNOME Shell may drop the keys an engine forwards; X11 apps delete with BackSpace as usual.
     bool IBusHost::throughShell() const {
         return direct_ && client_ == "gnome-shell";
     }
@@ -130,8 +131,10 @@ namespace ngosen {
         return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }
 
+    // Where GNOME Shell drops forwarded keys nothing could correct a copy behind the app, so the field
+    // counts as reporting nothing and types with the preedit.
     bool IBusHost::reportsText() const {
-        return client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+        return client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 && shellDeliversKeys();
     }
 
     Field IBusHost::field() const {
@@ -143,11 +146,13 @@ namespace ngosen {
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
         f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
-        // GNOME 50.0 to 50.3 drop the keys an engine forwards. Elsewhere only a click watcher tells a click
-        // from a reset; Chromium and Electron report no text and show the preedit well.
+        // Outside GNOME Shell only a click watcher tells a click from a reset; Chromium and Electron report
+        // no text and show the preedit well.
         if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
             f.surroundingText = false;
-        const bool preeditOnly = throughShell() || (direct_ && !f.surroundingText);
+        // Address bars and terminals delete only through text, whatever the Shell does with keys.
+        const bool shellKeys   = throughShell() && reportsText() && !f.url && !f.terminal;
+        const bool preeditOnly = (throughShell() && !shellKeys) || (direct_ && !f.surroundingText);
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;
         f.password             = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;

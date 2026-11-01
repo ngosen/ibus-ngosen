@@ -25,3 +25,6 @@ add_subdirectory(data)
 add_subdirectory(settings)
 add_subdirectory(po)
 add_subdirectory(test)
+
+# GNOME 50.0-50.3 drop keys an engine forwards; the engine enables this extension there.
+install(DIRECTORY ngosen/gnome-shell/forward-keys@ngosen.github.io DESTINATION ${CMAKE_INSTALL_DATADIR}/gnome-shell/extensions)

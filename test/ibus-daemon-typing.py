@@ -11,7 +11,7 @@ import warnings
 import gi
 
 gi.require_version("IBus", "1.0")
-from gi.repository import GLib, GObject, IBus  # noqa: E402
+from gi.repository import Gio, GLib, GObject, IBus  # noqa: E402
 
 failures = 0
 
@@ -238,6 +238,81 @@ class App:
         self.commit_preedit()
         self.ic.focus_out()
         pump(200)
+
+
+# The parts of GNOME Shell the engine asks about forwarded keys, on the session bus of the test.
+SHELL_INTERFACES = """<node>
+  <interface name="org.gnome.Shell">
+    <property name="ShellVersion" type="s" access="read"/>
+  </interface>
+  <interface name="org.gnome.Shell.Extensions">
+    <method name="GetExtensionInfo">
+      <arg type="s" direction="in"/><arg type="a{sv}" direction="out"/>
+    </method>
+    <method name="EnableExtension">
+      <arg type="s" direction="in"/><arg type="b" direction="out"/>
+    </method>
+    <signal name="ExtensionStateChanged"><arg type="s"/><arg type="a{sv}"/></signal>
+  </interface>
+</node>"""
+EXTENSION_ACTIVE = 1.0
+EXTENSION_INACTIVE = 2.0
+
+
+class FakeShell:
+    def __init__(self):
+        self.version = None
+        self.state = None
+        self.enable_calls = 0
+        self.owner = 0
+        self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        # Its replacement needs a newer GLib than the oldest system supported.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            for interface in Gio.DBusNodeInfo.new_for_xml(SHELL_INTERFACES).interfaces:
+                self.bus.register_object(
+                    "/org/gnome/Shell", interface, self.on_method, self.on_property, None
+                )
+
+    def on_property(self, *_args):
+        return GLib.Variant("s", self.version)
+
+    def info(self):
+        return {} if self.state is None else {"state": GLib.Variant("d", self.state)}
+
+    def on_method(self, _bus, _sender, _path, _interface, method, _args, invocation):
+        if method == "GetExtensionInfo":
+            invocation.return_value(GLib.Variant("(a{sv})", (self.info(),)))
+        else:
+            self.enable_calls += 1
+            invocation.return_value(GLib.Variant("(b)", (True,)))
+            self.set_extension(EXTENSION_ACTIVE)
+
+    def start(self, version, state):
+        self.stop()
+        self.version = version
+        self.state = state
+        self.owner = Gio.bus_own_name_on_connection(
+            self.bus, "org.gnome.Shell", Gio.BusNameOwnerFlags.NONE, None, None
+        )
+        pump(300)
+
+    def stop(self):
+        if self.owner:
+            Gio.bus_unown_name(self.owner)
+            self.owner = 0
+            pump(300)
+
+    def set_extension(self, state):
+        self.state = state
+        self.bus.emit_signal(
+            None,
+            "/org/gnome/Shell",
+            "org.gnome.Shell.Extensions",
+            "ExtensionStateChanged",
+            GLib.Variant("(sa{sv})", ("forward-keys@ngosen.github.io", self.info())),
+        )
+        pump(300)
 
 
 def check(ok, what, got):
@@ -485,10 +560,11 @@ with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
+shell = FakeShell()
+shell.start("50.1", None)
 set_setting("DirectTyping", "True")
 
 
-# An empty field has reported no text yet, so the core underlines its first word.
 def field_with_text(**kwargs):
     app = App("gnome-shell", **kwargs)
     app.type("xin ")
@@ -496,14 +572,54 @@ def field_with_text(**kwargs):
     return app
 
 
+def types_underlined(what):
+    app = field_with_text()
+    app.type("vieetj ")
+    check(app.text == "xin việt ", f"{what}: the word", app.text)
+    check("việt" in app.preedits, f"{what}: underlined", app.preedits)
+    app.close()
+
+
+# Firefox reports its text a beat late; a copy behind the word leaves only forwarded keys to delete.
+def deletes_with_keys(what):
+    app = field_with_text()
+    backspaces = []
+    listen(
+        app.ic,
+        "forward-key-event",
+        lambda _ic, keyval, _keycode, _state: backspaces.append(keyval),
+    )
+    app.report = lambda: None
+    app.type("vieetj ")
+    check(app.text == "xin việt ", f"{what}: the word", app.text)
+    check(IBus.KEY_BackSpace in backspaces, f"{what}: deletes with keys", backspaces)
+    check(app.preedits == [], f"{what}: no underline", app.preedits)
+    app.close()
+
+
+types_underlined("extension not installed yet")
+check(shell.enable_calls == 0, "extension not installed yet: nothing to enable", shell.enable_calls)
+
+for version in ("50.0", "50.3"):
+    shell.start(version, None)
+    types_underlined(f"GNOME {version} without the extension")
+
+shell.start("51.0", EXTENSION_INACTIVE)
+check(shell.enable_calls == 0, "GNOME 51: the extension is left alone", shell.enable_calls)
+
+shell.start("50.1", EXTENSION_INACTIVE)
+check(shell.enable_calls == 1, "GNOME 50.1: the extension is enabled", shell.enable_calls)
+deletes_with_keys("GNOME 50.1 with the extension")
+
+for version in ("46.2", "50.4", "51.0"):
+    shell.start(version, None)
+    deletes_with_keys(f"GNOME {version}")
+
+shell.start("50.1", EXTENSION_ACTIVE)
 app = App("gnome-shell")
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, empty field: the words", app.text)
-check(
-    "xin" in app.preedits and not any("v" in p for p in app.preedits),
-    "direct, empty field: only the first word underlined",
-    app.preedits,
-)
+check(app.preedits == [], "direct, empty field: no underline", app.preedits)
 app.close()
 
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
@@ -573,9 +689,8 @@ app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 5, 5)
 pump(100)
 app.type("e")
-# The core underlines a word begun inside another one.
 check(
-    app.text == "xin vie" and app.preedit == "e",
+    app.text == "xin viee" and app.preedit == "",
     "direct, click inside the word: the next key deletes nothing",
     (app.text, app.preedit),
 )
@@ -707,6 +822,15 @@ app.type("vieetj ")
 check(app.text == "việt ", "direct, address bar: the word", app.text)
 check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
 app.close()
+
+# The lock screen turns extensions off too, so one enabled before is not enabled again.
+shell.set_extension(EXTENSION_INACTIVE)
+types_underlined("extension turned off")
+check(shell.enable_calls == 1, "extension turned off: not enabled again", shell.enable_calls)
+shell.set_extension(EXTENSION_ACTIVE)
+deletes_with_keys("extension turned back on")
+shell.stop()
+types_underlined("GNOME Shell gone")
 set_setting("DirectTyping", "False")
 
 # XIM clients such as Alacritty keep the preedit across a click and send no reset.

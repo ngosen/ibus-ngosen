@@ -298,6 +298,10 @@ namespace ngosen {
         return configDir + "/.fcitx5-imported";
     }
 
+    std::string SettingsPaths::extensionEnabledMark() const {
+        return configDir + "/.forward-keys-enabled";
+    }
+
     bool readFile(const std::string& path, std::string& content) {
         std::ifstream file(path, std::ios::binary);
         if (!file)
