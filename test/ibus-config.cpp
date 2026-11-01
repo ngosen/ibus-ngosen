@@ -144,19 +144,30 @@ namespace {
         check(!isChecked(menu, "SpellCheck") && findItem(menu, "SpellCheck") != nullptr, "the menu shows spell check off");
         check(isChecked(menu, "CapitalizeStartOfText") && !isChecked(menu, "AutoCapitalizeAfterPunctuation"), "the capitalize items show their own settings");
         check(findItem(menu, SettingsWindowItem) != nullptr, "the menu opens the settings window");
+        // GNOME Shell closes the menu on some switch clicks and not others; plain items always close it.
+        IBusProperty* spellCheck  = findItem(menu, "SpellCheck");
+        IBusProperty* startOfText = findItem(menu, "CapitalizeStartOfText");
+        check(ibus_property_get_prop_type(spellCheck) == PROP_TYPE_NORMAL && ibus_property_get_prop_type(startOfText) == PROP_TYPE_NORMAL,
+              "on/off settings are plain items, not switches");
+        check(g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(spellCheck)), "✖ ") && g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(startOfText)), "✔ "),
+              "a plain item shows its setting with ✔ or ✖");
         g_object_unref(menu);
 
         std::string key;
         std::string value;
-        check(settingForClick("InputMethod/Telex", true, key, value) && key == "InputMethod" && value == "Telex", "choosing Telex");
-        check(!settingForClick("InputMethod/Telex", false, key, value), "a radio item being unchecked changes nothing");
-        check(!settingForClick("InputMethod/Custom", true, key, value), "a method the menu does not offer");
-        check(settingForClick("OutputCharset/TCVN3 (ABC)", true, key, value) && key == "OutputCharset" && value == "TCVN3 (ABC)", "choosing a charset");
-        check(!settingForClick("OutputCharset/Nope", true, key, value), "an unknown charset");
-        check(settingForClick("SpellCheck", false, key, value) && key == "SpellCheck" && value == "False", "turning spell check off");
-        check(settingForClick("EnableDictionary", true, key, value) && value == "True", "turning the dictionary on");
-        check(settingForClick("DirectTyping", true, key, value) && key == "DirectTyping" && value == "True", "turning Sen on");
-        check(!settingForClick("Mode", true, key, value) && !settingForClick(SettingsWindowItem, true, key, value), "items that are not settings");
+        check(settingForClick("InputMethod/Telex", true, settings, key, value) && key == "InputMethod" && value == "Telex", "choosing Telex");
+        check(!settingForClick("InputMethod/Telex", false, settings, key, value), "a radio item being unchecked changes nothing");
+        check(!settingForClick("InputMethod/Custom", true, settings, key, value), "a method the menu does not offer");
+        check(settingForClick("OutputCharset/TCVN3 (ABC)", true, settings, key, value) && key == "OutputCharset" && value == "TCVN3 (ABC)", "choosing a charset");
+        check(!settingForClick("OutputCharset/Nope", true, settings, key, value), "an unknown charset");
+        // The state sent with a plain item is whatever the panel showed, so the saved setting decides.
+        check(settingForClick("SpellCheck", true, settings, key, value) && key == "SpellCheck" && value == "True", "turning spell check on");
+        check(settingForClick("CapitalizeStartOfText", true, settings, key, value) && value == "False", "turning start-of-text capitals off");
+        settings.enableDictionary = false;
+        check(settingForClick("EnableDictionary", false, settings, key, value) && value == "True", "turning the dictionary on");
+        settings.directTyping = true;
+        check(settingForClick("DirectTyping", false, settings, key, value) && key == "DirectTyping" && value == "False", "turning Sen off");
+        check(!settingForClick("Mode", true, settings, key, value) && !settingForClick(SettingsWindowItem, true, settings, key, value), "items that are not settings");
     }
 
     void testImport(const fs::path& root) {

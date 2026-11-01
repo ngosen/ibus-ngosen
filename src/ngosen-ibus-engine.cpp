@@ -182,7 +182,7 @@ namespace {
         }
         std::string key;
         std::string value;
-        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, key, value))
+        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, resources().settings(), key, value))
             return;
         ngosen::IBusSettings saved;
         // A failed write shows the old state again, so the menu never claims a setting that is not saved.

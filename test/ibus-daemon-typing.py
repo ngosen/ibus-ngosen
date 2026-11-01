@@ -753,14 +753,17 @@ def prop_states(props):
 class GnomeMenu:
     def __init__(self):
         self.states = None
+        self.labels = {}
 
     def register(self, props):
         if self.states is None and props.get(0) is not None:
             self.states = prop_states(props)
+            self.labels = labels(props)
 
     def update(self, prop):
         if self.states is not None and prop.get_key() in self.states:
             self.states[prop.get_key()] = prop.get_state()
+            self.labels[prop.get_key()] = prop.get_label().get_text()
 
     def checked(self):
         return {
@@ -801,7 +804,7 @@ with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
 check(
-    menu_labels.get("SpellCheck") == "Kiểm tra chính tả",
+    menu_labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
     "menu: in Vietnamese whatever the desktop language",
     menu_labels.get("SpellCheck"),
 )
@@ -817,10 +820,16 @@ check(
 )
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
-app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+# GNOME Shell sends the state a plain item shows, so a click on "✔ ..." comes as checked.
+app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
-    check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
+    check("SpellCheck=False" in f.read(), "menu: a click turns an on item off", settings_path)
+check(
+    gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả",
+    "menu: GNOME shows the new setting",
+    gnome.labels.get("SpellCheck"),
+)
 # As when the settings window changes it while the field keeps focus and no key is typed.
 set_setting("EnableMacro", "False")
 pump(1000)
