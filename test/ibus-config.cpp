@@ -246,7 +246,19 @@ namespace {
               "on/off settings are plain items, not switches");
         check(g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(spellCheck)), "✖ ") && g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(startOfText)), "✔ "),
               "a plain item shows its setting with ✔ or ✖");
+        IBusProperty* vietnamese = findItem(menu, InputModeItem);
+        check(ibus_property_get_prop_type(vietnamese) == PROP_TYPE_NORMAL && g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(vietnamese)), "✔ ") &&
+                  isChecked(menu, InputModeItem),
+              "the Vietnamese item is a plain item marked ✔ in Vietnamese");
+        check(g_strcmp0(ibus_text_get_text(ibus_property_get_symbol(vietnamese)), "V") == 0, "the top bar symbol is V in Vietnamese");
         g_object_unref(menu);
+        IBusPropList* englishMenu = newSettingsMenu(settings, true);
+        g_object_ref_sink(englishMenu);
+        IBusProperty* englishItem = findItem(englishMenu, InputModeItem);
+        check(g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(englishItem)), "✖ ") && !isChecked(englishMenu, InputModeItem),
+              "the Vietnamese item is marked ✖ in English");
+        check(g_strcmp0(ibus_text_get_text(ibus_property_get_symbol(englishItem)), "E") == 0, "the top bar symbol is E in English");
+        g_object_unref(englishMenu);
 
         std::string key;
         std::string value;

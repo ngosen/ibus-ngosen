@@ -1324,21 +1324,35 @@ tap_ctrl_shift(app)
 check(updates == ["InputMode"], "menu: the toggle key resends only its own item", updates)
 check(symbols[-1:] == ["E"], "menu: the top bar shows E in English", symbols)
 check("InputMode" not in gnome.checked(), "menu: the Vietnamese item is unchecked", gnome.checked())
-app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
+# A plain item like the other on/off items: GNOME Shell sends the state it shows, so a click on
+# "✖ ..." comes as unchecked, and a click must flip the language whatever state it carries.
+check(
+    gnome.labels.get("InputMode") == "✖ Tiếng Việt",
+    "menu: the Vietnamese item is marked like the other on/off items",
+    gnome.labels.get("InputMode"),
+)
+app.ic.property_activate("InputMode", IBus.PropState.UNCHECKED)
 pump(500)
 check(symbols[-1:] == ["V"], "menu: clicking the item switches back", symbols)
+check(
+    gnome.labels.get("InputMode") == "✔ Tiếng Việt",
+    "menu: the click shows the mark again",
+    gnome.labels.get("InputMode"),
+)
 check(not os.path.exists(english_mark), "menu: the click is remembered", english_mark)
 before = len(app.commits)
 app.type("vie65t")
-app.ic.property_activate("InputMode", IBus.PropState.UNCHECKED)
+app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
 pump(500)
 check(
     app.commits[before:] == ["việt"],
     "menu: the click commits the word being typed once",
     app.commits,
 )
+# A menu built before the language changed sends the other state; the click still flips.
 app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
 pump(500)
+check(symbols[-1:] == ["V"], "menu: a click with a stale state still flips", symbols)
 # A restore in the settings window writes the marker while a field has focus.
 write_file(english_mark, "")
 check(symbols[-1:] == ["E"], "menu: a marker written elsewhere switches to English", symbols)

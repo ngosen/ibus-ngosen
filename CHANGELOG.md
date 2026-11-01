@@ -11,8 +11,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Thêm
 
 - Nhấp Ctrl+Shift để đổi Anh/Việt như UniKey, ngay trong Ngó Sen: đổi cho mọi app cùng lúc, nhớ cả khi khởi động
-  lại; thanh trên cùng hiện V hoặc E và menu có mục "Tiếng Việt" để bấm. Cửa sổ cài đặt cho đổi sang
-  Shift+Alt hoặc tắt phím này; Super+Space vẫn đổi nguồn nhập như cũ. Ô mật khẩu luôn gõ tiếng Anh (#50).
+  lại; thanh trên cùng hiện V hoặc E và menu có dòng "Tiếng Việt" có ✔ hoặc ✖ như các tuỳ chọn khác để bấm. Cửa
+  sổ cài đặt cho đổi sang Shift+Alt hoặc tắt phím này; Super+Space vẫn đổi nguồn nhập như cũ. Ô mật khẩu luôn gõ
+  tiếng Anh (#50, #61).
 - Chọn "Phím khác…" trong cửa sổ cài đặt để tự bấm tổ hợp phím chuyển Anh/Việt; phím tắt GNOME đã dùng, phím
   đơn và Shift kèm một phím bị từ chối (#51).
 - Sao lưu và khôi phục cài đặt, gõ tắt, bảng phím, từ điển và trạng thái Anh/Việt từ menu của cửa sổ cài đặt, cùng

@@ -17,7 +17,7 @@ namespace ngosen {
 
     constexpr const char* SettingsWindowItem = "Settings";
     constexpr const char* SaveTypingLogItem  = "SaveTypingLog";
-    // GNOME Shell shows the symbol of the item with this key in the top bar.
+    // GNOME Shell shows the symbol of the item with this key in the top bar, whatever its type.
     constexpr const char* InputModeItem = "InputMode";
 
     // The ngosen.conf change a click on an item asks for; an on/off item flips its value in
