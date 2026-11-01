@@ -18,60 +18,54 @@ mode hay chèn emoji, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.co
 
 ## Cài
 
-```
-curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --ibus
-```
+Tải package đúng distro và kiến trúc từ [release mới nhất](https://github.com/ngosen/ibus-ngosen/releases/latest),
+rồi cài bằng trình quản lý gói, trong thư mục vừa tải về:
 
-Lệnh tải package `ibus-ngosen` đúng distro từ [release mới nhất](https://github.com/ngosen/ibus-ngosen/releases/latest),
-so hash SHA-256 và hỏi lại trước khi cài.
+```
+sudo apt install ./ibus-ngosen_*.deb         # Debian, Kali, Ubuntu, Linux Mint
+sudo dnf install ./ibus-ngosen-*.rpm         # Fedora
+sudo pacman -U ./ibus-ngosen-*.pkg.tar.zst   # Arch, CachyOS
+sudo zypper install ./ibus-ngosen-*.rpm      # openSUSE Tumbleweed
+```
 
 Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch, CachyOS và openSUSE Tumbleweed. Linux
 Mint 22 dùng package của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch và openSUSE chỉ có
 x86_64. Không có package cho Debian 12 và Ubuntu 22.04.
 
-Trên GNOME, lệnh thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập, đặt app dùng IBus rồi khởi động lại IBus. Nếu tài
-khoản đang dùng fcitx5, lệnh hỏi có bỏ fcitx5 để chuyển sang bản cho GNOME không. Hai bản không chạy cùng lúc trong
-một tài khoản; mỗi tài khoản chọn một.
+Hai bản không chạy cùng lúc trong một tài khoản; nếu đang dùng [bản fcitx5](https://github.com/ngosen/ngosen), gỡ
+bản đó trước.
 
-Trên Xfce, Cinnamon, MATE (X11, Debian, Ubuntu, Linux Mint), lệnh dùng `im-config` đặt IBus làm bộ gõ và thêm
-Ngó Sen; đăng xuất rồi đăng nhập lại, bấm Ctrl+Space để chuyển qua lại Ngó Sen và bàn phím thường. Desktop khác
-không có `im-config` thì lệnh chỉ cài package rồi in các bước tự làm: mở IBus Preferences bằng `ibus-setup`, thêm
-"Tiếng Việt (Ngó Sen)", rồi đăng xuất và đăng nhập lại.
+Cài xong, trên GNOME:
 
-Muốn quay lại bản fcitx5 thì chạy lệnh cài [bản fcitx5](https://github.com/ngosen/ngosen); lệnh hỏi lại rồi gỡ
-bản cho GNOME.
+1. Chạy `ibus restart`.
+2. Mở Settings → Keyboard → Input Sources, thêm "Tiếng Việt (Ngó Sen)".
 
-Trên Fedora, có thể cài từ kho COPR, để `dnf upgrade` tự lên version mới. Sau đó thiết lập IBus và thêm nguồn nhập
-như trên:
+Trên desktop khác GNOME như Cinnamon, Xfce:
+
+1. Chạy `im-config -n ibus` nếu máy có `im-config`.
+2. Mở IBus Preferences bằng `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)". Cinnamon giữ phím Super cho menu nên Super+Space
+   không tới được IBus; đặt phím chuyển khác như Ctrl+Space ở tab General.
+3. Đăng xuất rồi đăng nhập lại.
+
+Trên Fedora, có thể cài từ kho COPR, để `dnf upgrade` tự lên version mới. Sau đó thêm nguồn nhập như trên:
 
 ```
 sudo dnf copr enable nguyenphi/ngosen
 sudo dnf install ibus-ngosen
 ```
 
-openSUSE Tumbleweed có repo zypper chung với bản fcitx5. zypper hỏi một lần có tin cậy key không; đối chiếu
-fingerprint rồi chọn tin cậy:
-
-```
-sudo zypper addrepo https://ngosen.github.io/ngosen/opensuse/ngosen.repo
-sudo zypper refresh
-sudo zypper install ibus-ngosen
-```
-
-Muốn cài bằng tay, tải package đúng distro và kiến trúc từ trang
-[Releases](https://github.com/ngosen/ibus-ngosen/releases), rồi cài bằng trình quản lý gói. Sau đó thiết lập IBus và
-thêm nguồn nhập như trên.
-
 ## Gỡ
 
+Bỏ "Tiếng Việt (Ngó Sen)" khỏi nguồn nhập hoặc khỏi IBus Preferences, rồi gỡ bằng trình quản lý gói:
+
 ```
-curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --uninstall
+sudo apt remove ibus-ngosen      # Debian, Kali, Ubuntu, Linux Mint
+sudo dnf remove ibus-ngosen      # Fedora
+sudo pacman -R ibus-ngosen       # Arch, CachyOS
+sudo zypper remove ibus-ngosen   # openSUSE Tumbleweed
 ```
 
-Lệnh tự nhận bản đang cài. Nếu có cả hai bản, lệnh hỏi gỡ bản nào; thêm `--ibus` để chọn bản cho GNOME.
-
-Trên GNOME, lệnh trả lại nguồn nhập và thiết lập IBus mà lệnh cài đã đổi. Gỡ xong, đăng xuất rồi đăng nhập lại. Cài
-đặt trong `~/.config/ngosen/` được giữ lại.
+Gỡ xong, đăng xuất rồi đăng nhập lại. Cài đặt trong `~/.config/ngosen/` được giữ lại.
 
 ## Dựng từ mã nguồn
 

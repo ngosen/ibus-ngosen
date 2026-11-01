@@ -8,6 +8,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Tài liệu
+
+- Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`, và kho APT, pacman, zypper của Ngó Sen không còn phát gói này.
+
 ## [1.1.3-1] — 01/11/2026
 
 Gõ Sen chạy bằng lõi Ngó Sen và gõ thẳng cả ở app X11, kitty trên X11 gõ được tiếng Việt, menu nguồn nhập đóng
