@@ -26,6 +26,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   đầu và ra "ngời"; Ngó Sen chờ app hiện xong lần sửa trước, tối đa 20 ms (#56).
 - Gõ Sen trên GNOME: chữ đầu tiên trong ô còn trống của app GTK, Firefox và LibreOffice không còn bị gạch chân
   mà gõ thẳng vào ô như các chữ sau (#56).
+- Menu nguồn nhập trên GNOME: các tuỳ chọn bật/tắt là dòng có ✔ hoặc ✖ như menu khay của bản fcitx5, bấm vào là
+  đổi và menu đóng lại lần nào cũng như nhau, thay vì công tắc lúc giữ menu lúc đóng (#57).
 
 ## [1.1.2-1] — 30/10/2026
 
