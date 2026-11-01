@@ -40,8 +40,12 @@ namespace ngosen {
             return ibus_property_new(key.c_str(), type, ibus_text_new_from_string(label), nullptr, nullptr, TRUE, TRUE, checked ? PROP_STATE_CHECKED : PROP_STATE_UNCHECKED, items);
         }
 
+        // A plain item marked like the fcitx5 tray menu: GNOME Shell closes its menu on some switch
+        // clicks and not others, but always on a plain item.
         IBusProperty* newToggle(const Toggle& toggle, const IBusSettings& settings) {
-            return newItem(toggle.key, PROP_TYPE_TOGGLE, _(toggle.label), toggle.isOn(settings));
+            const bool        on    = toggle.isOn(settings);
+            const std::string label = std::string(on ? "✔ " : "✖ ") + _(toggle.label);
+            return newItem(toggle.key, PROP_TYPE_NORMAL, label.c_str(), on);
         }
 
         IBusProperty* newChoice(const std::string& key, const char* label, const std::vector<std::string>& names, const std::string& current) {
@@ -79,7 +83,7 @@ namespace ngosen {
         return menu;
     }
 
-    bool settingForClick(const std::string& name, bool checked, std::string& key, std::string& value) {
+    bool settingForClick(const std::string& name, bool checked, const IBusSettings& settings, std::string& key, std::string& value) {
         if (const auto slash = name.find('/'); slash != std::string::npos) {
             key   = name.substr(0, slash);
             value = name.substr(slash + 1);
@@ -90,8 +94,9 @@ namespace ngosen {
         const auto toggle = std::find_if(std::begin(Toggles), std::end(Toggles), [&name](const Toggle* t) { return name == t->key; });
         if (toggle == std::end(Toggles))
             return false;
+        // The panel sends the state it last showed for a plain item, which may be stale.
         key   = name;
-        value = checked ? "True" : "False";
+        value = (*toggle)->isOn(settings) ? "False" : "True";
         return true;
     }
 

@@ -21,8 +21,9 @@ namespace ngosen {
     std::atomic<bool> clicksWatched{false};
 
     namespace {
-        // IBus keycodes are evdev codes: KEY_BACKSPACE, KEY_RIGHT, KEY_LEFTSHIFT, KEY_ENTER.
+        // IBus keycodes are evdev codes: KEY_BACKSPACE, KEY_TAB, KEY_RIGHT, KEY_LEFTSHIFT, KEY_ENTER.
         constexpr guint BackSpaceKeycode = 14;
+        constexpr guint TabKeycode       = 15;
         constexpr guint RightKeycode     = 106;
         constexpr guint ShiftKeycode     = 42;
         constexpr guint ReturnKeycode    = 28;
@@ -89,6 +90,9 @@ namespace ngosen {
             case EditKey::Right: ibus_engine_forward_key_event(engine_, IBUS_KEY_Right, RightKeycode, state); break;
             case EditKey::Shift: ibus_engine_forward_key_event(engine_, IBUS_KEY_Shift_L, ShiftKeycode, state); break;
             case EditKey::Return: ibus_engine_forward_key_event(engine_, IBUS_KEY_Return, ReturnKeycode, state); break;
+            case EditKey::ShiftReturn: ibus_engine_forward_key_event(engine_, IBUS_KEY_Return, ReturnKeycode, state | IBUS_SHIFT_MASK); break;
+            case EditKey::Tab: ibus_engine_forward_key_event(engine_, IBUS_KEY_Tab, TabKeycode, state); break;
+            case EditKey::ShiftTab: ibus_engine_forward_key_event(engine_, IBUS_KEY_ISO_Left_Tab, TabKeycode, state | IBUS_SHIFT_MASK); break;
         }
     }
 

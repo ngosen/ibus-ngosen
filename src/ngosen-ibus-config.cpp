@@ -394,7 +394,7 @@ namespace ngosen {
         if (on) {
             const int fd = g_mkdir_with_parents(paths.stateDir.c_str(), 0700) == 0 ? ::open(paths.englishMark().c_str(), O_WRONLY | O_CREAT | O_CLOEXEC, 0600) : -1;
             if (fd == -1) {
-                NGOSEN_WARN("Cannot write " << paths.englishMark() << ": " << std::strerror(errno));
+                NGOSEN_WARN("Cannot write " + paths.englishMark() + ": " + std::strerror(errno));
                 return false;
             }
             ::close(fd);
@@ -403,7 +403,7 @@ namespace ngosen {
         std::error_code error;
         std::filesystem::remove(paths.englishMark(), error);
         if (error)
-            NGOSEN_WARN("Cannot remove " << paths.englishMark() << ": " << error.message());
+            NGOSEN_WARN("Cannot remove " + paths.englishMark() + ": " + error.message());
         return !error;
     }
 
@@ -424,7 +424,7 @@ namespace ngosen {
         std::string temp = path + ".XXXXXX";
         const int   fd   = ::mkostemp(temp.data(), O_CLOEXEC);
         if (fd == -1) {
-            NGOSEN_WARN("Cannot write " << path << ": " << std::strerror(errno));
+            NGOSEN_WARN("Cannot write " + path + ": " + std::strerror(errno));
             return false;
         }
         size_t written = 0;
@@ -438,7 +438,7 @@ namespace ngosen {
         const bool ok = written == content.size() && ::fsync(fd) == 0;
         ::close(fd);
         if (!ok || ::rename(temp.c_str(), path.c_str()) != 0) {
-            NGOSEN_WARN("Cannot write " << path << ": " << std::strerror(errno));
+            NGOSEN_WARN("Cannot write " + path + ": " + std::strerror(errno));
             ::unlink(temp.c_str());
             return false;
         }

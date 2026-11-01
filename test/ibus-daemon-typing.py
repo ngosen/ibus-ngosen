@@ -6,13 +6,32 @@ import glob
 import os
 import sys
 import time
+import warnings
 
 import gi
 
 gi.require_version("IBus", "1.0")
-from gi.repository import GLib, IBus  # noqa: E402
+from gi.repository import GLib, GObject, IBus  # noqa: E402
 
 failures = 0
+
+# PyGObject reports GLib criticals as Python warnings. One here means the test touched a freed
+# object, which only sometimes crashes, so it fails every time instead.
+glib_warnings = []
+warnings.showwarning = lambda message, *_args, **_kwargs: glib_warnings.append(str(message))
+
+# IBus checks the text or property it passed to a signal once the handlers return, and frees it if
+# it is still floating. PyGObject takes that floating reference and drops it with the Python
+# object, so the check would read freed memory unless the test keeps the object.
+kept = []
+
+
+def listen(ic, signal, handler):
+    def keep(*args):
+        kept.extend(arg for arg in args if isinstance(arg, GObject.Object) and arg is not ic)
+        return handler(*args)
+
+    ic.connect(signal, keep)
 
 
 def pump(ms):
@@ -98,16 +117,16 @@ class App:
         if surrounding:
             caps |= IBus.Capabilite.SURROUNDING_TEXT
         self.ic.set_capabilities(caps)
-        self.ic.connect("commit-text", self.on_commit)
-        self.ic.connect("delete-surrounding-text", self.on_delete)
-        self.ic.connect("require-surrounding-text", self.on_require)
-        self.ic.connect("forward-key-event", self.on_forward)
+        listen(self.ic, "commit-text", self.on_commit)
+        listen(self.ic, "delete-surrounding-text", self.on_delete)
+        listen(self.ic, "require-surrounding-text", self.on_require)
+        listen(self.ic, "forward-key-event", self.on_forward)
         if app_commits:
             self.ic.set_client_commit_preedit(True)
-            self.ic.connect("update-preedit-text-with-mode", self.on_preedit_with_mode)
+            listen(self.ic, "update-preedit-text-with-mode", self.on_preedit_with_mode)
         else:
-            self.ic.connect("update-preedit-text", self.on_preedit)
-        self.ic.connect("hide-preedit-text", self.on_hide_preedit)
+            listen(self.ic, "update-preedit-text", self.on_preedit)
+        listen(self.ic, "hide-preedit-text", self.on_hide_preedit)
         self.ic.set_content_type(purpose, hints)
         self.ic.focus_in()
         # An input context of a plain client cannot pick its own engine.
@@ -263,6 +282,15 @@ def check(ok, what, got):
         print(f"FAIL {what}: {got!r}")
 
 
+def finish():
+    check(
+        glib_warnings == [], "GLib warnings", glib_warnings[:3] + [f"{len(glib_warnings)} in all"]
+    )
+    if failures == 0:
+        print("all IBus daemon checks passed")
+    sys.exit(1 if failures else 0)
+
+
 app = App("space")
 app.type("vieetj ")
 check(app.commits == ["việt "], "space: commits", app.commits)
@@ -414,7 +442,7 @@ if no_x:
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
     check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
-    sys.exit(1 if failures else 0)
+    finish()
 
 open(log_path, "w").close()
 write_file(os.path.join(config_dir, "notes.txt"), "not a setting\n")
@@ -616,9 +644,10 @@ check(
     app.requests,
 )
 app.type("vieetj nam ")
+# The empty report the field sends after focus is enough for its first word.
 check(
-    app.text == "việt nam " and "việt" in app.preedits,
-    "direct, next field on the same engine: its first word underlined",
+    app.text == "việt nam " and app.preedits == [],
+    "direct, next field on the same engine: its first word typed in the field",
     (app.text, app.preedits),
 )
 app.close()
@@ -834,14 +863,17 @@ def prop_states(props):
 class GnomeMenu:
     def __init__(self):
         self.states = None
+        self.labels = {}
 
     def register(self, props):
         if self.states is None and props.get(0) is not None:
             self.states = prop_states(props)
+            self.labels = labels(props)
 
     def update(self, prop):
         if self.states is not None and prop.get_key() in self.states:
             self.states[prop.get_key()] = prop.get_state()
+            self.labels[prop.get_key()] = prop.get_label().get_text()
 
     def checked(self):
         return {
@@ -1034,7 +1066,8 @@ def menu_app(name):
     )
     app.menu = None
     # IBus frees the table after the signal, so keep its labels rather than the table.
-    app.ic.connect(
+    listen(
+        app.ic,
         "update-lookup-table",
         lambda _ic, table, visible: setattr(
             app,
@@ -1133,7 +1166,8 @@ app.ic.set_capabilities(
     IBus.Capabilite.FOCUS | IBus.Capabilite.PREEDIT_TEXT | IBus.Capabilite.AUXILIARY_TEXT
 )
 note = []
-app.ic.connect(
+listen(
+    app.ic,
     "update-auxiliary-text",
     lambda _ic, text, visible: note.append(text.get_text() if visible else ""),
 )
@@ -1200,12 +1234,13 @@ app.ic.set_capabilities(
     | IBus.Capabilite.SURROUNDING_TEXT
     | IBus.Capabilite.PROPERTY
 )
-app.ic.connect("register-properties", lambda _ic, props: menus.append(checked_items(props)))
-app.ic.connect("register-properties", lambda _ic, props: menu_labels.update(labels(props)))
-app.ic.connect("register-properties", lambda _ic, props: gnome.register(props))
-app.ic.connect("update-property", lambda _ic, prop: gnome.update(prop))
+listen(app.ic, "register-properties", lambda _ic, props: menus.append(checked_items(props)))
+listen(app.ic, "register-properties", lambda _ic, props: menu_labels.update(labels(props)))
+listen(app.ic, "register-properties", lambda _ic, props: gnome.register(props))
+listen(app.ic, "update-property", lambda _ic, prop: gnome.update(prop))
 symbols = []
-app.ic.connect(
+listen(
+    app.ic,
     "update-property",
     lambda _ic, prop: (
         symbols.append(prop.get_symbol().get_text()) if prop.get_key() == "InputMode" else None
@@ -1217,7 +1252,7 @@ pump(300)
 check(gnome.states is not None, "menu: GNOME gets the menu", gnome.states)
 # GNOME Shell rebuilds its menu on each item update, which stalls it when every focus change sends them.
 updates = []
-app.ic.connect("update-property", lambda _ic, prop: updates.append(prop.get_key()))
+listen(app.ic, "update-property", lambda _ic, prop: updates.append(prop.get_key()))
 for _ in range(3):
     app.ic.focus_out()
     app.ic.focus_in()
@@ -1229,7 +1264,7 @@ with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
 check(
-    menu_labels.get("SpellCheck") == "Kiểm tra chính tả",
+    menu_labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
     "menu: in Vietnamese whatever the desktop language",
     menu_labels.get("SpellCheck"),
 )
@@ -1245,10 +1280,35 @@ check(
 )
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
-app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+# GNOME Shell sends the state a plain item shows, so a click on "✔ ..." comes as checked.
+app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
-    check("SpellCheck=False" in f.read(), "menu: a toggle is saved", settings_path)
+    check("SpellCheck=False" in f.read(), "menu: a click turns an on item off", settings_path)
+check(
+    gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả",
+    "menu: GNOME shows the new setting",
+    gnome.labels.get("SpellCheck"),
+)
+# The engine reloads settings only between words, while clicks and the menu go by the file.
+app.type("vie")
+check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
+app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+pump(1000)
+check(
+    gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    "menu: a click while a word is underlined shows the new setting",
+    gnome.labels.get("SpellCheck"),
+)
+app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
+pump(1000)
+with open(settings_path) as f:
+    check(
+        "SpellCheck=False" in f.read(),
+        "menu: two clicks while a word is underlined put the setting back",
+        settings_path,
+    )
+app.type(" ")
 # As when the settings window changes it while the field keeps focus and no key is typed.
 set_setting("EnableMacro", "False")
 pump(1000)
@@ -1301,7 +1361,4 @@ if saved_logs:
     modes = (os.stat(state_dir).st_mode & 0o777, os.stat(saved_logs[0]).st_mode & 0o777)
     check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
 app.close()
-
-if failures == 0:
-    print("all IBus daemon checks passed")
-sys.exit(1 if failures else 0)
+finish()

@@ -164,7 +164,7 @@ namespace {
         closeModeMenu(engine, session);
         session.setLanguage(!englishOn);
         ngosen::saveEnglishOn(resources().paths(), englishOn);
-        NGOSEN_INFO("Toggle key: " << (englishOn ? "English" : "Vietnamese"));
+        NGOSEN_INFO(std::string("Toggle key: ") + (englishOn ? "English" : "Vietnamese"));
         showLanguageItem(engine);
         showLanguage(engine);
         session.showsNotice = true;
@@ -248,7 +248,7 @@ namespace {
         // Applied at once, since the next key may come before the file monitor reports the write.
         if (!english && resources().settings().directTyping != direct && resources().saveSetting("DirectTyping", direct ? "True" : "False", saved))
             resources().noticeChange();
-        NGOSEN_INFO("Mode menu: " << item.label);
+        NGOSEN_INFO("Mode menu: " + item.label);
         ibus_engine_update_auxiliary_text(engine, ibus_text_new_from_string(item.label.c_str()), TRUE);
         session.showsNotice = true;
     }
@@ -409,7 +409,9 @@ namespace {
             return;
         if (Session* session = sessionOf(focusedEngine))
             session->applyNewSettings();
-        showMenu(focusedEngine, resources().settings());
+        // The file, not settings(): with a word underlined the reload waits, and the menu would
+        // take back a click.
+        showMenu(focusedEngine, resources().savedSettings());
     }
 
     void focusIn(IBusEngine* engine) {
@@ -436,7 +438,7 @@ namespace {
             gchar*  argv[] = {const_cast<gchar*>(NGOSEN_SETUP_EXEC), nullptr}; //NOLINT
             GError* error  = nullptr;
             if (!g_spawn_async(nullptr, argv, nullptr, G_SPAWN_DEFAULT, nullptr, nullptr, nullptr, &error)) {
-                NGOSEN_WARN("Cannot open the settings window: " << error->message);
+                NGOSEN_WARN(std::string("Cannot open the settings window: ") + error->message);
                 g_error_free(error);
             }
             return;
@@ -453,11 +455,11 @@ namespace {
         }
         std::string key;
         std::string value;
-        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, key, value))
+        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, resources().savedSettings(), key, value))
             return;
         ngosen::IBusSettings saved;
         // A failed write shows the old state again, so the menu never claims a setting that is not saved.
-        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().settings(), true);
+        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().savedSettings(), true);
     }
 
     void focusOut(IBusEngine* engine) {
@@ -476,7 +478,7 @@ namespace {
     void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
         if (Session* session = sessionOf(engine))
             session->host->setClient(client != nullptr ? client : "");
-        NGOSEN_INFO("Focus in: " << (client != nullptr ? client : ""));
+        NGOSEN_INFO(std::string("Focus in: ") + (client != nullptr ? client : ""));
         focusIn(engine);
     }
 
@@ -513,7 +515,7 @@ namespace {
 
     void setContentType(IBusEngine* engine, guint purpose, guint hints) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_content_type(engine, purpose, hints);
-        NGOSEN_DEBUG("Content type: purpose " << purpose << ", hints " << hints);
+        NGOSEN_DEBUG("Content type: purpose " + std::to_string(purpose) + ", hints " + std::to_string(hints));
         if (Session* session = sessionOf(engine))
             session->host->setContentType(purpose, hints);
     }

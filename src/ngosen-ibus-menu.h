@@ -20,8 +20,9 @@ namespace ngosen {
     // GNOME Shell shows the symbol of the item with this key in the top bar.
     constexpr const char* InputModeItem = "InputMode";
 
-    // The ngosen.conf change a click on an item asks for. False when it changes nothing: a radio
-    // item being unchecked, or a name the menu does not have.
-    bool settingForClick(const std::string& name, bool checked, std::string& key, std::string& value);
+    // The ngosen.conf change a click on an item asks for; an on/off item flips its value in
+    // settings. False when it changes nothing: a radio item being unchecked, or a name the menu
+    // does not have.
+    bool settingForClick(const std::string& name, bool checked, const IBusSettings& settings, std::string& key, std::string& value);
 
 } // namespace ngosen
