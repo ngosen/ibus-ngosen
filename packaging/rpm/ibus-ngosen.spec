@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.1.2
+Version:        1.1.3
 Release:        1%{?dist}
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later AND OFL-1.1
@@ -55,6 +55,10 @@ with. The word being typed is underlined until it is done.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Sun Nov 01 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.3-1
+- Typing with Sen runs on the core and types into X11 apps, tone keys typed together kept on GNOME,
+  kitty on X11, marked on/off items in the menu, core ngosen-1.7.5-1.
+
 * Fri Oct 30 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.2-1
 - Stop resending unchanged menu items on focus changes, which stalled GNOME Shell on X11.
 

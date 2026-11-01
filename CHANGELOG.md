@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.1.3-1] — 01/11/2026
+
+Gõ Sen chạy bằng lõi Ngó Sen và gõ thẳng cả ở app X11, kitty trên X11 gõ được tiếng Việt, menu nguồn nhập đóng
+đều đặn sau mỗi lần bấm. Dùng lõi Ngó Sen `ngosen-1.7.5-1`. Tải gói ở
+[release ibus-ngosen-1.1.3-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.3-1).
+
 ### Thay đổi
 
 - "Gõ Sen ở app cho phép" giờ chạy bằng lõi Ngó Sen như bản fcitx5: mỗi chữ tự chọn gõ thẳng hay gạch chân,
