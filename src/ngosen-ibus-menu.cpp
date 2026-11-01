@@ -62,8 +62,11 @@ namespace ngosen {
     } // namespace
 
     IBusPropList* newSettingsMenu(const IBusSettings& settings, bool english) {
-        IBusPropList* menu      = ibus_prop_list_new();
-        IBusProperty* inputMode = newItem(InputModeItem, PROP_TYPE_TOGGLE, _("Vietnamese"), !english);
+        IBusPropList* menu = ibus_prop_list_new();
+        // Marked like the on/off settings, for the same reason. GNOME Shell reads the symbol of the
+        // "InputMode" item for the top bar whatever its type.
+        const std::string label     = std::string(english ? "✖ " : "✔ ") + _("Vietnamese");
+        IBusProperty*     inputMode = newItem(InputModeItem, PROP_TYPE_NORMAL, label.c_str(), !english);
         ibus_property_set_symbol(inputMode, ibus_text_new_from_static_string(english ? "E" : "V"));
         ibus_prop_list_append(menu, inputMode);
         ibus_prop_list_append(menu, newChoice("InputMethod", _("Input Method"), MenuInputMethods, settings.options.inputMethod));

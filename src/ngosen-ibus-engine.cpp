@@ -448,8 +448,9 @@ namespace {
             return;
         }
         if (g_strcmp0(name, ngosen::InputModeItem) == 0) {
-            // Checked means Vietnamese; a click that asks for the language in use changes nothing.
-            if (Session* session = sessionOf(engine); session != nullptr && (state == PROP_STATE_CHECKED) == englishOn)
+            // GNOME Shell sends the state the item showed, so a click flips the language as the
+            // toggle key does, whatever state it carries.
+            if (Session* session = sessionOf(engine))
                 toggleLanguage(engine, *session);
             return;
         }
