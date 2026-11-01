@@ -31,6 +31,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   nào để bỏ dấu thì phím đó vẫn bỏ dấu. Cửa sổ cài đặt cho đổi phím mở menu sang Shift+~ như ibus-unikey hoặc
   tắt, và đổi phím của từng chế độ (#55).
 
+### Sửa
+
+- Mục "Tiếng Việt" trong menu nguồn nhập trên GNOME là dòng có ✔ hoặc ✖ như các tuỳ chọn khác: bấm vào là đổi Anh/Việt
+  và menu đóng lại lần nào cũng như nhau, thay vì công tắc lúc giữ menu lúc đóng; thanh trên cùng vẫn hiện V hoặc E (#61).
+
 ## [1.1.3-1] — 01/11/2026
 
 Gõ Sen chạy bằng lõi Ngó Sen và gõ thẳng cả ở app X11, kitty trên X11 gõ được tiếng Việt, menu nguồn nhập đóng
