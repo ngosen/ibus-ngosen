@@ -146,7 +146,9 @@ namespace {
             return;
         if (Session* session = sessionOf(focusedEngine))
             session->applyNewSettings();
-        showMenu(focusedEngine, resources().settings());
+        // The file, not settings(): with a word underlined the reload waits, and the menu would
+        // take back a click.
+        showMenu(focusedEngine, resources().savedSettings());
     }
 
     void focusIn(IBusEngine* engine) {
@@ -182,11 +184,11 @@ namespace {
         }
         std::string key;
         std::string value;
-        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, key, value))
+        if (name == nullptr || !ngosen::settingForClick(name, state == PROP_STATE_CHECKED, resources().savedSettings(), key, value))
             return;
         ngosen::IBusSettings saved;
         // A failed write shows the old state again, so the menu never claims a setting that is not saved.
-        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().settings(), true);
+        showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().savedSettings(), true);
     }
 
     void focusOut(IBusEngine* engine) {

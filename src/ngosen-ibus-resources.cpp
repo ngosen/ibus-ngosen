@@ -110,6 +110,11 @@ namespace ngosen {
         return true;
     }
 
+    IBusSettings IBusResources::savedSettings() const {
+        std::string text;
+        return readFile(paths_.settingsFile(), text) ? readSettings(parseIni(text)) : settings_;
+    }
+
     void IBusResources::load() {
         std::string text;
         settings_ = readFile(paths_.settingsFile(), text) ? readSettings(parseIni(text)) : defaultSettings();
