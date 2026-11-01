@@ -264,6 +264,7 @@ class FakeShell:
         self.version = None
         self.state = None
         self.enable_calls = 0
+        self.info_fails = False
         self.owner = 0
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         # Its replacement needs a newer GLib than the oldest system supported.
@@ -281,7 +282,9 @@ class FakeShell:
         return {} if self.state is None else {"state": GLib.Variant("d", self.state)}
 
     def on_method(self, _bus, _sender, _path, _interface, method, _args, invocation):
-        if method == "GetExtensionInfo":
+        if method == "GetExtensionInfo" and self.info_fails:
+            invocation.return_dbus_error("org.freedesktop.DBus.Error.Failed", "busy")
+        elif method == "GetExtensionInfo":
             invocation.return_value(GLib.Variant("(a{sv})", (self.info(),)))
         else:
             self.enable_calls += 1
@@ -607,8 +610,14 @@ for version in ("50.0", "50.3"):
 shell.start("51.0", EXTENSION_INACTIVE)
 check(shell.enable_calls == 0, "GNOME 51: the extension is left alone", shell.enable_calls)
 
+set_setting("DirectTyping", "False")
+App("gnome-shell").close()
 shell.start("50.1", EXTENSION_INACTIVE)
-check(shell.enable_calls == 1, "GNOME 50.1: the extension is enabled", shell.enable_calls)
+check(shell.enable_calls == 0, "Gõ Sen off: the extension is left alone", shell.enable_calls)
+set_setting("DirectTyping", "True")
+App("gnome-shell").close()
+pump(300)
+check(shell.enable_calls == 1, "Gõ Sen on again: the extension is enabled", shell.enable_calls)
 deletes_with_keys("GNOME 50.1 with the extension")
 
 for version in ("46.2", "50.4", "51.0"):
@@ -829,6 +838,11 @@ types_underlined("extension turned off")
 check(shell.enable_calls == 1, "extension turned off: not enabled again", shell.enable_calls)
 shell.set_extension(EXTENSION_ACTIVE)
 deletes_with_keys("extension turned back on")
+shell.info_fails = True
+shell.set_extension(EXTENSION_INACTIVE)
+types_underlined("extension state unreadable")
+shell.info_fails = False
+shell.set_extension(EXTENSION_ACTIVE)
 shell.stop()
 types_underlined("GNOME Shell gone")
 set_setting("DirectTyping", "False")

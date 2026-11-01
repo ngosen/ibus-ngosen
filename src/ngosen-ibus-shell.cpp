@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-shell.h"
 
+#include "ngosen-globals.h"
 #include "ngosen-ibus-config.h"
 #include "ngosen-log.h"
 
@@ -69,7 +70,7 @@ namespace ngosen {
 
         void enableExtensionOnce() {
             ShellState& s = shell();
-            if (s.bus == nullptr || s.enabling || !s.extensionRead || !dropsForwardedKeys(s.version))
+            if (realMode != Mode::Sen || s.bus == nullptr || s.enabling || !s.extensionRead || !dropsForwardedKeys(s.version))
                 return;
             if (s.extensionActive) {
                 markEnabled();
@@ -95,19 +96,21 @@ namespace ngosen {
         }
 
         // A cancelled reply belongs to an older state of the Shell and changes nothing.
-        GVariant* finishCall(GObject* source, GAsyncResult* result) {
+        GVariant* finishCall(GObject* source, GAsyncResult* result, bool& cancelled) {
             GError*   error = nullptr;
             GVariant* reply = g_dbus_connection_call_finish(G_DBUS_CONNECTION(source), result, &error);
             if (reply != nullptr)
                 return reply;
-            if (!g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED))
+            cancelled = g_error_matches(error, G_IO_ERROR, G_IO_ERROR_CANCELLED);
+            if (!cancelled)
                 NGOSEN_WARN(std::string("GNOME Shell did not answer: ") + error->message);
             g_error_free(error);
             return nullptr;
         }
 
         void onVersion(GObject* source, GAsyncResult* result, gpointer /*data*/) {
-            GVariant* reply = finishCall(source, result);
+            bool      cancelled = false;
+            GVariant* reply     = finishCall(source, result, cancelled);
             if (reply == nullptr)
                 return;
             GVariant* value = nullptr;
@@ -120,12 +123,19 @@ namespace ngosen {
         }
 
         void onExtension(GObject* source, GAsyncResult* result, gpointer /*data*/) {
-            GVariant* reply = finishCall(source, result);
-            if (reply == nullptr)
+            bool        cancelled = false;
+            GVariant*   reply     = finishCall(source, result, cancelled);
+            ShellState& s         = shell();
+            if (reply == nullptr) {
+                // An extension whose state cannot be read may have stopped, and keys would be lost.
+                if (!cancelled) {
+                    s.extensionRead = s.extensionKnown = s.extensionActive = false;
+                    update();
+                }
                 return;
-            GVariant*   info  = g_variant_get_child_value(reply, 0);
-            gdouble     state = 0;
-            ShellState& s     = shell();
+            }
+            GVariant* info    = g_variant_get_child_value(reply, 0);
+            gdouble   state   = 0;
             s.extensionRead   = true;
             s.extensionKnown  = g_variant_lookup(info, "state", "d", &state);
             s.extensionActive = s.extensionKnown && state == ExtensionActive;
@@ -183,8 +193,11 @@ namespace ngosen {
 
     void watchShell(const std::string& enabledMark) {
         ShellState& s = shell();
-        if (!s.enabledMark.empty())
+        // Gõ Sen may have just been turned on again, with the Shell's state already read.
+        if (!s.enabledMark.empty()) {
+            update();
             return;
+        }
         s.enabledMark = enabledMark;
         g_bus_watch_name(G_BUS_TYPE_SESSION, ShellService, G_BUS_NAME_WATCHER_FLAGS_NONE, onShellAppeared, onShellVanished, nullptr, nullptr);
     }

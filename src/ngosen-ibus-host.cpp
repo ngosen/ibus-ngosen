@@ -150,7 +150,7 @@ namespace ngosen {
         // no text and show the preedit well.
         if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
             f.surroundingText = false;
-        // Address bars and terminals delete only through text, whatever the Shell does with keys.
+        // Address bars keep the preedit and terminals erase with DEL, whatever the Shell does with keys.
         const bool shellKeys   = throughShell() && reportsText() && !f.url && !f.terminal;
         const bool preeditOnly = (throughShell() && !shellKeys) || (direct_ && !f.surroundingText);
         f.sendsNoKeys          = preeditOnly;
