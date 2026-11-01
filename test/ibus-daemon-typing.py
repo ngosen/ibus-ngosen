@@ -830,6 +830,25 @@ check(
     "menu: GNOME shows the new setting",
     gnome.labels.get("SpellCheck"),
 )
+# The engine reloads settings only between words, while clicks and the menu go by the file.
+app.type("vie")
+check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
+app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+pump(1000)
+check(
+    gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    "menu: a click while a word is underlined shows the new setting",
+    gnome.labels.get("SpellCheck"),
+)
+app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
+pump(1000)
+with open(settings_path) as f:
+    check(
+        "SpellCheck=False" in f.read(),
+        "menu: two clicks while a word is underlined put the setting back",
+        settings_path,
+    )
+app.type(" ")
 # As when the settings window changes it while the field keeps focus and no key is typed.
 set_setting("EnableMacro", "False")
 pump(1000)

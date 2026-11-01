@@ -161,7 +161,7 @@ namespace {
         check(settingForClick("OutputCharset/TCVN3 (ABC)", true, settings, key, value) && key == "OutputCharset" && value == "TCVN3 (ABC)", "choosing a charset");
         check(!settingForClick("OutputCharset/Nope", true, settings, key, value), "an unknown charset");
         // The state sent with a plain item is whatever the panel showed, so the saved setting decides.
-        check(settingForClick("SpellCheck", true, settings, key, value) && key == "SpellCheck" && value == "True", "turning spell check on");
+        check(settingForClick("SpellCheck", false, settings, key, value) && key == "SpellCheck" && value == "True", "turning spell check on");
         check(settingForClick("CapitalizeStartOfText", true, settings, key, value) && value == "False", "turning start-of-text capitals off");
         settings.enableDictionary = false;
         check(settingForClick("EnableDictionary", false, settings, key, value) && value == "True", "turning the dictionary on");

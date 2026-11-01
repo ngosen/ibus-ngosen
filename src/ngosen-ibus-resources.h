@@ -54,6 +54,8 @@ namespace ngosen {
         // Writes one setting and returns what the file now says. The file monitor reloads it
         // between words, as for a change the settings window makes.
         bool saveSetting(const std::string& key, const std::string& value, IBusSettings& saved) const;
+        // What the file says now, which settings() catches up with only between words.
+        IBusSettings savedSettings() const;
 
         // Counts reloads, so a field knows its engine was built from older settings.
         unsigned generation() const {
