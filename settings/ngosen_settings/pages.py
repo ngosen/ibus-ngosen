@@ -329,7 +329,7 @@ def about_page(version):
     page = Adw.PreferencesPage(title=_("About"), icon_name="help-about-symbolic")
     page.add(_about_header(version))
     links = preferences_group()
-    links.add(_link_row(_("Report Bug"), None, PROJECT_URL + "/issues/new"))
+    links.add(_link_row(_("Report Bug"), None, PROJECT_URL + "/issues/new/choose"))
     links.add(_link_row(_("Source code"), None, PROJECT_URL))
     page.add(links)
     page.add(_credit())

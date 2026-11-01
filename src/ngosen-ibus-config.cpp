@@ -315,7 +315,7 @@ namespace ngosen {
         std::string temp = path + ".XXXXXX";
         const int   fd   = ::mkostemp(temp.data(), O_CLOEXEC);
         if (fd == -1) {
-            NGOSEN_WARN("Cannot write " << path << ": " << std::strerror(errno));
+            NGOSEN_WARN("Cannot write " + path + ": " + std::strerror(errno));
             return false;
         }
         size_t written = 0;
@@ -329,7 +329,7 @@ namespace ngosen {
         const bool ok = written == content.size() && ::fsync(fd) == 0;
         ::close(fd);
         if (!ok || ::rename(temp.c_str(), path.c_str()) != 0) {
-            NGOSEN_WARN("Cannot write " << path << ": " << std::strerror(errno));
+            NGOSEN_WARN("Cannot write " + path + ": " + std::strerror(errno));
             ::unlink(temp.c_str());
             return false;
         }

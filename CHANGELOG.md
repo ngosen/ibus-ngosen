@@ -8,6 +8,33 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.1.3-1] — 01/11/2026
+
+Gõ Sen chạy bằng lõi Ngó Sen và gõ thẳng cả ở app X11, kitty trên X11 gõ được tiếng Việt, menu nguồn nhập đóng
+đều đặn sau mỗi lần bấm. Dùng lõi Ngó Sen `ngosen-1.7.5-1`. Tải gói ở
+[release ibus-ngosen-1.1.3-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.3-1).
+
+### Thay đổi
+
+- "Gõ Sen ở app cho phép" giờ chạy bằng lõi Ngó Sen như bản fcitx5: mỗi chữ tự chọn gõ thẳng hay gạch chân,
+  chữ đầu tiên trong ô còn trống của app chưa báo chữ trong ô vẫn gạch chân; lõi `ngosen-1.7.2-1` (#41).
+- "Gõ Sen ở app cho phép" giờ gõ thẳng cả ở app X11 (GTK, Qt, Firefox, LibreOffice, terminal của GNOME, KDE,
+  Xfce) và vẫn tự viết hoa đầu dòng ở đó, thay vì gạch chân mọi chữ; bấm chuột giữa chữ không xoá chữ khác.
+  Chrome, app Electron, xterm, Alacritty và kitty vẫn gạch chân. Bấm chuột trong Alacritty và app XIM không còn làm mất chữ đang gạch chân (#44).
+- Báo lỗi, báo lỗi cài đặt và đề xuất tính năng qua form có sẵn như kho fcitx5; nút "Báo lỗi" trong cửa sổ cài
+  đặt mở trang chọn form (#45).
+
+### Sửa
+
+- kitty trên X11 gõ được tiếng Việt, không còn ra chữ thô như `vieejt`: gói đặt `GLFW_IM_MODULE=ibus` cho phiên
+  đăng nhập (đã thử GNOME, Cinnamon và Xfce), có hiệu lực sau khi đăng nhập lại (#47).
+- Gõ Sen trên GNOME: gõ hai phím dấu sát nhau (như w và f trong "nguowfi") không còn làm mất lần thêm dấu
+  đầu và ra "ngời"; Ngó Sen chờ app hiện xong lần sửa trước, tối đa 20 ms (#56).
+- Gõ Sen trên GNOME: chữ đầu tiên trong ô còn trống của app GTK, Firefox và LibreOffice không còn bị gạch chân
+  mà gõ thẳng vào ô như các chữ sau (#56).
+- Menu nguồn nhập trên GNOME: các tuỳ chọn bật/tắt là dòng có ✔ hoặc ✖ như menu khay của bản fcitx5, bấm vào là
+  đổi và menu đóng lại lần nào cũng như nhau, thay vì công tắc lúc giữ menu lúc đóng (#57).
+
 ## [1.1.2-1] — 30/10/2026
 
 Sửa màn hình giật khi đổi cửa sổ hay bấm phím Windows trên GNOME X11. Dùng lõi Ngó Sen `ngosen-1.7.0-1`. Tải

@@ -7,7 +7,6 @@
 
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
-#include "ngosen-utf8.h"
 
 #include <libintl.h>
 
@@ -19,9 +18,12 @@ namespace ngosen {
     static_assert(key::Shift_L == IBUS_KEY_Shift_L);
     static_assert(modifier::Ctrl == IBUS_CONTROL_MASK);
 
+    std::atomic<bool> clicksWatched{false};
+
     namespace {
-        // IBus keycodes are evdev codes: KEY_BACKSPACE, KEY_RIGHT, KEY_LEFTSHIFT, KEY_ENTER.
+        // IBus keycodes are evdev codes: KEY_BACKSPACE, KEY_TAB, KEY_RIGHT, KEY_LEFTSHIFT, KEY_ENTER.
         constexpr guint BackSpaceKeycode = 14;
+        constexpr guint TabKeycode       = 15;
         constexpr guint RightKeycode     = 106;
         constexpr guint ShiftKeycode     = 42;
         constexpr guint ReturnKeycode    = 28;
@@ -71,67 +73,14 @@ namespace ngosen {
     } // namespace
 
     void IBusHost::commitText(const std::string& text) {
-        if (typed_.empty()) {
-            ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
-            return;
-        }
-        replaceTypedWord(text);
-        typed_.clear();
+        ibus_engine_commit_text(engine_, ibus_text_new_from_string(text.c_str()));
     }
 
-    // Only the end that changed, so most keys add a character and delete nothing.
-    void IBusHost::replaceTypedWord(const std::string& word) {
-        std::string gone;
-        std::string added;
-        utf8::compareAndSplitStrings(typed_, word, gone, added);
-        size_t same = typed_.size() - gone.size();
-        if (const glong extra = countToDelete(same); extra > 0)
-            ibus_engine_delete_surrounding_text(engine_, static_cast<gint>(-extra), static_cast<guint>(extra));
-        if (same < word.size())
-            ibus_engine_commit_text(engine_, ibus_text_new_from_string(word.c_str() + same));
-        typed_ = word;
-    }
-
-    // Kept apart from the copy IBus edits on each deletion, since GNOME Shell does not see those edits.
-    void IBusHost::setReportedText(const gchar* text, guint cursor) {
-        if (cursor > static_cast<guint>(g_utf8_strlen(text, -1))) {
-            reportedBeforeCursor_.clear();
-            backAfterTypedWord_ = false;
-            return;
-        }
-        reportedBeforeCursor_.assign(text, static_cast<size_t>(g_utf8_offset_to_pointer(text, cursor) - text));
-        backAfterTypedWord_ = !typed_.empty() && reportedBeforeCursor_ == wordEndBeforeCursor_;
-        if (!typed_.empty() && g_str_has_suffix(reportedBeforeCursor_.c_str(), typed_.c_str()))
-            wordEndBeforeCursor_ = reportedBeforeCursor_;
-    }
-
-    // GNOME Shell passes a deletion to Wayland apps in bytes, measured on the text the app last
-    // reported, and Qt does not report again after a deletion. So count over that text, and when
-    // no count there covers the bytes to delete, delete from an earlier character of the word.
-    glong IBusHost::countToDelete(size_t& from) const {
-        const glong chars = g_utf8_strlen(typed_.c_str() + from, -1);
-        if (chars == 0 || client_ != "gnome-shell")
-            return chars;
-        const char* reportedStart = reportedBeforeCursor_.c_str();
-        const char* reportedEnd   = reportedStart + reportedBeforeCursor_.size();
-        const char* reported      = reportedEnd;
-        const char* typedStart    = typed_.c_str();
-        const char* typedEnd      = typedStart + typed_.size();
-        const char* typed         = typedStart + from;
-        glong       count         = 0;
-        while (true) {
-            while (reportedEnd - reported < typedEnd - typed && reported > reportedStart) {
-                reported = g_utf8_prev_char(reported);
-                ++count;
-            }
-            if (reportedEnd - reported == typedEnd - typed) {
-                from = static_cast<size_t>(typed - typedStart);
-                return count;
-            }
-            if (typed == typedStart)
-                return chars;
-            typed = g_utf8_prev_char(typed);
-        }
+    // Kept apart from the copy IBus edits on each deletion: GNOME Shell turns a deletion into bytes on
+    // the text the app last reported, so that is the copy the core counts on.
+    void IBusHost::setReportedText(const gchar* text, guint cursor, guint anchor) {
+        const auto length = static_cast<guint>(g_utf8_strlen(text, -1));
+        reported_         = cursor <= length && anchor <= length ? Surrounding(text, cursor, anchor) : Surrounding();
     }
 
     void IBusHost::forwardKey(EditKey key, bool release, uint32_t /*time*/) {
@@ -141,6 +90,9 @@ namespace ngosen {
             case EditKey::Right: ibus_engine_forward_key_event(engine_, IBUS_KEY_Right, RightKeycode, state); break;
             case EditKey::Shift: ibus_engine_forward_key_event(engine_, IBUS_KEY_Shift_L, ShiftKeycode, state); break;
             case EditKey::Return: ibus_engine_forward_key_event(engine_, IBUS_KEY_Return, ReturnKeycode, state); break;
+            case EditKey::ShiftReturn: ibus_engine_forward_key_event(engine_, IBUS_KEY_Return, ReturnKeycode, state | IBUS_SHIFT_MASK); break;
+            case EditKey::Tab: ibus_engine_forward_key_event(engine_, IBUS_KEY_Tab, TabKeycode, state); break;
+            case EditKey::ShiftTab: ibus_engine_forward_key_event(engine_, IBUS_KEY_ISO_Left_Tab, TabKeycode, state | IBUS_SHIFT_MASK); break;
         }
     }
 
@@ -154,6 +106,8 @@ namespace ngosen {
     }
 
     Surrounding IBusHost::surrounding() const {
+        if (throughShell())
+            return reportsText() ? reported_ : Surrounding();
         if ((engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) == 0)
             return {};
         IBusText* text   = nullptr;
@@ -162,7 +116,22 @@ namespace ngosen {
         ibus_engine_get_surrounding_text(engine_, &text, &cursor, &anchor);
         if (text == nullptr)
             return {};
-        return {ibus_text_get_text(text), cursor, anchor};
+        Surrounding copy(ibus_text_get_text(text), cursor, anchor);
+        g_object_unref(text);
+        return copy;
+    }
+
+    // Only GNOME Shell drops the keys an engine forwards; X11 apps delete with BackSpace as usual.
+    bool IBusHost::throughShell() const {
+        return direct_ && client_ == "gnome-shell";
+    }
+
+    bool IBusHost::typesWithKeysBesideText() const {
+        return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+    }
+
+    bool IBusHost::reportsText() const {
+        return client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }
 
     Field IBusHost::field() const {
@@ -170,10 +139,18 @@ namespace ngosen {
         // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
         f.frontend        = "ibus";
         f.program         = client_;
-        f.surroundingText = (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
+        f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
-        f.password        = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
+        // GNOME 50.0 to 50.3 drop the keys an engine forwards. Elsewhere only a click watcher tells a click
+        // from a reset; Chromium and Electron report no text and show the preedit well.
+        if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
+            f.surroundingText = false;
+        const bool preeditOnly = throughShell() || (direct_ && !f.surroundingText);
+        f.sendsNoKeys          = preeditOnly;
+        f.preeditFallback      = preeditOnly && f.preedit;
+        f.password             = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 
@@ -200,17 +177,6 @@ namespace ngosen {
     }
 
     void IBusHost::refreshPreedit() {
-        // Decided once per word, so a word never moves between the preedit and the app. A terminal
-        // cannot delete around the cursor and keeps the preedit. So do X11 apps: the IBus GTK module
-        // claims surrounding text before it knows the widget has it, and Firefox resets after each commit.
-        // The Chrome address bar, a URL field, drops some deletions.
-        const bool wordStarts = typed_.empty() && !preeditVisible_;
-        if (wordStarts && !preedit_.empty())
-            direct_ = directTyping_ && client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 && purpose_ != IBUS_INPUT_PURPOSE_URL;
-        if (direct_ && (wordStarts || !typed_.empty())) {
-            replaceTypedWord(preedit_);
-            return;
-        }
         IBusText*   text   = ibus_text_new_from_string(preedit_.c_str());
         const guint length = static_cast<guint>(g_utf8_strlen(preedit_.c_str(), -1));
         // Some apps draw a preedit without attributes as plain text, which looks already typed.
@@ -218,7 +184,6 @@ namespace ngosen {
             ibus_text_append_attribute(text, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, length);
         // The app commits the preedit itself when it resets or loses focus, so no word is lost.
         ibus_engine_update_preedit_text_with_mode(engine_, text, length, length > 0, IBUS_ENGINE_PREEDIT_COMMIT);
-        preeditVisible_ = length > 0;
     }
 
     void IBusHost::refreshPanel() {
