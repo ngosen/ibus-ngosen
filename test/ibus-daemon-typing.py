@@ -1349,8 +1349,10 @@ check(
     "menu: the click commits the word being typed once",
     app.commits,
 )
-app.ic.property_activate("InputMode", IBus.PropState.UNCHECKED)
+# A menu built before the language changed sends the other state; the click still flips.
+app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
 pump(500)
+check(symbols[-1:] == ["V"], "menu: a click with a stale state still flips", symbols)
 # A restore in the settings window writes the marker while a field has focus.
 write_file(english_mark, "")
 check(symbols[-1:] == ["E"], "menu: a marker written elsewhere switches to English", symbols)
