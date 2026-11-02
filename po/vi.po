@@ -127,7 +127,7 @@ msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xóa d
 
 #: settings/ngosen_settings/options.py
 msgid "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
-msgstr "Không phải đầu từ: nhw → như, còn w đứng riêng vẫn là w. Mọi nơi: w đứng riêng cũng ra ư. uw thì luôn ra ư."
+msgstr "Trong từ: nhw → như, còn w đứng riêng vẫn là w. Mọi nơi: w đứng riêng cũng ra ư. uw thì luôn ra ư."
 
 #: settings/ngosen_settings/options.py
 msgid "ch]a → chưa, m[f → mờ. Type a bracket twice to get it back: [[ → [."
@@ -151,7 +151,7 @@ msgstr "Tắt"
 
 #: settings/ngosen_settings/options.py
 msgid "Non-Start"
-msgstr "Không phải đầu từ"
+msgstr "Trong từ"
 
 #: settings/ngosen_settings/options.py
 msgid "Everywhere"
