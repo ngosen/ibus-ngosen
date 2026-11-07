@@ -47,6 +47,11 @@ namespace ngosen {
             return state & HeldModifiers;
         }
 
+        // ibus_key_event_from_string reads past the end of the split of an empty string.
+        bool parseKeyString(const std::string& text, guint& keyval, guint& modifiers) {
+            return !text.empty() && ibus_key_event_from_string(text.c_str(), &keyval, &modifiers) && keyval != IBUS_KEY_VoidSymbol;
+        }
+
     } // namespace
 
     const std::vector<std::string>& defaultToggleKeys() {
@@ -61,7 +66,7 @@ namespace ngosen {
 
     std::optional<KeyChord> parseToggleKey(const std::string& text) {
         KeyChord chord;
-        if (!ibus_key_event_from_string(text.c_str(), &chord.keyval, &chord.modifiers) || chord.keyval == IBUS_KEY_VoidSymbol)
+        if (!parseKeyString(text, chord.keyval, chord.modifiers))
             return std::nullopt;
         chord.modifiers = heldModifiers(chord.modifiers) & ~ownModifier(chord.keyval);
         if (chord.modifiers == 0)
@@ -73,7 +78,7 @@ namespace ngosen {
 
     std::optional<KeyChord> parseMenuKey(const std::string& text) {
         KeyChord chord;
-        if (!ibus_key_event_from_string(text.c_str(), &chord.keyval, &chord.modifiers) || chord.keyval == IBUS_KEY_VoidSymbol || ownModifier(chord.keyval) != 0)
+        if (!parseKeyString(text, chord.keyval, chord.modifiers) || ownModifier(chord.keyval) != 0)
             return std::nullopt;
         chord.modifiers = heldModifiers(chord.modifiers);
         chord.keyval    = canonicalKey(chord.keyval);

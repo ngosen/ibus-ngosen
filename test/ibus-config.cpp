@@ -142,6 +142,7 @@ namespace {
         check(readSettings(parseIni(std::string(FcitxSettings) + fcitxKeys)).toggleKeys == std::vector<std::string>{"Alt+z"},
               "the fcitx5 edition's key list is imported, up to its first missing index");
         check(readSettings(parseIni(std::string(FcitxSettings) + "[ToggleKey]\n")).toggleKeys.empty(), "a key turned off in the fcitx5 edition stays off");
+        check(readSettings(parseIni(std::string(FcitxSettings) + "[ToggleKey]\n0=\n")).toggleKeys.empty(), "an empty fcitx5 key entry turns the key off");
     }
 
     void testModeMenuSettings() {
@@ -192,6 +193,7 @@ namespace {
 
     void testKeyMatching() {
         check(!parseToggleKey("Shift_L") && !parseToggleKey("Shift+Shift_L") && !parseToggleKey("space") && !parseToggleKey("Nope+x"), "single and unknown keys");
+        check(!parseToggleKey("") && !parseMenuKey(""), "an empty key");
         check(matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK), "Ctrl held, Shift pressed");
         check(matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK | IBUS_SHIFT_MASK | IBUS_RELEASE_MASK), "Shift released with Ctrl held");
         check(matches("Control+Shift_L", IBUS_KEY_Shift_L, IBUS_CONTROL_MASK | IBUS_MOD2_MASK | IBUS_LOCK_MASK), "NumLock and Caps Lock do not count");

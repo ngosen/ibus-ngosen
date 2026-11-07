@@ -98,6 +98,8 @@ namespace ngosen {
                 keys = iniKeyList(ini, name);
             else
                 return defaults;
+            // fcitx5 writes a cleared key as an empty entry, which matches nothing.
+            keys.erase(std::remove(keys.begin(), keys.end(), std::string()), keys.end());
             std::vector<std::string> usable;
             for (const auto& key : keys) {
                 if (parse(key))
