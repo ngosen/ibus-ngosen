@@ -80,7 +80,7 @@ namespace {
     // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
     std::atomic<unsigned> clicksSeen{0};
 
-    void applyTypingMode(ngosen::IBusHost& host) {
+    void                  applyTypingMode(ngosen::IBusHost& host) {
         realMode = typingMode();
         host.setDirectTyping(realMode == ngosen::Mode::Sen);
         if (realMode == ngosen::Mode::Sen)
