@@ -22,24 +22,26 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
    `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` and `packaging/rpm/opensuse/ibus-ngosen.spec`
    (each with a `%changelog` entry) and `packaging/arch/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must
    pass; the release workflow runs it on the tag.
-2. `CHANGELOG.md`: turn `## [Chưa phát hành]` into `## [X.Y.Z-N] — DD/MM/YYYY` with a one-line summary,
+2. Run the full check in a real GNOME session from the release branch (see "Testing in a real GNOME
+   session" in [AGENTS.md](AGENTS.md)) and list the results in the release PR.
+3. `CHANGELOG.md`: turn `## [Chưa phát hành]` into `## [X.Y.Z-N] — DD/MM/YYYY` with a one-line summary,
    the core tag it uses and a link to the release, and start a new empty `## [Chưa phát hành]`.
-3. Merge the PR into `main` once CI passes, then tag the merge commit through the API, not from a local
+4. Merge the PR into `main` once CI passes, then tag the merge commit through the API, not from a local
    checkout, where a stale local tag can point at the wrong commit:
 
    ```
    gh api repos/ngosen/ibus-ngosen/git/refs -f ref=refs/tags/ibus-ngosen-X.Y.Z-N -f sha=<merge commit>
    ```
 
-4. Check the draft release before publishing: all packages and `SHA256SUMS` are attached and the sums
+5. Check the draft release before publishing: all packages and `SHA256SUMS` are attached and the sums
    match; release notes list only the systems typed on with this version.
-5. Publish it: `gh release edit ibus-ngosen-X.Y.Z-N --repo ngosen/ibus-ngosen --draft=false --latest`.
+6. Publish it: `gh release edit ibus-ngosen-X.Y.Z-N --repo ngosen/ibus-ngosen --draft=false --latest`.
    Arch packages are attached to the release like the others; there is no AUR package.
-6. Publishing starts `Fedora COPR` (`copr.yml`), which builds the release tarball in the COPR project
+7. Publishing starts `Fedora COPR` (`copr.yml`), which builds the release tarball in the COPR project
    `nguyenphi/ngosen`, next to `fcitx5-ngosen`; check that it passes. It needs the `COPR_CONFIG` secret
    (the API token from https://copr.fedorainfracloud.org/api/) in the `release` environment. If it fails,
    rerun it: `gh workflow run copr.yml --repo ngosen/ibus-ngosen --ref ibus-ngosen-X.Y.Z-N`.
-7. Refresh the APT, pacman and zypper repositories, which are built in `ngosen/ngosen` and run on their own
+8. Refresh the APT, pacman and zypper repositories, which are built in `ngosen/ngosen` and run on their own
    only when a core version is released. Run the workflow from the newest `ngosen-*` tag and check that it
    passes:
 
