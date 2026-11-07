@@ -544,16 +544,33 @@ if no_x:
     # Without its text a field shows a click only by a reset, which XIM clients never send. With the
     # underline the core could still delete with forwarded keys, so only the engine holds the offer back.
     set_setting("DirectTyping", "False")
+
+    def toggle(app):
+        app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+        app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+        pump(300)
+
     app = App("retype-no-text", surrounding=False)
     app.type("vieetj")
-    app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
-    app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
-    app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
-    app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
-    pump(300)
+    toggle(app)
     check(
         not os.path.exists(mark) and app.text == "vieetj",
         "no click watcher, field without text: no retype",
+        app.text,
+    )
+    app.close()
+    # kitty and Konsole declare their text but always send it empty.
+    app = App("retype-empty-text")
+    app.report = lambda: app.ic.set_surrounding_text(IBus.Text.new_from_string(""), 0, 0)
+    app.report()
+    toggle(app)
+    app.type("vieetj")
+    toggle(app)
+    check(
+        not os.path.exists(mark) and app.text == "vieetj",
+        "no click watcher, field sending its text empty: no retype",
         app.text,
     )
     app.close()

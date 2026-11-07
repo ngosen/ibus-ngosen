@@ -105,7 +105,7 @@ namespace {
             state->resetAfterAppCommit(false);
             englishOn = english;
             applyTypingMode(*host);
-            // The per-field checks of Sen start over, but the keys typed in English stay for Cứu chữ.
+            // Still the same field, so as in fcitx5 Sen keeps what it learned of it and the keys for Cứu chữ.
             if (realMode == ngosen::Mode::Sen)
                 state->activate(ngosen::Mode::Sen, false);
         }
