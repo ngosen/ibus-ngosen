@@ -92,5 +92,6 @@ int main(int argc, char** argv) {
     stopWatching.store(true, std::memory_order_release);
     if (clickWatcher.joinable())
         clickWatcher.join();
+    g_object_unref(factory);
     return 0;
 }

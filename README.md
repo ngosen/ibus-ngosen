@@ -55,6 +55,11 @@ sudo dnf copr enable nguyenphi/ngosen
 sudo dnf install ibus-ngosen
 ```
 
+Trên Debian, Ubuntu, Arch và openSUSE, có thể cài từ kho APT, pacman, zypper của Ngó Sen, để `apt upgrade`,
+`pacman -Syu`, `zypper up` tự lên version mới: thêm kho theo
+[hướng dẫn của bản fcitx5](https://github.com/ngosen/ngosen#cập-nhật-bằng-trình-quản-lý-gói), rồi cài `ibus-ngosen`
+thay cho `fcitx5-ngosen`.
+
 ## Gỡ
 
 Bỏ "Tiếng Việt (Ngó Sen)" khỏi nguồn nhập hoặc khỏi IBus Preferences, rồi gỡ bằng trình quản lý gói:

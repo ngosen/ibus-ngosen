@@ -20,7 +20,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Tài liệu
 
-- Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`, và kho APT, pacman, zypper của Ngó Sen không còn phát gói này.
+- Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`.
+- Kho APT, pacman, zypper của Ngó Sen phát lại gói này từ lõi `ngosen-1.8.2-1` (ngosen/ngosen#598); README chỉ cách thêm kho để `apt upgrade`, `pacman -Syu`, `zypper up` tự lên version mới (#65).
 
 ## [1.1.3-1] — 01/11/2026
 
