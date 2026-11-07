@@ -3,25 +3,23 @@ name: Ngó Sen for GNOME settings
 description: A plain libadwaita window with the three Ngó Sen marks.
 typography:
   wordmark:
-    fontFamily: "'Xanh Mono', monospace"
     fontSize: "26px"
   typed:
-    fontFamily: "'Xanh Mono', monospace"
     fontSize: "17px"
-  everything-else: "system font (libadwaita default)"
+  everything: "system font (libadwaita default)"
 ---
 
 # Design: Ngó Sen for GNOME settings window
 
 The window is a GNOME app first: stock libadwaita widgets, the system accent colour, light and dark
 from the system. Ngó Sen shows itself in three places only, the same marks as the fcitx5 edition's
-settings window (its `DESIGN.md`): the icon, the wordmark "Ngó Sen" in Xanh Mono, and typed text in
-Xanh Mono.
+settings window (its `DESIGN.md`): the icon, the wordmark "Ngó Sen" in larger text, and typed text in
+larger text.
 
 ## Rules
 
 1. **Stock widgets.** `AdwPreferencesPage` with `AdwSwitchRow`, `AdwComboRow` and `AdwEntryRow`. The
-   only CSS is the Xanh Mono font on `.wordmark` and on the text of `.typed` entries
+   only CSS is a larger font size on `.wordmark` and on the text of `.typed` entries
    (`settings/ngosen_settings/brand.py`). No custom colours.
 2. **Changes save at once.** No OK or Apply. Each change writes the file and shows an `AdwToast`
    "Đã lưu “<setting>”." with "Hoàn tác", which puts back the file as it was before that change.
@@ -33,8 +31,8 @@ Xanh Mono.
    values it types with, and `--list-input-methods`/`--list-charsets` for the names it accepts, so
    defaults are not written down twice.
 5. **Vietnamese UI**, whatever the desktop language is, as in the fcitx5 edition.
-6. **Ship one font.** Xanh Mono (OFL) comes from the `ngosen` submodule. If it is missing, the system
-   monospace font stands in.
+6. **No bundled font.** Everything uses the system font, as the fcitx5 edition does; some monospace
+   fonts misplace stacked tone marks.
 
 ## Layout
 

@@ -30,10 +30,6 @@ Files: ngosen/data/dictionaries/*
 Copyright: 1997-2003 The Free Vietnamese Dictionary Project
 License: GPL-2.0-or-later
 
-Files: ngosen/settings-gui/fonts/*
-Copyright: 2020 The XanhMono Project Authors (https://github.com/yellow-type-foundry/xanhmono)
-License: OFL-1.1
-
 Files: settings/io.github.ngosen.IBusNgoSen.metainfo.xml
 Copyright: 2026 Ngó Sen contributors
 License: CC0-1.0
@@ -64,9 +60,6 @@ License: Expat
  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-
-License: OFL-1.1
- The full text is installed as /usr/share/ibus-ngosen/fonts/OFL-1.1.txt.
 
 License: CC0-1.0
  On Debian systems, the full text of the CC0 1.0 Universal license can be found
