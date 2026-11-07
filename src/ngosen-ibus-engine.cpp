@@ -153,8 +153,8 @@ namespace {
     }
 
     void showLanguage(IBusEngine* engine) {
-        IBusText* text = ibus_text_new_from_string(englishOn ? _("English") : _("Vietnamese"));
-        ibus_engine_update_auxiliary_text(engine, text, TRUE);
+        if (Session* session = sessionOf(engine))
+            session->host->showNotice(englishOn ? _("English") : _("Vietnamese"));
     }
 
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
@@ -165,6 +165,7 @@ namespace {
             return;
         session.menuOpen = false;
         ibus_engine_hide_lookup_table(engine);
+        session.host->setMenuOpen(false);
     }
 
     void toggleLanguage(IBusEngine* engine, Session& session) {
@@ -239,6 +240,7 @@ namespace {
         session.state->resetAfterAppCommit(false);
         session.menuOpen   = true;
         session.menuCursor = realMode == ngosen::Mode::Sen ? 0 : 1;
+        session.host->setMenuOpen(true);
         showModeMenu(engine, session);
     }
 
@@ -256,7 +258,7 @@ namespace {
         if (!english && resources().settings().directTyping != direct && resources().saveSetting("DirectTyping", direct ? "True" : "False", saved))
             resources().noticeChange();
         NGOSEN_INFO("Mode menu: " + item.label);
-        ibus_engine_update_auxiliary_text(engine, ibus_text_new_from_string(item.label.c_str()), TRUE);
+        session.host->showNotice(item.label);
         session.showsNotice = true;
     }
 
@@ -328,7 +330,7 @@ namespace {
             showLanguageItem(engine);
         // Shown until the next key typed, not the release of the toggle key itself.
         if (session->showsNotice && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
-            ibus_engine_hide_auxiliary_text(engine);
+            session->host->hideNotice();
             session->showsNotice = false;
         }
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
@@ -537,6 +539,36 @@ namespace {
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
     }
 
+    // The panel's clicks go to the mode menu while it is open, otherwise to the candidates.
+    void candidateClicked(IBusEngine* engine, guint index, guint /*button*/, guint /*state*/) {
+        Session* session = sessionOf(engine);
+        if (session == nullptr)
+            return;
+        if (!session->menuOpen) {
+            session->host->clickCandidate(index);
+            return;
+        }
+        const auto items = ngosen::modeMenuItems(resources().settings());
+        if (index < items.size())
+            pickMode(engine, *session, items[index]);
+    }
+
+    // Only the menu follows the panel's arrows: the core pages its candidates by key and keeps the page
+    // number under them, which an arrow handled here would leave behind.
+    void moveCursor(IBusEngine* engine, int step) {
+        Session* session = sessionOf(engine);
+        if (session != nullptr && session->menuOpen)
+            moveMenuCursor(engine, *session, step);
+    }
+
+    void cursorUp(IBusEngine* engine) {
+        moveCursor(engine, -1);
+    }
+
+    void cursorDown(IBusEngine* engine) {
+        moveCursor(engine, 1);
+    }
+
     // The factory's own engines never get focus_in_id, which names the app. GNOME Shell sends the text
     // around the cursor only after a request, which active-surrounding-text makes IBus send on each focus-in.
     IBusEngine* createEngine(IBusFactory* factory, const gchar* name, gpointer /*data*/) {
@@ -562,6 +594,9 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->focus_in_id          = focusInId;
     engineClass->focus_out_id         = focusOutId;
     engineClass->property_activate    = propertyActivate;
+    engineClass->candidate_clicked    = candidateClicked;
+    engineClass->cursor_up            = cursorUp;
+    engineClass->cursor_down          = cursorDown;
     IBUS_OBJECT_CLASS(klass)->destroy = destroy;
 }
 
