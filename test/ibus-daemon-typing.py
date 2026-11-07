@@ -645,6 +645,16 @@ check(app.text == "xin việt ", "direct, empty field: the words", app.text)
 check(app.preedits == [], "direct, empty field: no underline", app.preedits)
 app.close()
 
+# Terminals erase with DEL, so even with keys delivered none is forwarded to them.
+app = field_with_text(purpose=IBus.InputPurpose.TERMINAL)
+forwarded = []
+listen(app.ic, "forward-key-event", lambda _ic, keyval, _keycode, _state: forwarded.append(keyval))
+app.report = lambda: None
+app.type("vieetj ")
+pump(500)
+check(IBus.KEY_BackSpace not in forwarded, "relayed terminal: no forwarded BackSpace", forwarded)
+app.close()
+
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     app = field_with_text(app_commits=app_commits)
     app.type("vieetj ")
