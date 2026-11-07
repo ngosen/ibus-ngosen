@@ -499,6 +499,20 @@ app.type("ko ")
 check(app.commits == ["không "], "macro: expands on space", app.commits)
 app.close()
 
+# GNOME Shell fields take no forwarded keys in any mode, so the underlined words must not need them.
+app = App("gnome-shell")
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "preedit, GNOME Shell: the words", app.text)
+app.key(IBus.KEY_BackSpace)
+check(
+    (app.text, app.preedit) == ("xin ", "việt"),
+    "preedit, GNOME Shell: BackSpace reopens the word",
+    (app.text, app.preedit),
+)
+forwarded = [e for e in app.events if e[0] == "forward"]
+check(forwarded == [], "preedit, GNOME Shell: no forwarded keys", forwarded)
+app.close()
+
 open(log_path, "w").close()
 # A new user's first word list goes into a folder that did not exist when the engine started.
 check(

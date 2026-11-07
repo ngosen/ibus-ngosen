@@ -54,6 +54,18 @@ namespace {
         check(!host.pressSystemKeys(3) && sent.empty(), "other apps under Xwayland get no sent keys");
         setXSendSenderForTest({});
     }
+
+    // GNOME 50.0 to 50.3 drop forwarded keys whatever the typing mode, so deletions go through the text.
+    void testShellFields() {
+        IBusEngine engine{};
+        engine.client_capabilities = IBUS_CAP_PREEDIT_TEXT | IBUS_CAP_SURROUNDING_TEXT;
+        IBusHost host(&engine);
+        host.setDirectTyping(false);
+        host.setClient("gnome-shell");
+        check(host.field().sendsNoKeys && host.field().surroundingText, "preedit mode through GNOME Shell sends no keys");
+        host.setClient("gtk3-im:gedit");
+        check(!host.field().sendsNoKeys, "an X11 app in preedit mode still forwards");
+    }
 } // namespace
 
 int main() {
@@ -62,6 +74,7 @@ int main() {
     unsetenv("WAYLAND_DISPLAY");
     testXTest();
     testXSend();
+    testShellFields();
     if (failures == 0)
         std::cout << "all host checks passed\n";
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

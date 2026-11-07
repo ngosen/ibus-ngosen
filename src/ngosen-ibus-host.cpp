@@ -131,9 +131,10 @@ namespace ngosen {
         return copy;
     }
 
-    // Only GNOME Shell drops the keys an engine forwards; X11 apps delete with BackSpace as usual.
+    // Only GNOME Shell drops the keys an engine forwards, in every typing mode; X11 apps delete with
+    // BackSpace as usual.
     bool IBusHost::throughShell() const {
-        return direct_ && client_ == "gnome-shell";
+        return client_ == "gnome-shell";
     }
 
     bool IBusHost::typesWithKeysBesideText() const {
