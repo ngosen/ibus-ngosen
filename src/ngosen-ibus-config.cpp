@@ -251,15 +251,12 @@ namespace ngosen {
         return keys;
     }
 
-    // Options that delete text typed before stay off: IBus cannot check that text against the app yet.
+    // Macros while in English stay off: the shell does not read that setting yet.
     IBusSettings defaultSettings() {
         IBusSettings settings;
-        settings.toggleKeys    = defaultToggleKeys();
-        settings.modeMenuKeys  = defaultModeMenuKeys();
-        auto& o                = settings.options;
-        o.enableMacroInOffMode = false;
-        o.doubleSpaceToPeriod  = false;
-        o.doubleHyphenToEmDash = false;
+        settings.toggleKeys                   = defaultToggleKeys();
+        settings.modeMenuKeys                 = defaultModeMenuKeys();
+        settings.options.enableMacroInOffMode = false;
         return settings;
     }
 
@@ -286,6 +283,8 @@ namespace ngosen {
         o.lockWordKey = static_cast<LockWordKey>(lockWordKey);
         read.boolean("AutoCapitalizeAfterPunctuation", o.autoCapitalizeAfterPunctuation);
         read.boolean("CapitalizeStartOfText", o.capitalizeStartOfText);
+        read.boolean("DoubleSpaceToPeriod", o.doubleSpaceToPeriod);
+        read.boolean("DoubleHyphenToEmDash", o.doubleHyphenToEmDash);
         read.text("TimeFormat", o.timeFormat);
         read.text("DateFormat", o.dateFormat);
         read.boolean("EnableDictionary", settings.enableDictionary);
@@ -320,6 +319,8 @@ namespace ngosen {
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
         line("AutoCapitalizeAfterPunctuation", boolText(o.autoCapitalizeAfterPunctuation));
         line("CapitalizeStartOfText", boolText(o.capitalizeStartOfText));
+        line("DoubleSpaceToPeriod", boolText(o.doubleSpaceToPeriod));
+        line("DoubleHyphenToEmDash", boolText(o.doubleHyphenToEmDash));
         line("TimeFormat", o.timeFormat);
         line("DateFormat", o.dateFormat);
         line("EnableDictionary", boolText(settings.enableDictionary));

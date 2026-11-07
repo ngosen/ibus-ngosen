@@ -82,7 +82,8 @@ namespace {
         const IBusSettings read = readSettings(parseIni(FcitxSettings));
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
-        check(!read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod stays off");
+        check(!defaults.options.doubleSpaceToPeriod && !defaults.options.doubleHyphenToEmDash, "the punctuation options are off by default");
+        check(read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod is read");
         check(read.options.retypeAfterSwitch, "RetypeAfterSwitch is read");
         check(!read.options.retoneSelection, "RetoneSelection is read");
 
@@ -90,23 +91,27 @@ namespace {
         check(odd.options.inputMethod == "Telex" && odd.options.spellCheck && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
         check(odd.options.lockWordKey == LockWordKey::None, "LockWordModifier is read by name");
 
-        IBusSettings changed              = defaults;
-        changed.options.inputMethod       = "VNI";
-        changed.options.outputCharset     = "TCVN3 (ABC)";
-        changed.options.bracketTransform  = 1;
-        changed.options.lockWordKey       = LockWordKey::Alt;
-        changed.options.timeFormat        = "%H giờ %M";
-        changed.options.spellCheck        = false;
-        changed.options.retoneSelection   = false;
-        changed.options.retypeAfterSwitch = false;
-        changed.enableDictionary          = true;
-        changed.enableCustomKeymap        = true;
-        changed.directTyping              = true;
-        const std::string text            = settingsText(changed);
+        IBusSettings changed                 = defaults;
+        changed.options.inputMethod          = "VNI";
+        changed.options.outputCharset        = "TCVN3 (ABC)";
+        changed.options.bracketTransform     = 1;
+        changed.options.lockWordKey          = LockWordKey::Alt;
+        changed.options.timeFormat           = "%H giờ %M";
+        changed.options.spellCheck           = false;
+        changed.options.retoneSelection      = false;
+        changed.options.retypeAfterSwitch    = false;
+        changed.options.doubleSpaceToPeriod  = true;
+        changed.options.doubleHyphenToEmDash = true;
+        changed.enableDictionary             = true;
+        changed.enableCustomKeymap           = true;
+        changed.directTyping                 = true;
+        const std::string text               = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
-        check(parseIni(text).top.size() == 27, "the file has every key");
+        check(readSettings(parseIni(text)).options.doubleSpaceToPeriod, "DoubleSpaceToPeriod round trip");
+        check(readSettings(parseIni(text)).options.doubleHyphenToEmDash, "DoubleHyphenToEmDash round trip");
+        check(parseIni(text).top.size() == 29, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }

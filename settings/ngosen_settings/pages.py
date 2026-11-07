@@ -594,7 +594,6 @@ FCITX5_ONLY = [
     N_("Sen in every app, with its fixes for each app"),
     N_("Cứu dấu in every app"),
     N_("Vim mode for each app"),
-    N_("Two spaces to a period, -- to —"),
     N_("The emoji picker and rules for each app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
