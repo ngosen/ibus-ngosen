@@ -120,6 +120,9 @@ namespace ngosen {
     Surrounding IBusHost::surrounding() const {
         if (throughShell())
             return reportsText() ? reported_ : Surrounding();
+        // The Shell applies a deletion to the text last reported, not to the copy IBus edits itself.
+        if (client_ == "gnome-shell")
+            return (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 ? reported_ : Surrounding();
         if ((engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) == 0)
             return {};
         IBusText* text   = nullptr;
@@ -166,7 +169,15 @@ namespace ngosen {
         const bool preeditOnly = (throughShell() && !shellKeys) || (direct_ && !f.surroundingText);
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;
-        f.password             = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        // With the underline or in English the Shell still drops forwarded keys, but deleting through the
+        // text reaches the app, so an edit of committed text goes that way. Terminals claim text they never
+        // report and erase with DEL.
+        if (!direct_ && client_ == "gnome-shell" && !shellDeliversKeys()) {
+            f.sendsNoKeys = true;
+            if (f.terminal)
+                f.surroundingText = false;
+        }
+        f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 

@@ -311,6 +311,7 @@ class FakeShell:
         self.version = None
         self.state = None
         self.enable_calls = 0
+        self.version_reads = 0
         self.info_fails = False
         self.owner = 0
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
@@ -323,6 +324,7 @@ class FakeShell:
                 )
 
     def on_property(self, *_args):
+        self.version_reads += 1
         return GLib.Variant("s", self.version)
 
     def info(self):
@@ -380,6 +382,13 @@ def finish():
         print("all IBus daemon checks passed")
     sys.exit(1 if failures else 0)
 
+
+# With the underline the Shell's dropped keys matter too, so the engine follows it from the start.
+shell = FakeShell()
+shell.start("51.0", None)
+App("gnome-shell").close()
+check(shell.version_reads > 0, "underline: GNOME Shell is followed", shell.version_reads)
+shell.stop()
 
 app = App("space")
 app.type("vieetj ")
@@ -577,6 +586,20 @@ app.type("ko ")
 check(app.commits == ["không "], "macro: expands on space", app.commits)
 app.close()
 
+# GNOME Shell fields take no forwarded keys in any mode, so the underlined words must not need them.
+app = App("gnome-shell")
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "preedit, GNOME Shell: the words", app.text)
+app.key(IBus.KEY_BackSpace)
+check(
+    (app.text, app.preedit) == ("xin ", "việt"),
+    "preedit, GNOME Shell: BackSpace reopens the word",
+    (app.text, app.preedit),
+)
+forwarded = [e for e in app.events if e[0] == "forward"]
+check(forwarded == [], "preedit, GNOME Shell: no forwarded keys", forwarded)
+app.close()
+
 open(log_path, "w").close()
 # A new user's first word list goes into a folder that did not exist when the engine started.
 check(
@@ -622,7 +645,6 @@ with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
-shell = FakeShell()
 shell.start("50.1", None)
 set_setting("DirectTyping", "True")
 

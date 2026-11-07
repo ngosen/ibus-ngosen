@@ -206,4 +206,8 @@ namespace ngosen {
         return shell().delivers;
     }
 
+    void setShellDeliversKeysForTest(bool delivers) {
+        shell().delivers = delivers;
+    }
+
 } // namespace ngosen

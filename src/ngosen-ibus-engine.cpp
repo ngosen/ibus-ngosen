@@ -83,8 +83,9 @@ namespace {
     void                  applyTypingMode(ngosen::IBusHost& host) {
         realMode = typingMode();
         host.setDirectTyping(realMode == ngosen::Mode::Sen);
-        if (realMode == ngosen::Mode::Sen)
-            ngosen::watchShell(ngosen::SettingsPaths::fromEnvironment().extensionEnabledMark());
+        // Every mode needs to know whether the Shell drops forwarded keys; the extension is still
+        // enabled only for Sen.
+        ngosen::watchShell(ngosen::SettingsPaths::fromEnvironment().extensionEnabledMark());
     }
 
     struct Session {
