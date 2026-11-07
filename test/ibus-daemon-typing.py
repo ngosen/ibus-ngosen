@@ -1491,6 +1491,14 @@ pump(300)
 check(app.text == "việt", "retype: offered where the engine watches clicks", app.text)
 app.close()
 
+# An address bar may select its completion after the typed text, and the deletion would take that first.
+app = App("retype-url", purpose=IBus.InputPurpose.URL)
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: not in an address bar", app.text)
+app.close()
+
 set_setting("DirectTyping", "True")
 app = App("gtk3-im:gedit")
 typed_in_english(app, "vieetj")
