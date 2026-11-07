@@ -55,14 +55,15 @@ namespace {
         setXSendSenderForTest({});
     }
 
-    // GNOME 50.0 to 50.3 drop forwarded keys whatever the typing mode, so deletions go through the text.
+    // GNOME 50.0 to 50.3 drop forwarded keys whatever the typing mode. No GNOME Shell answers here, so
+    // its keys count as dropped and the core must not forward a deletion it would lose.
     void testShellFields() {
         IBusEngine engine{};
         engine.client_capabilities = IBUS_CAP_PREEDIT_TEXT | IBUS_CAP_SURROUNDING_TEXT;
         IBusHost host(&engine);
         host.setDirectTyping(false);
         host.setClient("gnome-shell");
-        check(host.field().sendsNoKeys && host.field().surroundingText, "preedit mode through GNOME Shell sends no keys");
+        check(host.field().sendsNoKeys && host.field().surroundingText, "preedit mode through a GNOME Shell that drops keys deletes through the text");
         host.setClient("gtk3-im:gedit");
         check(!host.field().sendsNoKeys, "an X11 app in preedit mode still forwards");
     }
