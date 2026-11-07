@@ -23,7 +23,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Cứu dấu: khi bật "Gõ Sen ở app cho phép", bấm chuột ngay sau một chữ rồi gõ phím dấu để sửa dấu chữ đó (chao,
   f → chào); Tab hay Esc trả lại phím vừa gõ. Bôi đen chữ rồi gõ phím dấu cũng được, nhưng chỉ ở app X11: app đi
   qua GNOME Shell gõ chữ trên vùng bôi đen bằng gạch chân (#52).
-- Cửa sổ cài đặt có tab "Kiểm tra máy tôi": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
+- Cửa sổ cài đặt có tab "Kiểm tra máy": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
 - Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
   nạp sẵn bảng phím Telex, VNI, VIQR… như bản fcitx5; không cần sang bản fcitx5 để soạn nữa (#53).
@@ -31,6 +31,16 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   lúc. Bấm ` hai lần để gõ ra `; lúc gõ tiếng Anh ` gõ như thường, kiểu gõ VIQR hay keymap tuỳ chỉnh dùng phím
   nào để bỏ dấu thì phím đó vẫn bỏ dấu. Cửa sổ cài đặt cho đổi phím mở menu sang Shift+~ như ibus-unikey hoặc
   tắt, và đổi phím của từng chế độ (#55).
+
+### Thay đổi
+
+- Dùng lõi Ngó Sen `ngosen-1.8.1-1`: Gõ Sen hết nuốt hoặc đảo thứ tự phím mũi tên, Home, End bấm ngay sau một chữ
+  (ngosen/ngosen#591), cùng các sửa của lõi cho Firefox và Chrome trên GNOME; cửa sổ cài đặt dùng font của hệ thống
+  thay cho Xanh Mono; tuỳ chọn "Không phải đầu từ" đổi tên thành "Trong từ" như bản fcitx5 (#67).
+
+### Tài liệu
+
+- Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`, và kho APT, pacman, zypper của Ngó Sen không còn phát gói này.
 
 ## [1.1.3-1] — 01/11/2026
 
