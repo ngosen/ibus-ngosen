@@ -41,6 +41,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
 - Ở game SDL trong phiên X11, Ngó Sen xoá chữ bằng phím BackSpace bấm qua XTEST như bản fcitx5, thay vì commit
   chữ mới khi chưa xoá được chữ cũ; gói Debian và openSUSE thêm `libxcb-xtest` (#69).
+- Ở ô đi qua GNOME Shell, khi gõ gạch chân hay đang tiếng Anh, Ngó Sen xoá chữ đã gõ qua chữ quanh con trỏ như
+  khi gõ thẳng, thay vì chuyển phím BackSpace mà GNOME 50.0–50.3 bỏ đi; cần cho Cứu chữ, hai lần cách thành ". "
+  và gõ tắt khi tiếng Anh sắp có (#72).
 
 ### Tài liệu
 
