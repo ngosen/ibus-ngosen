@@ -311,6 +311,7 @@ class FakeShell:
         self.version = None
         self.state = None
         self.enable_calls = 0
+        self.version_reads = 0
         self.info_fails = False
         self.owner = 0
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
@@ -323,6 +324,7 @@ class FakeShell:
                 )
 
     def on_property(self, *_args):
+        self.version_reads += 1
         return GLib.Variant("s", self.version)
 
     def info(self):
@@ -380,6 +382,13 @@ def finish():
         print("all IBus daemon checks passed")
     sys.exit(1 if failures else 0)
 
+
+# With the underline the Shell's dropped keys matter too, so the engine follows it from the start.
+shell = FakeShell()
+shell.start("51.0", None)
+App("gnome-shell").close()
+check(shell.version_reads > 0, "underline: GNOME Shell is followed", shell.version_reads)
+shell.stop()
 
 app = App("space")
 app.type("vieetj ")
@@ -636,7 +645,6 @@ with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
-shell = FakeShell()
 shell.start("50.1", None)
 set_setting("DirectTyping", "True")
 

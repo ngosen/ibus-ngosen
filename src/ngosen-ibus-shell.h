@@ -17,5 +17,6 @@ namespace ngosen {
     // Whether keys an engine forwards reach apps through GNOME Shell. False until the Shell has
     // answered, so a field types with the preedit rather than lose a deletion.
     bool shellDeliversKeys();
+    void setShellDeliversKeysForTest(bool delivers);
 
 } // namespace ngosen
