@@ -27,6 +27,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   gõ có dấu (vieetj → việt); Tab hay Esc trả lại như cũ. Chữ không chắc là tiếng Việt thì chỉ hiện gợi ý, Enter
   hoặc bấm vào gợi ý để nhận. Chỉ làm ở ô mà Ngó Sen biết được con trỏ chưa bị bấm chuột dời đi. Ai đã cài sẽ thấy
   tính năng này bật sau khi cập nhật; tắt được trong cửa sổ cài đặt (#76).
+- Hai dấu cách thành ". " và -- thành "—", như bản fcitx5: bật trong cửa sổ cài đặt, mục "Gõ nhanh"; mặc định
+  tắt (#77).
 - Cửa sổ cài đặt có tab "Kiểm tra máy": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
 - Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
