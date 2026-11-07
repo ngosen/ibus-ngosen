@@ -2,7 +2,8 @@
 
 Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Nhấp Ctrl+Shift để đổi
 Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Cửa sổ cài đặt cho đổi sang Shift+Alt, hoặc tắt phím này nếu
-không cần. Super+Space vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME.
+không cần. Super+Space vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME. Lỡ gõ chữ lúc đang tiếng Anh thì
+chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (vieetj → việt), Tab hoặc Esc trả lại.
 
 Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
 không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
@@ -11,10 +12,11 @@ Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là 
 được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép (thử nghiệm)"
 (mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ quanh con trỏ (trên X11 là
 app GTK, Qt, Firefox, LibreOffice và terminal của GNOME, KDE, Xfce; Chrome, app Electron, xterm, Alacritty và
-kitty vẫn gạch chân). Trên Wayland, chữ đầu tiên trong ô còn trống, và chữ bắt đầu giữa một chữ khác, vẫn được
+kitty vẫn gạch chân). GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
+extension sửa lỗi này. Bật tuỳ chọn và đăng nhập lại một lần là Ngó Sen tự bật extension; chưa chạy thì chữ vẫn
 gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
 
-Nếu cần Cứu chữ, Cứu dấu, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
+Nếu cần Cứu dấu ở mọi app, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
 mode hay chèn emoji, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
 
 ## Cài
@@ -54,6 +56,11 @@ Trên Fedora, có thể cài từ kho COPR, để `dnf upgrade` tự lên versio
 sudo dnf copr enable nguyenphi/ngosen
 sudo dnf install ibus-ngosen
 ```
+
+Trên Debian, Ubuntu, Arch và openSUSE, có thể cài từ kho APT, pacman, zypper của Ngó Sen, để `apt upgrade`,
+`pacman -Syu`, `zypper up` tự lên version mới: thêm kho theo
+[hướng dẫn của bản fcitx5](https://github.com/ngosen/ngosen#cập-nhật-bằng-trình-quản-lý-gói), rồi cài `ibus-ngosen`
+thay cho `fcitx5-ngosen`.
 
 ## Gỡ
 

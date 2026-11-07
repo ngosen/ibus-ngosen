@@ -11,6 +11,7 @@
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-mode-menu.h"
 #include "ngosen-ibus-resources.h"
+#include "ngosen-ibus-shell.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
 #include "ngosen-pointer.h"
@@ -79,6 +80,14 @@ namespace {
     // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
     std::atomic<unsigned> clicksSeen{0};
 
+    void                  applyTypingMode(ngosen::IBusHost& host) {
+        realMode = typingMode();
+        host.setDirectTyping(realMode == ngosen::Mode::Sen);
+        // Every mode needs to know whether the Shell drops forwarded keys; the extension is still
+        // enabled only for Sen.
+        ngosen::watchShell(ngosen::SettingsPaths::fromEnvironment().extensionEnabledMark());
+    }
+
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
         std::unique_ptr<ngosen::TypingState> state;
@@ -95,11 +104,10 @@ namespace {
             state->commitBuffer();
             state->resetAfterAppCommit(false);
             englishOn = english;
-            realMode  = typingMode();
-            host->setDirectTyping(realMode == ngosen::Mode::Sen);
-            // As on focus-in: the per-field checks of Sen start over.
+            applyTypingMode(*host);
+            // Still the same field, so as in fcitx5 Sen keeps what it learned of it and the keys for Cứu chữ.
             if (realMode == ngosen::Mode::Sen)
-                state->activate(ngosen::Mode::Sen, true);
+                state->activate(ngosen::Mode::Sen, false);
         }
 
         // Only between words: a new engine would drop the word being typed. True when the
@@ -118,8 +126,7 @@ namespace {
             resources().reloadIfChanged();
             if (generation == resources().generation())
                 return languageChanged;
-            realMode = typingMode();
-            host->setDirectTyping(realMode == ngosen::Mode::Sen);
+            applyTypingMode(*host);
             state->setEngine();
             generation = resources().generation();
             return languageChanged;
@@ -146,8 +153,8 @@ namespace {
     }
 
     void showLanguage(IBusEngine* engine) {
-        IBusText* text = ibus_text_new_from_string(englishOn ? _("English") : _("Vietnamese"));
-        ibus_engine_update_auxiliary_text(engine, text, TRUE);
+        if (Session* session = sessionOf(engine))
+            session->host->showNotice(englishOn ? _("English") : _("Vietnamese"));
     }
 
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
@@ -158,6 +165,7 @@ namespace {
             return;
         session.menuOpen = false;
         ibus_engine_hide_lookup_table(engine);
+        session.host->setMenuOpen(false);
     }
 
     void toggleLanguage(IBusEngine* engine, Session& session) {
@@ -168,6 +176,9 @@ namespace {
         showLanguageItem(engine);
         showLanguage(engine);
         session.showsNotice = true;
+        // A click moving the cursor must be seen, or the offer would replace text somewhere else.
+        if (!englishOn && session.host->seesCursorMoves())
+            session.state->offerRetype();
     }
 
     // True when the app must not see this key.
@@ -232,6 +243,7 @@ namespace {
         session.state->resetAfterAppCommit(false);
         session.menuOpen   = true;
         session.menuCursor = realMode == ngosen::Mode::Sen ? 0 : 1;
+        session.host->setMenuOpen(true);
         showModeMenu(engine, session);
     }
 
@@ -249,7 +261,7 @@ namespace {
         if (!english && resources().settings().directTyping != direct && resources().saveSetting("DirectTyping", direct ? "True" : "False", saved))
             resources().noticeChange();
         NGOSEN_INFO("Mode menu: " + item.label);
-        ibus_engine_update_auxiliary_text(engine, ibus_text_new_from_string(item.label.c_str()), TRUE);
+        session.host->showNotice(item.label);
         session.showsNotice = true;
     }
 
@@ -321,7 +333,7 @@ namespace {
             showLanguageItem(engine);
         // Shown until the next key typed, not the release of the toggle key itself.
         if (session->showsNotice && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
-            ibus_engine_hide_auxiliary_text(engine);
+            session->host->hideNotice();
             session->showsNotice = false;
         }
         // A password is sent as typed, the way fcitx5 turns input methods off in password fields.
@@ -472,6 +484,7 @@ namespace {
         session->tap = {};
         closeModeMenu(engine, *session);
         session->state->resetAfterAppCommit(true);
+        session->state->forgetKeysWhileOff();
         session->host->setFocus(false);
         session->host->forgetReportedText();
     }
@@ -494,6 +507,7 @@ namespace {
         if (session == nullptr)
             return;
         closeModeMenu(engine, *session);
+        session->state->fieldResetWhileOff();
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
@@ -530,6 +544,36 @@ namespace {
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
     }
 
+    // The panel's clicks go to the mode menu while it is open, otherwise to the candidates.
+    void candidateClicked(IBusEngine* engine, guint index, guint /*button*/, guint /*state*/) {
+        Session* session = sessionOf(engine);
+        if (session == nullptr)
+            return;
+        if (!session->menuOpen) {
+            session->host->clickCandidate(index);
+            return;
+        }
+        const auto items = ngosen::modeMenuItems(resources().settings());
+        if (index < items.size())
+            pickMode(engine, *session, items[index]);
+    }
+
+    // Only the menu follows the panel's arrows: the core pages its candidates by key and keeps the page
+    // number under them, which an arrow handled here would leave behind.
+    void moveCursor(IBusEngine* engine, int step) {
+        Session* session = sessionOf(engine);
+        if (session != nullptr && session->menuOpen)
+            moveMenuCursor(engine, *session, step);
+    }
+
+    void cursorUp(IBusEngine* engine) {
+        moveCursor(engine, -1);
+    }
+
+    void cursorDown(IBusEngine* engine) {
+        moveCursor(engine, 1);
+    }
+
     // The factory's own engines never get focus_in_id, which names the app. GNOME Shell sends the text
     // around the cursor only after a request, which active-surrounding-text makes IBus send on each focus-in.
     IBusEngine* createEngine(IBusFactory* factory, const gchar* name, gpointer /*data*/) {
@@ -555,6 +599,9 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->focus_in_id          = focusInId;
     engineClass->focus_out_id         = focusOutId;
     engineClass->property_activate    = propertyActivate;
+    engineClass->candidate_clicked    = candidateClicked;
+    engineClass->cursor_up            = cursorUp;
+    engineClass->cursor_down          = cursorDown;
     IBUS_OBJECT_CLASS(klass)->destroy = destroy;
 }
 
@@ -565,8 +612,7 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
     // A settings change seen by no engine yet still reaches the new one.
-    realMode = typingMode();
-    session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
+    applyTypingMode(*session->host);
     self->session = session;
 }
 

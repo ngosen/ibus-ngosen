@@ -12,7 +12,9 @@
 #include <functional>
 #include <ibus.h>
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 namespace ngosen {
 
@@ -82,22 +84,46 @@ namespace ngosen {
 
         std::string                  keyText(uint32_t sym) const override;
 
-        bool                         throughShell() const;
+        // The mode menu shares the lookup table; while it is open the candidates wait behind it.
+        void setMenuOpen(bool open);
+        // A short notice on the line under the preedit, which a status line from the core takes over.
+        void showNotice(const std::string& text);
+        void hideNotice();
+        // From the panel: a click on a candidate of the page shown.
+        void clickCandidate(guint indexInPage);
+
+        bool throughShell() const;
+        // A click that moves the cursor reaches the engine: the field reports its text, or clicks are watched.
+        bool seesCursorMoves() const;
         // Typing straight in with forwarded keys, in a field that claims to report its text.
         bool typesWithKeysBesideText() const;
 
       private:
-        bool        reportsText() const;
+        struct CandidateList {
+            std::vector<std::string>    labels;
+            int                         pageSize = 1;
+            int                         cursor   = 0;
+            std::function<void(size_t)> onPick;
+        };
 
-        IBusEngine* engine_;
-        bool        focus_   = false;
-        bool        direct_  = false;
-        guint       purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
-        guint       hints_   = IBUS_INPUT_HINT_NONE;
-        std::string client_;
-        Surrounding reported_;
-        std::string preedit_;
-        std::string status_;
+        bool                         reportsText() const;
+        void                         showTable();
+        void                         showAuxiliary();
+
+        IBusEngine*                  engine_;
+        bool                         focus_   = false;
+        bool                         direct_  = false;
+        guint                        purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
+        guint                        hints_   = IBUS_INPUT_HINT_NONE;
+        std::string                  client_;
+        Surrounding                  reported_;
+        std::string                  preedit_;
+        std::string                  status_;
+        std::string                  notice_;
+        std::optional<CandidateList> list_;
+        bool                         tableShown_ = false;
+        bool                         tableDirty_ = false;
+        bool                         menuOpen_   = false;
     };
 
     class IBusKeyPress final : public KeyPress {

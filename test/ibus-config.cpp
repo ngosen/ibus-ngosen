@@ -73,39 +73,40 @@ namespace {
     void testSettings() {
         const IBusSettings defaults = defaultSettings();
         check(sameOptions(readSettings(parseIni("")), defaults), "an empty file reads as the defaults");
-        Options fcitxDefaults           = defaultOptions;
-        fcitxDefaults.retypeAfterSwitch = false;
-        IBusSettings expected           = defaults;
-        expected.options                = fcitxDefaults;
+        IBusSettings expected = defaults;
+        expected.options      = defaultOptions;
         check(sameOptions(defaults, expected), "the defaults are the fcitx5 edition's");
+        check(defaults.options.retypeAfterSwitch, "Cứu chữ is on by default, as in fcitx5");
         check(defaults.options.retoneSelection, "RetoneSelection is on by default, as in fcitx5");
 
         const IBusSettings read = readSettings(parseIni(FcitxSettings));
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
         check(!read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod stays off");
-        check(!read.options.retypeAfterSwitch, "RetypeAfterSwitch stays off");
+        check(read.options.retypeAfterSwitch, "RetypeAfterSwitch is read");
         check(!read.options.retoneSelection, "RetoneSelection is read");
 
         const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nSpellCheck=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
         check(odd.options.inputMethod == "Telex" && odd.options.spellCheck && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
         check(odd.options.lockWordKey == LockWordKey::None, "LockWordModifier is read by name");
 
-        IBusSettings changed             = defaults;
-        changed.options.inputMethod      = "VNI";
-        changed.options.outputCharset    = "TCVN3 (ABC)";
-        changed.options.bracketTransform = 1;
-        changed.options.lockWordKey      = LockWordKey::Alt;
-        changed.options.timeFormat       = "%H giờ %M";
-        changed.options.spellCheck       = false;
-        changed.options.retoneSelection  = false;
-        changed.enableDictionary         = true;
-        changed.enableCustomKeymap       = true;
-        changed.directTyping             = true;
-        const std::string text           = settingsText(changed);
+        IBusSettings changed              = defaults;
+        changed.options.inputMethod       = "VNI";
+        changed.options.outputCharset     = "TCVN3 (ABC)";
+        changed.options.bracketTransform  = 1;
+        changed.options.lockWordKey       = LockWordKey::Alt;
+        changed.options.timeFormat        = "%H giờ %M";
+        changed.options.spellCheck        = false;
+        changed.options.retoneSelection   = false;
+        changed.options.retypeAfterSwitch = false;
+        changed.enableDictionary          = true;
+        changed.enableCustomKeymap        = true;
+        changed.directTyping              = true;
+        const std::string text            = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
-        check(parseIni(text).top.size() == 26, "the file has every key");
+        check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
+        check(parseIni(text).top.size() == 27, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -315,6 +316,32 @@ namespace {
         check(read(paths.settingsFile()) == settingsText(defaultSettings()), "nothing to import writes the defaults");
     }
 
+    // Settings imported before this edition had Cứu chữ: fcitx5's choice comes over once, else the default.
+    void testRetypeCarriedOver(const fs::path& root) {
+        const auto retype = [](const SettingsPaths& paths) {
+            const auto top = parseIni(read(paths.settingsFile())).top;
+            return top.count("RetypeAfterSwitch") != 0 ? top.at("RetypeAfterSwitch") : std::string("missing");
+        };
+        const auto earlier = [](const SettingsPaths& paths, const char* settings) {
+            write(paths.settingsFile(), settings);
+            write(paths.importedMark(), "");
+        };
+        SettingsPaths paths = pathsIn(root / "off-in-fcitx5");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "RetypeAfterSwitch=False\n");
+        check(prepareSettings(paths) && retype(paths) == "False", "Cứu chữ turned off in fcitx5 stays off");
+        check(parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "carrying it over keeps the other settings");
+
+        paths = pathsIn(root / "no-fcitx5");
+        earlier(paths, "InputMethod=VNI\n");
+        check(prepareSettings(paths) && retype(paths) == "True", "Cứu chữ comes on without fcitx5 settings");
+
+        paths = pathsIn(root / "already-set");
+        earlier(paths, "RetypeAfterSwitch=False\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "RetypeAfterSwitch=True\n");
+        check(prepareSettings(paths) && retype(paths) == "False", "a choice made in this edition is kept");
+    }
+
     // A run killed after any write leaves files the next run finishes into the same result.
     void testKilledHalfway(const fs::path& root) {
         const auto fill = [](const SettingsPaths& paths) {
@@ -362,6 +389,7 @@ int main() {
     testNoOverwrite(root / "keep");
     testDefaults(root / "defaults");
     testKilledHalfway(root / "killed");
+    testRetypeCarriedOver(root / "retype");
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all settings checks passed\n";

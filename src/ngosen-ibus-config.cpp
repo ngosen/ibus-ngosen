@@ -257,7 +257,6 @@ namespace ngosen {
         settings.toggleKeys    = defaultToggleKeys();
         settings.modeMenuKeys  = defaultModeMenuKeys();
         auto& o                = settings.options;
-        o.retypeAfterSwitch    = false;
         o.enableMacroInOffMode = false;
         o.doubleSpaceToPeriod  = false;
         o.doubleHyphenToEmDash = false;
@@ -279,6 +278,7 @@ namespace ngosen {
         read.boolean("DdFreeStyle", o.ddFreeStyle);
         read.boolean("BackspaceRemovesTone", o.backspaceRemovesTone);
         read.boolean("RetoneSelection", o.retoneSelection);
+        read.boolean("RetypeAfterSwitch", o.retypeAfterSwitch);
         read.boolean("EnableMacro", o.enableMacro);
         read.boolean("CapitalizeMacro", o.capitalizeMacro);
         int lockWordKey = static_cast<int>(o.lockWordKey);
@@ -314,6 +314,7 @@ namespace ngosen {
         line("DdFreeStyle", boolText(o.ddFreeStyle));
         line("BackspaceRemovesTone", boolText(o.backspaceRemovesTone));
         line("RetoneSelection", boolText(o.retoneSelection));
+        line("RetypeAfterSwitch", boolText(o.retypeAfterSwitch));
         line("EnableMacro", boolText(o.enableMacro));
         line("CapitalizeMacro", boolText(o.capitalizeMacro));
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
@@ -409,6 +410,10 @@ namespace ngosen {
         return !error;
     }
 
+    std::string SettingsPaths::extensionEnabledMark() const {
+        return configDir + "/.forward-keys-enabled";
+    }
+
     bool readFile(const std::string& path, std::string& content) {
         std::ifstream file(path, std::ios::binary);
         if (!file)
@@ -447,6 +452,23 @@ namespace ngosen {
         return true;
     }
 
+    namespace {
+        // Settings written before Cứu chữ came to this edition lack it, and the import that could have
+        // carried it over from fcitx5 ran once already: take it from fcitx5 now, or from the default.
+        bool addRetypeSetting(const SettingsPaths& paths, const FileWriter& write) {
+            std::string text;
+            if (!readFile(paths.settingsFile(), text) || parseIni(text).top.count("RetypeAfterSwitch") != 0)
+                return true;
+            bool        on = defaultSettings().options.retypeAfterSwitch;
+            std::string fcitx;
+            if (readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx)) {
+                const IniFile ini = parseIni(fcitx);
+                Reader{ini.top}.boolean("RetypeAfterSwitch", on);
+            }
+            return write(paths.settingsFile(), withSetting(text, "RetypeAfterSwitch", boolText(on)));
+        }
+    } // namespace
+
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write) {
         const bool  imported = fileExists(paths.importedMark());
         std::string content;
@@ -469,6 +491,8 @@ namespace ngosen {
             }
             if (!write(paths.settingsFile(), settingsText(settings)))
                 return false;
+        } else if (!addRetypeSetting(paths, write)) {
+            return false;
         }
         return imported || write(paths.importedMark(), "");
     }

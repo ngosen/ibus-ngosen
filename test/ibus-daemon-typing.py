@@ -11,7 +11,7 @@ import warnings
 import gi
 
 gi.require_version("IBus", "1.0")
-from gi.repository import GLib, GObject, IBus  # noqa: E402
+from gi.repository import Gio, GLib, GObject, IBus  # noqa: E402
 
 failures = 0
 
@@ -287,6 +287,86 @@ class App:
         pump(200)
 
 
+# The parts of GNOME Shell the engine asks about forwarded keys, on the session bus of the test.
+SHELL_INTERFACES = """<node>
+  <interface name="org.gnome.Shell">
+    <property name="ShellVersion" type="s" access="read"/>
+  </interface>
+  <interface name="org.gnome.Shell.Extensions">
+    <method name="GetExtensionInfo">
+      <arg type="s" direction="in"/><arg type="a{sv}" direction="out"/>
+    </method>
+    <method name="EnableExtension">
+      <arg type="s" direction="in"/><arg type="b" direction="out"/>
+    </method>
+    <signal name="ExtensionStateChanged"><arg type="s"/><arg type="a{sv}"/></signal>
+  </interface>
+</node>"""
+EXTENSION_ACTIVE = 1.0
+EXTENSION_INACTIVE = 2.0
+
+
+class FakeShell:
+    def __init__(self):
+        self.version = None
+        self.state = None
+        self.enable_calls = 0
+        self.version_reads = 0
+        self.info_fails = False
+        self.owner = 0
+        self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        # Its replacement needs a newer GLib than the oldest system supported.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            for interface in Gio.DBusNodeInfo.new_for_xml(SHELL_INTERFACES).interfaces:
+                self.bus.register_object(
+                    "/org/gnome/Shell", interface, self.on_method, self.on_property, None
+                )
+
+    def on_property(self, *_args):
+        self.version_reads += 1
+        return GLib.Variant("s", self.version)
+
+    def info(self):
+        return {} if self.state is None else {"state": GLib.Variant("d", self.state)}
+
+    def on_method(self, _bus, _sender, _path, _interface, method, _args, invocation):
+        if method == "GetExtensionInfo" and self.info_fails:
+            invocation.return_dbus_error("org.freedesktop.DBus.Error.Failed", "busy")
+        elif method == "GetExtensionInfo":
+            invocation.return_value(GLib.Variant("(a{sv})", (self.info(),)))
+        else:
+            self.enable_calls += 1
+            invocation.return_value(GLib.Variant("(b)", (True,)))
+            self.set_extension(EXTENSION_ACTIVE)
+
+    def start(self, version, state):
+        self.stop()
+        self.version = version
+        self.state = state
+        self.owner = Gio.bus_own_name_on_connection(
+            self.bus, "org.gnome.Shell", Gio.BusNameOwnerFlags.NONE, None, None
+        )
+        pump(300)
+
+    def stop(self):
+        if self.owner:
+            Gio.bus_unown_name(self.owner)
+            self.owner = 0
+            pump(300)
+
+    def set_extension(self, state):
+        self.state = state
+        self.bus.emit_signal(
+            None,
+            "/org/gnome/Shell",
+            "org.gnome.Shell.Extensions",
+            "ExtensionStateChanged",
+            GLib.Variant("(sa{sv})", ("forward-keys@ngosen.github.io", self.info())),
+        )
+        pump(300)
+
+
 def check(ok, what, got):
     global failures
     if not ok:
@@ -302,6 +382,13 @@ def finish():
         print("all IBus daemon checks passed")
     sys.exit(1 if failures else 0)
 
+
+# With the underline the Shell's dropped keys matter too, so the engine follows it from the start.
+shell = FakeShell()
+shell.start("51.0", None)
+App("gnome-shell").close()
+check(shell.version_reads > 0, "underline: GNOME Shell is followed", shell.version_reads)
+shell.stop()
 
 app = App("space")
 app.type("vieetj ")
@@ -454,6 +541,39 @@ if no_x:
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
     check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
+    # Without its text a field shows a click only by a reset, which XIM clients never send. With the
+    # underline the core could still delete with forwarded keys, so only the engine holds the offer back.
+    set_setting("DirectTyping", "False")
+
+    def toggle(app):
+        app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+        app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+        pump(300)
+
+    app = App("retype-no-text", surrounding=False)
+    app.type("vieetj")
+    toggle(app)
+    check(
+        not os.path.exists(mark) and app.text == "vieetj",
+        "no click watcher, field without text: no retype",
+        app.text,
+    )
+    app.close()
+    # kitty and Konsole declare their text but always send it empty.
+    app = App("retype-empty-text")
+    app.report = lambda: app.ic.set_surrounding_text(IBus.Text.new_from_string(""), 0, 0)
+    app.report()
+    toggle(app)
+    app.type("vieetj")
+    toggle(app)
+    check(
+        not os.path.exists(mark) and app.text == "vieetj",
+        "no click watcher, field sending its text empty: no retype",
+        app.text,
+    )
+    app.close()
     finish()
 
 open(log_path, "w").close()
@@ -497,6 +617,20 @@ write_file(os.path.join(config_dir, "ngosen-macro-table.conf"), "[Macro/0]\nKey=
 app = App("macro")
 app.type("ko ")
 check(app.commits == ["không "], "macro: expands on space", app.commits)
+app.close()
+
+# GNOME Shell fields take no forwarded keys in any mode, so the underlined words must not need them.
+app = App("gnome-shell")
+app.type("xin vieetj ")
+check(app.text == "xin việt ", "preedit, GNOME Shell: the words", app.text)
+app.key(IBus.KEY_BackSpace)
+check(
+    (app.text, app.preedit) == ("xin ", "việt"),
+    "preedit, GNOME Shell: BackSpace reopens the word",
+    (app.text, app.preedit),
+)
+forwarded = [e for e in app.events if e[0] == "forward"]
+check(forwarded == [], "preedit, GNOME Shell: no forwarded keys", forwarded)
 app.close()
 
 open(log_path, "w").close()
@@ -544,10 +678,10 @@ with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
+shell.start("50.1", None)
 set_setting("DirectTyping", "True")
 
 
-# An empty field has reported no text yet, so the core underlines its first word.
 def field_with_text(**kwargs):
     app = App("gnome-shell", **kwargs)
     app.type("xin ")
@@ -555,14 +689,72 @@ def field_with_text(**kwargs):
     return app
 
 
+def types_underlined(what):
+    app = field_with_text()
+    app.type("vieetj ")
+    check(app.text == "xin việt ", f"{what}: the word", app.text)
+    check("việt" in app.preedits, f"{what}: underlined", app.preedits)
+    app.close()
+
+
+# Firefox reports its text a beat late; a copy behind the word leaves only forwarded keys to delete.
+def deletes_with_keys(what):
+    app = field_with_text()
+    backspaces = []
+    listen(
+        app.ic,
+        "forward-key-event",
+        lambda _ic, keyval, _keycode, _state: backspaces.append(keyval),
+    )
+    app.report = lambda: None
+    app.type("vieetj ")
+    # The copy never catches up, so the core waits out each report it asks for before deleting.
+    pump(500)
+    check(app.text == "xin việt ", f"{what}: the word", app.text)
+    check(IBus.KEY_BackSpace in backspaces, f"{what}: deletes with keys", backspaces)
+    check(app.preedits == [], f"{what}: no underline", app.preedits)
+    app.close()
+
+
+types_underlined("extension not installed yet")
+check(shell.enable_calls == 0, "extension not installed yet: nothing to enable", shell.enable_calls)
+
+for version in ("50.0", "50.3"):
+    shell.start(version, None)
+    types_underlined(f"GNOME {version} without the extension")
+
+shell.start("51.0", EXTENSION_INACTIVE)
+check(shell.enable_calls == 0, "GNOME 51: the extension is left alone", shell.enable_calls)
+
+set_setting("DirectTyping", "False")
+App("gnome-shell").close()
+shell.start("50.1", EXTENSION_INACTIVE)
+check(shell.enable_calls == 0, "Gõ Sen off: the extension is left alone", shell.enable_calls)
+set_setting("DirectTyping", "True")
+App("gnome-shell").close()
+pump(300)
+check(shell.enable_calls == 1, "Gõ Sen on again: the extension is enabled", shell.enable_calls)
+deletes_with_keys("GNOME 50.1 with the extension")
+
+for version in ("46.2", "50.4", "51.0"):
+    shell.start(version, None)
+    deletes_with_keys(f"GNOME {version}")
+
+shell.start("50.1", EXTENSION_ACTIVE)
 app = App("gnome-shell")
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, empty field: the words", app.text)
-check(
-    "xin" in app.preedits and not any("v" in p for p in app.preedits),
-    "direct, empty field: only the first word underlined",
-    app.preedits,
-)
+check(app.preedits == [], "direct, empty field: no underline", app.preedits)
+app.close()
+
+# Terminals erase with DEL, so even with keys delivered none is forwarded to them.
+app = field_with_text(purpose=IBus.InputPurpose.TERMINAL)
+forwarded = []
+listen(app.ic, "forward-key-event", lambda _ic, keyval, _keycode, _state: forwarded.append(keyval))
+app.report = lambda: None
+app.type("vieetj ")
+pump(500)
+check(IBus.KEY_BackSpace not in forwarded, "relayed terminal: no forwarded BackSpace", forwarded)
 app.close()
 
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
@@ -631,9 +823,8 @@ app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 5, 5)
 pump(100)
 app.type("e")
-# The core underlines a word begun inside another one.
 check(
-    app.text == "xin vie" and app.preedit == "e",
+    app.text == "xin viee" and app.preedit == "",
     "direct, click inside the word: the next key deletes nothing",
     (app.text, app.preedit),
 )
@@ -851,6 +1042,20 @@ app = retone_after_click("gnome-shell")
 check(app.text == "xin chaof", "direct, retone off: the key after a clicked word stays", app.text)
 app.close()
 set_setting("RetoneSelection", "True")
+
+# The lock screen turns extensions off too, so one enabled before is not enabled again.
+shell.set_extension(EXTENSION_INACTIVE)
+types_underlined("extension turned off")
+check(shell.enable_calls == 1, "extension turned off: not enabled again", shell.enable_calls)
+shell.set_extension(EXTENSION_ACTIVE)
+deletes_with_keys("extension turned back on")
+shell.info_fails = True
+shell.set_extension(EXTENSION_INACTIVE)
+types_underlined("extension state unreadable")
+shell.info_fails = False
+shell.set_extension(EXTENSION_ACTIVE)
+shell.stop()
+types_underlined("GNOME Shell gone")
 set_setting("DirectTyping", "False")
 
 # XIM clients such as Alacritty keep the preedit across a click and send no reset.
@@ -942,7 +1147,11 @@ check(
 tap_ctrl_shift(app, IBus.ModifierType.MOD2_MASK)
 check(not os.path.exists(english_mark), "toggle: a tap with NumLock on switches back", english_mark)
 app.type(" vieetj ")
-check(app.text == "việt vieetj việt ", "toggle: Vietnamese again", app.text)
+check(
+    app.text == "việt việt việt ",
+    "toggle: Vietnamese again, with the English word retyped",
+    app.text,
+)
 app.close()
 
 app = App("toggle-not-a-tap")
@@ -1192,6 +1401,124 @@ check(app.text == "à " and app.menu is None, "menu: VIQR keeps ` for its tone",
 app.close()
 set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
+
+# The panel's clicks and arrows reach the menu, as GNOME Shell sends them.
+panel = IBus.PanelService.new(bus.get_connection())
+bus.request_name(IBus.SERVICE_PANEL, 0)
+pump(300)
+app = menu_app("menu-click")
+app.key(IBus.KEY_grave)
+pump(200)
+panel.candidate_clicked(0, 1, 0)
+pump(500)
+check(
+    app.menu is None and setting("DirectTyping") == "DirectTyping=True",
+    "menu: a click on Sen picks it",
+    setting("DirectTyping"),
+)
+app.close()
+set_setting("DirectTyping", "True")
+app = menu_app("menu-arrow")
+app.key(IBus.KEY_grave)
+pump(200)
+panel.cursor_down()
+pump(200)
+app.key(IBus.KEY_Return)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=False",
+    "menu: the panel's arrow moves from Sen to the underline",
+    setting("DirectTyping"),
+)
+app.close()
+
+
+# Cứu chữ: English typed by mistake is retyped once Vietnamese comes back.
+def typed_in_english(app, keys):
+    tap_ctrl_shift(app)
+    app.type(keys)
+
+
+set_setting("DirectTyping", "False")
+app = menu_app("retype-at-once")
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: every word takes marks, so it is retyped at once", app.text)
+app.key(IBus.KEY_Tab)
+pump(300)
+check(app.text == "vieetj", "retype: Tab puts back what was typed", app.text)
+app.close()
+
+# A word Telex leaves alone may be English on purpose, so the change is only offered.
+app = menu_app("retype-offer")
+typed_in_english(app, "xin chaof the")
+tap_ctrl_shift(app)
+check(
+    app.menu == ["xin chaof the → xin chào the"] and app.text == "xin chaof the",
+    "retype: the offer is in the candidate list",
+    (app.menu, app.text),
+)
+app.key(IBus.KEY_Return)
+pump(300)
+check(app.text == "xin chào the" and app.menu is None, "retype: Enter takes the offer", app.text)
+app.close()
+
+app = menu_app("retype-click")
+typed_in_english(app, "xin chaof the")
+tap_ctrl_shift(app)
+panel.candidate_clicked(0, 1, 0)
+pump(300)
+check(app.text == "xin chào the", "retype: a click on the offer takes it", app.text)
+app.close()
+bus.release_name(IBus.SERVICE_PANEL)
+pump(300)
+
+app = menu_app("retype-focus")
+typed_in_english(app, "vieetj")
+app.ic.focus_out()
+pump(200)
+app.ic.focus_in()
+pump(200)
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: keys typed before a focus change are forgotten", app.text)
+app.close()
+
+# Without its text a field shows a click only by a reset, or to the engine watching clicks.
+app = App("retype-reset", surrounding=False)
+typed_in_english(app, "vieetj")
+app.ic.reset()
+pump(100)
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: keys typed before a reset are forgotten", app.text)
+app.close()
+
+app = App("retype-no-text", surrounding=False)
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: offered where the engine watches clicks", app.text)
+app.close()
+
+set_setting("DirectTyping", "True")
+app = App("gtk3-im:gedit")
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: Gõ Sen retypes too", app.text)
+app.close()
+set_setting("DirectTyping", "False")
+
+set_setting("RetypeAfterSwitch", "False")
+app = App("retype-off")
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: off in the settings", app.text)
+app.close()
+set_setting("RetypeAfterSwitch", "True")
 
 set_setting("ToggleKey", "Alt+z")
 app = App("toggle-note")

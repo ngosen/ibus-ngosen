@@ -73,6 +73,8 @@ namespace ngosen {
         std::string importedMark() const;
         // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
         std::string englishMark() const;
+        // Marks the forward-keys extension as enabled once, so turning it off is not undone.
+        std::string extensionEnabledMark() const;
     };
 
     bool readFile(const std::string& path, std::string& content);
