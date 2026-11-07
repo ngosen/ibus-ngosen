@@ -16,7 +16,7 @@ BuildRequires:  python3
 BuildRequires:  gettext
 
 Requires:       ibus >= 1.5.27
-# Loaded with dlopen to watch clicks on X11, which the automatic requires miss.
+# Loaded with dlopen on X11 to watch clicks and press keys, which the automatic requires miss.
 Requires:       libxcb
 Requires:       python3-gobject
 Requires:       gtk4

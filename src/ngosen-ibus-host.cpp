@@ -5,8 +5,10 @@
  */
 #include "ngosen-ibus-host.h"
 
+#include "ngosen-app-quirks.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
+#include "ngosen-xtest.h"
 
 #include <libintl.h>
 
@@ -106,9 +108,11 @@ namespace ngosen {
         ibus_engine_delete_surrounding_text(engine_, offset, size);
     }
 
-    // The preedit never deletes text the app already has, so it never needs keys pressed at the X server.
-    bool IBusHost::pressSystemKeys(int /*count*/) {
-        return false;
+    // The core presses keys only where forwarded ones do not reach the app, as with fcitx5.
+    bool IBusHost::pressSystemKeys(int count) {
+        if (xtestAvailable())
+            return xtestSendKeys(count);
+        return takesSentKeyEvents(field()) && xsendKeys(count);
     }
 
     Surrounding IBusHost::surrounding() const {
