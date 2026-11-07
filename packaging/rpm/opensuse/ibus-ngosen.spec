@@ -2,7 +2,7 @@ Name:           ibus-ngosen
 Version:        1.1.3
 Release:        1
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
-License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later AND OFL-1.1
+License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
 URL:            https://github.com/ngosen/ibus-ngosen
 # Release tarballs carry the ngosen submodule, which GitHub's own archives leave out.
 Source0:        %{url}/releases/download/%{name}-%{version}-1/%{name}-%{version}.tar.gz

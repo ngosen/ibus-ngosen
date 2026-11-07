@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Dùng lõi Ngó Sen `ngosen-1.8.1-1`: Gõ Sen hết nuốt hoặc đảo thứ tự phím mũi tên, Home, End bấm ngay sau một chữ
+  (ngosen/ngosen#591), cùng các sửa của lõi cho Firefox và Chrome trên GNOME; cửa sổ cài đặt dùng font của hệ thống
+  thay cho Xanh Mono; tuỳ chọn "Không phải đầu từ" đổi tên thành "Trong từ" như bản fcitx5 (#67).
+
 ### Sửa
 
 - Gõ Sen trên GNOME: Firefox và các app báo được chữ quanh con trỏ nay gõ thẳng chính xác hơn, vì Ngó Sen xoá được bằng phím BackSpace khi bản chữ app báo đã cũ. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím này nên gói kèm một extension sửa lỗi, và Ngó Sen tự bật extension một lần sau khi đăng nhập lại; chưa chạy thì chữ gạch chân. Gói này nay không cài chung được với `fcitx5-ngosen` vì cả hai cài cùng extension (#64).
