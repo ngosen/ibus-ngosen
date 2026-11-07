@@ -2,7 +2,8 @@
 
 Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Nhấp Ctrl+Shift để đổi
 Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Cửa sổ cài đặt cho đổi sang Shift+Alt, hoặc tắt phím này nếu
-không cần. Super+Space vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME.
+không cần. Super+Space vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME. Lỡ gõ chữ lúc đang tiếng Anh thì
+chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (vieetj → việt), Tab hoặc Esc trả lại.
 
 Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
 không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
@@ -15,7 +16,7 @@ kitty vẫn gạch chân). GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phí
 extension sửa lỗi này. Bật tuỳ chọn và đăng nhập lại một lần là Ngó Sen tự bật extension; chưa chạy thì chữ vẫn
 gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
 
-Nếu cần Cứu chữ, Cứu dấu, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
+Nếu cần Cứu dấu ở mọi app, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
 mode hay chèn emoji, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
 
 ## Cài

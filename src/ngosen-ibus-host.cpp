@@ -141,6 +141,11 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
+    // XIM clients under Xwayland send no reset on a click, and the X server's clicks are not watched there.
+    bool IBusHost::seesCursorMoves() const {
+        return (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 || clicksWatched.load(std::memory_order_acquire);
+    }
+
     bool IBusHost::typesWithKeysBesideText() const {
         return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }

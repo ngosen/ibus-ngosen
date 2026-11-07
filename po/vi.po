@@ -114,6 +114,14 @@ msgid "Backspace Removes the Tone Mark"
 msgstr "Backspace xoá dấu thanh"
 
 #: settings/ngosen_settings/options.py
+msgid "Retype text typed before switching on"
+msgstr "Cứu chữ: gõ lại có dấu khi quên bật tiếng Việt"
+
+#: settings/ngosen_settings/options.py
+msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
+msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ."
+
+#: settings/ngosen_settings/options.py
 msgid "Change the tone of a typed word"
 msgstr "Cứu dấu: sửa dấu chữ đã gõ"
 
@@ -242,8 +250,8 @@ msgid "Sen in every app, with its fixes for each app"
 msgstr "Gõ Sen ở mọi app, kèm sửa lỗi riêng từng app"
 
 #: settings/ngosen_settings/pages.py
-msgid "Cứu chữ, and Cứu dấu in every app"
-msgstr "Cứu chữ, và Cứu dấu ở mọi app"
+msgid "Cứu dấu in every app"
+msgstr "Cứu dấu ở mọi app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Two spaces to a period, -- to —"

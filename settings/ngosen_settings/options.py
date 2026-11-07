@@ -60,6 +60,7 @@ LABELS = {
     "FreeMarking": N_("Allow Type With More Freedom"),
     "BackspaceRemovesTone": N_("Backspace Removes the Tone Mark"),
     "RetoneSelection": N_("Change the tone of a typed word"),
+    "RetypeAfterSwitch": N_("Retype text typed before switching on"),
     "W2U": N_("Type w to Produce ư"),
     "BracketTransform": N_("Type [ -> ơ, ] -> ư, { -> Ơ, } -> Ư"),
     "AutoCapitalizeAfterPunctuation": N_(
@@ -103,6 +104,9 @@ HINTS = {
     "RetoneSelection": N_(
         "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
     ),
+    "RetypeAfterSwitch": N_(
+        "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
+    ),
     "W2U": N_(
         "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
     ),
@@ -141,7 +145,10 @@ TYPING_GROUPS = [
             "BracketTransform",
         ],
     ),
-    (N_("Quick typing"), ["AutoCapitalizeAfterPunctuation", "CapitalizeStartOfText"]),
+    (
+        N_("Quick typing"),
+        ["RetypeAfterSwitch", "AutoCapitalizeAfterPunctuation", "CapitalizeStartOfText"],
+    ),
     (N_("Mode menu"), SHORTCUTS),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]

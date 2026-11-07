@@ -93,6 +93,8 @@ namespace ngosen {
         void clickCandidate(guint indexInPage);
 
         bool throughShell() const;
+        // A click that moves the cursor reaches the engine: the field reports its text, or clicks are watched.
+        bool seesCursorMoves() const;
         // Typing straight in with forwarded keys, in a field that claims to report its text.
         bool typesWithKeysBesideText() const;
 
