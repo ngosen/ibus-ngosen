@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Dùng lõi Ngó Sen `ngosen-1.8.1-1`: Gõ Sen hết nuốt hoặc đảo thứ tự phím mũi tên, Home, End bấm ngay sau một chữ
+  (ngosen/ngosen#591), cùng các sửa của lõi cho Firefox và Chrome trên GNOME; cửa sổ cài đặt dùng font của hệ thống
+  thay cho Xanh Mono (#PRNUM).
+
 ### Tài liệu
 
 - Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`, và kho APT, pacman, zypper của Ngó Sen không còn phát gói này.

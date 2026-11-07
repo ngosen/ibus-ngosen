@@ -96,6 +96,12 @@ namespace ngosen {
         }
     }
 
+    // The core counts X11 keycodes, which are evdev codes plus 8.
+    void IBusHost::forwardKeyPress(uint32_t sym, uint32_t states, uint32_t code, bool release, uint32_t /*time*/) {
+        const guint keycode = code >= 8 ? code - 8 : 0;
+        ibus_engine_forward_key_event(engine_, sym, keycode, states | (release ? IBUS_RELEASE_MASK : 0));
+    }
+
     void IBusHost::deleteSurrounding(int offset, unsigned int size) {
         ibus_engine_delete_surrounding_text(engine_, offset, size);
     }
