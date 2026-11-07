@@ -132,7 +132,12 @@ jobs:
           NGOSEN_WINDOW_TESTS: required
         run: >-
           ctest --test-dir build --output-on-failure --no-tests=error -j"$(nproc)"
-          -E '^(desktop_file|metainfo|translations|install_environment)$'
+          -E '^(metainfo|translations|install_environment)$'
+      # A process whose exit status nobody reads still leaves its report, so any report fails the job.
       - name: Sanitizer reports
-        if: failure()
-        run: cat /tmp/sanitizer.* 2>/dev/null || echo "No sanitizer report"
+        if: always()
+        run: |
+          if ls /tmp/sanitizer.* > /dev/null 2>&1; then
+            cat /tmp/sanitizer.*
+            exit 1
+          fi
