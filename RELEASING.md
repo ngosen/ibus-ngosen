@@ -39,3 +39,10 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
    `nguyenphi/ngosen`, next to `fcitx5-ngosen`; check that it passes. It needs the `COPR_CONFIG` secret
    (the API token from https://copr.fedorainfracloud.org/api/) in the `release` environment. If it fails,
    rerun it: `gh workflow run copr.yml --repo ngosen/ibus-ngosen --ref ibus-ngosen-X.Y.Z-N`.
+7. Refresh the APT, pacman and zypper repositories, which are built in `ngosen/ngosen` and run on their own
+   only when a core version is released. Run the workflow from the newest `ngosen-*` tag and check that it
+   passes:
+
+   ```
+   gh workflow run package-repos.yml --repo ngosen/ngosen --ref "$(gh release view --repo ngosen/ngosen --json tagName --jq .tagName)"
+   ```
