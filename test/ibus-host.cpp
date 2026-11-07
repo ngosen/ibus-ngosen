@@ -89,6 +89,9 @@ namespace {
         check(!host.candidates(), "resetPanel hides the list");
         host.pickCandidate(0);
         check(picked.empty(), "a pick after resetPanel calls nothing");
+
+        host.showCandidates(std::vector<std::string>(20, "a"), 20, {});
+        check(host.candidates() && host.candidates()->pageSize == 16, "a page is at most the 16 IBus can show");
     }
 } // namespace
 

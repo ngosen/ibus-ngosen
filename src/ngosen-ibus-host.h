@@ -89,10 +89,8 @@ namespace ngosen {
         // A short notice on the line under the preedit, which a status line from the core takes over.
         void showNotice(const std::string& text);
         void hideNotice();
-        // From the panel: a click on a candidate of the page shown, or its arrows.
+        // From the panel: a click on a candidate of the page shown.
         void clickCandidate(guint indexInPage);
-        void moveCandidateCursor(int step);
-        void turnCandidatePage(int step);
 
         bool throughShell() const;
         // Typing straight in with forwarded keys, in a field that claims to report its text.
@@ -122,6 +120,7 @@ namespace ngosen {
         std::string                  notice_;
         std::optional<CandidateList> list_;
         bool                         tableShown_ = false;
+        bool                         tableDirty_ = false;
         bool                         menuOpen_   = false;
     };
 

@@ -532,7 +532,7 @@ namespace {
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
     }
 
-    // The panel's clicks and arrows go to the mode menu while it is open, otherwise to the candidates.
+    // The panel's clicks go to the mode menu while it is open, otherwise to the candidates.
     void candidateClicked(IBusEngine* engine, guint index, guint /*button*/, guint /*state*/) {
         Session* session = sessionOf(engine);
         if (session == nullptr)
@@ -546,14 +546,12 @@ namespace {
             pickMode(engine, *session, items[index]);
     }
 
+    // Only the menu follows the panel's arrows: the core pages its candidates by key and keeps the page
+    // number under them, which an arrow handled here would leave behind.
     void moveCursor(IBusEngine* engine, int step) {
         Session* session = sessionOf(engine);
-        if (session == nullptr)
-            return;
-        if (session->menuOpen)
+        if (session != nullptr && session->menuOpen)
             moveMenuCursor(engine, *session, step);
-        else
-            session->host->moveCandidateCursor(step);
     }
 
     void cursorUp(IBusEngine* engine) {
@@ -562,21 +560,6 @@ namespace {
 
     void cursorDown(IBusEngine* engine) {
         moveCursor(engine, 1);
-    }
-
-    // The mode menu fits on one page.
-    void turnPage(IBusEngine* engine, int step) {
-        Session* session = sessionOf(engine);
-        if (session != nullptr && !session->menuOpen)
-            session->host->turnCandidatePage(step);
-    }
-
-    void pageUp(IBusEngine* engine) {
-        turnPage(engine, -1);
-    }
-
-    void pageDown(IBusEngine* engine) {
-        turnPage(engine, 1);
     }
 
     // The factory's own engines never get focus_in_id, which names the app. GNOME Shell sends the text
@@ -607,8 +590,6 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->candidate_clicked    = candidateClicked;
     engineClass->cursor_up            = cursorUp;
     engineClass->cursor_down          = cursorDown;
-    engineClass->page_up              = pageUp;
-    engineClass->page_down            = pageDown;
     IBUS_OBJECT_CLASS(klass)->destroy = destroy;
 }
 
