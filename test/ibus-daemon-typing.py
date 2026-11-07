@@ -93,17 +93,15 @@ class App:
         self.preedit = ""
         self.preedits = []
         # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
-        # sends the text after a deletion only along with some other change, such as the cursor
-        # moving on screen: qt_through_shell is how many keys in a row must delete before the
-        # report stops.
+        # sends no text right after a deletion, only after the next commit.
         self.qt_through_shell = qt_through_shell
         # Firefox on X11 resets the input context after each key the engine lets through.
         self.resets_after_key = resets_after_key
         self.reported = ""
-        self.deleted = False
-        self.deleting_keys = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
+        # Commits and forwarded presses in the order the app gets them.
+        self.events = []
         self.requests = 0
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
@@ -132,36 +130,34 @@ class App:
         self.report()
 
     def report(self):
-        if not (
-            self.qt_through_shell and self.deleted and self.deleting_keys >= self.qt_through_shell
-        ):
-            self.reported = self.text
+        self.reported = self.text
         n = len(self.reported)
         self.ic.set_surrounding_text(IBus.Text.new_from_string(self.reported), n, n)
 
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
+        self.events.append(("commit", text.get_text()))
         self.text += text.get_text()
         self.report()
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
         if self.qt_through_shell:
-            if not self.deleted:
-                self.deleting_keys += 1
-            self.deleted = True
             end = len(self.reported) + offset + count
             size = len(self.reported[end - count : end].encode())
             count = len(self.text.encode()[-size:].decode(errors="replace"))
             offset = -count
         start = len(self.text) + offset
         self.text = self.text[:start] + self.text[start + count :]
-        self.report()
+        if not self.qt_through_shell:
+            self.report()
 
     def on_require(self, _ic):
         self.requests += 1
 
-    def on_forward(self, _ic, keyval, _keycode, state):
+    def on_forward(self, _ic, keyval, keycode, state):
+        if not state & IBus.ModifierType.RELEASE_MASK:
+            self.events.append(("forward", IBus.keyval_name(keyval), keycode))
         if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
             self.text = self.text[:-1]
             self.report()
@@ -212,15 +208,31 @@ class App:
                 if self.resets_after_key:
                     ic.reset()
 
-        if not self.deleted:
-            self.deleting_keys = 0
-        self.deleted = False
         self.ic.process_key_event_async(keyval, 0, state, -1, None, done)
         end = time.monotonic() + 5
         while not replies and time.monotonic() < end:
             GLib.MainContext.default().iteration(True)
         self.ic.process_key_event(keyval, 0, state | IBus.ModifierType.RELEASE_MASK)
         pump(40)
+
+    # Presses keys without waiting for the engine between them, as a fast typist does.
+    def burst(self, presses):
+        replies = []
+        for keyval, keycode in presses:
+            self.ic.process_key_event_async(
+                keyval,
+                keycode,
+                0,
+                -1,
+                None,
+                lambda ic, result: replies.append(ic.process_key_event_async_finish(result)),
+            )
+        end = time.monotonic() + 5
+        while len(replies) < len(presses) and time.monotonic() < end:
+            GLib.MainContext.default().iteration(True)
+        for keyval, keycode in presses:
+            self.ic.process_key_event(keyval, keycode, IBus.ModifierType.RELEASE_MASK)
+        pump(300)
 
     def type(self, keys):
         for c in keys:
@@ -531,19 +543,18 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
     app.close()
 
-for keys in (1, 2):
-    app = App("gnome-shell", qt_through_shell=keys)
-    app.type("nam tieesng")
-    app.key(IBus.KEY_BackSpace)
-    app.key(IBus.KEY_BackSpace)
-    app.type("ng ")
-    check(app.text == "nam tiếng ", f"direct, Qt through GNOME Shell ({keys}): the words", app.text)
-    check(
-        not any("t" in p for p in app.preedits),
-        f"direct, Qt through GNOME Shell ({keys}): the second word not underlined",
-        app.preedits,
-    )
-    app.close()
+app = App("gnome-shell", qt_through_shell=True)
+app.type("nam tieesng")
+app.key(IBus.KEY_BackSpace)
+app.key(IBus.KEY_BackSpace)
+app.type("ng ")
+check(app.text == "nam tiếng ", "direct, Qt through GNOME Shell: the words", app.text)
+check(
+    not any("t" in p for p in app.preedits),
+    "direct, Qt through GNOME Shell: the second word not underlined",
+    app.preedits,
+)
+app.close()
 
 # Qt reports the text around the cursor only once the field has text.
 app = App("gnome-shell", surrounding=False)
@@ -640,6 +651,29 @@ app.close()
 app = App("gtk3-im:firefox", resets_after_key=True)
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, X11 app resetting after each key: the words", app.text)
+app.close()
+
+# A copy behind the word makes the replacement delete with BackSpace and wait for the app; a cursor
+# key pressed meanwhile must land after the new letters.
+app = App("gtk3-im:gedit")
+app.type("xin ")
+app.report = lambda: None
+app.type("vieet")
+app.events.clear()
+app.burst([(IBus.KEY_j, 36), (IBus.KEY_Left, 105)])
+commits = [i for i, e in enumerate(app.events) if e[0] == "commit"]
+lefts = [i for i, e in enumerate(app.events) if e[0] == "forward" and e[1] == "Left"]
+check(
+    commits and lefts and lefts[0] > commits[-1],
+    "direct, X11 app: a cursor key held during the wait follows the new letters",
+    app.events,
+)
+check(
+    [app.events[i][2] for i in lefts] == [105],
+    "direct, X11 app: the held cursor key keeps its keycode",
+    (app.events, app.passed),
+)
+check(app.text == "xin việt", "direct, X11 app: the word before the held cursor key", app.text)
 app.close()
 
 # A click on X11 resets the context and moves the cursor the app reports.

@@ -20,7 +20,7 @@ class Vietnamese:
     """Labels that differ from the saved values, as they do in the real window."""
 
     def gettext(self, text):
-        return {"Everywhere": "Mọi nơi", "Non-Start": "Không phải đầu từ"}.get(text, text)
+        return {"Everywhere": "Mọi nơi", "Non-Start": "Trong từ"}.get(text, text)
 
 
 class FakeEngine:
