@@ -1193,6 +1193,39 @@ app.close()
 set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
 
+# The panel's clicks and arrows reach the menu, as GNOME Shell sends them.
+panel = IBus.PanelService.new(bus.get_connection())
+bus.request_name(IBus.SERVICE_PANEL, 0)
+pump(300)
+app = menu_app("menu-click")
+app.key(IBus.KEY_grave)
+pump(200)
+panel.candidate_clicked(0, 1, 0)
+pump(500)
+check(
+    app.menu is None and setting("DirectTyping") == "DirectTyping=True",
+    "menu: a click on Sen picks it",
+    setting("DirectTyping"),
+)
+app.close()
+set_setting("DirectTyping", "True")
+app = menu_app("menu-arrow")
+app.key(IBus.KEY_grave)
+pump(200)
+panel.cursor_down()
+pump(200)
+app.key(IBus.KEY_Return)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=False",
+    "menu: the panel's arrow moves from Sen to the underline",
+    setting("DirectTyping"),
+)
+app.close()
+bus.release_name(IBus.SERVICE_PANEL)
+pump(300)
+set_setting("DirectTyping", "False")
+
 set_setting("ToggleKey", "Alt+z")
 app = App("toggle-note")
 # Without this capability IBus shows the note in its own panel instead of telling the app.

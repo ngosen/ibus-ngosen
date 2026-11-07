@@ -31,6 +31,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   lúc. Bấm ` hai lần để gõ ra `; lúc gõ tiếng Anh ` gõ như thường, kiểu gõ VIQR hay keymap tuỳ chỉnh dùng phím
   nào để bỏ dấu thì phím đó vẫn bỏ dấu. Cửa sổ cài đặt cho đổi phím mở menu sang Shift+~ như ibus-unikey hoặc
   tắt, và đổi phím của từng chế độ (#55).
+- Bấm chuột vào một mục của menu ` để chọn chế độ, hoặc dùng mũi tên trên bảng menu; bản IBus cũng hiện được
+  bảng chọn của Ngó Sen, để dành cho các tính năng sắp bật (#74).
 
 ### Thay đổi
 
