@@ -41,10 +41,18 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
 - Ở game SDL trong phiên X11, Ngó Sen xoá chữ bằng phím BackSpace bấm qua XTEST như bản fcitx5, thay vì commit
   chữ mới khi chưa xoá được chữ cũ; gói Debian và openSUSE thêm `libxcb-xtest` (#69).
+- Ở ô đi qua GNOME Shell, khi gõ gạch chân hay đang tiếng Anh mà GNOME 50.0–50.3 chưa chạy extension, Ngó Sen
+  xoá chữ đã gõ qua chữ quanh con trỏ thay vì chuyển phím BackSpace mà GNOME bỏ đi; cần cho Cứu chữ, hai lần
+  cách thành ". " và gõ tắt khi tiếng Anh sắp có (#72).
+
+### Sửa
+
+- Gõ Sen trên GNOME: Firefox và các app báo được chữ quanh con trỏ nay gõ thẳng chính xác hơn, vì Ngó Sen xoá được bằng phím BackSpace khi bản chữ app báo đã cũ. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím này nên gói kèm một extension sửa lỗi, và Ngó Sen tự bật extension một lần sau khi đăng nhập lại; chưa chạy thì chữ gạch chân. Gói này nay không cài chung được với `fcitx5-ngosen` vì cả hai cài cùng extension (#64).
 
 ### Tài liệu
 
-- Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`, và kho APT, pacman, zypper của Ngó Sen không còn phát gói này.
+- Cài và gỡ nay bằng trình quản lý gói, từ release của repo này. `install.sh` của `ngosen/ngosen` không còn tuỳ chọn `--ibus`.
+- Kho APT, pacman, zypper của Ngó Sen phát lại gói này từ lõi `ngosen-1.8.2-1` (ngosen/ngosen#598); README chỉ cách thêm kho để `apt upgrade`, `pacman -Syu`, `zypper up` tự lên version mới (#65).
 
 ## [1.1.3-1] — 01/11/2026
 

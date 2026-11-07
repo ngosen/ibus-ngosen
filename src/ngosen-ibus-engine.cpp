@@ -11,6 +11,7 @@
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-mode-menu.h"
 #include "ngosen-ibus-resources.h"
+#include "ngosen-ibus-shell.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
 #include "ngosen-pointer.h"
@@ -79,6 +80,14 @@ namespace {
     // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
     std::atomic<unsigned> clicksSeen{0};
 
+    void                  applyTypingMode(ngosen::IBusHost& host) {
+        realMode = typingMode();
+        host.setDirectTyping(realMode == ngosen::Mode::Sen);
+        // Every mode needs to know whether the Shell drops forwarded keys; the extension is still
+        // enabled only for Sen.
+        ngosen::watchShell(ngosen::SettingsPaths::fromEnvironment().extensionEnabledMark());
+    }
+
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
         std::unique_ptr<ngosen::TypingState> state;
@@ -95,8 +104,7 @@ namespace {
             state->commitBuffer();
             state->resetAfterAppCommit(false);
             englishOn = english;
-            realMode  = typingMode();
-            host->setDirectTyping(realMode == ngosen::Mode::Sen);
+            applyTypingMode(*host);
             // As on focus-in: the per-field checks of Sen start over.
             if (realMode == ngosen::Mode::Sen)
                 state->activate(ngosen::Mode::Sen, true);
@@ -118,8 +126,7 @@ namespace {
             resources().reloadIfChanged();
             if (generation == resources().generation())
                 return languageChanged;
-            realMode = typingMode();
-            host->setDirectTyping(realMode == ngosen::Mode::Sen);
+            applyTypingMode(*host);
             state->setEngine();
             generation = resources().generation();
             return languageChanged;
@@ -565,8 +572,7 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
     // A settings change seen by no engine yet still reaches the new one.
-    realMode = typingMode();
-    session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
+    applyTypingMode(*session->host);
     self->session = session;
 }
 
