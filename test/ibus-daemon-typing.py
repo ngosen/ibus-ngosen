@@ -673,6 +673,7 @@ check(
     "direct, X11 app: the held cursor key keeps its keycode",
     (app.events, app.passed),
 )
+check(app.text == "xin việt", "direct, X11 app: the word before the held cursor key", app.text)
 app.close()
 
 # A click on X11 resets the context and moves the cursor the app reports.
