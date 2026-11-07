@@ -142,6 +142,7 @@ namespace {
         check(readSettings(parseIni(std::string(FcitxSettings) + fcitxKeys)).toggleKeys == std::vector<std::string>{"Alt+z"},
               "the fcitx5 edition's key list is imported, up to its first missing index");
         check(readSettings(parseIni(std::string(FcitxSettings) + "[ToggleKey]\n")).toggleKeys.empty(), "a key turned off in the fcitx5 edition stays off");
+        check(readSettings(parseIni(std::string(FcitxSettings) + "[ToggleKey]\n0=\n")).toggleKeys.empty(), "an empty fcitx5 key entry turns the key off");
     }
 
     void testModeMenuSettings() {
