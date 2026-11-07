@@ -141,6 +141,18 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
+    // XIM clients under Xwayland send no reset on a click, and the X server's clicks are not watched there.
+    // A field that declares its text but sends it empty or late (kitty, Konsole) shows no cursor move either.
+    bool IBusHost::seesCursorMoves() const {
+        if (clicksWatched.load(std::memory_order_acquire))
+            return true;
+        const Field f = field();
+        if (!f.surroundingText || ngosen::surroundingTextLags(f))
+            return false;
+        const Surrounding s = surrounding();
+        return s.isValid() && !s.text().empty();
+    }
+
     bool IBusHost::typesWithKeysBesideText() const {
         return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }

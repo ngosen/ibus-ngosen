@@ -541,6 +541,39 @@ if no_x:
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
     check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
+    # Without its text a field shows a click only by a reset, which XIM clients never send. With the
+    # underline the core could still delete with forwarded keys, so only the engine holds the offer back.
+    set_setting("DirectTyping", "False")
+
+    def toggle(app):
+        app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
+        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
+        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
+        app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
+        pump(300)
+
+    app = App("retype-no-text", surrounding=False)
+    app.type("vieetj")
+    toggle(app)
+    check(
+        not os.path.exists(mark) and app.text == "vieetj",
+        "no click watcher, field without text: no retype",
+        app.text,
+    )
+    app.close()
+    # kitty and Konsole declare their text but always send it empty.
+    app = App("retype-empty-text")
+    app.report = lambda: app.ic.set_surrounding_text(IBus.Text.new_from_string(""), 0, 0)
+    app.report()
+    toggle(app)
+    app.type("vieetj")
+    toggle(app)
+    check(
+        not os.path.exists(mark) and app.text == "vieetj",
+        "no click watcher, field sending its text empty: no retype",
+        app.text,
+    )
+    app.close()
     finish()
 
 open(log_path, "w").close()
@@ -1114,7 +1147,11 @@ check(
 tap_ctrl_shift(app, IBus.ModifierType.MOD2_MASK)
 check(not os.path.exists(english_mark), "toggle: a tap with NumLock on switches back", english_mark)
 app.type(" vieetj ")
-check(app.text == "việt vieetj việt ", "toggle: Vietnamese again", app.text)
+check(
+    app.text == "việt việt việt ",
+    "toggle: Vietnamese again, with the English word retyped",
+    app.text,
+)
 app.close()
 
 app = App("toggle-not-a-tap")
@@ -1394,9 +1431,94 @@ check(
     setting("DirectTyping"),
 )
 app.close()
+
+
+# Cứu chữ: English typed by mistake is retyped once Vietnamese comes back.
+def typed_in_english(app, keys):
+    tap_ctrl_shift(app)
+    app.type(keys)
+
+
+set_setting("DirectTyping", "False")
+app = menu_app("retype-at-once")
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: every word takes marks, so it is retyped at once", app.text)
+app.key(IBus.KEY_Tab)
+pump(300)
+check(app.text == "vieetj", "retype: Tab puts back what was typed", app.text)
+app.close()
+
+# A word Telex leaves alone may be English on purpose, so the change is only offered.
+app = menu_app("retype-offer")
+typed_in_english(app, "xin chaof the")
+tap_ctrl_shift(app)
+check(
+    app.menu == ["xin chaof the → xin chào the"] and app.text == "xin chaof the",
+    "retype: the offer is in the candidate list",
+    (app.menu, app.text),
+)
+app.key(IBus.KEY_Return)
+pump(300)
+check(app.text == "xin chào the" and app.menu is None, "retype: Enter takes the offer", app.text)
+app.close()
+
+app = menu_app("retype-click")
+typed_in_english(app, "xin chaof the")
+tap_ctrl_shift(app)
+panel.candidate_clicked(0, 1, 0)
+pump(300)
+check(app.text == "xin chào the", "retype: a click on the offer takes it", app.text)
+app.close()
 bus.release_name(IBus.SERVICE_PANEL)
 pump(300)
+
+app = menu_app("retype-focus")
+typed_in_english(app, "vieetj")
+app.ic.focus_out()
+pump(200)
+app.ic.focus_in()
+pump(200)
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: keys typed before a focus change are forgotten", app.text)
+app.close()
+
+# Without its text a field shows a click only by a reset, or to the engine watching clicks.
+app = App("retype-reset", surrounding=False)
+typed_in_english(app, "vieetj")
+app.ic.reset()
+pump(100)
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: keys typed before a reset are forgotten", app.text)
+app.close()
+
+app = App("retype-no-text", surrounding=False)
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: offered where the engine watches clicks", app.text)
+app.close()
+
+set_setting("DirectTyping", "True")
+app = App("gtk3-im:gedit")
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: Gõ Sen retypes too", app.text)
+app.close()
 set_setting("DirectTyping", "False")
+
+set_setting("RetypeAfterSwitch", "False")
+app = App("retype-off")
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: off in the settings", app.text)
+app.close()
+set_setting("RetypeAfterSwitch", "True")
 
 set_setting("ToggleKey", "Alt+z")
 app = App("toggle-note")

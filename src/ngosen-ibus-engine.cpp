@@ -105,9 +105,9 @@ namespace {
             state->resetAfterAppCommit(false);
             englishOn = english;
             applyTypingMode(*host);
-            // As on focus-in: the per-field checks of Sen start over.
+            // Still the same field, so as in fcitx5 Sen keeps what it learned of it and the keys for Cứu chữ.
             if (realMode == ngosen::Mode::Sen)
-                state->activate(ngosen::Mode::Sen, true);
+                state->activate(ngosen::Mode::Sen, false);
         }
 
         // Only between words: a new engine would drop the word being typed. True when the
@@ -176,6 +176,9 @@ namespace {
         showLanguageItem(engine);
         showLanguage(engine);
         session.showsNotice = true;
+        // A click moving the cursor must be seen, or the offer would replace text somewhere else.
+        if (!englishOn && session.host->seesCursorMoves())
+            session.state->offerRetype();
     }
 
     // True when the app must not see this key.
@@ -481,6 +484,7 @@ namespace {
         session->tap = {};
         closeModeMenu(engine, *session);
         session->state->resetAfterAppCommit(true);
+        session->state->forgetKeysWhileOff();
         session->host->setFocus(false);
         session->host->forgetReportedText();
     }
@@ -503,6 +507,7 @@ namespace {
         if (session == nullptr)
             return;
         closeModeMenu(engine, *session);
+        session->state->fieldResetWhileOff();
         // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
         // straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
