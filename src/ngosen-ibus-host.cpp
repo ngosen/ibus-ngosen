@@ -108,7 +108,7 @@ namespace ngosen {
         ibus_engine_delete_surrounding_text(engine_, offset, size);
     }
 
-    // The core picks these keys only for apps that drop forwarded ones (SDL, WPS), as with fcitx5.
+    // The core presses keys only where forwarded ones do not reach the app, as with fcitx5.
     bool IBusHost::pressSystemKeys(int count) {
         if (xtestAvailable())
             return xtestSendKeys(count);

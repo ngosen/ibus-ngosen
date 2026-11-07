@@ -38,7 +38,7 @@ namespace {
         setXTestSenderForTest({});
     }
 
-    // Under Xwayland only apps that take sent key events get them.
+    // Under Xwayland only apps the core marks as taking sent key events get them.
     void testXSend() {
         IBusEngine       engine{};
         IBusHost         host(&engine);
@@ -48,7 +48,7 @@ namespace {
             return true;
         });
         host.setClient("qt5-im:wps");
-        check(host.pressSystemKeys(3) && sent == std::vector<int>{3}, "WPS under Xwayland gets sent key events");
+        check(host.pressSystemKeys(3) && sent == std::vector<int>{3}, "an app that takes sent keys gets them under Xwayland");
         sent.clear();
         host.setClient("gtk3-im:gedit");
         check(!host.pressSystemKeys(3) && sent.empty(), "other apps under Xwayland get no sent keys");

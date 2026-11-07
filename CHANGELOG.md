@@ -38,10 +38,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   (ngosen/ngosen#591), cùng các sửa của lõi cho Firefox và Chrome trên GNOME; cửa sổ cài đặt dùng font của hệ thống
   thay cho Xanh Mono; tuỳ chọn "Không phải đầu từ" đổi tên thành "Trong từ" như bản fcitx5 (#67).
 - Dùng lõi Ngó Sen `ngosen-1.8.2-1`: Cứu chữ hết xoá nhầm chữ khi bấm chuột sang chỗ khác ngay sau phím chuyển
-  Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604).
-- Ở game SDL và WPS, Ngó Sen xoá chữ bằng phím BackSpace bấm qua X (XTEST trong phiên X11, gửi thẳng cho WPS
-  qua Xwayland) như bản fcitx5, thay vì commit chữ mới khi chưa xoá được chữ cũ; gói Debian và openSUSE thêm
-  `libxcb-xtest`.
+  Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
+- Ở game SDL trong phiên X11, Ngó Sen xoá chữ bằng phím BackSpace bấm qua XTEST như bản fcitx5, thay vì commit
+  chữ mới khi chưa xoá được chữ cũ; gói Debian và openSUSE thêm `libxcb-xtest` (#69).
 
 ### Tài liệu
 
