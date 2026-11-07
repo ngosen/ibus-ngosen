@@ -10,6 +10,7 @@
 #include "ngosen-log.h"
 #include "ngosen-xtest.h"
 
+#include <algorithm>
 #include <libintl.h>
 
 namespace ngosen {
@@ -184,6 +185,7 @@ namespace ngosen {
     void IBusHost::resetPanel() {
         preedit_.clear();
         status_.clear();
+        list_.reset();
     }
 
     void IBusHost::refreshPreedit() {
@@ -197,23 +199,128 @@ namespace ngosen {
     }
 
     void IBusHost::refreshPanel() {
-        ibus_engine_update_auxiliary_text(engine_, ibus_text_new_from_string(status_.c_str()), !status_.empty());
+        showTable();
+        showAuxiliary();
     }
 
-    void IBusHost::showCandidates(const std::vector<std::string>& /*labels*/, int /*pageSize*/, std::function<void(size_t)> /*onPick*/) {
-        NGOSEN_WARN("The IBus edition has no candidate list");
+    void IBusHost::showTable() {
+        if (menuOpen_)
+            return;
+        if (!list_) {
+            if (tableShown_)
+                ibus_engine_hide_lookup_table(engine_);
+            tableShown_ = false;
+            return;
+        }
+        const auto       pageSize = static_cast<guint>(list_->pageSize);
+        IBusLookupTable* table    = ibus_lookup_table_new(pageSize, static_cast<guint>(list_->cursor), TRUE, FALSE);
+        ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
+        for (const auto& label : list_->labels)
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(label.c_str()));
+        // Labels count within the page, as the number keys the core picks with do.
+        const auto labels = std::min<size_t>(pageSize, list_->labels.size());
+        for (guint i = 0; i < labels; ++i) {
+            gchar* label = g_strdup_printf("%u.", (i + 1) % 10);
+            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label));
+            g_free(label);
+        }
+        ibus_engine_update_lookup_table(engine_, table, TRUE);
+        tableShown_ = true;
     }
 
-    void                         IBusHost::hideCandidates() {}
+    void IBusHost::showAuxiliary() {
+        const std::string& text = status_.empty() ? notice_ : status_;
+        ibus_engine_update_auxiliary_text(engine_, ibus_text_new_from_string(text.c_str()), !text.empty());
+    }
+
+    void IBusHost::setMenuOpen(bool open) {
+        menuOpen_ = open;
+        // The menu draws over the table, which the panel no longer shows.
+        if (open)
+            tableShown_ = false;
+        else
+            showTable();
+    }
+
+    void IBusHost::showNotice(const std::string& text) {
+        notice_ = text;
+        showAuxiliary();
+    }
+
+    void IBusHost::hideNotice() {
+        notice_.clear();
+        showAuxiliary();
+    }
+
+    void IBusHost::showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick) {
+        if (labels.empty()) {
+            list_.reset();
+            return;
+        }
+        list_ = CandidateList{labels, std::max(pageSize, 1), 0, std::move(onPick)};
+    }
+
+    void IBusHost::hideCandidates() {
+        list_.reset();
+    }
 
     std::optional<CandidatePage> IBusHost::candidates() const {
-        return std::nullopt;
+        if (!list_)
+            return std::nullopt;
+        CandidatePage page;
+        page.total    = static_cast<int>(list_->labels.size());
+        page.pageSize = list_->pageSize;
+        page.cursor   = list_->cursor;
+        page.page     = list_->cursor / list_->pageSize;
+        page.hasPrev  = page.page > 0;
+        page.hasNext  = (page.page + 1) * page.pageSize < page.total;
+        return page;
     }
 
-    void IBusHost::highlightCandidate(int /*index*/) {}
-    void IBusHost::nextCandidatePage() {}
-    void IBusHost::prevCandidatePage() {}
-    void IBusHost::pickCandidate(int /*index*/) {}
+    void IBusHost::highlightCandidate(int index) {
+        if (list_ && index >= 0 && index < static_cast<int>(list_->labels.size()))
+            list_->cursor = index;
+    }
+
+    // The panel shows the page with the highlight, so a new page highlights its first candidate.
+    void IBusHost::nextCandidatePage() {
+        if (const auto page = candidates(); page && page->hasNext)
+            list_->cursor = (page->page + 1) * page->pageSize;
+    }
+
+    void IBusHost::prevCandidatePage() {
+        if (const auto page = candidates(); page && page->hasPrev)
+            list_->cursor = (page->page - 1) * page->pageSize;
+    }
+
+    void IBusHost::pickCandidate(int index) {
+        if (!list_ || index < 0 || index >= static_cast<int>(list_->labels.size()))
+            return;
+        // The callback may hide or replace the list it belongs to.
+        const auto onPick = list_->onPick;
+        if (onPick)
+            onPick(static_cast<size_t>(index));
+    }
+
+    void IBusHost::clickCandidate(guint indexInPage) {
+        if (const auto page = candidates())
+            pickCandidate(page->page * page->pageSize + static_cast<int>(indexInPage));
+    }
+
+    void IBusHost::moveCandidateCursor(int step) {
+        if (!list_)
+            return;
+        highlightCandidate(list_->cursor + step);
+        showTable();
+    }
+
+    void IBusHost::turnCandidatePage(int step) {
+        if (step > 0)
+            nextCandidatePage();
+        else
+            prevCandidatePage();
+        showTable();
+    }
 
     void IBusHost::setStatus(const std::string& text) {
         status_ = text;

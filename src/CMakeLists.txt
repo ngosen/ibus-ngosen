@@ -17,6 +17,8 @@ target_compile_definitions(ngosen_ibus PUBLIC GETTEXT_PACKAGE="ibus-ngosen" NGOS
 target_compile_definitions(ngosen_ibus PRIVATE NGOSEN_IBUS_DICTIONARY="${NGOSEN_IBUS_DATADIR}/vietnamese.cm.dict"
                                                NGOSEN_SETUP_EXEC="${NGOSEN_SETUP_EXEC}")
 target_link_libraries(ngosen_ibus PUBLIC ngosen_core PkgConfig::IBus)
+# The core calls the shell's log (ngosen-log.h), so the shell comes after it on the link line too.
+target_link_libraries(ngosen_core INTERFACE ngosen_ibus)
 
 add_executable(ibus-engine-ngosen main.cpp)
 target_compile_definitions(ibus-engine-ngosen PRIVATE NGOSEN_LOCALEDIR="${CMAKE_INSTALL_FULL_LOCALEDIR}")
