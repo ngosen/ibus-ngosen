@@ -16,6 +16,8 @@ BuildRequires:  python3
 BuildRequires:  gettext
 
 Requires:       ibus >= 1.5.27
+# Both install the forward-keys extension of the same name.
+Conflicts:      fcitx5-ngosen
 # Loaded with dlopen to watch clicks on X11, which the automatic requires miss.
 Requires:       libxcb
 Requires:       python3-gobject
@@ -47,6 +49,7 @@ with. The word being typed is underlined until it is done.
 %{_libexecdir}/ibus-setup-ngosen
 %{_datadir}/ibus/component/ngosen.xml
 %{_datadir}/ibus-ngosen/
+%{_datadir}/gnome-shell/extensions/forward-keys@ngosen.github.io/
 %{_datadir}/applications/ibus-setup-ngosen.desktop
 %{_datadir}/metainfo/io.github.ngosen.IBusNgoSen.metainfo.xml
 %{_datadir}/icons/hicolor/scalable/apps/ibus-ngosen.svg

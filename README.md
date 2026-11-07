@@ -10,7 +10,8 @@ Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là 
 được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép (thử nghiệm)"
 (mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ quanh con trỏ (trên X11 là
 app GTK, Qt, Firefox, LibreOffice và terminal của GNOME, KDE, Xfce; Chrome, app Electron, xterm, Alacritty và
-kitty vẫn gạch chân). Trên Wayland, chữ đầu tiên trong ô còn trống, và chữ bắt đầu giữa một chữ khác, vẫn được
+kitty vẫn gạch chân). GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
+extension sửa lỗi này. Bật tuỳ chọn và đăng nhập lại một lần là Ngó Sen tự bật extension; chưa chạy thì chữ vẫn
 gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
 
 Nếu cần Cứu chữ, Cứu dấu, phím chuyển Anh/Việt riêng, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
