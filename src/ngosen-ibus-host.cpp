@@ -142,15 +142,9 @@ namespace ngosen {
     }
 
     // XIM clients under Xwayland send no reset on a click, and the X server's clicks are not watched there.
-    // A field that declares its text but sends it empty or late (kitty, Konsole) shows no cursor move either.
+    // Apps reset on a click, and the core then forgets what it noted; XIM clients never send that reset.
     bool IBusHost::seesCursorMoves() const {
-        if (clicksWatched.load(std::memory_order_acquire))
-            return true;
-        const Field f = field();
-        if (!f.surroundingText || ngosen::surroundingTextLags(f))
-            return false;
-        const Surrounding s = surrounding();
-        return s.isValid() && !s.text().empty();
+        return clicksWatched.load(std::memory_order_acquire) || client_ != "xim";
     }
 
     bool IBusHost::typesWithKeysBesideText() const {

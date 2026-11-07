@@ -517,6 +517,18 @@ with open(settings_path) as f:
         settings_path,
     )
 
+
+def tap_ctrl_shift(app, extra=0, hold_ms=0):
+    ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
+    release = IBus.ModifierType.RELEASE_MASK
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl)
+    pump(hold_ms)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl | shift | release)
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra | ctrl | release)
+    pump(200)
+
+
 # Without a click watcher a reset may be a click, so X11 apps keep the preedit.
 if no_x:
     set_setting("DirectTyping", "True")
@@ -541,39 +553,27 @@ if no_x:
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
     check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
-    # Without its text a field shows a click only by a reset, which XIM clients never send. With the
-    # underline the core could still delete with forwarded keys, so only the engine holds the offer back.
+    # Other apps reset on a click, which forgets the keys typed in English; XIM clients never do. With
+    # the underline the core could still delete with forwarded keys, so only the engine holds the offer back.
     set_setting("DirectTyping", "False")
-
-    def toggle(app):
-        app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
-        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
-        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
-        app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
-        pump(300)
-
-    app = App("retype-no-text", surrounding=False)
+    app = App("xim", surrounding=False)
     app.type("vieetj")
-    toggle(app)
+    tap_ctrl_shift(app)
+    pump(100)
     check(
         not os.path.exists(mark) and app.text == "vieetj",
-        "no click watcher, field without text: no retype",
+        "no click watcher, XIM client: no retype",
         app.text,
     )
     app.close()
-    # kitty and Konsole declare their text but always send it empty.
-    app = App("retype-empty-text")
-    app.report = lambda: app.ic.set_surrounding_text(IBus.Text.new_from_string(""), 0, 0)
-    app.report()
-    toggle(app)
-    app.type("vieetj")
-    toggle(app)
-    check(
-        not os.path.exists(mark) and app.text == "vieetj",
-        "no click watcher, field sending its text empty: no retype",
-        app.text,
-    )
-    app.close()
+    for name, kwargs in (("gtk3-im:gedit", {}), ("retype-no-text", {"surrounding": False})):
+        app = App(name, **kwargs)
+        tap_ctrl_shift(app)
+        app.type("vieetj")
+        tap_ctrl_shift(app)
+        pump(100)
+        check(app.text == "việt", f"no click watcher, {name}: retyped", app.text)
+        app.close()
     finish()
 
 open(log_path, "w").close()
@@ -1124,17 +1124,6 @@ english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
 # Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
-def tap_ctrl_shift(app, extra=0, hold_ms=0):
-    ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
-    release = IBus.ModifierType.RELEASE_MASK
-    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra)
-    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl)
-    pump(hold_ms)
-    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl | shift | release)
-    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra | ctrl | release)
-    pump(200)
-
-
 app = App("toggle")
 app.type("vieetj")
 tap_ctrl_shift(app)
