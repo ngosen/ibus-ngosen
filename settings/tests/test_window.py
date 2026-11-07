@@ -23,7 +23,7 @@ class Vietnamese:
         # A real catalog answers the empty string with its header.
         if not text:
             return "Project-Id-Version: ibus-ngosen"
-        return {"Everywhere": "Mọi nơi", "Non-Start": "Không phải đầu từ"}.get(text, text)
+        return {"Everywhere": "Mọi nơi", "Non-Start": "Trong từ"}.get(text, text)
 
 
 class FakeEngine:

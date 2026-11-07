@@ -290,7 +290,7 @@ def load(engine):
         return None, None, str(error)
 
 
-def main(engine_path, localedir, font_path, version):
+def main(engine_path, localedir, version):
     i18n.setup(localedir)
     app = Adw.Application(application_id=APP_ID)
 
@@ -298,7 +298,6 @@ def main(engine_path, localedir, font_path, version):
         if app.get_active_window() is not None:
             app.get_active_window().present()
             return
-        brand.load_font(font_path)
         brand.install_css()
         engine = Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path))
         store, names, error = load(engine)
