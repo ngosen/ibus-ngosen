@@ -100,3 +100,39 @@ jobs:
         env:
           NGOSEN_WINDOW_TESTS: required
         run: ctest --test-dir build --output-on-failure --no-tests=error -j"$(nproc)"
+
+  # A memory error in the engine stops typing in every app until IBus restarts it.
+  sanitizers:
+    name: Tests with ASan and UBSan
+    runs-on: ubuntu-latest
+    container: fedora:44
+    # The engine runs under ibus-daemon, whose output the tests do not show, so reports go to files.
+    env:
+      ASAN_OPTIONS: log_path=/tmp/sanitizer
+      UBSAN_OPTIONS: print_stacktrace=1:log_path=/tmp/sanitizer
+    steps:
+      - name: Install dependencies
+        run: >-
+          dnf install -y gcc-c++ cmake ninja-build git pkgconf-pkg-config ibus-devel cargo rust libasan libubsan
+          ibus python3-gobject dbus-daemon gettext gtk4 libadwaita xorg-x11-server-Xvfb libXtst libxcb glibc-langpack-en
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+      - name: Build
+        run: |
+          san="-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_FLAGS="$san" -DCMAKE_CXX_FLAGS="$san" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined"
+          cmake --build build -j"$(nproc)"
+      # The excluded tests run no C++ of ours; the build job covers them.
+      - name: Test
+        env:
+          NGOSEN_WINDOW_TESTS: required
+        run: >-
+          ctest --test-dir build --output-on-failure --no-tests=error -j"$(nproc)"
+          -E '^(desktop_file|metainfo|translations|install_environment)$'
+      - name: Sanitizer reports
+        if: failure()
+        run: cat /tmp/sanitizer.* 2>/dev/null || echo "No sanitizer report"
