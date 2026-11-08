@@ -301,6 +301,12 @@ class App:
 SHELL_INTERFACES = """<node>
   <interface name="org.gnome.Shell">
     <property name="ShellVersion" type="s" access="read"/>
+    <property name="OverviewActive" type="b" access="read"/>
+  </interface>
+  <interface name="org.gnome.Shell.Introspect">
+    <method name="GetRunningApplications">
+      <arg type="a{sa{sv}}" direction="out"/>
+    </method>
   </interface>
   <interface name="org.gnome.Shell.Extensions">
     <method name="GetExtensionInfo">
@@ -324,24 +330,49 @@ class FakeShell:
         self.version_reads = 0
         self.info_fails = False
         self.owner = 0
+        self.overview = False
+        # The app ids GetRunningApplications lists, the focused one first.
+        self.apps = []
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         # Its replacement needs a newer GLib than the oldest system supported.
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             for interface in Gio.DBusNodeInfo.new_for_xml(SHELL_INTERFACES).interfaces:
-                self.bus.register_object(
-                    "/org/gnome/Shell", interface, self.on_method, self.on_property, None
-                )
+                path = "/org/gnome/Shell"
+                if interface.name == "org.gnome.Shell.Introspect":
+                    path += "/Introspect"
+                self.bus.register_object(path, interface, self.on_method, self.on_property, None)
 
-    def on_property(self, *_args):
+    def on_property(self, _bus, _sender, _path, _interface, name):
+        if name == "OverviewActive":
+            return GLib.Variant("b", self.overview)
         self.version_reads += 1
         return GLib.Variant("s", self.version)
+
+    def running_apps(self):
+        focused = {"active-on-seats": GLib.Variant("as", ["seat0"])}
+        return {app: focused if i == 0 else {} for i, app in enumerate(self.apps)}
+
+    def set_overview(self, active):
+        self.overview = active
+        self.bus.emit_signal(
+            None,
+            "/org/gnome/Shell",
+            "org.freedesktop.DBus.Properties",
+            "PropertiesChanged",
+            GLib.Variant(
+                "(sa{sv}as)", ("org.gnome.Shell", {"OverviewActive": GLib.Variant("b", active)}, [])
+            ),
+        )
+        pump(300)
 
     def info(self):
         return {} if self.state is None else {"state": GLib.Variant("d", self.state)}
 
     def on_method(self, _bus, _sender, _path, _interface, method, _args, invocation):
-        if method == "GetExtensionInfo" and self.info_fails:
+        if method == "GetRunningApplications":
+            invocation.return_value(GLib.Variant("(a{sa{sv}})", (self.running_apps(),)))
+        elif method == "GetExtensionInfo" and self.info_fails:
             invocation.return_dbus_error("org.freedesktop.DBus.Error.Failed", "busy")
         elif method == "GetExtensionInfo":
             invocation.return_value(GLib.Variant("(a{sv})", (self.info(),)))
@@ -373,6 +404,52 @@ class FakeShell:
             "org.gnome.Shell.Extensions",
             "ExtensionStateChanged",
             GLib.Variant("(sa{sv})", ("forward-keys@ngosen.github.io", self.info())),
+        )
+        pump(300)
+
+
+# GNOME's portal asks the Shell for the running apps whenever the focused one changes, from a
+# connection of its own.
+class FakePortal:
+    def __init__(self):
+        address = Gio.dbus_address_get_for_bus_sync(Gio.BusType.SESSION, None)
+        flags = (
+            Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT
+            | Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION
+        )
+        self.bus = Gio.DBusConnection.new_for_address_sync(address, flags, None, None)
+        self.owner = 0
+
+    def start(self):
+        self.owner = Gio.bus_own_name_on_connection(
+            self.bus,
+            "org.freedesktop.impl.portal.desktop.gnome",
+            Gio.BusNameOwnerFlags.NONE,
+            None,
+            None,
+        )
+        pump(300)
+
+    def stop(self):
+        if self.owner:
+            Gio.bus_unown_name(self.owner)
+            self.owner = 0
+            pump(300)
+
+    def focus(self, *apps):
+        shell.apps = list(apps)
+        self.bus.call(
+            "org.gnome.Shell",
+            "/org/gnome/Shell/Introspect",
+            "org.gnome.Shell.Introspect",
+            "GetRunningApplications",
+            None,
+            GLib.VariantType("(a{sa{sv}})"),
+            Gio.DBusCallFlags.NONE,
+            2000,
+            None,
+            # Without a callback GDBus tells the Shell no reply is wanted.
+            lambda bus, result: bus.call_finish(result),
         )
         pump(300)
 
@@ -581,6 +658,77 @@ if no_x:
         pump(100)
         check(app.text == "vieetj", f"no click watcher, {name}: no retype", app.text)
         app.close()
+    # On Wayland GNOME Shell relays every app under its own name, and the portal's traffic names
+    # the focused one.
+    shell.start("50.1", EXTENSION_ACTIVE)
+    portal = FakePortal()
+    portal.start()
+
+    # Whether the action logs that whole line, so a line logged before it cannot pass a check.
+    def names_after(action, line):
+        start = os.path.getsize(log_path)
+        action()
+        with open(log_path, "rb") as f:
+            f.seek(start)
+            return f"GNOME focused app: {line}\n".encode() in f.read()
+
+    def terminal_commits(*apps):
+        if apps:
+            portal.focus(*apps)
+        app = App("gnome-shell", purpose=IBus.InputPurpose.TERMINAL)
+        app.type("xin vieetj ")
+        pump(500)
+        app.close()
+        return app
+
+    set_setting("DirectTyping", "True")
+    app = terminal_commits("org.gnome.Ptyxis.desktop", "Alacritty.desktop")
+    check(any("\x7f" in c for c in app.commits), "portal, Ptyxis: erases with DEL", app.commits)
+    # Alacritty would paste the DEL once bracketed paste is on.
+    app = terminal_commits("Alacritty.desktop", "org.gnome.Ptyxis.desktop")
+    check(app.text == "xin việt ", "portal, Alacritty: the words", app.text)
+    check(not any("\x7f" in c for c in app.commits), "portal, Alacritty: no DEL", app.commits)
+
+    # The app is named with the underline too.
+    set_setting("DirectTyping", "False")
+    write_file(
+        os.path.join(
+            os.environ["XDG_DATA_HOME"],
+            "flatpak/exports/share/applications/com.example.Viewer.desktop",
+        ),
+        "[Desktop Entry]\nName=Viewer\nStartupWMClass=imgview\n",
+    )
+    viewer = "imgview, from the portal"
+    check(
+        names_after(lambda: portal.focus("com.example.Viewer.desktop"), viewer),
+        "portal, Flatpak: its own name",
+        log_path,
+    )
+    check(
+        names_after(lambda: shell.set_overview(True), "gnome-shell-overview, from OverviewActive"),
+        "portal, overview: the search box",
+        log_path,
+    )
+    check(
+        names_after(lambda: shell.set_overview(False), viewer),
+        "portal, overview closed: the app again",
+        log_path,
+    )
+    check(
+        names_after(lambda: portal.focus("window:12"), "unknown, from nothing"),
+        "portal, no .desktop file: unknown",
+        log_path,
+    )
+    set_setting("DirectTyping", "True")
+    portal.focus("Alacritty.desktop")
+    # A restarted Shell names the app only at the next app change.
+    shell.start("50.1", EXTENSION_ACTIVE)
+    app = terminal_commits()
+    check(any("\x7f" in c for c in app.commits), "portal, Shell restarted: no name", app.commits)
+    app = terminal_commits("Alacritty.desktop")
+    check(not any("\x7f" in c for c in app.commits), "portal, Shell restarted: named", app.commits)
+    portal.stop()
+    shell.stop()
     finish()
 
 open(log_path, "w").close()

@@ -8,6 +8,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-keys.cpp
     ngosen-ibus-menu.cpp
     ngosen-ibus-mode-menu.cpp
+    ngosen-ibus-program-name.cpp
     ngosen-ibus-resources.cpp
     ngosen-ibus-shell.cpp
     ngosen-ibus-typing-log.cpp

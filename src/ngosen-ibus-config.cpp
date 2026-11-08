@@ -23,15 +23,15 @@
 
 namespace ngosen {
 
-    namespace {
+    std::string trimIni(const std::string& text) {
+        const auto begin = text.find_first_not_of(" \t\r\f\v");
+        if (begin == std::string::npos)
+            return "";
+        const auto end = text.find_last_not_of(" \t\r\f\v");
+        return text.substr(begin, end - begin + 1);
+    }
 
-        std::string trim(const std::string& text) {
-            const auto begin = text.find_first_not_of(" \t\r\f\v");
-            if (begin == std::string::npos)
-                return "";
-            const auto end = text.find_last_not_of(" \t\r\f\v");
-            return text.substr(begin, end - begin + 1);
-        }
+    namespace {
 
         constexpr char EscapedChars[]  = "\\\"\n\f\r\t\v";
         constexpr char EscapeLetters[] = "\\\"nfrtv";
@@ -195,7 +195,7 @@ namespace ngosen {
         std::istringstream                  lines(text);
         std::string                         line;
         while (std::getline(lines, line)) {
-            line = trim(line);
+            line = trimIni(line);
             if (line.empty() || line[0] == '#')
                 continue;
             if (line.front() == '[' && line.back() == ']') {
@@ -342,7 +342,7 @@ namespace ngosen {
         bool               top = true;
         bool               set = false;
         while (std::getline(lines, line)) {
-            const std::string trimmed = trim(line);
+            const std::string trimmed = trimIni(line);
             const auto        equal   = trimmed.find('=');
             if (!trimmed.empty() && trimmed.front() == '[' && trimmed.back() == ']') {
                 // A key after a section header would belong to that section.

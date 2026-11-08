@@ -11,10 +11,17 @@ cp "${NGOSEN_IBUS_SIMPLE_COMPONENT:-/usr/share/ibus/component/simple.xml}" "$tmp
 export HOME="$tmp" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_DATA_HOME="$tmp/data" XDG_STATE_HOME="$tmp/state"
 export IBUS_ADDRESS="unix:path=$tmp/ibus" IBUS_COMPONENT_PATH="$tmp/component" NGOSEN_IBUS_DICTIONARY="$3"
 export NGOSEN_DEBUG=1 NGOSEN_IBUS_LOG_FILE="$tmp/engine.log"
+# Where Flatpak puts the desktop files of the apps a user installs.
+export XDG_DATA_DIRS="$tmp/data/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 # A private X server, so the engine watches the clicks the test makes and never the desktop's.
 # NGOSEN_TEST_NO_X runs with none, where the engine cannot watch clicks.
 unset WAYLAND_DISPLAY DISPLAY
-export XDG_SESSION_TYPE=x11
+# With no X server the engine sees no clicks, as on Wayland.
+if [ -n "$NGOSEN_TEST_NO_X" ]; then
+    export XDG_SESSION_TYPE=wayland
+else
+    export XDG_SESSION_TYPE=x11
+fi
 xvfb=
 if [ -z "$NGOSEN_TEST_NO_X" ]; then
     Xvfb -displayfd 3 -nolisten tcp 3>"$tmp/display" >/dev/null 2>&1 &

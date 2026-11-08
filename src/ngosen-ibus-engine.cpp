@@ -20,8 +20,6 @@
 #include <glib/gi18n-lib.h>
 #include <algorithm>
 #include <atomic>
-#include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <string>
 
@@ -632,9 +630,7 @@ namespace ngosen {
     std::thread watchClicks(const std::atomic<bool>& stop) {
         // On Wayland the X server sees clicks on X11 windows only, and a missed click would let a
         // reset be ignored after the cursor moved.
-        const char* wayland = std::getenv("WAYLAND_DISPLAY");
-        const char* session = std::getenv("XDG_SESSION_TYPE");
-        if ((wayland != nullptr && *wayland != 0) || (session != nullptr && std::strcmp(session, "wayland") == 0))
+        if (isWaylandSession())
             return {};
         return std::thread([&stop] {
             clicksWatched.store(true, std::memory_order_release);

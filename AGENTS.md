@@ -13,8 +13,10 @@ careful human wrote it, and the person sending it must be able to explain every 
 The IBus engine of Ngó Sen for GNOME, where IBus is the input method framework. It types with an
 underlined preedit, as IBus engines usually do. An option types straight into fields that report the
 text around the cursor; that path handles how GNOME Shell passes deletions on and keeps the core's
-click check, and fixes for single apps still belong to fcitx5-ngosen. A tap of Ctrl+Shift switches between Vietnamese and English inside the engine,
-for every app at once; Super+Space still switches GNOME's input sources.
+click check. On Wayland the engine learns the name of the app GNOME Shell relays from GNOME's portal,
+as fcitx5 does, so the core's rules for single apps run here too; such rules still go into the core. A
+tap of Ctrl+Shift switches between Vietnamese and English inside the engine, for every app at once;
+Super+Space still switches GNOME's input sources.
 
 ## Code
 
