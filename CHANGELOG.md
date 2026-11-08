@@ -50,9 +50,6 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Thay đổi
 
-- Dùng lõi Ngó Sen `ngosen-1.8.1-1`: Gõ Sen hết nuốt hoặc đảo thứ tự phím mũi tên, Home, End bấm ngay sau một chữ
-  (ngosen/ngosen#591), cùng các sửa của lõi cho Firefox và Chrome trên GNOME; cửa sổ cài đặt dùng font của hệ thống
-  thay cho Xanh Mono; tuỳ chọn "Không phải đầu từ" đổi tên thành "Trong từ" như bản fcitx5 (#67).
 - Dùng lõi Ngó Sen `ngosen-1.8.2-1`: Cứu chữ hết xoá nhầm chữ khi bấm chuột sang chỗ khác ngay sau phím chuyển
   Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
 - Dùng lõi Ngó Sen mới nhất trên nhánh phát triển: trong terminal như Ptyxis và GNOME Terminal, Ngó Sen sửa chữ đã
@@ -70,6 +67,21 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Gõ Sen hiện chữ ngay khi thêm dấu trong Ptyxis, GNOME Console và GNOME Terminal (ngosen/ngosen#630, #83).
 - Đổi cài đặt khi đang gõ dở một chữ, từ menu hay cửa sổ cài đặt, không còn làm mất chữ đó: cài đặt mới áp dụng
   khi gõ xong chữ (#83).
+
+## [1.1.4-1] — 08/11/2026
+
+Gõ Sen trên GNOME xoá chữ bằng phím BackSpace khi app báo chữ cũ, kèm extension cho GNOME 50.0–50.3; Gõ Sen
+hết nuốt phím mũi tên, Home, End bấm ngay sau một chữ. Dùng lõi Ngó Sen `ngosen-1.8.1-1`. Tải gói ở
+[release ibus-ngosen-1.1.4-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.4-1).
+
+### Thay đổi
+
+- Dùng lõi Ngó Sen `ngosen-1.8.1-1`: Gõ Sen hết nuốt hoặc đảo thứ tự phím mũi tên, Home, End bấm ngay sau một chữ
+  (ngosen/ngosen#591), cùng các sửa của lõi cho Firefox và Chrome trên GNOME; cửa sổ cài đặt dùng font của hệ thống
+  thay cho Xanh Mono; tuỳ chọn "Không phải đầu từ" đổi tên thành "Trong từ" như bản fcitx5 (#67).
+
+### Sửa
+
 - Gõ Sen trên GNOME: Firefox và các app báo được chữ quanh con trỏ nay gõ thẳng chính xác hơn, vì Ngó Sen xoá được bằng phím BackSpace khi bản chữ app báo đã cũ. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím này nên gói kèm một extension sửa lỗi, và Ngó Sen tự bật extension một lần sau khi đăng nhập lại; chưa chạy thì chữ gạch chân. Gói này nay không cài chung được với `fcitx5-ngosen` vì cả hai cài cùng extension (#64).
 
 ### Tài liệu
