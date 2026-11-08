@@ -8,6 +8,11 @@ target_link_libraries(ibus-host-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_host COMMAND ibus-host-test)
 set_tests_properties(ibus_host PROPERTIES LABELS "unit;ibus")
 
+add_executable(ibus-program-name-test ibus-program-name.cpp)
+target_link_libraries(ibus-program-name-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_program_name COMMAND ibus-program-name-test)
+set_tests_properties(ibus_program_name PROPERTIES LABELS "unit;ibus")
+
 add_test(NAME install_environment COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install-environment.sh ${PROJECT_BINARY_DIR})
 set_tests_properties(install_environment PROPERTIES LABELS "unit")
 
