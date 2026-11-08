@@ -199,7 +199,7 @@ def _shell_findings(facts):
                 WARN,
                 _("Ngó Sen cannot tell which app is in use"),
                 _(
-                    "Install xdg-desktop-portal-gnome, then log out and back in; fixes for single apps need it."
+                    "Install xdg-desktop-portal-gnome, then log out and back in; fixes for single apps and the typing mode picked for each app need it."
                 ),
             )
         )

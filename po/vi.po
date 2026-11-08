@@ -528,8 +528,8 @@ msgstr "Đã bật extension GNOME."
 msgid "Ngó Sen cannot tell which app is in use"
 msgstr "Ngó Sen không biết đang gõ trong app nào"
 
-msgid "Install xdg-desktop-portal-gnome, then log out and back in; fixes for single apps need it."
-msgstr "Cài xdg-desktop-portal-gnome rồi đăng xuất và đăng nhập lại; các bản sửa riêng cho từng app cần nó."
+msgid "Install xdg-desktop-portal-gnome, then log out and back in; fixes for single apps and the typing mode picked for each app need it."
+msgstr "Cài xdg-desktop-portal-gnome rồi đăng xuất và đăng nhập lại; các bản sửa riêng cho từng app và cách gõ chọn riêng cho từng app cần nó."
 
 msgid "Steps to type Vietnamese"
 msgstr "Các bước để gõ tiếng Việt"
