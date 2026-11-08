@@ -454,28 +454,20 @@ namespace ngosen {
     }
 
     namespace {
-        // Settings this edition began to read after the first import; a file without one never chose it.
+        // A key this edition began to read after the first import is missing from the file, as it was
+        // never chosen here: take fcitx5's value, or the default.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
             std::string text;
             if (!readFile(paths.settingsFile(), text))
                 return true;
-            const auto                         top = parseIni(text).top;
-            std::string                        fcitx;
-            const bool                         hasFcitx = readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx);
-            const auto                         fcitxTop = hasFcitx ? parseIni(fcitx).top : std::map<std::string, std::string>{};
-            const auto                         defaults = defaultSettings().options;
-            const std::pair<const char*, bool> later[]  = {
-                {"RetypeAfterSwitch", defaults.retypeAfterSwitch},
-                {"DoubleSpaceToPeriod", defaults.doubleSpaceToPeriod},
-                {"DoubleHyphenToEmDash", defaults.doubleHyphenToEmDash},
-                {"EnableMacroInOffMode", defaults.enableMacroInOffMode},
-            };
+            const IniFile current = parseIni(text);
+            std::string   fcitx;
+            readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx);
+            const IniFile     wanted = parseIni(settingsText(readSettings(parseIni(fcitx))));
             const std::string before = text;
-            for (auto [key, on] : later) {
-                if (top.count(key) != 0)
-                    continue;
-                Reader{fcitxTop}.boolean(key, on);
-                text = withSetting(text, key, boolText(on));
+            for (const auto& [key, value] : wanted.top) {
+                if (current.top.count(key) == 0)
+                    text = withSetting(text, key, value);
             }
             return text == before || write(paths.settingsFile(), text);
         }

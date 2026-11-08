@@ -324,7 +324,7 @@ namespace {
     }
 
     // A settings file without an option added later: fcitx5's choice comes over once, else the default.
-    void testRetypeCarriedOver(const fs::path& root) {
+    void testLaterSettingsCarriedOver(const fs::path& root) {
         const auto retype = [](const SettingsPaths& paths) {
             const auto top = parseIni(read(paths.settingsFile())).top;
             return top.count("RetypeAfterSwitch") != 0 ? top.at("RetypeAfterSwitch") : std::string("missing");
@@ -355,6 +355,16 @@ namespace {
         const IBusSettings carried = readSettings(parseIni(read(paths.settingsFile())));
         check(carried.options.enableMacroInOffMode, "macros in English turned on in fcitx5 comes over");
         check(carried.options.doubleSpaceToPeriod && carried.options.doubleHyphenToEmDash, "punctuation turned on in fcitx5 comes over");
+
+        paths = pathsIn(root / "macro-chosen-here");
+        earlier(paths, "EnableMacroInOffMode=False\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "EnableMacroInOffMode=True\n");
+        check(prepareSettings(paths) && !readSettings(parseIni(read(paths.settingsFile()))).options.enableMacroInOffMode, "macros in English chosen in this edition are kept");
+
+        paths = pathsIn(root / "macro-no-fcitx5");
+        earlier(paths, "InputMethod=VNI\n");
+        check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("EnableMacroInOffMode") == "False",
+              "macros in English take the default without fcitx5 settings");
     }
 
     // A run killed after any write leaves files the next run finishes into the same result.
@@ -404,7 +414,7 @@ int main() {
     testNoOverwrite(root / "keep");
     testDefaults(root / "defaults");
     testKilledHalfway(root / "killed");
-    testRetypeCarriedOver(root / "retype");
+    testLaterSettingsCarriedOver(root / "later");
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all settings checks passed\n";
