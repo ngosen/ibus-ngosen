@@ -24,7 +24,7 @@ namespace ngosen {
         }
 
         std::optional<AppMode> modeOfNumber(int number) {
-            // The fcitx5 edition still reads the numbers of the modes Sen replaced as Sen.
+            // As fcitx5 reads the file: 1, 3, 4 and 8 are Sen too.
             switch (number) {
                 case 1:
                 case SenNumber:
@@ -34,6 +34,14 @@ namespace ngosen {
                 case PreeditNumber: return AppMode::Preedit;
                 default: return std::nullopt;
             }
+        }
+
+        // The line's app, or empty for a comment or a line with no app.
+        std::string appOfLine(const std::string& line) {
+            const size_t equals = line.find('=');
+            if (line.empty() || line[0] == '#' || equals == std::string::npos)
+                return {};
+            return modeAppName(trimIni(line.substr(0, equals)));
         }
 
     } // namespace
@@ -107,14 +115,23 @@ namespace ngosen {
         if (app.empty())
             return false;
         reloadIfChanged();
-        AppModeMap changed = modes_;
+        // Only the app's own lines change, so comments and the modes fcitx5 keeps here (Off, Emoji) stay.
+        std::string old;
+        if (mtime_)
+            readFile(path_, old);
+        std::string        text;
+        std::istringstream lines(old);
+        for (std::string line; std::getline(lines, line);) {
+            if (appOfLine(line) != app)
+                text += line + "\n";
+        }
+        if (text.empty())
+            text = appModesText({});
         if (mode)
-            changed[app] = *mode;
-        else
-            changed.erase(app);
-        if (!write_(path_, appModesText(changed)))
+            text += app + "=" + std::to_string(*mode == AppMode::Sen ? SenNumber : PreeditNumber) + "\n";
+        if (!write_(path_, text))
             return false;
-        modes_ = std::move(changed);
+        modes_ = parseAppModes(text);
         // The write is ours; reading it back would change nothing.
         std::error_code error;
         if (const auto time = std::filesystem::last_write_time(path_, error); !error)

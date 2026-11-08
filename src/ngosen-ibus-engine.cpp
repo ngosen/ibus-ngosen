@@ -309,7 +309,9 @@ namespace {
         if (!english)
             keepMode(session, item.mode);
         NGOSEN_INFO("Mode menu: " + item.label);
-        session.host->showNotice(item.label);
+        // Default names no mode, and in an app without a name of its own it changes nothing.
+        const char* shown = realMode == ngosen::Mode::Off ? _("English") : realMode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
+        session.host->showNotice(item.mode == ngosen::MenuMode::Default ? shown : item.label);
         session.showsNotice = true;
     }
 
@@ -379,7 +381,8 @@ namespace {
             return FALSE;
         if (session->applyNewSettings())
             showLanguageItem(engine);
-        session->followApp();
+        if ((state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
+            session->followApp();
         // Shown until the next key typed, not the release of the toggle key itself.
         if (session->showsNotice && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
             session->host->hideNotice();

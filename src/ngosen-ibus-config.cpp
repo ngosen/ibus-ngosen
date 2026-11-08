@@ -488,6 +488,7 @@ namespace ngosen {
                 {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
                 {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
                 {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))

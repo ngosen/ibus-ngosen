@@ -62,9 +62,16 @@ namespace {
 
         check(!modes.set("", AppMode::Sen) && !modes.find(""), "an app without a name keeps nothing");
 
+        writeFileAtomically(path, "# mine\ncode=0\nfirefox.desktop=5\nkate=2\n");
+        fs::last_write_time(path, fs::last_write_time(path) + std::chrono::seconds(4));
+        check(modes.set("firefox", AppMode::Sen), "a pick over a file written elsewhere");
+        std::string text;
+        readFile(path, text);
+        check(text == "# mine\ncode=0\nkate=2\nfirefox=2\n", "a pick changes only the app's own lines: " + text);
+
         AppModes failing(path, [](const std::string&, const std::string&) { return false; });
         check(!failing.set("kate", AppMode::Sen), "a failed write is reported");
-        check(failing.find("kate") == AppMode::Preedit, "a failed write changes nothing");
+        check(failing.find("kate") == AppMode::Sen, "a failed write changes nothing");
     }
 
 } // namespace
