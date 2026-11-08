@@ -21,8 +21,10 @@ OK, WARN, FAIL = "ok", "warn", "fail"
 
 ENGINE = "ngosen"
 GNOME_SOURCES = "org.gnome.desktop.input-sources"
+FORWARD_KEYS = "forward-keys@ngosen.github.io"
 
 START_IBUS, RESTART_IBUS, ADD_SOURCE = "start-ibus", "restart-ibus", "add-source"
+ENABLE_FORWARD_KEYS = "enable-forward-keys"
 
 
 @dataclass
@@ -41,6 +43,11 @@ class Facts:
     ibus_version: str = ""
     ngosen_version: str = ""
     gnome_shell_version: str = ""
+    # Sen, which types straight into the app; the underlined mode works around the keys GNOME drops.
+    direct_typing: bool = False
+    # What gnome-extensions info says; empty when GNOME Shell does not know the extension.
+    forward_keys_state: str = ""
+    has_gnome_portal: bool = False
 
     @property
     def session(self):
@@ -84,6 +91,7 @@ def steps(facts):
         found.append(_restart_finding(_("IBus started before Ngó Sen was installed")))
     found += _source_findings(facts)
     found += _variable_findings(facts)
+    found += _shell_findings(facts)
     if facts.fcitx_running:
         found.append(
             Finding(
@@ -171,11 +179,52 @@ def _variable_findings(facts):
     return found
 
 
+def drops_forwarded_keys(version):
+    """GNOME 50.0 to 50.3 drop the keys an input method sends on to the app (mutter#4853)."""
+    match = re.match(r"50\.(\d+)$", version)
+    return match is not None and int(match.group(1)) <= 3
+
+
+def _shell_findings(facts):
+    if not facts.gnome:
+        return []
+    found = []
+    version = facts.gnome_shell_version
+    if facts.direct_typing and drops_forwarded_keys(version):
+        found.append(_forward_keys_finding(facts.forward_keys_state, version))
+    # On Wayland only the portal tells which app has the focus.
+    if facts.session == "wayland" and not facts.has_gnome_portal:
+        found.append(
+            Finding(
+                WARN,
+                _("Ngó Sen cannot tell which app is in use"),
+                _(
+                    "Install xdg-desktop-portal-gnome, then log out and back in; fixes for single apps need it."
+                ),
+            )
+        )
+    return found
+
+
+def _forward_keys_finding(state, version):
+    if state == "ACTIVE":
+        return Finding(OK, _("The fix for GNOME {} is on").format(version))
+    title = _("Sen keeps the underline: GNOME {} drops the keys Ngó Sen sends").format(version)
+    # GNOME reads a newly installed extension only at login.
+    if not state:
+        fix = _("Log out and back in. If this stays, update Ngó Sen or update to GNOME 50.4.")
+        return Finding(WARN, title, fix)
+    fix = _("Turn on the fix: gnome-extensions enable {}. If keys still drop, log out and back in.")
+    command = f"gnome-extensions enable {FORWARD_KEYS}"
+    return Finding(WARN, title, fix.format(FORWARD_KEYS), ENABLE_FORWARD_KEYS, command)
+
+
 def fix_label(action):
     return {
         START_IBUS: _("Start IBus"),
         RESTART_IBUS: _("Restart IBus"),
         ADD_SOURCE: _("Add Ngó Sen"),
+        ENABLE_FORWARD_KEYS: _("Turn on"),
     }[action]
 
 
@@ -184,15 +233,16 @@ def fixed_message(action):
         START_IBUS: _("Started IBus."),
         RESTART_IBUS: _("Restarted IBus."),
         ADD_SOURCE: _("Added Ngó Sen to the input sources."),
+        ENABLE_FORWARD_KEYS: _("Turned on the GNOME extension."),
     }[action]
 
 
 # IBus takes a moment to come back on the bus after starting.
-SETTLE_MS = {START_IBUS: 1500, RESTART_IBUS: 1500}
+SETTLE_MS = {START_IBUS: 1500, RESTART_IBUS: 1500, ENABLE_FORWARD_KEYS: 500}
 # A slow machine may need longer; check again this often before calling the fix failed.
 RETRY_MS, RETRIES = 500, 8
 # Restarting last, so it also picks up the input source just added.
-FIX_ORDER = (START_IBUS, ADD_SOURCE, RESTART_IBUS)
+FIX_ORDER = (START_IBUS, ADD_SOURCE, ENABLE_FORWARD_KEYS, RESTART_IBUS)
 
 
 def summary(found, failed=()):
@@ -241,6 +291,10 @@ def run_fix(action, sources):
         return _succeeds(["ibus", "restart"]), None
     if action == START_IBUS:
         return _succeeds(["ibus", "start"]), None
+    if action == ENABLE_FORWARD_KEYS:
+        if not _succeeds(["gnome-extensions", "enable", FORWARD_KEYS]):
+            return False, None
+        return True, lambda: _succeeds(["gnome-extensions", "disable", FORWARD_KEYS])
     return False, None
 
 
@@ -331,7 +385,11 @@ def report(facts, findings):
         " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES),
     ]
     if facts.gnome_shell_version:
-        lines.append(f"GNOME Shell {facts.gnome_shell_version}")
+        line = f"GNOME Shell {facts.gnome_shell_version}"
+        line += f", forward-keys: {facts.forward_keys_state or 'not installed'}"
+        line += f", portal: {'installed' if facts.has_gnome_portal else 'not installed'}"
+        mode = "Sen" if facts.direct_typing else "underlined"
+        lines.append(f"{line}, mode: {mode}")
     lines.append("")
     lines += [f"[{marks[f.level]}] {f.title}" for f in findings] or ["[OK] no setup problem found"]
     return "\n".join(lines)
@@ -346,10 +404,11 @@ def issue_url(facts, text):
     return f"{ISSUE_URL}?{urlencode(query)}"
 
 
-def collect(sources, ngosen_version="", env=None, proc="/proc"):
+def collect(sources, ngosen_version="", env=None, proc="/proc", direct_typing=False):
     env = dict(os.environ if env is None else env)
     facts = Facts(env={k: v for k, v in env.items() if k in IM_VARIABLES or k.startswith("XDG_")})
     facts.ngosen_version = ngosen_version
+    facts.direct_typing = direct_typing
     facts.distro = _distro()
     facts.ibus_running = ibus_owns_session(env, proc)
     if facts.ibus_running:
@@ -361,9 +420,27 @@ def collect(sources, ngosen_version="", env=None, proc="/proc"):
     if facts.gnome:
         facts.gnome_shell_version = _output(["gnome-shell", "--version"]).strip()
         facts.gnome_shell_version = facts.gnome_shell_version.removeprefix("GNOME Shell ")
+        facts.forward_keys_state = extension_state(
+            _output(["gnome-extensions", "info", FORWARD_KEYS])
+        )
+        facts.has_gnome_portal = has_gnome_portal(env)
         current = sources.get()
         facts.in_gnome_sources = None if current is None else ("ibus", ENGINE) in current
     return facts
+
+
+def extension_state(text):
+    """The State line of gnome-extensions info, which prints nothing for an unknown extension."""
+    match = re.search(r"^\s*State:\s*(.+?)\s*$", text, re.M)
+    return match.group(1) if match else ""
+
+
+def has_gnome_portal(env):
+    """Whether xdg-desktop-portal-gnome is installed, which D-Bus starts when asked."""
+    home = env.get("XDG_DATA_HOME") or os.path.join(env.get("HOME", ""), ".local", "share")
+    dirs = [home] + (env.get("XDG_DATA_DIRS") or "/usr/local/share").split(":") + ["/usr/share"]
+    name = "dbus-1/services/org.freedesktop.impl.portal.desktop.gnome.service"
+    return any(os.path.exists(os.path.join(d, name)) for d in dirs if d)
 
 
 def engine_listed(text):

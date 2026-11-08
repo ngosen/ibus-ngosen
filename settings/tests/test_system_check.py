@@ -4,6 +4,7 @@
 import os
 import tempfile
 import unittest
+from unittest import mock
 from urllib.parse import parse_qs, urlparse
 
 from ngosen_settings import system_check as sc
@@ -15,7 +16,7 @@ READY = {**GNOME_X11, "XMODIFIERS": "@im=ibus"}
 
 
 def facts(env=READY, **kwargs):
-    defaults = {"ibus_running": True, "in_gnome_sources": True}
+    defaults = {"ibus_running": True, "in_gnome_sources": True, "has_gnome_portal": True}
     return sc.Facts(env=dict(env), **{**defaults, **kwargs})
 
 
@@ -167,6 +168,72 @@ class FactsTest(unittest.TestCase):
         self.assertTrue(sc.ibus_owns_session(env, self.proc))
 
 
+GNOME_WAYLAND = {**READY, "XDG_SESSION_TYPE": "wayland"}
+
+
+class ShellStepsTest(unittest.TestCase):
+    def forward_keys(self, version, state, **kwargs):
+        args = {"direct_typing": True, **kwargs}
+        f = facts(gnome_shell_version=version, forward_keys_state=state, **args)
+        return [x for x in sc.steps(f) if "GNOME" in x.title and version in x.title]
+
+    def test_forward_keys_step_on_gnome_50_0_to_50_3_with_sen(self):
+        (step,) = self.forward_keys("50.1", "INACTIVE")
+        self.assertEqual((step.level, step.action), (sc.WARN, sc.ENABLE_FORWARD_KEYS))
+        self.assertEqual(step.command, "gnome-extensions enable " + sc.FORWARD_KEYS)
+        (step,) = self.forward_keys("50.3", "")
+        self.assertEqual((step.level, step.action), (sc.WARN, ""))
+        (step,) = self.forward_keys("50.0", "ACTIVE")
+        self.assertEqual(step.level, sc.OK)
+
+    def test_no_forward_keys_step_elsewhere(self):
+        for version in ("50.4", "49.2", "46.0", "51.0"):
+            self.assertEqual(self.forward_keys(version, "INACTIVE"), [], version)
+        # The underlined mode sends no keys on to the app.
+        self.assertEqual(self.forward_keys("50.1", "INACTIVE", direct_typing=False), [])
+
+    def test_missing_portal_warns_on_gnome_wayland(self):
+        title = "Ngó Sen cannot tell which app is in use"
+        missing = facts(GNOME_WAYLAND, has_gnome_portal=False)
+        self.assertEqual(titles(sc.steps(missing), sc.WARN), [title])
+        self.assertEqual(titles(sc.steps(facts(GNOME_WAYLAND)), sc.WARN), [])
+        # On X11 apps reach IBus themselves, not through GNOME Shell.
+        self.assertEqual(titles(sc.steps(facts(has_gnome_portal=False)), sc.WARN), [])
+
+    def test_enable_forward_keys_and_undo(self):
+        with mock.patch.object(sc, "_succeeds", return_value=True) as run:
+            done, undo = sc.run_fix(sc.ENABLE_FORWARD_KEYS, FakeSources())
+            self.assertTrue(done)
+            self.assertTrue(undo())
+        self.assertEqual(
+            [c.args[0] for c in run.call_args_list],
+            [["gnome-extensions", verb, sc.FORWARD_KEYS] for verb in ("enable", "disable")],
+        )
+        with mock.patch.object(sc, "_succeeds", return_value=False):
+            self.assertEqual(sc.run_fix(sc.ENABLE_FORWARD_KEYS, FakeSources()), (False, None))
+
+    def test_extension_state(self):
+        text = "forward-keys@ngosen.github.io\n  Name: Forward keys\n  State: ACTIVE\n"
+        self.assertEqual(sc.extension_state(text), "ACTIVE")
+        self.assertEqual(sc.extension_state(""), "")
+
+    def test_gnome_portal_found_in_the_data_dirs(self):
+        exists = os.path.exists
+        with tempfile.TemporaryDirectory() as data:
+            env = {"XDG_DATA_DIRS": data, "XDG_DATA_HOME": os.path.join(data, "home")}
+            # Only the test's folder counts, whatever this machine has installed.
+            only_data = mock.patch.object(
+                os.path, "exists", side_effect=lambda p: p.startswith(data) and exists(p)
+            )
+            with only_data:
+                self.assertFalse(sc.has_gnome_portal(env))
+                services = os.path.join(data, "dbus-1", "services")
+                os.makedirs(services)
+                name = "org.freedesktop.impl.portal.desktop.gnome.service"
+                open(os.path.join(services, name), "w").close()
+                self.assertTrue(sc.has_gnome_portal(env))
+
+
 class ReportTest(unittest.TestCase):
     def test_report_and_issue_link(self):
         f = facts(GNOME_X11, ngosen_version="1.2.0", distro="Ubuntu 24.04", ibus_version="1.5.29")
@@ -176,6 +243,16 @@ class ReportTest(unittest.TestCase):
             text.startswith("Ngó Sen 1.2.0, IBus 1.5.29\nUbuntu 24.04, UBUNTU:GNOME, x11")
         )
         self.assertIn("XMODIFIERS=(unset)", text)
+        shell = facts(
+            GNOME_X11,
+            gnome_shell_version="50.1",
+            forward_keys_state="ACTIVE",
+            has_gnome_portal=False,
+        )
+        self.assertIn(
+            "GNOME Shell 50.1, forward-keys: ACTIVE, portal: not installed, mode: underlined",
+            sc.report(shell, []),
+        )
         query = parse_qs(urlparse(sc.issue_url(f, text)).query)
         self.assertEqual(query["setup"], [text])
         self.assertEqual(query["template"], ["bug_report.yml"])
