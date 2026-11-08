@@ -1356,12 +1356,16 @@ english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
 # A macro typed in English: the abbreviation is already in the app, so it must be deleted first.
-def macro_in_english(name, before="", **kwargs):
+def macro_in_english(name, before="", between=None, after="", **kwargs):
     app = App(name, **kwargs)
     app.type(before)
     tap_ctrl_shift(app)
-    app.type("ko ")
+    app.type("ko")
+    if between:
+        between()
+    app.type(" ")
     tap_ctrl_shift(app)
+    app.type(after)
     app.close()
     return app.text
 
@@ -1375,6 +1379,18 @@ got = macro_in_english("macro-english-no-text", surrounding=False)
 check(got == "không ", "macro in English: a field without text deletes with keys", got)
 got = macro_in_english("gnome-shell", surrounding=False)
 check(got == "ko ", "macro in English: a field that can delete nothing keeps the abbreviation", got)
+# A reload makes a new engine, which would no longer hold the abbreviation the app shows.
+got = macro_in_english(
+    "macro-english-reload", between=lambda: set_setting("DoubleSpaceToPeriod", "True")
+)
+set_setting("DoubleSpaceToPeriod", "False")
+check(got == "không ", "macro in English: a settings change before the space keeps the word", got)
+# The change still applies once the word is over; two spaces become ". " only in Vietnamese.
+got = macro_in_english(
+    "reload-after-word", between=lambda: set_setting("DoubleSpaceToPeriod", "True"), after="ban  "
+)
+set_setting("DoubleSpaceToPeriod", "False")
+check(got == "không ban. ", "macro in English: a change held for the word applies after it", got)
 got = macro_in_english("gnome-shell", before="xin ")
 check(got == "xin không ", "macro in English: GNOME Shell deletes through the text", got)
 set_setting("EnableMacroInOffMode", "False")

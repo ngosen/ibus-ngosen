@@ -108,10 +108,10 @@ namespace {
                 state->activate(ngosen::Mode::Sen, false);
         }
 
-        // Only between words: a new engine would drop the word being typed. True when the
-        // language changed, which the menu has to show.
+        // Only between words: a new engine would drop the word being typed, underlined or already in
+        // the field. True when the language changed, which the menu has to show.
         bool applyNewSettings() {
-            if (host->hasPreedit())
+            if (host->hasPreedit() || state->holdsWord())
                 return false;
             bool languageChanged = false;
             // The toggle key writes the marker too; reading it back then changes nothing.
@@ -420,7 +420,7 @@ namespace {
             return;
         if (Session* session = sessionOf(focusedEngine))
             session->applyNewSettings();
-        // The file, not settings(): with a word underlined the reload waits, and the menu would
+        // The file, not settings(): in the middle of a word the reload waits, and the menu would
         // take back a click.
         showMenu(focusedEngine, resources().savedSettings());
     }
