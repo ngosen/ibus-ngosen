@@ -294,6 +294,7 @@ namespace ngosen {
         read.shortcut("ShortcutSen", settings.shortcutSen);
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
+        read.shortcut("ShortcutDefault", settings.shortcutDefault);
         return settings;
     }
 
@@ -331,6 +332,7 @@ namespace ngosen {
         line("ShortcutSen", settings.shortcutSen);
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
+        line("ShortcutDefault", settings.shortcutDefault);
         return out.str();
     }
 
@@ -379,6 +381,10 @@ namespace ngosen {
     }
     std::string SettingsPaths::dictionaryFile() const {
         return dataDir + "/vietnamese.cm.dict";
+    }
+    // The fcitx5 edition's name, so the two files look alike.
+    std::string SettingsPaths::appModesFile() const {
+        return configDir + "/ngosen-app-rules.conf";
     }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";

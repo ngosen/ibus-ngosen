@@ -3,6 +3,11 @@ target_link_libraries(ibus-config-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_config COMMAND ibus-config-test)
 set_tests_properties(ibus_config PROPERTIES LABELS "unit;ibus")
 
+add_executable(ibus-app-modes-test ibus-app-modes.cpp)
+target_link_libraries(ibus-app-modes-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_app_modes COMMAND ibus-app-modes-test)
+set_tests_properties(ibus_app_modes PROPERTIES LABELS "unit;ibus")
+
 add_executable(ibus-host-test ibus-host.cpp)
 target_link_libraries(ibus-host-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_host COMMAND ibus-host-test)

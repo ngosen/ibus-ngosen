@@ -47,6 +47,7 @@ namespace ngosen {
             {MenuMode::Sen, _("Sen"), ibus_keyval_from_name(settings.shortcutSen.c_str())},
             {MenuMode::Preedit, _("Preedit"), ibus_keyval_from_name(settings.shortcutPreedit.c_str())},
             {MenuMode::English, _("English"), ibus_keyval_from_name(settings.shortcutOff.c_str())},
+            {MenuMode::Default, _("Default Typing"), ibus_keyval_from_name(settings.shortcutDefault.c_str())},
         };
     }
 

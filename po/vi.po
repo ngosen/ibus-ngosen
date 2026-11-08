@@ -73,6 +73,10 @@ msgstr "Tiếng Việt"
 msgid "English"
 msgstr "Tiếng Anh"
 
+#: src/ngosen-ibus-mode-menu.cpp
+msgid "Default Typing"
+msgstr "Chế độ gõ mặc định"
+
 #: settings/ngosen_settings/options.py
 msgid "Output Charset"
 msgstr "Bảng mã"
@@ -851,8 +855,11 @@ msgstr "Phím tắt cho Gạch chân"
 msgid "Shortcut for English"
 msgstr "Phím tắt cho Tiếng Anh"
 
-msgid "Opens a menu to switch every app to Sen, underlined typing or English. Press it twice to type the key itself; in English it types as usual."
-msgstr "Mở menu để chuyển mọi app sang Gõ Sen, gạch chân hay tiếng Anh. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
+msgid "Shortcut for Default Typing"
+msgstr "Phím tắt cho Mặc định"
+
+msgid "Opens a menu to pick Sen or underlined typing for the app in use, or English for every app. Press it twice to type the key itself; in English it types as usual."
+msgstr "Mở menu để chọn Gõ Sen hay gạch chân cho app đang dùng, hoặc tiếng Anh cho mọi app. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
 
 msgid "Mode menu"
 msgstr "Menu chế độ gõ"

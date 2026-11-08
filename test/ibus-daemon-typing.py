@@ -1557,7 +1557,7 @@ check(app.text == "việt ", "toggle: there and back before the first word", app
 app.close()
 
 
-# The mode menu: its key ends the word, then a key picks Sen, underline or English for every app.
+# The mode menu: its key ends the word, then a key picks Sen or underline for the app, or English for every app.
 def menu_app(name):
     app = App(name)
     # Without this capability IBus draws the menu in its own panel instead of telling the app.
@@ -1589,50 +1589,104 @@ def setting(key):
         return next((line for line in f.read().splitlines() if line.startswith(key + "=")), "")
 
 
+app_modes_path = os.path.join(config_dir, "ngosen-app-rules.conf")
+
+
+def app_mode(name):
+    if not os.path.exists(app_modes_path):
+        return ""
+    with open(app_modes_path) as f:
+        return next((line for line in f.read().splitlines() if line.startswith(name + "=")), "")
+
+
 app = menu_app("menu")
 app.type("vieetj")
 app.key(IBus.KEY_grave)
 pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
-check(items == ["Gõ Sen", "Gạch chân", "Tiếng Anh"], "menu: ` shows the three modes", items)
+check(
+    items == ["Gõ Sen", "Gạch chân", "Tiếng Anh", "Chế độ gõ mặc định"],
+    "menu: ` shows the four items",
+    items,
+)
 app.key(IBus.KEY_q)
 pump(500)
 check(app.menu is None, "menu: a pick closes it", app.menu)
 check(
-    setting("DirectTyping") == "DirectTyping=False",
-    "menu: q turns Sen off",
-    setting("DirectTyping"),
+    app_mode("menu") == "menu=5" and setting("DirectTyping") == "DirectTyping=True",
+    "menu: q keeps the underline for this app only",
+    (app_mode("menu"), setting("DirectTyping")),
 )
-app.type(" vieetj")
+app.type(" vieetj ")
 check(
-    "việt" in app.preedits and app.text == "việt ",
+    "việt" in app.preedits and app.text == "việt việt ",
     "menu: the next word is underlined",
     app.preedits,
 )
+other = menu_app("menu-other")
+other.type("vieetj")
+check(
+    other.text == "việt" and "việt" not in other.preedits,
+    "menu: another app still types with Sen",
+    other.preedits,
+)
+other.close()
+app.ic.focus_in()
+pump(300)
+app.type("nam")
+check(
+    "nam" in app.preedits,
+    "menu: the app keeps its underline after another app had the focus",
+    app.preedits,
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_r)
+pump(500)
+check(app_mode("menu") == "", "menu: r forgets the pick for this app", app_mode("menu"))
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_1)
 pump(500)
-check(
-    setting("DirectTyping") == "DirectTyping=True", "menu: 1 turns Sen on", setting("DirectTyping")
-)
+check(app_mode("menu") == "menu=2", "menu: 1 keeps Sen for this app", app_mode("menu"))
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_grave)
 pump(200)
-check(app.text == "việt việt`", "menu: ` twice types `", app.text)
+check(app.text == "việt việt nam`", "menu: ` twice types `", app.text)
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_Escape)
 pump(200)
 check(
-    app.menu is None and app.text == "việt việt`", "menu: Esc closes it and types nothing", app.text
+    app.menu is None and app.text == "việt việt nam`",
+    "menu: Esc closes it and types nothing",
+    app.text,
 )
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_e)
 pump(500)
 check(os.path.exists(english_mark), "menu: e switches to English", english_mark)
 app.type(" vieetj`")
-check(app.text == "việt việt` vieetj`", "menu: in English ` types itself", app.text)
+check(app.text == "việt việt nam` vieetj`", "menu: in English ` types itself", app.text)
 tap_ctrl_shift(app)
+app.close()
+
+# Qt and XIM clients of any app share one name, so a pick there changes the mode every app follows.
+app = menu_app("QIBusInputContext")
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_q)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=False" and app_mode("QIBusInputContext") == "",
+    "menu: in an app without a name of its own q turns Sen off for every app",
+    (setting("DirectTyping"), app_mode("QIBusInputContext")),
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_1)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=True",
+    "menu: there 1 turns Sen on again",
+    setting("DirectTyping"),
+)
 app.close()
 
 set_setting("ModeMenuKey", "Shift+asciitilde")
@@ -1672,9 +1726,9 @@ pump(200)
 panel.candidate_clicked(0, 1, 0)
 pump(500)
 check(
-    app.menu is None and setting("DirectTyping") == "DirectTyping=True",
+    app.menu is None and app_mode("menu-click") == "menu-click=2",
     "menu: a click on Sen picks it",
-    setting("DirectTyping"),
+    app_mode("menu-click"),
 )
 app.close()
 set_setting("DirectTyping", "True")
@@ -1686,11 +1740,13 @@ pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
 check(
-    setting("DirectTyping") == "DirectTyping=False",
+    app_mode("menu-arrow") == "menu-arrow=5",
     "menu: the panel's arrow moves from Sen to the underline",
-    setting("DirectTyping"),
+    app_mode("menu-arrow"),
 )
 app.close()
+# Later checks reuse app names and expect the shared mode.
+os.remove(app_modes_path)
 
 
 # Cứu chữ: English typed by mistake is retyped once Vietnamese comes back.

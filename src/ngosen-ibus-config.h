@@ -48,6 +48,7 @@ namespace ngosen {
         std::string shortcutSen     = "1";
         std::string shortcutPreedit = "q";
         std::string shortcutOff     = "e";
+        std::string shortcutDefault = "r";
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.
@@ -71,6 +72,7 @@ namespace ngosen {
         std::string          macroFile() const;
         std::string          keymapFile() const;
         std::string          dictionaryFile() const;
+        std::string          appModesFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
