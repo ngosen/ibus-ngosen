@@ -41,7 +41,13 @@ class Window(Adw.ApplicationWindow):
         self.macros = pages.MacroPage(store, self.rows, self.save_macros)
         self.dictionary = pages.DictionaryPage(store, self.rows, self.save_words)
         self.keymap = pages.KeymapPage(store, self.rows, self.save_keymap)
-        self.check = check_page.CheckPage(sources, version, self.notify, self._count)
+        self.check = check_page.CheckPage(
+            sources,
+            version,
+            self.notify,
+            self._count,
+            lambda: store.values.get("DirectTyping") == "True",
+        )
 
         stack = Adw.ViewStack()
         typing = pages.typing_page(self.rows)

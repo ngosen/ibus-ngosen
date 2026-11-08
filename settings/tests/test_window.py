@@ -417,6 +417,12 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(len(check.rows), len(check.found))
         self.assertIn("Ngó Sen", check.report_text())
 
+    def test_check_page_reads_the_typing_mode(self):
+        self.window.store.values["DirectTyping"] = "True"
+        self.assertTrue(self.window.check.direct_typing())
+        self.window.store.values["DirectTyping"] = "False"
+        self.assertFalse(self.window.check.direct_typing())
+
     def tearDown(self):
         self.window.destroy()
         context = GLib.MainContext.default()

@@ -92,9 +92,10 @@ def _copy(text):
 
 
 class CheckPage:
-    def __init__(self, sources, ngosen_version, notify, on_count):
+    def __init__(self, sources, ngosen_version, notify, on_count, direct_typing=lambda: False):
         """notify(text, undo) shows a toast; on_count(n) gets the number of steps left."""
         self.sources = sources
+        self.direct_typing = direct_typing
         self.ngosen_version = ngosen_version
         self.notify = notify
         self.on_count = on_count
@@ -151,7 +152,9 @@ class CheckPage:
         return group
 
     def run(self):
-        self.facts = system_check.collect(self.sources, self.ngosen_version)
+        self.facts = system_check.collect(
+            self.sources, self.ngosen_version, direct_typing=self.direct_typing()
+        )
         self.found = system_check.steps(self.facts)
         self.findings = [f for f in self.found if f.level != system_check.OK]
         self._show_steps()
