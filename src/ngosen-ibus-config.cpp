@@ -483,18 +483,34 @@ namespace ngosen {
             return text == before || write(paths.settingsFile(), text);
         }
 
-        // A file from before Sen was the default says DirectTyping=False even if the user never chose it, since
-        // saving any setting writes every key, so Sen is switched on once for it.
+        // Saving any setting writes every key, so DirectTyping=False in an unmarked file may be an untouched
+        // default rather than a choice; Sen is switched on once for it.
         bool switchSenOnOnce(const SettingsPaths& paths, const FileWriter& write) {
             std::string text;
             if (fileExists(paths.senDefaultMark()) || !readFile(paths.settingsFile(), text))
                 return true;
-            if (!readSettings(parseIni(text)).directTyping) {
-                NGOSEN_INFO("Turning Sen on, now the default");
-                if (!write(paths.settingsFile(), withSetting(text, "DirectTyping", "True")))
-                    return false;
-            }
-            return write(paths.senDefaultMark(), "");
+            // The mark goes first: a failed switch leaves the underline, never a second switch later.
+            if (!write(paths.senDefaultMark(), ""))
+                return false;
+            if (readSettings(parseIni(text)).directTyping)
+                return true;
+            NGOSEN_INFO("Turning Sen on, now the default");
+            return write(paths.settingsFile(), withSetting(text, "DirectTyping", "True"));
+        }
+
+        // fcitx5 keeps Sen or the underline in Mode; Off types with Sen while Vietnamese is on, and there is no
+        // emoji picker here, so it underlines.
+        void readFcitxMode(const IniFile& fcitx, IBusSettings& settings) {
+            const auto mode = fcitx.top.find("Mode");
+            if (mode == fcitx.top.end())
+                return;
+            std::string name = mode->second;
+            for (char& c : name)
+                c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            if (name == "preedit" || name == "emoji picker")
+                settings.directTyping = false;
+            else if (name == "sen" || name == "off")
+                settings.directTyping = true;
         }
     } // namespace
 
@@ -517,9 +533,12 @@ namespace ngosen {
             IBusSettings settings = defaultSettings();
             if (!imported && readFile(paths.fcitxConfigDir + "/ngosen.conf", content)) {
                 NGOSEN_INFO("Importing the settings of the fcitx5 edition");
-                settings = readSettings(parseIni(content));
+                const IniFile fcitx = parseIni(content);
+                settings            = readSettings(fcitx);
+                readFcitxMode(fcitx, settings);
             }
-            if (!write(paths.settingsFile(), settingsText(settings)))
+            // A new file already holds the mode wanted, so it is never switched.
+            if (!write(paths.senDefaultMark(), "") || !write(paths.settingsFile(), settingsText(settings)))
                 return false;
         } else if (!addLaterSettings(paths, write)) {
             return false;

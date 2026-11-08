@@ -470,13 +470,6 @@ def finish():
     sys.exit(1 if failures else 0)
 
 
-# With the underline the Shell's dropped keys matter too, so the engine follows it from the start.
-shell = FakeShell()
-shell.start("51.0", None)
-App("gnome-shell").close()
-check(shell.version_reads > 0, "underline: GNOME Shell is followed", shell.version_reads)
-shell.stop()
-
 config_dir = os.path.join(os.environ["XDG_CONFIG_HOME"], "ngosen")
 user_dictionary = os.path.join(os.environ["XDG_DATA_HOME"], "ngosen", "vietnamese.cm.dict")
 settings_path = os.path.join(config_dir, "ngosen.conf")
@@ -497,6 +490,8 @@ def set_setting(key, value):
     write_file(settings_path, "\n".join(lines + [f"{key}={value}"]) + "\n")
 
 
+# The engine writes the settings file when it first starts.
+App("first-run").close()
 with open(settings_path) as f:
     check(
         "EnableDictionary=False" in f.read(),
@@ -512,6 +507,13 @@ check(
 )
 # The checks up to the Sen ones below are about the underline.
 set_setting("DirectTyping", "False")
+
+# With the underline the Shell's dropped keys matter too, so the engine follows it from the start.
+shell = FakeShell()
+shell.start("51.0", None)
+App("gnome-shell").close()
+check(shell.version_reads > 0, "underline: GNOME Shell is followed", shell.version_reads)
+shell.stop()
 
 app = App("space")
 app.type("vieetj ")

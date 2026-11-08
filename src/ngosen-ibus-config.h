@@ -75,7 +75,7 @@ namespace ngosen {
         std::string          appModesFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
-        // Marks Sen as switched on once for a user from before it was the default, so turning it off sticks.
+        // Marks Sen as switched on once, so turning it off afterwards sticks.
         std::string senDefaultMark() const;
         // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
         std::string englishMark() const;

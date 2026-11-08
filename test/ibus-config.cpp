@@ -397,7 +397,7 @@ namespace {
         const SettingsPaths clean = pathsIn(root / "clean");
         fill(clean);
         prepareSettings(clean);
-        for (int stopAt = 0; stopAt < 5; ++stopAt) {
+        for (int stopAt = 0; stopAt < 6; ++stopAt) {
             const SettingsPaths paths = pathsIn(root / std::to_string(stopAt));
             fill(paths);
             int        writes = 0;
@@ -423,6 +423,12 @@ namespace {
 
         write(old.settingsFile(), "InputMethod=VNI\nDirectTyping=False\n");
         check(prepareSettings(old) && parseIni(read(old.settingsFile())).top.at("DirectTyping") == "False", "Sen turned off after the switch stays off");
+
+        for (const auto& [mode, sen] : {std::pair{"Preedit", false}, {"Emoji Picker", false}, {"Sen", true}, {"OFF", true}}) {
+            const SettingsPaths fcitx = pathsIn(root / (std::string("fcitx-") + mode));
+            write(fcitx.fcitxConfigDir + "/ngosen.conf", std::string("InputMethod=VNI\nMode=") + mode + "\n");
+            check(prepareSettings(fcitx) && readSettings(parseIni(read(fcitx.settingsFile()))).directTyping == sen, std::string("the fcitx5 mode is kept on import: ") + mode);
+        }
     }
 
 } // namespace
