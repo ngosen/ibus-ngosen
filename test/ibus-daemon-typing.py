@@ -833,7 +833,11 @@ app.type("vieetj ")
 pump(500)
 check(app.text == "xin việt ", "reporting terminal: the word", app.text)
 check(app.preedits == [], "reporting terminal: no underline", app.preedits)
-check(any("\x7f" in c for c in app.commits), "reporting terminal: the commit erases with DEL", app.commits)
+check(
+    any("\x7f" in c for c in app.commits),
+    "reporting terminal: the commit erases with DEL",
+    app.commits,
+)
 check(IBus.KEY_BackSpace not in forwarded, "reporting terminal: no forwarded BackSpace", forwarded)
 app.close()
 
