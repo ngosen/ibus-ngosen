@@ -664,17 +664,13 @@ if no_x:
     portal = FakePortal()
     portal.start()
 
-    # Only what was logged since the last name found, so an earlier line cannot pass a check.
-    log_seen = [0]
-
-    def shell_names(text):
+    # Whether the action logs that whole line, so a line logged before it cannot pass a check.
+    def names_after(action, line):
+        start = os.path.getsize(log_path)
+        action()
         with open(log_path, "rb") as f:
-            f.seek(log_seen[0])
-            logged = f.read()
-        found = logged.find(text.encode())
-        if found >= 0:
-            log_seen[0] += found + len(text.encode())
-        return found >= 0
+            f.seek(start)
+            return f"GNOME focused app: {line}\n".encode() in f.read()
 
     def terminal_commits(*apps):
         if apps:
@@ -702,22 +698,27 @@ if no_x:
         ),
         "[Desktop Entry]\nName=Viewer\nStartupWMClass=imgview\n",
     )
-    portal.focus("com.example.Viewer.desktop")
-    check(shell_names("GNOME focused app: imgview"), "portal, Flatpak: its own name", log_path)
-    shell.set_overview(True)
+    viewer = "imgview, from the portal"
     check(
-        shell_names("GNOME focused app: gnome-shell-overview"),
+        names_after(lambda: portal.focus("com.example.Viewer.desktop"), viewer),
+        "portal, Flatpak: its own name",
+        log_path,
+    )
+    check(
+        names_after(lambda: shell.set_overview(True), "gnome-shell-overview, from OverviewActive"),
         "portal, overview: the search box",
         log_path,
     )
-    shell.set_overview(False)
     check(
-        shell_names("GNOME focused app: imgview"),
+        names_after(lambda: shell.set_overview(False), viewer),
         "portal, overview closed: the app again",
         log_path,
     )
-    portal.focus("window:12")
-    check(shell_names("GNOME focused app: unknown"), "portal, no .desktop file: unknown", log_path)
+    check(
+        names_after(lambda: portal.focus("window:12"), "unknown, from nothing"),
+        "portal, no .desktop file: unknown",
+        log_path,
+    )
     set_setting("DirectTyping", "True")
     portal.focus("Alacritty.desktop")
     # A restarted Shell names the app only at the next app change.
