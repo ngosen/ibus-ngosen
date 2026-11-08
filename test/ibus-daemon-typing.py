@@ -633,6 +633,37 @@ forwarded = [e for e in app.events if e[0] == "forward"]
 check(forwarded == [], "preedit, GNOME Shell: no forwarded keys", forwarded)
 app.close()
 
+# An address bar may select a completion, which a deletion through the text would take first.
+app = App("gnome-shell", purpose=IBus.InputPurpose.URL)
+app.type("xin vieetj ")
+app.key(IBus.KEY_BackSpace)
+check(
+    (app.text, app.preedit) == ("xin việt", ""),
+    "preedit, GNOME Shell, an address bar: BackSpace does not reopen the word",
+    (app.text, app.preedit),
+)
+app.close()
+
+
+# Claims its text but never sends it, as VS Code does through GNOME Shell.
+class SilentApp(App):
+    def report(self):
+        pass
+
+
+# The Shell turns a deletion into bytes of the text last reported, so with none it deletes nothing.
+app = SilentApp("gnome-shell", qt_through_shell=True)
+tap_ctrl_shift(app)
+app.type("vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(
+    app.text == "vieetj",
+    "preedit, GNOME Shell, a field that never reports its text: no retype",
+    app.text,
+)
+app.close()
+
 open(log_path, "w").close()
 # A new user's first word list goes into a folder that did not exist when the engine started.
 check(
