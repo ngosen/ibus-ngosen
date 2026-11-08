@@ -323,7 +323,7 @@ namespace {
         check(read(paths.settingsFile()) == settingsText(defaultSettings()), "nothing to import writes the defaults");
     }
 
-    // A settings file without RetypeAfterSwitch: fcitx5's choice comes over once, else the default.
+    // A settings file without an option added later: fcitx5's choice comes over once, else the default.
     void testRetypeCarriedOver(const fs::path& root) {
         const auto retype = [](const SettingsPaths& paths) {
             const auto top = parseIni(read(paths.settingsFile())).top;
@@ -347,6 +347,14 @@ namespace {
         earlier(paths, "RetypeAfterSwitch=False\n");
         write(paths.fcitxConfigDir + "/ngosen.conf", "RetypeAfterSwitch=True\n");
         check(prepareSettings(paths) && retype(paths) == "False", "a choice made in this edition is kept");
+
+        paths = pathsIn(root / "newer-options");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "EnableMacroInOffMode=True\nDoubleSpaceToPeriod=True\nDoubleHyphenToEmDash=True\n");
+        check(prepareSettings(paths), "options added after the import are carried over");
+        const IBusSettings carried = readSettings(parseIni(read(paths.settingsFile())));
+        check(carried.options.enableMacroInOffMode, "macros in English turned on in fcitx5 comes over");
+        check(carried.options.doubleSpaceToPeriod && carried.options.doubleHyphenToEmDash, "punctuation turned on in fcitx5 comes over");
     }
 
     // A run killed after any write leaves files the next run finishes into the same result.
