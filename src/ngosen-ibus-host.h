@@ -93,7 +93,7 @@ namespace ngosen {
         void clickCandidate(guint indexInPage);
 
         bool throughShell() const;
-        // A click that moves the cursor reaches the engine, as a reset or through the click watcher.
+        // A click that moves the cursor reaches the engine through the click watcher.
         bool seesCursorMoves() const;
         // Typing straight in with forwarded keys, in a field that claims to report its text.
         bool typesWithKeysBesideText() const;

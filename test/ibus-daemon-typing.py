@@ -518,6 +518,7 @@ with open(settings_path) as f:
     )
 
 
+# Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
 def tap_ctrl_shift(app, extra=0, hold_ms=0):
     ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
     release = IBus.ModifierType.RELEASE_MASK
@@ -553,26 +554,22 @@ if no_x:
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
     check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
-    # Other apps reset on a click, which forgets the keys typed in English; XIM clients never do. With
-    # the underline the core could still delete with forwarded keys, so only the engine holds the offer back.
+    # Not every app resets on a click, so without the click watcher Cứu chữ holds back. With the
+    # underline the core could still delete with forwarded keys, so only the engine holds the offer back.
     set_setting("DirectTyping", "False")
     app = App("xim", surrounding=False)
     app.type("vieetj")
     tap_ctrl_shift(app)
     pump(100)
-    check(
-        not os.path.exists(mark) and app.text == "vieetj",
-        "no click watcher, XIM client: no retype",
-        app.text,
-    )
+    check(not os.path.exists(mark), "no click watcher: Vietnamese again", mark)
     app.close()
-    for name, kwargs in (("gtk3-im:gedit", {}), ("retype-no-text", {"surrounding": False})):
+    for name, kwargs in (("xim", {"surrounding": False}), ("gtk3-im:gedit", {})):
         app = App(name, **kwargs)
         tap_ctrl_shift(app)
         app.type("vieetj")
         tap_ctrl_shift(app)
         pump(100)
-        check(app.text == "việt", f"no click watcher, {name}: retyped", app.text)
+        check(app.text == "vieetj", f"no click watcher, {name}: no retype", app.text)
         app.close()
     finish()
 
@@ -1154,7 +1151,6 @@ class GnomeMenu:
 english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
-# Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
 app = App("toggle")
 app.type("vieetj")
 tap_ctrl_shift(app)

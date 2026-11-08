@@ -141,10 +141,9 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
-    // XIM clients under Xwayland send no reset on a click, and the X server's clicks are not watched there.
-    // Apps reset on a click, and the core then forgets what it noted; XIM clients never send that reset.
+    // Not every app resets on a click (XIM clients never do), and IBus text comes too late to check.
     bool IBusHost::seesCursorMoves() const {
-        return clicksWatched.load(std::memory_order_acquire) || client_ != "xim";
+        return clicksWatched.load(std::memory_order_acquire);
     }
 
     bool IBusHost::typesWithKeysBesideText() const {
@@ -176,9 +175,8 @@ namespace ngosen {
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;
         // With the underline or in English the Shell still drops forwarded keys, but deleting through the
-        // text reaches the app, so an edit of committed text goes that way. The Shell turns it into bytes of
-        // the text last reported, so a field that reported none cannot take it; terminals claim text they
-        // never report and erase with DEL, and an address bar's selected completion would go first.
+        // text reaches the app, so an edit of committed text goes that way. The Shell maps it onto the text
+        // last reported: a field with none, a terminal or an address bar's selected completion would go wrong.
         if (!direct_ && client_ == "gnome-shell" && !shellDeliversKeys()) {
             f.sendsNoKeys = true;
             if (f.terminal || f.url || !reported_.isValid())
