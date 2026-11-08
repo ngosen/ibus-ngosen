@@ -161,8 +161,7 @@ namespace ngosen {
         // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
         f.frontend = "ibus";
         // The Shell names every app it relays after itself, so the rules for one app need its own name.
-        const std::string& relayed = client_ == "gnome-shell" ? shellFocusedApp() : std::string();
-        f.program                  = relayed.empty() ? client_ : relayed;
+        f.program = client_ == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client_;
         if (f.program != client_)
             f.reportedProgram = client_;
         f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;

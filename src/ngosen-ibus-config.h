@@ -21,7 +21,9 @@ namespace ngosen {
         std::map<std::string, std::map<std::string, std::string>> sections;
     };
 
-    IniFile                  parseIni(const std::string& text);
+    IniFile parseIni(const std::string& text);
+    // The spaces fcitx5 strips around a line.
+    std::string              trimIni(const std::string& text);
     std::string              escapeIniValue(const std::string& value);
 
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
