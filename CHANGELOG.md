@@ -31,6 +31,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Menu phím ` nhớ Gõ Sen hay gạch chân riêng cho từng app như bản fcitx5, thay vì đổi cho mọi app cùng lúc; mục
   mới "Chế độ gõ mặc định" (phím r) bỏ lựa chọn riêng của app đó. App chưa nhận ra tên thì vẫn đổi cách gõ chung
   (#87).
+- Sao lưu và khôi phục mang theo cả cách gõ chọn riêng cho từng app, cùng tệp với bản fcitx5; luật tắt tiếng Việt
+  hay chọn emoji theo app vẫn được giữ lại cho bản fcitx5 (#88).
 - Hai dấu cách thành ". " và -- thành "—", như bản fcitx5: bật trong cửa sổ cài đặt, mục "Gõ nhanh"; mặc định
   tắt (#77).
 - Gõ tắt cả khi đang gõ tiếng Anh, như bản fcitx5: gõ "ko" rồi dấu cách vẫn ra "không"; bật trong cửa sổ cài đặt,
