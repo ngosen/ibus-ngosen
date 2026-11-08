@@ -25,8 +25,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   qua GNOME Shell gõ chữ trên vùng bôi đen bằng gạch chân (#52).
 - Cứu chữ, bật sẵn như bản fcitx5: lỡ gõ tiếng Anh rồi bấm phím chuyển về tiếng Việt thì Ngó Sen gõ lại chữ vừa
   gõ có dấu (vieetj → việt); Tab hay Esc trả lại như cũ. Chữ không chắc là tiếng Việt thì chỉ hiện gợi ý, Enter
-  hoặc bấm vào gợi ý để nhận. Chỉ làm ở ô mà Ngó Sen biết được con trỏ chưa bị bấm chuột dời đi. Ai đã cài sẽ thấy
-  tính năng này bật sau khi cập nhật; tắt được trong cửa sổ cài đặt (#76).
+  hoặc bấm vào gợi ý để nhận. Không làm ở ô địa chỉ của trình duyệt; ở app XIM chỉ làm khi Ngó Sen thấy được cú
+  bấm chuột. Ai đã cài sẽ thấy tính năng này bật sau khi cập nhật; tắt được trong cửa sổ cài đặt (#76, #78).
 - Cửa sổ cài đặt có tab "Kiểm tra máy": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
 - Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
