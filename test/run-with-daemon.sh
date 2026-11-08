@@ -16,11 +16,9 @@ export XDG_DATA_DIRS="$tmp/data/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/loca
 # A private X server, so the engine watches the clicks the test makes and never the desktop's.
 # NGOSEN_TEST_NO_X runs with none, where the engine cannot watch clicks.
 unset WAYLAND_DISPLAY DISPLAY
-# With no X server the engine sees no clicks, as on Wayland. Only WAYLAND_DISPLAY tells, as for a
-# daemon started by hand.
+# With no X server the engine sees no clicks, as on Wayland.
 if [ -n "$NGOSEN_TEST_NO_X" ]; then
-    export WAYLAND_DISPLAY=ngosen-test-none
-    unset XDG_SESSION_TYPE
+    export XDG_SESSION_TYPE=wayland
 else
     export XDG_SESSION_TYPE=x11
 fi

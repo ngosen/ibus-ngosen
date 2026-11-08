@@ -452,9 +452,12 @@ namespace ngosen {
     }
 
     bool isWaylandSession() {
-        const char* wayland = std::getenv("WAYLAND_DISPLAY");
+        // A session type that is set wins: a WAYLAND_DISPLAY kept from an earlier login is no session.
         const char* session = std::getenv("XDG_SESSION_TYPE");
-        return (wayland != nullptr && *wayland != 0) || (session != nullptr && std::strcmp(session, "wayland") == 0);
+        if (session != nullptr && *session != 0)
+            return std::strcmp(session, "wayland") == 0;
+        const char* wayland = std::getenv("WAYLAND_DISPLAY");
+        return wayland != nullptr && *wayland != 0;
     }
 
     bool shellDeliversKeys() {

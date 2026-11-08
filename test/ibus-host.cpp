@@ -116,6 +116,21 @@ namespace {
         host.showCandidates(std::vector<std::string>(20, "a"), 20, {});
         check(host.candidates() && host.candidates()->pageSize == 16, "a page is at most the 16 IBus can show");
     }
+
+    void testWaylandSession() {
+        const auto session = [](const char* type, const char* display) {
+            type != nullptr ? setenv("XDG_SESSION_TYPE", type, 1) : unsetenv("XDG_SESSION_TYPE");
+            display != nullptr ? setenv("WAYLAND_DISPLAY", display, 1) : unsetenv("WAYLAND_DISPLAY");
+            return isWaylandSession();
+        };
+        check(session("wayland", nullptr), "a Wayland session");
+        check(session(nullptr, "wayland-0"), "a daemon started by hand on Wayland");
+        check(session("", "wayland-0"), "an empty session type");
+        check(!session("x11", "wayland-0"), "a leftover WAYLAND_DISPLAY on X11");
+        check(!session(nullptr, nullptr), "no session");
+        unsetenv("XDG_SESSION_TYPE");
+        unsetenv("WAYLAND_DISPLAY");
+    }
 } // namespace
 
 int main() {
@@ -126,6 +141,7 @@ int main() {
     testXSend();
     testShellFields();
     testCandidates();
+    testWaylandSession();
     if (failures == 0)
         std::cout << "all host checks passed\n";
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;

@@ -20,8 +20,6 @@
 #include <glib/gi18n-lib.h>
 #include <algorithm>
 #include <atomic>
-#include <cstdlib>
-#include <cstring>
 #include <memory>
 #include <string>
 
