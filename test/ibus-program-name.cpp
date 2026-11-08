@@ -78,6 +78,10 @@ int main() {
     expect("a native app keeps its name", gnomeProgramName("org.gnome.Ptyxis.desktop"), "org.gnome.Ptyxis.desktop");
     expect("a plain name", gnomeProgramName("Alacritty.desktop"), "Alacritty.desktop");
 
+    expect("an app not installed yet", gnomeProgramName("com.example.Late.desktop"), "com.example.Late.desktop");
+    writeFile(systemExports, "com.example.Late.desktop", "[Desktop Entry]\nStartupWMClass=late\n");
+    expect("an app installed later", gnomeProgramName("com.example.Late.desktop"), "late");
+
     // An unreadable export, here a folder, gives way to the next one on the data path.
     g_mkdir_with_parents((root + "/" + userExports + "/applications/com.example.Viewer.desktop").c_str(), 0700);
     writeFile(systemExports, "com.example.Viewer.desktop", "[Desktop Entry]\nStartupWMClass=imgview\n");
