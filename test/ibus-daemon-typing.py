@@ -610,6 +610,36 @@ check(app.commits == ["Việt "], "preedit, X11 app: capitalizes at the start of
 app.close()
 set_setting("CapitalizeStartOfText", "False")
 
+# The second key deletes the space or hyphen the app already has.
+app = App("punctuation-off")
+app.type("ban  a--b ")
+check(app.text == "ban  a--b ", "punctuation: off by default", app.text)
+app.close()
+set_setting("DoubleSpaceToPeriod", "True")
+set_setting("DoubleHyphenToEmDash", "True")
+app = App("punctuation")
+app.type("ban  a--b ")
+check(app.text == "ban. a—b ", "punctuation: two spaces and two hyphens", app.text)
+app.close()
+app = App("punctuation-no-text", surrounding=False)
+app.type("ban  a--b ")
+check(app.text == "ban. a—b ", "punctuation: a field without text deletes with keys", app.text)
+app.close()
+# GNOME Shell fields take no forwarded keys, so the edit goes through the text the app reported.
+app = App("gnome-shell")
+# A field that has reported no text yet takes no edit through it.
+app.type("xin ")
+app.type("ban  a--b ")
+forwarded = [e for e in app.events if e[0] == "forward"]
+check(
+    (app.text, forwarded) == ("xin ban. a—b ", []),
+    "punctuation: GNOME Shell deletes through the text",
+    (app.text, forwarded),
+)
+app.close()
+set_setting("DoubleSpaceToPeriod", "False")
+set_setting("DoubleHyphenToEmDash", "False")
+
 write_file(os.path.join(config_dir, "ngosen-macro-table.conf"), "[Macro/0]\nKey=ko\nValue=không\n")
 app = App("macro")
 app.type("ko ")
