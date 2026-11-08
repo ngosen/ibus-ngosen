@@ -594,7 +594,7 @@ FCITX5_ONLY = [
     N_("Sen in every app, with its fixes for each app"),
     N_("Cứu dấu in every app"),
     N_("Vim mode for each app"),
-    N_("The emoji picker and rules for each app"),
+    N_("The emoji picker, and turning Vietnamese off for one app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
 # The installer asks before it removes this edition, so the window only hands the command over.
