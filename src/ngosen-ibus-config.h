@@ -60,6 +60,8 @@ namespace ngosen {
         std::string          dictionaryFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
+        // Marks the forward-keys extension as enabled once, so turning it off is not undone.
+        std::string extensionEnabledMark() const;
     };
 
     bool readFile(const std::string& path, std::string& content);

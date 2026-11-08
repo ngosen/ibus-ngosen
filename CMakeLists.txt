@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ibus-ngosen VERSION 1.1.3 LANGUAGES C CXX)
+project(ibus-ngosen VERSION 1.1.4 LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -25,3 +25,6 @@ add_subdirectory(data)
 add_subdirectory(settings)
 add_subdirectory(po)
 add_subdirectory(test)
+
+# GNOME 50.0-50.3 drop keys an engine forwards; the engine enables this extension there.
+install(DIRECTORY ngosen/gnome-shell/forward-keys@ngosen.github.io DESTINATION ${CMAKE_INSTALL_DATADIR}/gnome-shell/extensions)

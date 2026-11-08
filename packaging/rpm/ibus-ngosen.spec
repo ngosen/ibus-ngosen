@@ -1,8 +1,8 @@
 Name:           ibus-ngosen
-Version:        1.1.3
+Version:        1.1.4
 Release:        1%{?dist}
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
-License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later AND OFL-1.1
+License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
 URL:            https://github.com/ngosen/ibus-ngosen
 # Release tarballs carry the ngosen submodule, which GitHub's own archives leave out.
 Source0:        %{url}/releases/download/%{name}-%{version}-1/%{name}-%{version}.tar.gz
@@ -16,6 +16,8 @@ BuildRequires:  python3
 BuildRequires:  gettext
 
 Requires:       ibus >= 1.5.27
+# Both install the forward-keys extension of the same name.
+Conflicts:      fcitx5-ngosen
 # Loaded with dlopen to watch clicks on X11, which the automatic requires miss.
 Requires:       libxcb
 Requires:       python3-gobject
@@ -47,6 +49,7 @@ with. The word being typed is underlined until it is done.
 %{_libexecdir}/ibus-setup-ngosen
 %{_datadir}/ibus/component/ngosen.xml
 %{_datadir}/ibus-ngosen/
+%{_datadir}/gnome-shell/extensions/forward-keys@ngosen.github.io/
 %{_datadir}/applications/ibus-setup-ngosen.desktop
 %{_datadir}/metainfo/io.github.ngosen.IBusNgoSen.metainfo.xml
 %{_datadir}/icons/hicolor/scalable/apps/ibus-ngosen.svg
@@ -55,6 +58,10 @@ with. The word being typed is underlined until it is done.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Sun Nov 08 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.4-1
+- Typing with Sen on GNOME erases with BackSpace when the app's copy is stale, with an extension
+  for GNOME 50.0-50.3; conflicts with fcitx5-ngosen; core ngosen-1.8.1-1.
+
 * Sun Nov 01 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.1.3-1
 - Typing with Sen runs on the core and types into X11 apps, tone keys typed together kept on GNOME,
   kitty on X11, marked on/off items in the menu, core ngosen-1.7.5-1.

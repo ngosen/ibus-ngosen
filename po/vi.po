@@ -51,7 +51,7 @@ msgstr "Gõ tự do"
 
 #: settings/ngosen_settings/options.py
 msgid "Backspace Removes the Tone Mark"
-msgstr "Backspace xóa dấu thanh"
+msgstr "Backspace xoá dấu thanh"
 
 #: settings/ngosen_settings/options.py
 msgid "Type w to Produce ư"
@@ -123,11 +123,11 @@ msgstr "Gõ dấu ở cuối từ cũng được."
 
 #: settings/ngosen_settings/options.py
 msgid "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
-msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xóa dấu thanh. Chữ không có dấu thanh thì Backspace xóa chữ như thường."
+msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xoá dấu thanh. Chữ không có dấu thanh thì Backspace xoá chữ như thường."
 
 #: settings/ngosen_settings/options.py
 msgid "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
-msgstr "Không phải đầu từ: nhw → như, còn w đứng riêng vẫn là w. Mọi nơi: w đứng riêng cũng ra ư. uw thì luôn ra ư."
+msgstr "Trong từ: nhw → như, còn w đứng riêng vẫn là w. Mọi nơi: w đứng riêng cũng ra ư. uw thì luôn ra ư."
 
 #: settings/ngosen_settings/options.py
 msgid "ch]a → chưa, m[f → mờ. Type a bracket twice to get it back: [[ → [."
@@ -151,7 +151,7 @@ msgstr "Tắt"
 
 #: settings/ngosen_settings/options.py
 msgid "Non-Start"
-msgstr "Không phải đầu từ"
+msgstr "Trong từ"
 
 #: settings/ngosen_settings/options.py
 msgid "Everywhere"

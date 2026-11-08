@@ -11,7 +11,7 @@ import warnings
 import gi
 
 gi.require_version("IBus", "1.0")
-from gi.repository import GLib, GObject, IBus  # noqa: E402
+from gi.repository import Gio, GLib, GObject, IBus  # noqa: E402
 
 failures = 0
 
@@ -93,17 +93,15 @@ class App:
         self.preedit = ""
         self.preedits = []
         # GNOME Shell turns a deletion into bytes using the text the app last reported. Qt on Wayland
-        # sends the text after a deletion only along with some other change, such as the cursor
-        # moving on screen: qt_through_shell is how many keys in a row must delete before the
-        # report stops.
+        # sends no text right after a deletion, only after the next commit.
         self.qt_through_shell = qt_through_shell
         # Firefox on X11 resets the input context after each key the engine lets through.
         self.resets_after_key = resets_after_key
         self.reported = ""
-        self.deleted = False
-        self.deleting_keys = 0
         self.preedit_mode = IBus.PreeditFocusMode.CLEAR
         self.passed = []
+        # Commits and forwarded presses in the order the app gets them.
+        self.events = []
         self.requests = 0
         self.app_commits = app_commits
         self.ic = bus.create_input_context(name)
@@ -132,36 +130,34 @@ class App:
         self.report()
 
     def report(self):
-        if not (
-            self.qt_through_shell and self.deleted and self.deleting_keys >= self.qt_through_shell
-        ):
-            self.reported = self.text
+        self.reported = self.text
         n = len(self.reported)
         self.ic.set_surrounding_text(IBus.Text.new_from_string(self.reported), n, n)
 
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
+        self.events.append(("commit", text.get_text()))
         self.text += text.get_text()
         self.report()
 
     # The cursor stays at the end of the text.
     def on_delete(self, _ic, offset, count):
         if self.qt_through_shell:
-            if not self.deleted:
-                self.deleting_keys += 1
-            self.deleted = True
             end = len(self.reported) + offset + count
             size = len(self.reported[end - count : end].encode())
             count = len(self.text.encode()[-size:].decode(errors="replace"))
             offset = -count
         start = len(self.text) + offset
         self.text = self.text[:start] + self.text[start + count :]
-        self.report()
+        if not self.qt_through_shell:
+            self.report()
 
     def on_require(self, _ic):
         self.requests += 1
 
-    def on_forward(self, _ic, keyval, _keycode, state):
+    def on_forward(self, _ic, keyval, keycode, state):
+        if not state & IBus.ModifierType.RELEASE_MASK:
+            self.events.append(("forward", IBus.keyval_name(keyval), keycode))
         if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
             self.text = self.text[:-1]
             self.report()
@@ -212,15 +208,31 @@ class App:
                 if self.resets_after_key:
                     ic.reset()
 
-        if not self.deleted:
-            self.deleting_keys = 0
-        self.deleted = False
         self.ic.process_key_event_async(keyval, 0, state, -1, None, done)
         end = time.monotonic() + 5
         while not replies and time.monotonic() < end:
             GLib.MainContext.default().iteration(True)
         self.ic.process_key_event(keyval, 0, state | IBus.ModifierType.RELEASE_MASK)
         pump(40)
+
+    # Presses keys without waiting for the engine between them, as a fast typist does.
+    def burst(self, presses):
+        replies = []
+        for keyval, keycode in presses:
+            self.ic.process_key_event_async(
+                keyval,
+                keycode,
+                0,
+                -1,
+                None,
+                lambda ic, result: replies.append(ic.process_key_event_async_finish(result)),
+            )
+        end = time.monotonic() + 5
+        while len(replies) < len(presses) and time.monotonic() < end:
+            GLib.MainContext.default().iteration(True)
+        for keyval, keycode in presses:
+            self.ic.process_key_event(keyval, keycode, IBus.ModifierType.RELEASE_MASK)
+        pump(300)
 
     def type(self, keys):
         for c in keys:
@@ -238,6 +250,84 @@ class App:
         self.commit_preedit()
         self.ic.focus_out()
         pump(200)
+
+
+# The parts of GNOME Shell the engine asks about forwarded keys, on the session bus of the test.
+SHELL_INTERFACES = """<node>
+  <interface name="org.gnome.Shell">
+    <property name="ShellVersion" type="s" access="read"/>
+  </interface>
+  <interface name="org.gnome.Shell.Extensions">
+    <method name="GetExtensionInfo">
+      <arg type="s" direction="in"/><arg type="a{sv}" direction="out"/>
+    </method>
+    <method name="EnableExtension">
+      <arg type="s" direction="in"/><arg type="b" direction="out"/>
+    </method>
+    <signal name="ExtensionStateChanged"><arg type="s"/><arg type="a{sv}"/></signal>
+  </interface>
+</node>"""
+EXTENSION_ACTIVE = 1.0
+EXTENSION_INACTIVE = 2.0
+
+
+class FakeShell:
+    def __init__(self):
+        self.version = None
+        self.state = None
+        self.enable_calls = 0
+        self.info_fails = False
+        self.owner = 0
+        self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
+        # Its replacement needs a newer GLib than the oldest system supported.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            for interface in Gio.DBusNodeInfo.new_for_xml(SHELL_INTERFACES).interfaces:
+                self.bus.register_object(
+                    "/org/gnome/Shell", interface, self.on_method, self.on_property, None
+                )
+
+    def on_property(self, *_args):
+        return GLib.Variant("s", self.version)
+
+    def info(self):
+        return {} if self.state is None else {"state": GLib.Variant("d", self.state)}
+
+    def on_method(self, _bus, _sender, _path, _interface, method, _args, invocation):
+        if method == "GetExtensionInfo" and self.info_fails:
+            invocation.return_dbus_error("org.freedesktop.DBus.Error.Failed", "busy")
+        elif method == "GetExtensionInfo":
+            invocation.return_value(GLib.Variant("(a{sv})", (self.info(),)))
+        else:
+            self.enable_calls += 1
+            invocation.return_value(GLib.Variant("(b)", (True,)))
+            self.set_extension(EXTENSION_ACTIVE)
+
+    def start(self, version, state):
+        self.stop()
+        self.version = version
+        self.state = state
+        self.owner = Gio.bus_own_name_on_connection(
+            self.bus, "org.gnome.Shell", Gio.BusNameOwnerFlags.NONE, None, None
+        )
+        pump(300)
+
+    def stop(self):
+        if self.owner:
+            Gio.bus_unown_name(self.owner)
+            self.owner = 0
+            pump(300)
+
+    def set_extension(self, state):
+        self.state = state
+        self.bus.emit_signal(
+            None,
+            "/org/gnome/Shell",
+            "org.gnome.Shell.Extensions",
+            "ExtensionStateChanged",
+            GLib.Variant("(sa{sv})", ("forward-keys@ngosen.github.io", self.info())),
+        )
+        pump(300)
 
 
 def check(ok, what, got):
@@ -485,10 +575,11 @@ with open(log_path) as f:
     check("Settings reloaded" in f.read(), "dictionary: a new word list reloads", log_path)
 
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
+shell = FakeShell()
+shell.start("50.1", None)
 set_setting("DirectTyping", "True")
 
 
-# An empty field has reported no text yet, so the core underlines its first word.
 def field_with_text(**kwargs):
     app = App("gnome-shell", **kwargs)
     app.type("xin ")
@@ -496,14 +587,72 @@ def field_with_text(**kwargs):
     return app
 
 
+def types_underlined(what):
+    app = field_with_text()
+    app.type("vieetj ")
+    check(app.text == "xin việt ", f"{what}: the word", app.text)
+    check("việt" in app.preedits, f"{what}: underlined", app.preedits)
+    app.close()
+
+
+# Firefox reports its text a beat late; a copy behind the word leaves only forwarded keys to delete.
+def deletes_with_keys(what):
+    app = field_with_text()
+    backspaces = []
+    listen(
+        app.ic,
+        "forward-key-event",
+        lambda _ic, keyval, _keycode, _state: backspaces.append(keyval),
+    )
+    app.report = lambda: None
+    app.type("vieetj ")
+    # The copy never catches up, so the core waits out each report it asks for before deleting.
+    pump(500)
+    check(app.text == "xin việt ", f"{what}: the word", app.text)
+    check(IBus.KEY_BackSpace in backspaces, f"{what}: deletes with keys", backspaces)
+    check(app.preedits == [], f"{what}: no underline", app.preedits)
+    app.close()
+
+
+types_underlined("extension not installed yet")
+check(shell.enable_calls == 0, "extension not installed yet: nothing to enable", shell.enable_calls)
+
+for version in ("50.0", "50.3"):
+    shell.start(version, None)
+    types_underlined(f"GNOME {version} without the extension")
+
+shell.start("51.0", EXTENSION_INACTIVE)
+check(shell.enable_calls == 0, "GNOME 51: the extension is left alone", shell.enable_calls)
+
+set_setting("DirectTyping", "False")
+App("gnome-shell").close()
+shell.start("50.1", EXTENSION_INACTIVE)
+check(shell.enable_calls == 0, "Gõ Sen off: the extension is left alone", shell.enable_calls)
+set_setting("DirectTyping", "True")
+App("gnome-shell").close()
+pump(300)
+check(shell.enable_calls == 1, "Gõ Sen on again: the extension is enabled", shell.enable_calls)
+deletes_with_keys("GNOME 50.1 with the extension")
+
+for version in ("46.2", "50.4", "51.0"):
+    shell.start(version, None)
+    deletes_with_keys(f"GNOME {version}")
+
+shell.start("50.1", EXTENSION_ACTIVE)
 app = App("gnome-shell")
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, empty field: the words", app.text)
-check(
-    "xin" in app.preedits and not any("v" in p for p in app.preedits),
-    "direct, empty field: only the first word underlined",
-    app.preedits,
-)
+check(app.preedits == [], "direct, empty field: no underline", app.preedits)
+app.close()
+
+# Terminals erase with DEL, so even with keys delivered none is forwarded to them.
+app = field_with_text(purpose=IBus.InputPurpose.TERMINAL)
+forwarded = []
+listen(app.ic, "forward-key-event", lambda _ic, keyval, _keycode, _state: forwarded.append(keyval))
+app.report = lambda: None
+app.type("vieetj ")
+pump(500)
+check(IBus.KEY_BackSpace not in forwarded, "relayed terminal: no forwarded BackSpace", forwarded)
 app.close()
 
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
@@ -531,19 +680,18 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
     app.close()
 
-for keys in (1, 2):
-    app = App("gnome-shell", qt_through_shell=keys)
-    app.type("nam tieesng")
-    app.key(IBus.KEY_BackSpace)
-    app.key(IBus.KEY_BackSpace)
-    app.type("ng ")
-    check(app.text == "nam tiếng ", f"direct, Qt through GNOME Shell ({keys}): the words", app.text)
-    check(
-        not any("t" in p for p in app.preedits),
-        f"direct, Qt through GNOME Shell ({keys}): the second word not underlined",
-        app.preedits,
-    )
-    app.close()
+app = App("gnome-shell", qt_through_shell=True)
+app.type("nam tieesng")
+app.key(IBus.KEY_BackSpace)
+app.key(IBus.KEY_BackSpace)
+app.type("ng ")
+check(app.text == "nam tiếng ", "direct, Qt through GNOME Shell: the words", app.text)
+check(
+    not any("t" in p for p in app.preedits),
+    "direct, Qt through GNOME Shell: the second word not underlined",
+    app.preedits,
+)
+app.close()
 
 # Qt reports the text around the cursor only once the field has text.
 app = App("gnome-shell", surrounding=False)
@@ -573,9 +721,8 @@ app.type("vie")
 app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 5, 5)
 pump(100)
 app.type("e")
-# The core underlines a word begun inside another one.
 check(
-    app.text == "xin vie" and app.preedit == "e",
+    app.text == "xin viee" and app.preedit == "",
     "direct, click inside the word: the next key deletes nothing",
     (app.text, app.preedit),
 )
@@ -640,6 +787,29 @@ app.close()
 app = App("gtk3-im:firefox", resets_after_key=True)
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, X11 app resetting after each key: the words", app.text)
+app.close()
+
+# A copy behind the word makes the replacement delete with BackSpace and wait for the app; a cursor
+# key pressed meanwhile must land after the new letters.
+app = App("gtk3-im:gedit")
+app.type("xin ")
+app.report = lambda: None
+app.type("vieet")
+app.events.clear()
+app.burst([(IBus.KEY_j, 36), (IBus.KEY_Left, 105)])
+commits = [i for i, e in enumerate(app.events) if e[0] == "commit"]
+lefts = [i for i, e in enumerate(app.events) if e[0] == "forward" and e[1] == "Left"]
+check(
+    commits and lefts and lefts[0] > commits[-1],
+    "direct, X11 app: a cursor key held during the wait follows the new letters",
+    app.events,
+)
+check(
+    [app.events[i][2] for i in lefts] == [105],
+    "direct, X11 app: the held cursor key keeps its keycode",
+    (app.events, app.passed),
+)
+check(app.text == "xin việt", "direct, X11 app: the word before the held cursor key", app.text)
 app.close()
 
 # A click on X11 resets the context and moves the cursor the app reports.
@@ -707,6 +877,20 @@ app.type("vieetj ")
 check(app.text == "việt ", "direct, address bar: the word", app.text)
 check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
 app.close()
+
+# The lock screen turns extensions off too, so one enabled before is not enabled again.
+shell.set_extension(EXTENSION_INACTIVE)
+types_underlined("extension turned off")
+check(shell.enable_calls == 1, "extension turned off: not enabled again", shell.enable_calls)
+shell.set_extension(EXTENSION_ACTIVE)
+deletes_with_keys("extension turned back on")
+shell.info_fails = True
+shell.set_extension(EXTENSION_INACTIVE)
+types_underlined("extension state unreadable")
+shell.info_fails = False
+shell.set_extension(EXTENSION_ACTIVE)
+shell.stop()
+types_underlined("GNOME Shell gone")
 set_setting("DirectTyping", "False")
 
 # XIM clients such as Alacritty keep the preedit across a click and send no reset.

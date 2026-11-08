@@ -1,6 +1,5 @@
 set(NGOSEN_SETTINGS_DIR "${NGOSEN_IBUS_DATADIR}/settings")
 set(NGOSEN_LOCALEDIR "${CMAKE_INSTALL_FULL_LOCALEDIR}")
-set(NGOSEN_FONT "${NGOSEN_IBUS_DATADIR}/fonts/XanhMono-Regular.ttf")
 foreach(path NGOSEN_IBUS_EXEC NGOSEN_SETUP_EXEC NGOSEN_IBUS_DATADIR)
     if (NOT ${path})
         message(FATAL_ERROR "${path} must be set before settings/")
@@ -14,9 +13,6 @@ install(DIRECTORY ngosen_settings DESTINATION ${NGOSEN_SETTINGS_DIR} FILES_MATCH
 # GNOME Settings opens an IBus engine's settings through ibus-setup-<engine>.desktop.
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ibus-setup-ngosen.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 install(FILES io.github.ngosen.IBusNgoSen.metainfo.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
-install(FILES ${PROJECT_SOURCE_DIR}/ngosen/settings-gui/fonts/XanhMono-Regular.ttf
-              ${PROJECT_SOURCE_DIR}/ngosen/LICENSES/OFL-1.1.txt
-        DESTINATION ${NGOSEN_IBUS_DATADIR}/fonts)
 
 # The window tests need a display; without xvfb-run they are skipped.
 find_program(XVFB_RUN xvfb-run)

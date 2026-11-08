@@ -9,6 +9,7 @@
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-resources.h"
+#include "ngosen-ibus-shell.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
 #include "ngosen-pointer.h"
@@ -33,6 +34,13 @@ namespace {
         return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
     }
 
+    void applyTypingMode(ngosen::IBusHost& host) {
+        realMode = typingMode();
+        host.setDirectTyping(realMode == ngosen::Mode::Sen);
+        if (realMode == ngosen::Mode::Sen)
+            ngosen::watchShell(ngosen::SettingsPaths::fromEnvironment().extensionEnabledMark());
+    }
+
     struct Session {
         ngosen::IBusHost*                    host = nullptr;
         std::unique_ptr<ngosen::TypingState> state;
@@ -45,8 +53,7 @@ namespace {
             resources().reloadIfChanged();
             if (generation == resources().generation())
                 return;
-            realMode = typingMode();
-            host->setDirectTyping(realMode == ngosen::Mode::Sen);
+            applyTypingMode(*host);
             state->setEngine();
             generation = resources().generation();
         }
@@ -290,8 +297,7 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     session->state      = std::make_unique<ngosen::TypingState>(&resources(), std::move(host));
     session->generation = resources().generation();
     // A settings change seen by no engine yet still reaches the new one.
-    realMode = typingMode();
-    session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
+    applyTypingMode(*session->host);
     self->session = session;
 }
 
