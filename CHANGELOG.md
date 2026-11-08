@@ -56,6 +56,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Thay đổi
 
+- Ngó Sen gõ thẳng (Gõ Sen) theo mặc định như bản fcitx5, thay cho gạch chân, và tuỳ chọn hết ghi "thử nghiệm".
+  Người dùng bản cũ được chuyển sang Gõ Sen một lần khi cập nhật; muốn gạch chân thì bấm ` rồi chọn gạch chân cho
+  app đang dùng, hoặc tắt Gõ Sen trong cửa sổ cài đặt cho mọi app chưa chọn riêng (#89).
 - Dùng lõi Ngó Sen `ngosen-1.8.2-1`: Cứu chữ hết xoá nhầm chữ khi bấm chuột sang chỗ khác ngay sau phím chuyển
   Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
 - Dùng lõi Ngó Sen mới nhất trên nhánh phát triển: trong terminal như Ptyxis và GNOME Terminal, Ngó Sen sửa chữ đã
