@@ -163,11 +163,11 @@ msgstr "Bật gõ tắt"
 
 #: settings/ngosen_settings/options.py
 msgid "Macros while typing English"
-msgstr "Gõ tắt cả khi đang tiếng Anh"
+msgstr "Gõ tắt cả khi đang gõ tiếng Anh"
 
 #: settings/ngosen_settings/options.py
-msgid "ko and Space gives không even in English."
-msgstr "Gõ ko rồi dấu cách ra không, cả khi đang tiếng Anh."
+msgid "With Enable Macro on, ko and Space gives không even in English."
+msgstr "Khi đã bật gõ tắt, gõ ko rồi dấu cách ra không, cả khi đang gõ tiếng Anh."
 
 #: settings/ngosen_settings/options.py
 msgid "Capitalize Macro"
