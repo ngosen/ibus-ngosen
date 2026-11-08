@@ -282,8 +282,8 @@ msgid "Cứu dấu in every app"
 msgstr "Cứu dấu ở mọi app"
 
 #: settings/ngosen_settings/pages.py
-msgid "The emoji picker and rules for each app"
-msgstr "Bảng chọn emoji và luật theo app"
+msgid "The emoji picker, and turning Vietnamese off for one app"
+msgstr "Bảng chọn emoji, và tắt tiếng Việt cho riêng một app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Vim mode for each app"
@@ -773,8 +773,8 @@ msgid "The backup was made while typing English, so typing switches to English."
 msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
 
 #: settings/ngosen_settings/backup.py
-msgid "Rules for each app are left out: this edition has none."
-msgstr "Bỏ qua luật theo từng app: bản này không có."
+msgid "Rules that turn Vietnamese off or pick emoji for an app are kept but do nothing here."
+msgstr "Luật tắt tiếng Việt hay chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
 
 #: settings/ngosen_settings/window.py
 msgid "The settings changed after the restore, so nothing was undone."

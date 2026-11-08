@@ -17,6 +17,9 @@ COMPONENTS = ("config", "macros", "keymaps", "rules", "dictionary")
 IBUS_ONLY = ("DirectTyping", "ToggleKey", "ModeMenuKey")
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
 DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
+# The engine types with Sen for 1, 2, 3, 4 and 8 and underlined for 5, as fcitx5 reads them.
+APP_MODES = {"1", "2", "3", "4", "5", "8"}
+APP_MODES_HEADER = "# The typing mode picked for each app: 2 = Sen, 5 = Preedit\n"
 NEEDS_MODIFIER = N_("A switch key here needs Ctrl, Alt, Shift or Super with another key.")
 
 
@@ -42,6 +45,7 @@ class Paths:
         self.keymaps = store.keymap_file
         self.dictionary = store.dictionary_file
         self.bundled_dictionary = store.bundled_dictionary
+        self.app_modes = os.path.join(os.path.dirname(store.settings_file), "ngosen-app-rules.conf")
         self.english = english_mark()
 
 
@@ -114,6 +118,17 @@ def undo(before, restored, write=put):
     return True
 
 
+def _app_rules(path):
+    """The lines of the app modes file as fcitx5 backs up its rules, Off and Emoji included."""
+    text = (read_bytes(path) or b"").decode("utf-8", "surrogateescape")
+    rules = []
+    for line in text.splitlines():
+        app, equals, mode = line.partition("=")
+        if equals and not line.startswith("#"):
+            rules.append({"App": app.strip(), "Mode": mode.strip()})
+    return rules
+
+
 def _entries(path, name):
     text = read_bytes(path)
     entries = ini.read_list(ini.parse((text or b"").decode("utf-8"))[1], name)
@@ -133,6 +148,8 @@ def export(engine, paths, target):
         "macros": _entries(paths.macros, MACRO_LIST),
         "keymaps": _entries(paths.keymaps, KEYMAP_LIST),
     }
+    if os.path.exists(paths.app_modes):
+        backup["rules"] = _app_rules(paths.app_modes)
     # The list in effect, so restoring brings back the packaged one over a later own list.
     dictionary = read_bytes(paths.dictionary)
     if dictionary is None:
@@ -159,9 +176,13 @@ def load(path):
         items = backup.get(name, [])
         if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
             raise ValueError(_("The lists in the file are damaged."))
-    for name in ("macros", "keymaps"):
+    for name, fields in (
+        ("macros", ("Key", "Value")),
+        ("keymaps", ("Key", "Value")),
+        ("rules", ("App", "Mode")),
+    ):
         for item in backup.get(name, []):
-            if not all(isinstance(item.get(k, ""), str) for k in ("Key", "Value")):
+            if not all(isinstance(item.get(k, ""), str) for k in fields):
                 raise ValueError(_("The lists in the file are damaged."))
     if not isinstance(backup.get("dictionary", ""), str):
         raise ValueError(_("The dictionary in the file is damaged."))
@@ -292,6 +313,25 @@ def _list_file(text, name, items):
     return (kept + ini.list_text(name, entries)).encode("utf-8", "surrogateescape")
 
 
+def _app_modes_file(current, rules, notes):
+    """The app modes file holding rules, kept in full so a later fcitx5 restore gets them back."""
+    lines = []
+    for rule in rules:
+        app, mode = rule.get("App", "").strip(), rule.get("Mode", "").strip()
+        # A line break or "=" would turn one rule into another.
+        if app and not any(c in app + mode for c in "=\n\r") and not app.startswith("#"):
+            lines.append(f"{app}={mode}\n")
+    if any(line.rstrip("\n").partition("=")[2] not in APP_MODES for line in lines):
+        notes.append(
+            _(
+                "Rules that turn Vietnamese off or pick emoji for an app are kept but do nothing here."
+            )
+        )
+    if current is None and not lines:
+        return None
+    return (APP_MODES_HEADER + "".join(lines)).encode("utf-8", "surrogateescape")
+
+
 def _keymap_file(text, items):
     """text with the keymap replaced as the Keymap page writes it."""
     entries = [(item.get("Key", ""), item.get("Value", "")) for item in items]
@@ -334,9 +374,11 @@ def plan(backup, paths, engine, taken=frozenset()):
         # As Store.set_words: a copy of the packaged list would hide later updates to it.
         bundled = sorted(words) == sorted(read_words(paths.bundled_dictionary))
         changes[paths.dictionary] = None if bundled else text.encode("utf-8")
+    if "rules" in backup:
+        changes[paths.app_modes] = _app_modes_file(
+            _current(paths.app_modes), backup["rules"], notes
+        )
     # Last, so the running engine switches language only once the rest is written.
     if "VietnameseOn" in config:
         changes[paths.english] = _english(config, paths, notes)
-    if backup.get("rules"):
-        notes.append(_("Rules for each app are left out: this edition has none."))
     return changes, notes

@@ -92,7 +92,14 @@ class UserFiles:
 
     def files(self):
         paths = self.paths
-        names = (paths.settings, paths.macros, paths.keymaps, paths.dictionary, paths.english)
+        names = (
+            paths.settings,
+            paths.macros,
+            paths.keymaps,
+            paths.dictionary,
+            paths.app_modes,
+            paths.english,
+        )
         return {path: backup.read_bytes(path) for path in names}
 
     def settings(self):
@@ -210,14 +217,40 @@ class BackupTest(UserFiles, unittest.TestCase):
                 self.assertEqual(self.settings()["ToggleKey"], "")
                 self.assertEqual(notes, [])
 
-    def test_rules_are_left_out_and_reported(self):
+    def test_rules_come_back_as_the_mode_for_each_app(self):
         data = fcitx5_backup()
-        data["rules"] = [{"App": "firefox", "Mode": "2"}]
-        before = self.files()
+        data["rules"] = [{"App": "firefox", "Mode": "5"}, {"App": "kate", "Mode": "2"}]
+        _, notes = self.restore(data)
+        self.assertEqual(notes, [])
+        self.assertEqual(
+            read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "firefox=5\nkate=2\n"
+        )
+
+    def test_off_and_emoji_rules_are_kept_and_reported(self):
+        data = fcitx5_backup()
+        data["rules"] = [{"App": "code", "Mode": "0"}, {"App": "kate", "Mode": "6"}]
         _, notes = self.restore(data)
         self.assertEqual(len(notes), 1)
-        written = set(path for path, data in self.files().items() if data != before[path])
-        self.assertTrue(written <= set(before))
+        self.assertEqual(
+            read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "code=0\nkate=6\n"
+        )
+
+    def test_rules_that_would_break_the_file_are_skipped(self):
+        data = fcitx5_backup()
+        data["rules"] = [
+            {"App": "a=b", "Mode": "5"},
+            {"App": "x\ny", "Mode": "5"},
+            {"App": "", "Mode": "5"},
+            {"App": "#c", "Mode": "5"},
+            {"App": "ok", "Mode": "5\nevil=2"},
+        ]
+        self.restore(data)
+        self.assertFalse(os.path.exists(self.paths.app_modes))
+
+    def test_empty_rules_clear_the_modes_picked_for_each_app(self):
+        write_text(self.paths.app_modes, "firefox=5\n")
+        self.restore({"rules": []})
+        self.assertEqual(read_text(self.paths.app_modes), backup.APP_MODES_HEADER)
 
     def test_missing_parts_are_left_alone(self):
         before = self.files()
@@ -240,6 +273,7 @@ class BackupTest(UserFiles, unittest.TestCase):
             {"macros": 5},
             {"macros": [{"Key": 1}]},
             {"rules": [1]},
+            {"rules": [{"App": 1}]},
             {"config": {}, "keymaps": None},
             '{"dictionary": "\\ud800"}',
         ):
@@ -321,12 +355,15 @@ class BackupTest(UserFiles, unittest.TestCase):
         )
         write_text(self.paths.keymaps, "[CustomKeymap/0]\nKey=a\nValue=b\n\n")
         write_text(self.paths.dictionary, "khô\ngà\n")
+        write_text(self.paths.app_modes, backup.APP_MODES_HEADER + "firefox=5\ncode=0\n")
         backup.put(self.paths.english, b"")
         before = self.files()
         target = os.path.join(self.home, "out.json")
         backup.export(self.engine, self.paths, target)
         exported = backup.load(target)
-        self.assertNotIn("rules", exported)
+        self.assertEqual(
+            exported["rules"], [{"App": "firefox", "Mode": "5"}, {"App": "code", "Mode": "0"}]
+        )
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["ToggleKey"], {"0": "Alt+z"})
         self.assertEqual(exported["config"]["ModeMenuKey"], {"0": "Shift+asciitilde"})
@@ -336,13 +373,18 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.restore(fcitx5_backup())
         self.assertNotEqual(self.files(), before)
         _, notes = self.restore(exported)
-        self.assertEqual(len(notes), 1)  # Switching to English.
+        self.assertEqual(len(notes), 2)  # Switching to English, and code's Off rule.
         self.assertEqual(self.files(), before)
         again = os.path.join(self.home, "again.json")
         backup.export(self.engine, self.paths, again)
         second = backup.load(again)
         del exported["meta"]["timestamp"], second["meta"]["timestamp"]
         self.assertEqual(second, exported)
+
+    def test_no_app_modes_file_exports_no_rules(self):
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        self.assertNotIn("rules", backup.load(target))
 
     def test_export_without_own_dictionary(self):
         target = os.path.join(self.home, "out.json")

@@ -18,7 +18,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   đơn và Shift kèm một phím bị từ chối (#51).
 - Sao lưu và khôi phục cài đặt, gõ tắt, bảng phím, từ điển và trạng thái Anh/Việt từ menu của cửa sổ cài đặt, cùng
   tệp JSON với bản fcitx5 nên chuyển qua lại được giữa hai bản. Khôi phục kiểm cả tệp trước khi ghi, báo trước những
-  gì bản IBus không giữ được (luật theo app, chế độ emoji, phím chuyển chỉ một phím) và có nút Hoàn tác trả lại
+  gì bản IBus không giữ được (chế độ emoji, tắt tiếng Việt theo app, phím chuyển chỉ một phím) và có nút Hoàn tác trả lại
   đúng như cũ; Ngó Sen đang chạy đổi Anh/Việt theo bản sao lưu ngay (#54).
 - Cứu dấu: khi bật "Gõ Sen ở app cho phép", bấm chuột ngay sau một chữ rồi gõ phím dấu để sửa dấu chữ đó (chao,
   f → chào); Tab hay Esc trả lại phím vừa gõ. Bôi đen chữ rồi gõ phím dấu cũng được, nhưng chỉ ở app X11: app đi
@@ -31,6 +31,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Menu phím ` nhớ Gõ Sen hay gạch chân riêng cho từng app như bản fcitx5, thay vì đổi cho mọi app cùng lúc; mục
   mới "Chế độ gõ mặc định" (phím r) bỏ lựa chọn riêng của app đó. App chưa nhận ra tên thì vẫn đổi cách gõ chung
   (#87).
+- Sao lưu và khôi phục mang theo cả cách gõ chọn riêng cho từng app, cùng tệp với bản fcitx5; luật tắt tiếng Việt
+  hay chọn emoji theo app vẫn được giữ lại cho bản fcitx5 (#88).
 - Hai dấu cách thành ". " và -- thành "—", như bản fcitx5: bật trong cửa sổ cài đặt, mục "Gõ nhanh"; mặc định
   tắt (#77).
 - Gõ tắt cả khi đang gõ tiếng Anh, như bản fcitx5: gõ "ko" rồi dấu cách vẫn ra "không"; bật trong cửa sổ cài đặt,
