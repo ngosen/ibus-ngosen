@@ -517,6 +517,19 @@ with open(settings_path) as f:
         settings_path,
     )
 
+
+# Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
+def tap_ctrl_shift(app, extra=0, hold_ms=0):
+    ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
+    release = IBus.ModifierType.RELEASE_MASK
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl)
+    pump(hold_ms)
+    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl | shift | release)
+    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra | ctrl | release)
+    pump(200)
+
+
 # Without a click watcher a reset may be a click, so X11 apps keep the preedit.
 if no_x:
     set_setting("DirectTyping", "True")
@@ -541,39 +554,23 @@ if no_x:
     mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
     check(os.path.exists(mark), "no click watcher: a reset between the keys still taps", mark)
     app.close()
-    # Without its text a field shows a click only by a reset, which XIM clients never send. With the
+    # Not every app resets on a click, so without the click watcher Cứu chữ holds back. With the
     # underline the core could still delete with forwarded keys, so only the engine holds the offer back.
     set_setting("DirectTyping", "False")
-
-    def toggle(app):
-        app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
-        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
-        app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | IBus.ModifierType.RELEASE_MASK)
-        app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | IBus.ModifierType.RELEASE_MASK)
-        pump(300)
-
-    app = App("retype-no-text", surrounding=False)
+    app = App("xim", surrounding=False)
     app.type("vieetj")
-    toggle(app)
-    check(
-        not os.path.exists(mark) and app.text == "vieetj",
-        "no click watcher, field without text: no retype",
-        app.text,
-    )
+    tap_ctrl_shift(app)
+    pump(100)
+    check(not os.path.exists(mark), "no click watcher: Vietnamese again", mark)
     app.close()
-    # kitty and Konsole declare their text but always send it empty.
-    app = App("retype-empty-text")
-    app.report = lambda: app.ic.set_surrounding_text(IBus.Text.new_from_string(""), 0, 0)
-    app.report()
-    toggle(app)
-    app.type("vieetj")
-    toggle(app)
-    check(
-        not os.path.exists(mark) and app.text == "vieetj",
-        "no click watcher, field sending its text empty: no retype",
-        app.text,
-    )
-    app.close()
+    for name, kwargs in (("xim", {"surrounding": False}), ("gtk3-im:gedit", {})):
+        app = App(name, **kwargs)
+        tap_ctrl_shift(app)
+        app.type("vieetj")
+        tap_ctrl_shift(app)
+        pump(100)
+        check(app.text == "vieetj", f"no click watcher, {name}: no retype", app.text)
+        app.close()
     finish()
 
 open(log_path, "w").close()
@@ -659,6 +656,37 @@ check(
 )
 forwarded = [e for e in app.events if e[0] == "forward"]
 check(forwarded == [], "preedit, GNOME Shell: no forwarded keys", forwarded)
+app.close()
+
+# An address bar may select a completion, which a deletion through the text would take first.
+app = App("gnome-shell", purpose=IBus.InputPurpose.URL)
+app.type("xin vieetj ")
+app.key(IBus.KEY_BackSpace)
+check(
+    (app.text, app.preedit) == ("xin việt", ""),
+    "preedit, GNOME Shell, an address bar: BackSpace does not reopen the word",
+    (app.text, app.preedit),
+)
+app.close()
+
+
+# Claims its text but never sends it, as VS Code does through GNOME Shell.
+class SilentApp(App):
+    def report(self):
+        pass
+
+
+# The Shell turns a deletion into bytes of the text last reported, so with none it deletes nothing.
+app = SilentApp("gnome-shell", qt_through_shell=True)
+tap_ctrl_shift(app)
+app.type("vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(
+    app.text == "vieetj",
+    "preedit, GNOME Shell, a field that never reports its text: no retype",
+    app.text,
+)
 app.close()
 
 open(log_path, "w").close()
@@ -1151,18 +1179,6 @@ class GnomeMenu:
 english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
-# Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.
-def tap_ctrl_shift(app, extra=0, hold_ms=0):
-    ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
-    release = IBus.ModifierType.RELEASE_MASK
-    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra)
-    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl)
-    pump(hold_ms)
-    app.ic.process_key_event(IBus.KEY_Shift_L, 0, extra | ctrl | shift | release)
-    app.ic.process_key_event(IBus.KEY_Control_L, 0, extra | ctrl | release)
-    pump(200)
-
-
 app = App("toggle")
 app.type("vieetj")
 tap_ctrl_shift(app)
@@ -1530,6 +1546,14 @@ pump(300)
 check(app.text == "việt", "retype: offered where the engine watches clicks", app.text)
 app.close()
 
+# An address bar may select its completion after the typed text, and the deletion would take that first.
+app = App("retype-url", purpose=IBus.InputPurpose.URL)
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "vieetj", "retype: not in an address bar", app.text)
+app.close()
+
 set_setting("DirectTyping", "True")
 app = App("gtk3-im:gedit")
 typed_in_english(app, "vieetj")
@@ -1571,6 +1595,13 @@ check(note[-1:] == ["Tiếng Anh"], "toggle: the note stays after the keys are l
 app.type("a")
 check(note[-1:] == [""], "toggle: the note goes at the next key", note)
 app.key(IBus.KEY_z, alt)
+app.ic.process_key_event(IBus.KEY_Alt_L, 0, alt | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+app.ic.focus_out()
+pump(200)
+app.ic.focus_in()
+pump(200)
+check(note[-1:] == [""], "toggle: the note stays gone at the next focus in", note)
 app.close()
 
 app = App("toggle-alt-z")

@@ -122,7 +122,7 @@ namespace ngosen {
             return reportsText() ? reported_ : Surrounding();
         // The Shell applies a deletion to the text last reported, not to the copy IBus edits itself.
         if (client_ == "gnome-shell")
-            return (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 ? reported_ : Surrounding();
+            return field().surroundingText ? reported_ : Surrounding();
         if ((engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) == 0)
             return {};
         IBusText* text   = nullptr;
@@ -141,16 +141,9 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
-    // XIM clients under Xwayland send no reset on a click, and the X server's clicks are not watched there.
-    // A field that declares its text but sends it empty or late (kitty, Konsole) shows no cursor move either.
+    // Not every app resets on a click (XIM clients never do), and IBus text comes too late to check.
     bool IBusHost::seesCursorMoves() const {
-        if (clicksWatched.load(std::memory_order_acquire))
-            return true;
-        const Field f = field();
-        if (!f.surroundingText || ngosen::surroundingTextLags(f))
-            return false;
-        const Surrounding s = surrounding();
-        return s.isValid() && !s.text().empty();
+        return clicksWatched.load(std::memory_order_acquire);
     }
 
     bool IBusHost::typesWithKeysBesideText() const {
@@ -182,11 +175,11 @@ namespace ngosen {
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;
         // With the underline or in English the Shell still drops forwarded keys, but deleting through the
-        // text reaches the app, so an edit of committed text goes that way. Terminals claim text they never
-        // report and erase with DEL.
+        // text reaches the app, so an edit of committed text goes that way. The Shell maps it onto the text
+        // last reported: a field with none, a terminal or an address bar's selected completion would go wrong.
         if (!direct_ && client_ == "gnome-shell" && !shellDeliversKeys()) {
             f.sendsNoKeys = true;
-            if (f.terminal)
+            if (f.terminal || f.url || !reported_.isValid())
                 f.surroundingText = false;
         }
         f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;

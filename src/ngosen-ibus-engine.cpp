@@ -176,8 +176,9 @@ namespace {
         showLanguageItem(engine);
         showLanguage(engine);
         session.showsNotice = true;
-        // A click moving the cursor must be seen, or the offer would replace text somewhere else.
-        if (!englishOn && session.host->seesCursorMoves())
+        // A click moving the cursor must be seen, or the offer would replace text somewhere else. An
+        // address bar may select its completion after the typed text, which the deletion would take first.
+        if (!englishOn && session.host->seesCursorMoves() && !session.host->field().url)
             session.state->offerRetype();
     }
 
@@ -483,6 +484,9 @@ namespace {
             return;
         session->tap = {};
         closeModeMenu(engine, *session);
+        // ibus-daemon keeps the last line it got and shows it again in the next field.
+        session->host->hideNotice();
+        session->showsNotice = false;
         session->state->resetAfterAppCommit(true);
         session->state->forgetKeysWhileOff();
         session->host->setFocus(false);
