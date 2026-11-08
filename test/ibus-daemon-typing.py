@@ -628,6 +628,16 @@ app = App("punctuation-no-text", surrounding=False)
 app.type("ban  a--b ")
 check(app.text == "ban. a—b ", "punctuation: a field without text deletes with keys", app.text)
 app.close()
+# GNOME Shell fields take no forwarded keys, so the edit goes through the text the app reported.
+app = App("gnome-shell")
+app.type("ban  a--b ")
+forwarded = [e for e in app.events if e[0] == "forward"]
+check(
+    (app.text, forwarded) == ("ban. a—b ", []),
+    "punctuation: GNOME Shell deletes through the text",
+    (app.text, forwarded),
+)
+app.close()
 set_setting("DoubleSpaceToPeriod", "False")
 set_setting("DoubleHyphenToEmDash", "False")
 

@@ -49,7 +49,7 @@ namespace {
 
     // As the fcitx5 edition writes them: defaults are commented out.
     const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\nDoubleSpaceToPeriod=True\n"
-                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\nRetypeAfterSwitch=True\n";
+                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\nRetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\n";
     const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
 
     void              testValues() {
@@ -82,8 +82,7 @@ namespace {
         const IBusSettings read = readSettings(parseIni(FcitxSettings));
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
-        check(!defaults.options.doubleSpaceToPeriod && !defaults.options.doubleHyphenToEmDash, "the punctuation options are off by default");
-        check(read.options.doubleSpaceToPeriod, "DoubleSpaceToPeriod is read");
+        check(read.options.doubleSpaceToPeriod && read.options.doubleHyphenToEmDash, "the punctuation options are read");
         check(read.options.retypeAfterSwitch, "RetypeAfterSwitch is read");
         check(!read.options.retoneSelection, "RetoneSelection is read");
 
