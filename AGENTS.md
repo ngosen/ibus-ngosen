@@ -46,6 +46,27 @@ Super+Space still switches GNOME's input sources.
   test, and only that test, fail.
 - **Reuse one build directory.** Rebuild in `build/`; a new directory per experiment wears out the SSD.
 
+## Testing in a real GNOME session
+
+The typing rules are shared with fcitx5-ngosen and tested in the core, but the way text reaches apps is
+not: GNOME Shell relays most apps under its own name, sends the text around the cursor only when asked,
+and can deliver two commits in one batch. Bugs on that path show up only in a real session, so how much
+to test there depends on what the change touches:
+
+- **None:** typing rules in the core, settings, translations, packaging, CI and docs. `ctest` and CI are
+  enough.
+- **Short check, about 10 minutes:** anything in how the engine commits, shows the preedit, deletes,
+  follows focus or forwards keys through GNOME Shell (`src/ngosen-ibus-engine.cpp`,
+  `src/ngosen-ibus-host.cpp`, `src/ngosen-ibus-shell.cpp`), and a core update that changes when it waits
+  for the app. On GNOME 50, type a Telex word with a BackSpace in it 3 times in a Firefox page and 3 times
+  in a Chrome page, and "tooi" twice in the Firefox address bar while it autofills a bookmarked site.
+  Say in the PR what was typed and what came out.
+- **Full check, before a release** and for a change on that path with no earlier measurement: the same
+  apps with 10 runs each at a slow and a fast pace, plus GTK, Qt, LibreOffice Writer and a terminal.
+
+Write down before each run which runs should fail and which should pass; a run that differs proves
+nothing until it is explained.
+
 ## Commits
 
 - Conventional Commits, imperative subject of at most 72 characters.
