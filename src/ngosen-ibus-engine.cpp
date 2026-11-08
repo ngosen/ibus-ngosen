@@ -420,7 +420,7 @@ namespace {
             return;
         if (Session* session = sessionOf(focusedEngine))
             session->applyNewSettings();
-        // The file, not settings(): with a word underlined the reload waits, and the menu would
+        // The file, not settings(): in the middle of a word the reload waits, and the menu would
         // take back a click.
         showMenu(focusedEngine, resources().savedSettings());
     }
