@@ -35,6 +35,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   cách, -- (#79).
 - Cửa sổ cài đặt có tab "Kiểm tra máy": kiểm IBus, nguồn nhập và biến môi trường, sửa vài bước bằng một
   nút (chạy hay khởi động lại IBus, thêm Ngó Sen vào nguồn nhập), chép kết quả để gửi báo lỗi (#46).
+- Tab "Kiểm tra máy" báo thêm hai bước trên GNOME: khi dùng Gõ Sen trên GNOME 50.0–50.3, extension sửa lỗi có đang
+  chạy không, kèm nút bật; trên Wayland, máy có thiếu xdg-desktop-portal-gnome không, vì thiếu nó thì Ngó Sen không
+  biết đang gõ trong app nào (#86).
 - Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
   nạp sẵn bảng phím Telex, VNI, VIQR… như bản fcitx5; không cần sang bản fcitx5 để soạn nữa (#53).
 - Bấm ` để mở menu chế độ gõ như bản fcitx5: 1 chọn Gõ Sen, q chọn gạch chân, e chọn tiếng Anh, đổi cho mọi app cùng
