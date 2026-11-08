@@ -1571,6 +1571,13 @@ check(note[-1:] == ["Tiếng Anh"], "toggle: the note stays after the keys are l
 app.type("a")
 check(note[-1:] == [""], "toggle: the note goes at the next key", note)
 app.key(IBus.KEY_z, alt)
+app.ic.process_key_event(IBus.KEY_Alt_L, 0, alt | IBus.ModifierType.RELEASE_MASK)
+pump(200)
+app.ic.focus_out()
+pump(200)
+app.ic.focus_in()
+pump(200)
+check(note[-1:] == [""], "toggle: the note stays gone at the next focus in", note)
 app.close()
 
 app = App("toggle-alt-z")

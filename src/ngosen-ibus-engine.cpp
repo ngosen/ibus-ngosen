@@ -484,6 +484,9 @@ namespace {
             return;
         session->tap = {};
         closeModeMenu(engine, *session);
+        // ibus-daemon keeps the last line it got and shows it again in the next field.
+        session->host->hideNotice();
+        session->showsNotice = false;
         session->state->resetAfterAppCommit(true);
         session->state->forgetKeysWhileOff();
         session->host->setFocus(false);
