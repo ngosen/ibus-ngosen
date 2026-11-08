@@ -46,7 +46,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Trên Wayland, Ngó Sen biết app đang gõ qua GNOME Shell là app nào, đọc từ portal của GNOME như fcitx5 5.1.22,
   không cần extension; app Flatpak mang tên như khi cài thường. Nhờ vậy các luật riêng từng app của lõi chạy cả ở
   bản IBus: Alacritty không bị gửi ký tự DEL mà nó sẽ dán ra thành rác, ô địa chỉ của Firefox được nhận ra như ở bản fcitx5, ô tìm kiếm
-  của GNOME không sửa dấu hay gõ lại chữ (#PRNUM).
+  của GNOME không sửa dấu hay gõ lại chữ (#81).
 
 ### Thay đổi
 
