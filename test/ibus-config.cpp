@@ -397,7 +397,7 @@ namespace {
         const SettingsPaths clean = pathsIn(root / "clean");
         fill(clean);
         prepareSettings(clean);
-        for (int stopAt = 0; stopAt < 5; ++stopAt) {
+        for (int stopAt = 0; stopAt < 6; ++stopAt) {
             const SettingsPaths paths = pathsIn(root / std::to_string(stopAt));
             fill(paths);
             int        writes = 0;
@@ -405,6 +405,29 @@ namespace {
             check(!done && !fs::exists(paths.importedMark()), "stopped after " + std::to_string(stopAt) + " writes");
             prepareSettings(paths);
             check(result(paths) == result(clean), "finished after stopping at write " + std::to_string(stopAt));
+        }
+    }
+
+    void testSenDefault(const fs::path& root) {
+        const SettingsPaths fresh = pathsIn(root / "fresh");
+        check(prepareSettings(fresh) && readSettings(parseIni(read(fresh.settingsFile()))).directTyping, "a new user types with Sen");
+        check(fs::exists(fresh.senDefaultMark()), "a new user is not switched again");
+
+        const SettingsPaths old = pathsIn(root / "old");
+        write(old.settingsFile(), "InputMethod=VNI\nDirectTyping=False\n");
+        write(old.importedMark(), "");
+        check(prepareSettings(old), "an older file is prepared");
+        const IniFile once = parseIni(read(old.settingsFile()));
+        check(once.top.at("DirectTyping") == "True" && once.top.at("InputMethod") == "VNI", "an older file is switched to Sen once, the rest kept");
+        check(fs::exists(old.senDefaultMark()), "the switch is marked done");
+
+        write(old.settingsFile(), "InputMethod=VNI\nDirectTyping=False\n");
+        check(prepareSettings(old) && parseIni(read(old.settingsFile())).top.at("DirectTyping") == "False", "Sen turned off after the switch stays off");
+
+        for (const auto& [mode, sen] : {std::pair{"Preedit", false}, {"Emoji Picker", false}, {"Sen", true}, {"OFF", true}}) {
+            const SettingsPaths fcitx = pathsIn(root / (std::string("fcitx-") + mode));
+            write(fcitx.fcitxConfigDir + "/ngosen.conf", std::string("InputMethod=VNI\nMode=") + mode + "\n");
+            check(prepareSettings(fcitx) && readSettings(parseIni(read(fcitx.settingsFile()))).directTyping == sen, std::string("the fcitx5 mode is kept on import: ") + mode);
         }
     }
 
@@ -431,6 +454,7 @@ int main() {
     testDefaults(root / "defaults");
     testKilledHalfway(root / "killed");
     testLaterSettingsCarriedOver(root / "later");
+    testSenDefault(root / "sen");
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all settings checks passed\n";

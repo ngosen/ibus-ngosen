@@ -470,6 +470,44 @@ def finish():
     sys.exit(1 if failures else 0)
 
 
+config_dir = os.path.join(os.environ["XDG_CONFIG_HOME"], "ngosen")
+user_dictionary = os.path.join(os.environ["XDG_DATA_HOME"], "ngosen", "vietnamese.cm.dict")
+settings_path = os.path.join(config_dir, "ngosen.conf")
+
+
+# As the settings window saves: a temporary file renamed over the old one.
+def write_file(path, text):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path + ".tmp", "w") as f:
+        f.write(text)
+    os.replace(path + ".tmp", path)
+    pump(1000)
+
+
+def set_setting(key, value):
+    with open(settings_path) as f:
+        lines = [line for line in f.read().splitlines() if not line.startswith(key + "=")]
+    write_file(settings_path, "\n".join(lines + [f"{key}={value}"]) + "\n")
+
+
+# The engine writes the settings file when it first starts.
+App("first-run").close()
+with open(settings_path) as f:
+    check(
+        "EnableDictionary=False" in f.read(),
+        "settings: the first run writes every key",
+        settings_path,
+    )
+with open(settings_path) as f:
+    check("DirectTyping=True" in f.read(), "settings: Sen is the default", settings_path)
+check(
+    os.path.exists(os.path.join(config_dir, ".sen-default")),
+    "settings: a new user is not switched to Sen again",
+    config_dir,
+)
+# The checks up to the Sen ones below are about the underline.
+set_setting("DirectTyping", "False")
+
 # With the underline the Shell's dropped keys matter too, so the engine follows it from the start.
 shell = FakeShell()
 shell.start("51.0", None)
@@ -576,33 +614,6 @@ check("việt" in plain, "log: a plain field logs what was typed", plain)
 hidden = typed_log(IBus.InputHints.PRIVATE)
 leaked = [w for w in ("việt", "viê") if w in hidden]
 check(not leaked, "log: a private field keeps no typed text", leaked)
-
-config_dir = os.path.join(os.environ["XDG_CONFIG_HOME"], "ngosen")
-user_dictionary = os.path.join(os.environ["XDG_DATA_HOME"], "ngosen", "vietnamese.cm.dict")
-settings_path = os.path.join(config_dir, "ngosen.conf")
-
-
-# As the settings window saves: a temporary file renamed over the old one.
-def write_file(path, text):
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path + ".tmp", "w") as f:
-        f.write(text)
-    os.replace(path + ".tmp", path)
-    pump(1000)
-
-
-def set_setting(key, value):
-    with open(settings_path) as f:
-        lines = [line for line in f.read().splitlines() if not line.startswith(key + "=")]
-    write_file(settings_path, "\n".join(lines + [f"{key}={value}"]) + "\n")
-
-
-with open(settings_path) as f:
-    check(
-        "EnableDictionary=False" in f.read(),
-        "settings: the first run writes every key",
-        settings_path,
-    )
 
 
 # Ctrl held, then Shift, then both let go: the way a tap of the toggle key reaches the engine.

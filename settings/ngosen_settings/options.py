@@ -49,7 +49,7 @@ LABELS = {
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for English"),
     "ShortcutDefault": N_("Shortcut for Default Typing"),
-    "DirectTyping": N_("Type with Sen where the app allows (experimental)"),
+    "DirectTyping": N_("Type with Sen where the app allows"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
