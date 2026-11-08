@@ -1182,8 +1182,9 @@ english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
 # A macro typed in English: the abbreviation is already in the app, so it must be deleted first.
-def macro_in_english(name, **kwargs):
+def macro_in_english(name, before="", **kwargs):
     app = App(name, **kwargs)
+    app.type(before)
     tap_ctrl_shift(app)
     app.type("ko ")
     tap_ctrl_shift(app)
@@ -1191,7 +1192,8 @@ def macro_in_english(name, **kwargs):
     return app.text
 
 
-check(macro_in_english("macro-english-off") == "ko ", "macro in English: off by default", "")
+got = macro_in_english("macro-english-off")
+check(got == "ko ", "macro in English: off by default", got)
 set_setting("EnableMacroInOffMode", "True")
 got = macro_in_english("macro-english")
 check(got == "không ", "macro in English: expands", got)
@@ -1199,13 +1201,8 @@ got = macro_in_english("macro-english-no-text", surrounding=False)
 check(got == "không ", "macro in English: a field without text deletes with keys", got)
 got = macro_in_english("gnome-shell", surrounding=False)
 check(got == "ko ", "macro in English: a field that can delete nothing keeps the abbreviation", got)
-app = App("gnome-shell")
-app.type("xin ")
-tap_ctrl_shift(app)
-app.type("ko ")
-tap_ctrl_shift(app)
-app.close()
-check(app.text == "xin không ", "macro in English: GNOME Shell deletes through the text", app.text)
+got = macro_in_english("gnome-shell", before="xin ")
+check(got == "xin không ", "macro in English: GNOME Shell deletes through the text", got)
 set_setting("EnableMacroInOffMode", "False")
 
 app = App("toggle")

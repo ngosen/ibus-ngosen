@@ -17,7 +17,8 @@ kitty vẫn gạch chân). GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phí
 extension sửa lỗi này. Bật tuỳ chọn và đăng nhập lại một lần là Ngó Sen tự bật extension; chưa chạy thì chữ vẫn
 gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
 
-Nếu cần Cứu dấu ở mọi app, chế độ riêng theo từng app như Vim mode hay chèn emoji, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
+Nếu cần Cứu dấu ở mọi app, chế độ riêng theo từng app như Vim mode hay chèn emoji, dùng
+[Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
 
 ## Cài
 
