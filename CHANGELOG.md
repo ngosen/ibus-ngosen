@@ -51,6 +51,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   thay cho Xanh Mono; tuỳ chọn "Không phải đầu từ" đổi tên thành "Trong từ" như bản fcitx5 (#67).
 - Dùng lõi Ngó Sen `ngosen-1.8.2-1`: Cứu chữ hết xoá nhầm chữ khi bấm chuột sang chỗ khác ngay sau phím chuyển
   Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
+- Dùng lõi Ngó Sen mới nhất trên nhánh phát triển: trong terminal như Ptyxis và GNOME Terminal, Ngó Sen sửa chữ đã
+  gõ bằng ký tự DEL gửi kèm chữ mới, terminal xoá bằng nó như khi bấm BackSpace (ngosen/ngosen#620; #80).
 - Ở game SDL trong phiên X11, Ngó Sen xoá chữ bằng phím BackSpace bấm qua XTEST như bản fcitx5, thay vì commit
   chữ mới khi chưa xoá được chữ cũ; gói Debian và openSUSE thêm `libxcb-xtest` (#69).
 - Ở ô đi qua GNOME Shell, khi gõ gạch chân hay đang tiếng Anh mà GNOME 50.0–50.3 chưa chạy extension, Ngó Sen

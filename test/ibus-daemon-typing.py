@@ -4,6 +4,7 @@
 import ctypes
 import glob
 import os
+import re
 import sys
 import time
 import warnings
@@ -100,6 +101,8 @@ class App:
         self.resets_after_key = resets_after_key
         # The GTK 3 module reports the cursor alone, with no selection.
         self.reports_anchor = reports_anchor
+        # A terminal passes a committed DEL to the shell, which erases a character with it.
+        self.terminal = purpose == IBus.InputPurpose.TERMINAL
         self.reported = ""
         # None keeps the cursor at the end of the text; select() moves it and sets an anchor.
         self.cursor = None
@@ -167,7 +170,14 @@ class App:
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
         self.events.append(("commit", text.get_text()))
-        self.insert(text.get_text())
+        if self.terminal:
+            for part in re.split("(\x7f)", text.get_text()):
+                if part == "\x7f":
+                    self.backspace()
+                else:
+                    self.insert(part)
+        else:
+            self.insert(text.get_text())
         self.report()
 
     def on_delete(self, _ic, offset, count):
@@ -813,6 +823,22 @@ app.report = lambda: None
 app.type("vieetj ")
 pump(500)
 check(IBus.KEY_BackSpace not in forwarded, "relayed terminal: no forwarded BackSpace", forwarded)
+app.close()
+
+# A terminal that reports its text, as Ptyxis does through GNOME Shell, gets the word fixed by a DEL.
+app = field_with_text(purpose=IBus.InputPurpose.TERMINAL)
+forwarded = []
+listen(app.ic, "forward-key-event", lambda _ic, keyval, _keycode, _state: forwarded.append(keyval))
+app.type("vieetj ")
+pump(500)
+check(app.text == "xin việt ", "reporting terminal: the word", app.text)
+check(app.preedits == [], "reporting terminal: no underline", app.preedits)
+check(
+    any("\x7f" in c for c in app.commits),
+    "reporting terminal: the commit erases with DEL",
+    app.commits,
+)
+check(IBus.KEY_BackSpace not in forwarded, "reporting terminal: no forwarded BackSpace", forwarded)
 app.close()
 
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
