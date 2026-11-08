@@ -120,7 +120,9 @@ HINTS = {
     ),
     "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
     "DoubleHyphenToEmDash": N_("a--b → a—b."),
-    "EnableMacroInOffMode": N_("With Enable Macro on, a macro such as ko → không expands even in English."),
+    "EnableMacroInOffMode": N_(
+        "With Enable Macro on, a macro such as ko → không expands even in English."
+    ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
 
