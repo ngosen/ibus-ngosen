@@ -711,7 +711,11 @@ if no_x:
         log_path,
     )
     shell.set_overview(False)
-    check(shell_names("GNOME focused app: imgview"), "portal, overview closed: the app again", log_path)
+    check(
+        shell_names("GNOME focused app: imgview"),
+        "portal, overview closed: the app again",
+        log_path,
+    )
     portal.focus("window:12")
     check(shell_names("GNOME focused app: unknown"), "portal, no .desktop file: unknown", log_path)
     set_setting("DirectTyping", "True")
