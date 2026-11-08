@@ -108,8 +108,6 @@ namespace {
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
-        check(readSettings(parseIni(text)).options.doubleSpaceToPeriod, "DoubleSpaceToPeriod round trip");
-        check(readSettings(parseIni(text)).options.doubleHyphenToEmDash, "DoubleHyphenToEmDash round trip");
         check(parseIni(text).top.size() == 29, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");

@@ -251,10 +251,12 @@ namespace ngosen {
         return keys;
     }
 
+    // Macros while in English stay off: the shell does not read that setting yet.
     IBusSettings defaultSettings() {
         IBusSettings settings;
-        settings.toggleKeys   = defaultToggleKeys();
-        settings.modeMenuKeys = defaultModeMenuKeys();
+        settings.toggleKeys                   = defaultToggleKeys();
+        settings.modeMenuKeys                 = defaultModeMenuKeys();
+        settings.options.enableMacroInOffMode = false;
         return settings;
     }
 
