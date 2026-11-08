@@ -220,7 +220,7 @@ class ShellStepsTest(unittest.TestCase):
     def test_gnome_portal_found_in_the_data_dirs(self):
         exists = os.path.exists
         with tempfile.TemporaryDirectory() as data:
-            env = {"XDG_DATA_DIRS": data}
+            env = {"XDG_DATA_DIRS": data, "XDG_DATA_HOME": os.path.join(data, "home")}
             # Only the test's folder counts, whatever this machine has installed.
             only_data = mock.patch.object(
                 os.path, "exists", side_effect=lambda p: p.startswith(data) and exists(p)

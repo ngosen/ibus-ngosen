@@ -14,9 +14,9 @@ gi.require_version("PangoCairo", "1.0")
 
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402,F401
 
-from . import backup, brand, check_page, i18n, keys, options, pages  # noqa: E402
+from . import backup, brand, check_page, i18n, ini, keys, options, pages  # noqa: E402
 from .i18n import _  # noqa: E402
-from .store import Engine, Store  # noqa: E402
+from .store import Engine, Store, read_text  # noqa: E402
 
 APP_ID = "io.github.ngosen.IBusNgoSen"
 # A file dialog the user closed; older GTK has no CANCELLED.
@@ -46,7 +46,7 @@ class Window(Adw.ApplicationWindow):
             version,
             self.notify,
             self._count,
-            lambda: store.values.get("DirectTyping") == "True",
+            self._direct_typing,
         )
 
         stack = Adw.ViewStack()
@@ -90,6 +90,13 @@ class Window(Adw.ApplicationWindow):
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
+        if key == "DirectTyping":
+            self.check.run()
+
+    def _direct_typing(self):
+        # The engine saves the mode itself when it is picked from its menu.
+        saved = ini.parse(read_text(self.store.settings_file) or "")[0]
+        return saved.get("DirectTyping", self.store.values.get("DirectTyping")) == "True"
 
     def save_macros(self, macros, _key):
         saved = self._write(lambda: self.store.set_macros(macros) or True, _("Macro"))

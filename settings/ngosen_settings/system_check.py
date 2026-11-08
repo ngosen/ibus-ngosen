@@ -43,7 +43,7 @@ class Facts:
     ibus_version: str = ""
     ngosen_version: str = ""
     gnome_shell_version: str = ""
-    # Sen, which types straight into the app; the underlined mode needs neither GNOME fix.
+    # Sen, which types straight into the app; the underlined mode works around the keys GNOME drops.
     direct_typing: bool = False
     # What gnome-extensions info says; empty when GNOME Shell does not know the extension.
     forward_keys_state: str = ""
@@ -437,7 +437,8 @@ def extension_state(text):
 
 def has_gnome_portal(env):
     """Whether xdg-desktop-portal-gnome is installed, which D-Bus starts when asked."""
-    dirs = (env.get("XDG_DATA_DIRS") or "/usr/local/share").split(":") + ["/usr/share"]
+    home = env.get("XDG_DATA_HOME") or os.path.join(env.get("HOME", ""), ".local", "share")
+    dirs = [home] + (env.get("XDG_DATA_DIRS") or "/usr/local/share").split(":") + ["/usr/share"]
     name = "dbus-1/services/org.freedesktop.impl.portal.desktop.gnome.service"
     return any(os.path.exists(os.path.join(d, name)) for d in dirs if d)
 
