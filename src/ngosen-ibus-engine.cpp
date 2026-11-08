@@ -6,6 +6,7 @@
 #include "ngosen-ibus-engine.h"
 
 #include "ngosen-globals.h"
+#include "ngosen-ibus-app-modes.h"
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-menu.h"
@@ -21,6 +22,7 @@
 #include <algorithm>
 #include <atomic>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace {
@@ -31,14 +33,32 @@ namespace {
     }
 
     // What the toggle key last chose, shared by every field as in the fcitx5 edition.
-    bool englishOn = false;
+    bool              englishOn = false;
 
-    // Off, every word goes into the preedit; on, the core picks for each word whether it goes
+    ngosen::AppModes& appModes() {
+        static ngosen::AppModes modes(resources().paths().appModesFile());
+        return modes;
+    }
+
+    std::string currentApp(const ngosen::IBusHost& host) {
+        return ngosen::modeAppName(host.field().program);
+    }
+
+    // In Preedit every word goes into the preedit; in Sen the core picks for each word whether it goes
     // straight into the field or into the preedit.
-    ngosen::Mode typingMode() {
+    ngosen::Mode sharedMode() {
         if (englishOn)
             return ngosen::Mode::Off;
         return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
+    }
+
+    // The mode picked for the app, else the shared one.
+    ngosen::Mode typingMode(const ngosen::IBusHost& host) {
+        if (englishOn)
+            return ngosen::Mode::Off;
+        if (const auto mode = appModes().find(currentApp(host)))
+            return *mode == ngosen::AppMode::Sen ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
+        return sharedMode();
     }
 
     const std::vector<ngosen::KeyChord>& toggleChords() {
@@ -79,7 +99,7 @@ namespace {
     std::atomic<unsigned> clicksSeen{0};
 
     void                  applyTypingMode(ngosen::IBusHost& host) {
-        realMode = typingMode();
+        realMode = typingMode(host);
         host.setDirectTyping(realMode == ngosen::Mode::Sen);
         // Every mode needs to know whether the Shell drops forwarded keys; the extension is still
         // enabled only for Sen.
@@ -104,6 +124,16 @@ namespace {
             englishOn = english;
             applyTypingMode(*host);
             // Still the same field, so as in fcitx5 Sen keeps what it learned of it and the keys for Cứu chữ.
+            if (realMode == ngosen::Mode::Sen)
+                state->activate(ngosen::Mode::Sen, false);
+        }
+
+        // GNOME's portal may name the app only after focus-in, so the mode follows the app between words.
+        void followApp() {
+            if (host->hasPreedit() || state->holdsWord() || typingMode(*host) == realMode)
+                return;
+            applyTypingMode(*host);
+            NGOSEN_INFO(std::string("Typing mode for the app: ") + (realMode == ngosen::Mode::Sen ? "Sen" : "Preedit"));
             if (realMode == ngosen::Mode::Sen)
                 state->activate(ngosen::Mode::Sen, false);
         }
@@ -246,6 +276,28 @@ namespace {
         showModeMenu(engine, session);
     }
 
+    // As in the fcitx5 edition, a mode picked in the menu is kept for the app in use. An app without a
+    // name of its own changes the shared mode, which every app without a pick follows.
+    void keepMode(Session& session, ngosen::MenuMode mode) {
+        const std::string app = currentApp(*session.host);
+        if (!app.empty()) {
+            std::optional<ngosen::AppMode> kept;
+            if (mode != ngosen::MenuMode::Default)
+                kept = mode == ngosen::MenuMode::Sen ? ngosen::AppMode::Sen : ngosen::AppMode::Preedit;
+            if (!appModes().set(app, kept))
+                NGOSEN_WARN("Cannot save the typing mode for " + app);
+            session.followApp();
+            return;
+        }
+        if (mode == ngosen::MenuMode::Default)
+            return;
+        const bool           direct = mode == ngosen::MenuMode::Sen;
+        ngosen::IBusSettings saved;
+        // Applied at once, since the next key may come before the file monitor reports the write.
+        if (resources().settings().directTyping != direct && resources().saveSetting("DirectTyping", direct ? "True" : "False", saved))
+            resources().noticeChange();
+    }
+
     void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
         closeModeMenu(engine, session);
         const bool english = item.mode == ngosen::MenuMode::English;
@@ -254,13 +306,12 @@ namespace {
             ngosen::saveEnglishOn(resources().paths(), englishOn);
             showLanguageItem(engine);
         }
-        const bool           direct = item.mode == ngosen::MenuMode::Sen;
-        ngosen::IBusSettings saved;
-        // Applied at once, since the next key may come before the file monitor reports the write.
-        if (!english && resources().settings().directTyping != direct && resources().saveSetting("DirectTyping", direct ? "True" : "False", saved))
-            resources().noticeChange();
+        if (!english)
+            keepMode(session, item.mode);
         NGOSEN_INFO("Mode menu: " + item.label);
-        session.host->showNotice(item.label);
+        // Default names no mode, and in an app without a name of its own it changes nothing.
+        const char* shown = realMode == ngosen::Mode::Off ? _("English") : realMode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
+        session.host->showNotice(item.mode == ngosen::MenuMode::Default ? shown : item.label);
         session.showsNotice = true;
     }
 
@@ -330,6 +381,8 @@ namespace {
             return FALSE;
         if (session->applyNewSettings())
             showLanguageItem(engine);
+        if ((state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
+            session->followApp();
         // Shown until the next key typed, not the release of the toggle key itself.
         if (session->showsNotice && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
             session->host->hideNotice();
@@ -435,8 +488,9 @@ namespace {
         if (Session* session = sessionOf(engine)) {
             session->host->setFocus(true);
             session->applyNewSettings();
-            // With use-global-engine off each field has its own engine, and the toggle key may have switched elsewhere.
-            session->host->setDirectTyping(realMode == ngosen::Mode::Sen);
+            // With use-global-engine off each field has its own engine, the toggle key may have switched
+            // elsewhere, and the app may have a mode of its own.
+            applyTypingMode(*session->host);
             // The per-field checks of Sen start over, as the fcitx5 frontend does on focus-in.
             if (realMode == ngosen::Mode::Sen)
                 session->state->activate(ngosen::Mode::Sen, true);
@@ -622,7 +676,7 @@ namespace ngosen {
 
     void addEngine(IBusFactory* factory) {
         englishOn = readEnglishOn(resources().paths());
-        realMode  = typingMode();
+        realMode  = sharedMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
     }

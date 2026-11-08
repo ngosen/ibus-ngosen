@@ -113,7 +113,7 @@ namespace {
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 30, "the file has every key");
+        check(parseIni(text).top.size() == 31, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -156,7 +156,8 @@ namespace {
     void testModeMenuSettings() {
         const IBusSettings defaults = readSettings(parseIni(""));
         check(defaults.modeMenuKeys == std::vector<std::string>{"grave"}, "the mode menu opens with ` by default, as in fcitx5");
-        check(defaults.shortcutSen == "1" && defaults.shortcutPreedit == "q" && defaults.shortcutOff == "e", "menu shortcuts default to fcitx5's");
+        check(defaults.shortcutSen == "1" && defaults.shortcutPreedit == "q" && defaults.shortcutOff == "e" && defaults.shortcutDefault == "r",
+              "menu shortcuts default to fcitx5's");
         check(readSettings(parseIni("ModeMenuKey=Shift+asciitilde\n")).modeMenuKeys == std::vector<std::string>{"Shift+asciitilde"}, "Shift+~ opens the menu");
         check(readSettings(parseIni("ModeMenuKey=\n")).modeMenuKeys.empty(), "an empty menu key turns the menu off");
         check(readSettings(parseIni("ModeMenuKey=Shift_L Nope\n")).modeMenuKeys == std::vector<std::string>{"grave"}, "a lone modifier falls back to `");
@@ -165,11 +166,12 @@ namespace {
         const IBusSettings shortcuts = readSettings(parseIni("ShortcutSen=a\nShortcutPreedit=semicolon\nShortcutOff=\n"));
         check(shortcuts.shortcutSen == "a" && shortcuts.shortcutPreedit == "q" && shortcuts.shortcutOff == "e", "a shortcut is one letter or digit");
         check(readSettings(parseIni("ShortcutOff=X\n")).shortcutOff == "x", "a shortcut written in capitals is read in lowercase");
-        IBusSettings changed  = defaults;
-        changed.modeMenuKeys  = {};
-        changed.shortcutOff   = "x";
-        const IBusSettings rt = readSettings(parseIni(settingsText(changed)));
-        check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x", "menu settings round trip");
+        IBusSettings changed    = defaults;
+        changed.modeMenuKeys    = {};
+        changed.shortcutOff     = "x";
+        changed.shortcutDefault = "z";
+        const IBusSettings rt   = readSettings(parseIni(settingsText(changed)));
+        check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x" && rt.shortcutDefault == "z", "menu settings round trip");
     }
 
     void testModeMenuKeys() {
@@ -192,6 +194,10 @@ namespace {
         settings.options.inputMethod = "Telex";
         check(!opensModeMenu(settings, {{"~", "DauNga"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "a custom keymap keeps its keys");
         check(opensModeMenu(settings, {{"s", "DauSac"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "other keymap keys leave the menu alone");
+        check(menuKey(settings, IBUS_KEY_r, 0).mode == MenuMode::Default, "r picks Default Typing");
+        settings.shortcutSen = "r";
+        check(menuKey(settings, IBUS_KEY_r, 0).mode == MenuMode::Sen && modeMenuItems(settings).back().key == IBUS_KEY_VoidSymbol,
+              "a shortcut the user gave r keeps it, and Default Typing goes without one");
     }
 
     bool matches(const std::string& key, guint keyval, guint state) {
@@ -292,6 +298,7 @@ namespace {
         write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
         write(paths.fcitxConfigDir + "/ngosen-macro-table.conf", FcitxMacros);
         write(paths.fcitxDataDir + "/vietnamese.cm.dict", "người dùng\n");
+        write(paths.fcitxConfigDir + "/ngosen-app-rules.conf", "firefox=5\ncode=0\n");
         check(prepareSettings(paths), "import succeeds");
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
@@ -300,6 +307,7 @@ namespace {
         check(read(paths.macroFile()) == FcitxMacros, "macros copied as they are");
         check(read(paths.dictionaryFile()) == "người dùng\n", "the user's dictionary copied");
         check(!fs::exists(paths.keymapFile()), "no keymap file without one to copy");
+        check(read(paths.appModesFile()) == "firefox=5\ncode=0\n", "the modes picked for each app copied as they are");
 
         write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
         check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");

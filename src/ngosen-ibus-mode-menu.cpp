@@ -9,6 +9,7 @@
 
 #include <glib/gi18n-lib.h>
 #include <ibus.h>
+#include <algorithm>
 #include <string_view>
 
 namespace ngosen {
@@ -43,11 +44,17 @@ namespace ngosen {
     } // namespace
 
     std::vector<MenuItem> modeMenuItems(const IBusSettings& settings) {
-        return {
+        std::vector<MenuItem> items = {
             {MenuMode::Sen, _("Sen"), ibus_keyval_from_name(settings.shortcutSen.c_str())},
             {MenuMode::Preedit, _("Preedit"), ibus_keyval_from_name(settings.shortcutPreedit.c_str())},
             {MenuMode::English, _("English"), ibus_keyval_from_name(settings.shortcutOff.c_str())},
         };
+        // Its key came after the others, which a user may already have given its letter.
+        guint key = ibus_keyval_from_name(settings.shortcutDefault.c_str());
+        if (std::any_of(items.begin(), items.end(), [&](const MenuItem& item) { return item.key == key; }))
+            key = IBUS_KEY_VoidSymbol;
+        items.push_back({MenuMode::Default, _("Default Typing"), key});
+        return items;
     }
 
     bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state) {

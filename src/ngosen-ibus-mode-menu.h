@@ -16,11 +16,13 @@ typedef struct _IBusLookupTable IBusLookupTable;
 
 namespace ngosen {
 
-    // The modes the menu offers. Every app shares one: IBus on Wayland does not tell apps apart.
+    // The modes the menu offers. Sen and Preedit are kept for the app in use, Default forgets its pick,
+    // and English applies to every app.
     enum class MenuMode {
         Sen,
         Preedit,
-        English
+        English,
+        Default
     };
 
     struct MenuItem {
