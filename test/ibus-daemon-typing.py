@@ -664,9 +664,17 @@ if no_x:
     portal = FakePortal()
     portal.start()
 
+    # Only what was logged since the last name found, so an earlier line cannot pass a check.
+    log_seen = [0]
+
     def shell_names(text):
-        with open(log_path) as f:
-            return text in f.read()
+        with open(log_path, "rb") as f:
+            f.seek(log_seen[0])
+            logged = f.read()
+        found = logged.find(text.encode())
+        if found >= 0:
+            log_seen[0] += found + len(text.encode())
+        return found >= 0
 
     def terminal_commits(*apps):
         if apps:
@@ -703,6 +711,7 @@ if no_x:
         log_path,
     )
     shell.set_overview(False)
+    check(shell_names("GNOME focused app: imgview"), "portal, overview closed: the app again", log_path)
     portal.focus("window:12")
     check(shell_names("GNOME focused app: unknown"), "portal, no .desktop file: unknown", log_path)
     set_setting("DirectTyping", "True")
@@ -974,7 +983,6 @@ check(
 )
 check(IBus.KEY_BackSpace not in forwarded, "reporting terminal: no forwarded BackSpace", forwarded)
 app.close()
-
 
 for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     app = field_with_text(app_commits=app_commits)
