@@ -108,10 +108,10 @@ namespace {
                 state->activate(ngosen::Mode::Sen, false);
         }
 
-        // Only between words: a new engine would drop the word being typed. True when the
-        // language changed, which the menu has to show.
+        // Only between words: a new engine would drop the word being typed, underlined or already in
+        // the field. True when the language changed, which the menu has to show.
         bool applyNewSettings() {
-            if (host->hasPreedit())
+            if (host->hasPreedit() || state->holdsWord())
                 return false;
             bool languageChanged = false;
             // The toggle key writes the marker too; reading it back then changes nothing.

@@ -65,6 +65,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Gõ -- trong terminal hay ô địa chỉ vẫn giữ nguyên khi bật "Hai gạch nối thành gạch dài", nên "git push --force"
+  không còn thành "git push —force" (ngosen/ngosen#625, #83).
+- Đổi cài đặt từ menu khi đang gõ dở một chữ không còn làm mất chữ đó: cài đặt mới chờ gõ xong chữ mới áp dụng
+  (#83).
 - Gõ Sen trên GNOME: Firefox và các app báo được chữ quanh con trỏ nay gõ thẳng chính xác hơn, vì Ngó Sen xoá được bằng phím BackSpace khi bản chữ app báo đã cũ. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím này nên gói kèm một extension sửa lỗi, và Ngó Sen tự bật extension một lần sau khi đăng nhập lại; chưa chạy thì chữ gạch chân. Gói này nay không cài chung được với `fcitx5-ngosen` vì cả hai cài cùng extension (#64).
 
 ### Tài liệu
