@@ -71,6 +71,7 @@ LABELS = {
     "DoubleHyphenToEmDash": N_("Double Hyphen to Em-Dash (--)"),
     "EnableMacro": N_("Enable Macro"),
     "CapitalizeMacro": N_("Capitalize Macro"),
+    "EnableMacroInOffMode": N_("Macros while typing English"),
     "TimeFormat": N_("Time Format ($TIME in macro)"),
     "DateFormat": N_("Date Format ($DATE in macro)"),
 }
@@ -119,6 +120,9 @@ HINTS = {
     ),
     "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
     "DoubleHyphenToEmDash": N_("a--b → a—b."),
+    "EnableMacroInOffMode": N_(
+        "With Enable Macro on, a macro such as ko → không expands even in English."
+    ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
 
@@ -161,7 +165,7 @@ TYPING_GROUPS = [
     ),
     (N_("Mode menu"), SHORTCUTS),
 ]
-MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]
+MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 
 CHOICES = {
     "ToggleKey": TOGGLE_KEYS,

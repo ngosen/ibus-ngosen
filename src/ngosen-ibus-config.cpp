@@ -251,12 +251,10 @@ namespace ngosen {
         return keys;
     }
 
-    // Macros while in English stay off: the shell does not read that setting yet.
     IBusSettings defaultSettings() {
         IBusSettings settings;
-        settings.toggleKeys                   = defaultToggleKeys();
-        settings.modeMenuKeys                 = defaultModeMenuKeys();
-        settings.options.enableMacroInOffMode = false;
+        settings.toggleKeys   = defaultToggleKeys();
+        settings.modeMenuKeys = defaultModeMenuKeys();
         return settings;
     }
 
@@ -278,6 +276,7 @@ namespace ngosen {
         read.boolean("RetypeAfterSwitch", o.retypeAfterSwitch);
         read.boolean("EnableMacro", o.enableMacro);
         read.boolean("CapitalizeMacro", o.capitalizeMacro);
+        read.boolean("EnableMacroInOffMode", o.enableMacroInOffMode);
         int lockWordKey = static_cast<int>(o.lockWordKey);
         read.index("LockWordModifier", lockWordKey, LockWordKeyNames);
         o.lockWordKey = static_cast<LockWordKey>(lockWordKey);
@@ -316,6 +315,7 @@ namespace ngosen {
         line("RetypeAfterSwitch", boolText(o.retypeAfterSwitch));
         line("EnableMacro", boolText(o.enableMacro));
         line("CapitalizeMacro", boolText(o.capitalizeMacro));
+        line("EnableMacroInOffMode", boolText(o.enableMacroInOffMode));
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
         line("AutoCapitalizeAfterPunctuation", boolText(o.autoCapitalizeAfterPunctuation));
         line("CapitalizeStartOfText", boolText(o.capitalizeStartOfText));
@@ -454,18 +454,23 @@ namespace ngosen {
     }
 
     namespace {
-        // A settings file without the key missed it in the one-time import, so take it from fcitx5 or the default.
-        bool addRetypeSetting(const SettingsPaths& paths, const FileWriter& write) {
-            std::string text;
-            if (!readFile(paths.settingsFile(), text) || parseIni(text).top.count("RetypeAfterSwitch") != 0)
+        // Options this edition began to read after the first import, where fcitx5's choice still applies; a
+        // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
+        bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
+            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode"};
+            std::string              text;
+            if (!readFile(paths.settingsFile(), text))
                 return true;
-            bool        on = defaultSettings().options.retypeAfterSwitch;
-            std::string fcitx;
-            if (readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx)) {
-                const IniFile ini = parseIni(fcitx);
-                Reader{ini.top}.boolean("RetypeAfterSwitch", on);
+            const IniFile current = parseIni(text);
+            std::string   fcitx;
+            readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx);
+            const IniFile     wanted = parseIni(settingsText(readSettings(parseIni(fcitx))));
+            const std::string before = text;
+            for (const char* key : later) {
+                if (current.top.count(key) == 0)
+                    text = withSetting(text, key, wanted.top.at(key));
             }
-            return write(paths.settingsFile(), withSetting(text, "RetypeAfterSwitch", boolText(on)));
+            return text == before || write(paths.settingsFile(), text);
         }
     } // namespace
 
@@ -491,7 +496,7 @@ namespace ngosen {
             }
             if (!write(paths.settingsFile(), settingsText(settings)))
                 return false;
-        } else if (!addRetypeSetting(paths, write)) {
+        } else if (!addLaterSettings(paths, write)) {
             return false;
         }
         return imported || write(paths.importedMark(), "");

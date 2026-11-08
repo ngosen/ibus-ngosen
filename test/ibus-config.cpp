@@ -48,8 +48,9 @@ namespace {
     }
 
     // As the fcitx5 edition writes them: defaults are commented out.
-    const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\nDoubleSpaceToPeriod=True\n"
-                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\nRetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\n";
+    const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\n"
+                                      "DoubleSpaceToPeriod=True\nVietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\n"
+                                      "RetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\nEnableMacroInOffMode=True\n";
     const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
 
     void              testValues() {
@@ -83,6 +84,8 @@ namespace {
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
         check(read.options.doubleSpaceToPeriod && read.options.doubleHyphenToEmDash, "the punctuation options are read");
+        check(!defaults.options.enableMacroInOffMode, "macros in English are off by default");
+        check(read.options.enableMacroInOffMode, "EnableMacroInOffMode is read");
         check(read.options.retypeAfterSwitch, "RetypeAfterSwitch is read");
         check(!read.options.retoneSelection, "RetoneSelection is read");
 
@@ -101,6 +104,7 @@ namespace {
         changed.options.retypeAfterSwitch    = false;
         changed.options.doubleSpaceToPeriod  = true;
         changed.options.doubleHyphenToEmDash = true;
+        changed.options.enableMacroInOffMode = true;
         changed.enableDictionary             = true;
         changed.enableCustomKeymap           = true;
         changed.directTyping                 = true;
@@ -108,7 +112,8 @@ namespace {
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
-        check(parseIni(text).top.size() == 29, "the file has every key");
+        check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
+        check(parseIni(text).top.size() == 30, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -318,8 +323,8 @@ namespace {
         check(read(paths.settingsFile()) == settingsText(defaultSettings()), "nothing to import writes the defaults");
     }
 
-    // A settings file without RetypeAfterSwitch: fcitx5's choice comes over once, else the default.
-    void testRetypeCarriedOver(const fs::path& root) {
+    // A settings file without an option added later: fcitx5's choice comes over once, else the default.
+    void testLaterSettingsCarriedOver(const fs::path& root) {
         const auto retype = [](const SettingsPaths& paths) {
             const auto top = parseIni(read(paths.settingsFile())).top;
             return top.count("RetypeAfterSwitch") != 0 ? top.at("RetypeAfterSwitch") : std::string("missing");
@@ -342,6 +347,32 @@ namespace {
         earlier(paths, "RetypeAfterSwitch=False\n");
         write(paths.fcitxConfigDir + "/ngosen.conf", "RetypeAfterSwitch=True\n");
         check(prepareSettings(paths) && retype(paths) == "False", "a choice made in this edition is kept");
+
+        paths = pathsIn(root / "newer-options");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "EnableMacroInOffMode=True\nDoubleSpaceToPeriod=True\nDoubleHyphenToEmDash=True\n");
+        check(prepareSettings(paths), "options added after the import are carried over");
+        const IBusSettings carried = readSettings(parseIni(read(paths.settingsFile())));
+        check(carried.options.enableMacroInOffMode, "macros in English turned on in fcitx5 comes over");
+        check(carried.options.doubleSpaceToPeriod && carried.options.doubleHyphenToEmDash, "punctuation turned on in fcitx5 comes over");
+
+        paths = pathsIn(root / "macro-chosen-here");
+        earlier(paths, "EnableMacroInOffMode=False\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "EnableMacroInOffMode=True\n");
+        check(prepareSettings(paths) && !readSettings(parseIni(read(paths.settingsFile()))).options.enableMacroInOffMode, "macros in English chosen in this edition are kept");
+
+        paths = pathsIn(root / "macro-no-fcitx5");
+        earlier(paths, "InputMethod=VNI\n");
+        check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.count("EnableMacroInOffMode") != 0 &&
+                  !readSettings(parseIni(read(paths.settingsFile()))).options.enableMacroInOffMode,
+              "macros in English take the default without fcitx5 settings");
+
+        // This edition has its own switch key, so an earlier file without one keeps Ctrl+Shift.
+        paths = pathsIn(root / "toggle-key");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "ToggleKey=Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R\n");
+        check(prepareSettings(paths) && readSettings(parseIni(read(paths.settingsFile()))).toggleKeys == defaultToggleKeys(),
+              "fcitx5's switch key does not replace this edition's");
     }
 
     // A run killed after any write leaves files the next run finishes into the same result.
@@ -391,7 +422,7 @@ int main() {
     testNoOverwrite(root / "keep");
     testDefaults(root / "defaults");
     testKilledHalfway(root / "killed");
-    testRetypeCarriedOver(root / "retype");
+    testLaterSettingsCarriedOver(root / "later");
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all settings checks passed\n";

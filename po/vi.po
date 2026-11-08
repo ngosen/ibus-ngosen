@@ -162,6 +162,14 @@ msgid "Enable Macro"
 msgstr "Bật gõ tắt"
 
 #: settings/ngosen_settings/options.py
+msgid "Macros while typing English"
+msgstr "Gõ tắt cả khi đang gõ tiếng Anh"
+
+#: settings/ngosen_settings/options.py
+msgid "With Enable Macro on, a macro such as ko → không expands even in English."
+msgstr "Khi đã bật gõ tắt, từ gõ tắt như ko → không vẫn ra cả khi đang gõ tiếng Anh."
+
+#: settings/ngosen_settings/options.py
 msgid "Capitalize Macro"
 msgstr "Gõ tắt chữ hoa"
 
