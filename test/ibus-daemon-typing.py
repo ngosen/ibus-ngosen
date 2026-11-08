@@ -1181,6 +1181,26 @@ class GnomeMenu:
 english_mark = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
 
 
+# A macro typed in English: the abbreviation is already in the app, so it must be deleted first.
+def macro_in_english(name, **kwargs):
+    app = App(name, **kwargs)
+    tap_ctrl_shift(app)
+    app.type("ko ")
+    tap_ctrl_shift(app)
+    app.close()
+    return app.text
+
+
+check(macro_in_english("macro-english-off") == "ko ", "macro in English: off by default", "")
+set_setting("EnableMacroInOffMode", "True")
+got = macro_in_english("macro-english")
+check(got == "không ", "macro in English: expands", got)
+got = macro_in_english("macro-english-no-text", surrounding=False)
+check(got == "không ", "macro in English: a field without text deletes with keys", got)
+got = macro_in_english("gnome-shell", surrounding=False)
+check(got == "ko ", "macro in English: a field that can delete nothing keeps the abbreviation", got)
+set_setting("EnableMacroInOffMode", "False")
+
 app = App("toggle")
 app.type("vieetj")
 tap_ctrl_shift(app)

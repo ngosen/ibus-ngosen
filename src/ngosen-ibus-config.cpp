@@ -251,12 +251,10 @@ namespace ngosen {
         return keys;
     }
 
-    // Macros while in English stay off: the shell does not read that setting yet.
     IBusSettings defaultSettings() {
         IBusSettings settings;
-        settings.toggleKeys                   = defaultToggleKeys();
-        settings.modeMenuKeys                 = defaultModeMenuKeys();
-        settings.options.enableMacroInOffMode = false;
+        settings.toggleKeys   = defaultToggleKeys();
+        settings.modeMenuKeys = defaultModeMenuKeys();
         return settings;
     }
 
@@ -278,6 +276,7 @@ namespace ngosen {
         read.boolean("RetypeAfterSwitch", o.retypeAfterSwitch);
         read.boolean("EnableMacro", o.enableMacro);
         read.boolean("CapitalizeMacro", o.capitalizeMacro);
+        read.boolean("EnableMacroInOffMode", o.enableMacroInOffMode);
         int lockWordKey = static_cast<int>(o.lockWordKey);
         read.index("LockWordModifier", lockWordKey, LockWordKeyNames);
         o.lockWordKey = static_cast<LockWordKey>(lockWordKey);
@@ -316,6 +315,7 @@ namespace ngosen {
         line("RetypeAfterSwitch", boolText(o.retypeAfterSwitch));
         line("EnableMacro", boolText(o.enableMacro));
         line("CapitalizeMacro", boolText(o.capitalizeMacro));
+        line("EnableMacroInOffMode", boolText(o.enableMacroInOffMode));
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
         line("AutoCapitalizeAfterPunctuation", boolText(o.autoCapitalizeAfterPunctuation));
         line("CapitalizeStartOfText", boolText(o.capitalizeStartOfText));

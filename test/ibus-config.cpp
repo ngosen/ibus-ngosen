@@ -48,8 +48,9 @@ namespace {
     }
 
     // As the fcitx5 edition writes them: defaults are commented out.
-    const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\nDoubleSpaceToPeriod=True\n"
-                                      "VietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\nRetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\n";
+    const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\n"
+                                      "DoubleSpaceToPeriod=True\nVietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\n"
+                                      "RetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\nEnableMacroInOffMode=True\n";
     const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
 
     void              testValues() {
@@ -83,6 +84,8 @@ namespace {
         check(read.options.inputMethod == "VNI", "InputMethod is read");
         check(read.options.w2u == 2, "W2U is read by name");
         check(read.options.doubleSpaceToPeriod && read.options.doubleHyphenToEmDash, "the punctuation options are read");
+        check(!defaults.options.enableMacroInOffMode, "macros in English are off by default");
+        check(read.options.enableMacroInOffMode, "EnableMacroInOffMode is read");
         check(read.options.retypeAfterSwitch, "RetypeAfterSwitch is read");
         check(!read.options.retoneSelection, "RetoneSelection is read");
 
@@ -101,6 +104,7 @@ namespace {
         changed.options.retypeAfterSwitch    = false;
         changed.options.doubleSpaceToPeriod  = true;
         changed.options.doubleHyphenToEmDash = true;
+        changed.options.enableMacroInOffMode = true;
         changed.enableDictionary             = true;
         changed.enableCustomKeymap           = true;
         changed.directTyping                 = true;
@@ -108,7 +112,8 @@ namespace {
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
-        check(parseIni(text).top.size() == 29, "the file has every key");
+        check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
+        check(parseIni(text).top.size() == 30, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
