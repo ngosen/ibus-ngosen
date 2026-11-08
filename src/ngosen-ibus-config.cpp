@@ -453,8 +453,7 @@ namespace ngosen {
     }
 
     namespace {
-        // Settings written before Cứu chữ came to this edition lack it, and the import that could have
-        // carried it over from fcitx5 ran once already: take it from fcitx5 now, or from the default.
+        // A settings file without the key missed it in the one-time import, so take it from fcitx5 or the default.
         bool addRetypeSetting(const SettingsPaths& paths, const FileWriter& write) {
             std::string text;
             if (!readFile(paths.settingsFile(), text) || parseIni(text).top.count("RetypeAfterSwitch") != 0)

@@ -316,7 +316,7 @@ namespace {
         check(read(paths.settingsFile()) == settingsText(defaultSettings()), "nothing to import writes the defaults");
     }
 
-    // Settings imported before this edition had Cứu chữ: fcitx5's choice comes over once, else the default.
+    // A settings file without RetypeAfterSwitch: fcitx5's choice comes over once, else the default.
     void testRetypeCarriedOver(const fs::path& root) {
         const auto retype = [](const SettingsPaths& paths) {
             const auto top = parseIni(read(paths.settingsFile())).top;
