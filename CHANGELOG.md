@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.1.4-1] — 08/11/2026
+
+Gõ Sen trên GNOME xoá chữ bằng phím BackSpace khi app báo chữ cũ, kèm extension cho GNOME 50.0–50.3; Gõ Sen
+hết nuốt phím mũi tên, Home, End bấm ngay sau một chữ. Dùng lõi Ngó Sen `ngosen-1.8.1-1`. Tải gói ở
+[release ibus-ngosen-1.1.4-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.1.4-1).
+
 ### Thay đổi
 
 - Dùng lõi Ngó Sen `ngosen-1.8.1-1`: Gõ Sen hết nuốt hoặc đảo thứ tự phím mũi tên, Home, End bấm ngay sau một chữ
