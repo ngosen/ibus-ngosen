@@ -23,4 +23,7 @@ namespace ngosen {
     // The app GNOME Shell relays, named as the core knows it; empty when the Shell has not told.
     const std::string& shellFocusedApp();
 
+    // XDG_SESSION_TYPE alone misses a daemon started by hand, which keeps only WAYLAND_DISPLAY.
+    bool isWaylandSession();
+
 } // namespace ngosen

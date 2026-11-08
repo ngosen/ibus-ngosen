@@ -12,6 +12,7 @@
 #include "ngosen-log.h"
 
 #include <cstdlib>
+#include <cstring>
 #include <gio/gio.h>
 #include <regex>
 #include <vector>
@@ -233,18 +234,6 @@ namespace ngosen {
             return nullptr;
         }
 
-        void onMonitoring(GObject* source, GAsyncResult* result, gpointer /*data*/) {
-            GError*   error = nullptr;
-            GVariant* reply = g_dbus_connection_call_finish(G_DBUS_CONNECTION(source), result, &error);
-            if (reply == nullptr) {
-                NGOSEN_WARN(std::string("Cannot watch GNOME's portal for the focused app: ") + error->message);
-                g_error_free(error);
-                return;
-            }
-            g_variant_unref(reply);
-            NGOSEN_INFO("Watching GNOME's portal for the focused app");
-        }
-
         void stopMonitor() {
             ShellState& s = shell();
             ++s.monitorRun;
@@ -252,6 +241,22 @@ namespace ngosen {
                 return;
             g_dbus_connection_close(s.monitor, nullptr, nullptr, nullptr);
             g_clear_object(&s.monitor);
+        }
+
+        void onMonitoring(GObject* source, GAsyncResult* result, gpointer data) {
+            GError*   error = nullptr;
+            GVariant* reply = g_dbus_connection_call_finish(G_DBUS_CONNECTION(source), result, &error);
+            if (reply == nullptr) {
+                // A monitor replaced before the bus answered is no failure.
+                if (GPOINTER_TO_UINT(data) == shell().monitorRun) {
+                    NGOSEN_WARN(std::string("Cannot watch GNOME's portal for the focused app: ") + error->message);
+                    stopMonitor();
+                }
+                g_error_free(error);
+                return;
+            }
+            g_variant_unref(reply);
+            NGOSEN_INFO("Watching GNOME's portal for the focused app");
         }
 
         // A name kept from a monitor the bus dropped would follow the user into every other app.
@@ -287,7 +292,7 @@ namespace ngosen {
             const std::string reply   = "type='method_return',sender='" + s.shellOwner + "',destination='" + s.portalOwner + "'";
             const gchar*      rules[] = {call.c_str(), reply.c_str(), nullptr};
             g_dbus_connection_call(s.monitor, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus.Monitoring", "BecomeMonitor",
-                                   g_variant_new("(^asu)", rules, 0U), nullptr, G_DBUS_CALL_FLAGS_NONE, ReplyTimeoutMs, nullptr, onMonitoring, nullptr);
+                                   g_variant_new("(^asu)", rules, 0U), nullptr, G_DBUS_CALL_FLAGS_NONE, ReplyTimeoutMs, nullptr, onMonitoring, data);
         }
 
         // A monitor connection may send nothing after BecomeMonitor, so it is a connection of its own.
@@ -436,8 +441,7 @@ namespace ngosen {
         s.enabledMark = enabledMark;
         // On X11 apps reach IBus themselves; the Shell is the client only for its own fields, and the
         // portal would name the window behind them.
-        const char* session = std::getenv("XDG_SESSION_TYPE");
-        s.watchPortal       = session != nullptr && std::string(session) == "wayland";
+        s.watchPortal = isWaylandSession();
         g_bus_watch_name(G_BUS_TYPE_SESSION, ShellService, G_BUS_NAME_WATCHER_FLAGS_NONE, onShellAppeared, onShellVanished, nullptr, nullptr);
         if (s.watchPortal)
             g_bus_watch_name(G_BUS_TYPE_SESSION, PortalService, G_BUS_NAME_WATCHER_FLAGS_NONE, onPortalAppeared, onPortalVanished, nullptr, nullptr);
@@ -445,6 +449,12 @@ namespace ngosen {
 
     const std::string& shellFocusedApp() {
         return shell().program;
+    }
+
+    bool isWaylandSession() {
+        const char* wayland = std::getenv("WAYLAND_DISPLAY");
+        const char* session = std::getenv("XDG_SESSION_TYPE");
+        return (wayland != nullptr && *wayland != 0) || (session != nullptr && std::strcmp(session, "wayland") == 0);
     }
 
     bool shellDeliversKeys() {
