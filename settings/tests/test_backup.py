@@ -18,7 +18,7 @@ DEFAULTS = {
     "EnableMacro": "True",
     "EnableDictionary": "False",
     "EnableCustomKeymap": "False",
-    "DirectTyping": "False",
+    "DirectTyping": "True",
     "ToggleKey": DEFAULT_TOGGLE,
     "ModeMenuKey": "grave",
 }
@@ -352,7 +352,7 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(
             exported["meta"]["components"], ["config", "macros", "keymaps", "dictionary"]
         )
-        self.assertEqual(exported["config"]["Mode"], "Preedit")
+        self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["VietnameseOn"], "True")
         # A list edited after the backup goes back to the packaged one.
         write_text(self.paths.dictionary, "việt\nkhô\n")

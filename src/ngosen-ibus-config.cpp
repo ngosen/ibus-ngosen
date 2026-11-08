@@ -390,6 +390,10 @@ namespace ngosen {
         return configDir + "/.fcitx5-imported";
     }
 
+    std::string SettingsPaths::senDefaultMark() const {
+        return configDir + "/.sen-default";
+    }
+
     std::string SettingsPaths::englishMark() const {
         return stateDir + "/english";
     }
@@ -478,6 +482,20 @@ namespace ngosen {
             }
             return text == before || write(paths.settingsFile(), text);
         }
+
+        // A file from before Sen was the default says DirectTyping=False even if the user never chose it, since
+        // saving any setting writes every key, so Sen is switched on once for it.
+        bool switchSenOnOnce(const SettingsPaths& paths, const FileWriter& write) {
+            std::string text;
+            if (fileExists(paths.senDefaultMark()) || !readFile(paths.settingsFile(), text))
+                return true;
+            if (!readSettings(parseIni(text)).directTyping) {
+                NGOSEN_INFO("Turning Sen on, now the default");
+                if (!write(paths.settingsFile(), withSetting(text, "DirectTyping", "True")))
+                    return false;
+            }
+            return write(paths.senDefaultMark(), "");
+        }
     } // namespace
 
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write) {
@@ -506,6 +524,8 @@ namespace ngosen {
         } else if (!addLaterSettings(paths, write)) {
             return false;
         }
+        if (!switchSenOnOnce(paths, write))
+            return false;
         return imported || write(paths.importedMark(), "");
     }
 

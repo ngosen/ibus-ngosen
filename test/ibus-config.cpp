@@ -408,6 +408,23 @@ namespace {
         }
     }
 
+    void testSenDefault(const fs::path& root) {
+        const SettingsPaths fresh = pathsIn(root / "fresh");
+        check(prepareSettings(fresh) && readSettings(parseIni(read(fresh.settingsFile()))).directTyping, "a new user types with Sen");
+        check(fs::exists(fresh.senDefaultMark()), "a new user is not switched again");
+
+        const SettingsPaths old = pathsIn(root / "old");
+        write(old.settingsFile(), "InputMethod=VNI\nDirectTyping=False\n");
+        write(old.importedMark(), "");
+        check(prepareSettings(old), "an older file is prepared");
+        const IniFile once = parseIni(read(old.settingsFile()));
+        check(once.top.at("DirectTyping") == "True" && once.top.at("InputMethod") == "VNI", "an older file is switched to Sen once, the rest kept");
+        check(fs::exists(old.senDefaultMark()), "the switch is marked done");
+
+        write(old.settingsFile(), "InputMethod=VNI\nDirectTyping=False\n");
+        check(prepareSettings(old) && parseIni(read(old.settingsFile())).top.at("DirectTyping") == "False", "Sen turned off after the switch stays off");
+    }
+
 } // namespace
 
 int main() {
@@ -431,6 +448,7 @@ int main() {
     testDefaults(root / "defaults");
     testKilledHalfway(root / "killed");
     testLaterSettingsCarriedOver(root / "later");
+    testSenDefault(root / "sen");
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all settings checks passed\n";

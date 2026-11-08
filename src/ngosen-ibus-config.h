@@ -39,7 +39,7 @@ namespace ngosen {
         bool    enableDictionary   = false;
         bool    enableCustomKeymap = false;
         // Straight into fields that can delete around the cursor, underlined elsewhere.
-        bool directTyping = false;
+        bool directTyping = true;
         // Switches between English and Vietnamese; empty when the user turned the key off.
         std::vector<std::string> toggleKeys;
         // Opens the menu of typing modes; empty when the user turned it off.
@@ -75,6 +75,8 @@ namespace ngosen {
         std::string          appModesFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
+        // Marks Sen as switched on once for a user from before it was the default, so turning it off sticks.
+        std::string senDefaultMark() const;
         // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
         std::string englishMark() const;
         // Marks the forward-keys extension as enabled once, so turning it off is not undone.

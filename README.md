@@ -9,13 +9,13 @@ chạy trên phiên X11.
 Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
 không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
 
-Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là cách gõ mà IBus và GNOME hỗ trợ chính, nên chạy
-được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép (thử nghiệm)"
-(mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ quanh con trỏ (trên X11 là
-app GTK, Qt, Firefox, LibreOffice và terminal của GNOME, KDE, Xfce; Chrome, app Electron, xterm, Alacritty và
-kitty vẫn gạch chân). GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
-extension sửa lỗi này. Bật tuỳ chọn và đăng nhập lại một lần là Ngó Sen tự bật extension; chưa chạy thì chữ vẫn
-gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
+Mặc định Ngó Sen dùng Gõ Sen như bản fcitx5: chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ
+quanh con trỏ. Ô nào không báo được thì chữ đang gõ được gạch chân (preedit) cho tới khi chốt; trên X11 đó là
+Chrome, app Electron, xterm, Alacritty và kitty. Bấm phím ` rồi chọn Gõ Sen hay Gạch chân để đổi riêng cho app
+đang dùng, Ngó Sen nhớ lựa chọn đó cho app ấy. Muốn gạch chân ở mọi app thì tắt tuỳ chọn "Gõ Sen ở app cho phép"
+trong cửa sổ cài đặt. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
+extension sửa lỗi này: đăng nhập lại một lần là Ngó Sen tự bật extension, chưa chạy thì chữ vẫn gạch chân. Gặp
+app gõ sai thì chuyển app đó sang Gạch chân và báo cho Ngó Sen.
 
 Nếu cần Cứu dấu ở mọi app, chế độ riêng theo từng app như Vim mode hay chèn emoji, dùng
 [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
