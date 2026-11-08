@@ -21,6 +21,34 @@ namespace ngosen {
                 return {};
             return text.substr(first, text.find_last_not_of(space) - first + 1);
         }
+
+        // fcitx5 unescapes a value only when it is quoted, and skips the line when that fails.
+        std::optional<std::string> iniValue(const std::string& raw) {
+            if (raw.size() < 2 || raw.front() != '"' || raw.back() != '"')
+                return raw;
+            std::string value;
+            for (size_t i = 1; i + 1 < raw.size(); ++i) {
+                char c = raw[i];
+                if (c == '"')
+                    return std::nullopt;
+                if (c == '\\') {
+                    if (i + 2 >= raw.size())
+                        return std::nullopt;
+                    switch (raw[++i]) {
+                        case 'n': c = '\n'; break;
+                        case 't': c = '\t'; break;
+                        case 'r': c = '\r'; break;
+                        case 'f': c = '\f'; break;
+                        case 'v': c = '\v'; break;
+                        case '\\': c = '\\'; break;
+                        case '"': c = '"'; break;
+                        default: return std::nullopt;
+                    }
+                }
+                value += c;
+            }
+            return value;
+        }
     } // namespace
 
     std::vector<std::string> desktopFiles(const std::string& appId) {
@@ -57,8 +85,10 @@ namespace ngosen {
                 continue;
             }
             const size_t equals = line.find('=');
-            if (equals != std::string::npos && group == "Desktop Entry" && line.compare(0, equals, "StartupWMClass") == 0)
-                wmClass = trimmed(line.substr(equals + 1));
+            if (equals == std::string::npos || group != "Desktop Entry" || line.compare(0, equals, "StartupWMClass") != 0)
+                continue;
+            if (const auto value = iniValue(line.substr(equals + 1)))
+                wmClass = trimmed(*value);
         }
         return wmClass;
     }

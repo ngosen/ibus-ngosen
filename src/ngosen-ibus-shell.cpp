@@ -254,7 +254,43 @@ namespace ngosen {
             g_clear_object(&s.monitor);
         }
 
-        // A monitor connection may send nothing after this call, so it is a connection of its own.
+        // A name kept from a monitor the bus dropped would follow the user into every other app.
+        void onMonitorClosed(GDBusConnection* /*connection*/, gboolean /*peerVanished*/, GError* /*error*/, gpointer data) {
+            ShellState& s = shell();
+            if (GPOINTER_TO_UINT(data) != s.monitorRun)
+                return;
+            NGOSEN_WARN("Stopped watching GNOME's portal for the focused app");
+            stopMonitor();
+            s.names.dropPortalApp();
+            publish();
+        }
+
+        void onMonitorConnected(GObject* /*source*/, GAsyncResult* result, gpointer data) {
+            GError*          error   = nullptr;
+            GDBusConnection* monitor = g_dbus_connection_new_for_address_finish(result, &error);
+            ShellState&      s       = shell();
+            if (monitor == nullptr) {
+                NGOSEN_WARN(std::string("Cannot connect to the session bus to watch GNOME's portal: ") + error->message);
+                g_error_free(error);
+                return;
+            }
+            if (GPOINTER_TO_UINT(data) != s.monitorRun) {
+                g_dbus_connection_close(monitor, nullptr, nullptr, nullptr);
+                g_object_unref(monitor);
+                return;
+            }
+            s.monitor = monitor;
+            g_signal_connect(monitor, "closed", G_CALLBACK(onMonitorClosed), data);
+            g_dbus_connection_add_filter(monitor, filterMonitored, data, nullptr);
+            const std::string call =
+                "type='method_call',sender='" + s.portalOwner + "',destination='" + s.shellOwner + "',interface='org.gnome.Shell.Introspect',member='GetRunningApplications'";
+            const std::string reply   = "type='method_return',sender='" + s.shellOwner + "',destination='" + s.portalOwner + "'";
+            const gchar*      rules[] = {call.c_str(), reply.c_str(), nullptr};
+            g_dbus_connection_call(s.monitor, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus.Monitoring", "BecomeMonitor",
+                                   g_variant_new("(^asu)", rules, 0U), nullptr, G_DBUS_CALL_FLAGS_NONE, ReplyTimeoutMs, nullptr, onMonitoring, nullptr);
+        }
+
+        // A monitor connection may send nothing after BecomeMonitor, so it is a connection of its own.
         void startMonitor() {
             ShellState& s = shell();
             stopMonitor();
@@ -262,23 +298,14 @@ namespace ngosen {
                 return;
             GError* error   = nullptr;
             gchar*  address = g_dbus_address_get_for_bus_sync(G_BUS_TYPE_SESSION, nullptr, &error);
-            if (address != nullptr) {
-                const auto flags = static_cast<GDBusConnectionFlags>(G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT | G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION);
-                s.monitor        = g_dbus_connection_new_for_address_sync(address, flags, nullptr, nullptr, &error);
-                g_free(address);
-            }
-            if (s.monitor == nullptr) {
-                NGOSEN_WARN(std::string("Cannot connect to the session bus to watch GNOME's portal: ") + error->message);
+            if (address == nullptr) {
+                NGOSEN_WARN(std::string("Cannot find the session bus to watch GNOME's portal: ") + error->message);
                 g_error_free(error);
                 return;
             }
-            g_dbus_connection_add_filter(s.monitor, filterMonitored, GUINT_TO_POINTER(s.monitorRun), nullptr);
-            const std::string call =
-                "type='method_call',sender='" + s.portalOwner + "',destination='" + s.shellOwner + "',interface='org.gnome.Shell.Introspect',member='GetRunningApplications'";
-            const std::string reply   = "type='method_return',sender='" + s.shellOwner + "',destination='" + s.portalOwner + "'";
-            const gchar*      rules[] = {call.c_str(), reply.c_str(), nullptr};
-            g_dbus_connection_call(s.monitor, "org.freedesktop.DBus", "/org/freedesktop/DBus", "org.freedesktop.DBus.Monitoring", "BecomeMonitor",
-                                   g_variant_new("(^asu)", rules, 0U), nullptr, G_DBUS_CALL_FLAGS_NONE, ReplyTimeoutMs, nullptr, onMonitoring, nullptr);
+            const auto flags = static_cast<GDBusConnectionFlags>(G_DBUS_CONNECTION_FLAGS_AUTHENTICATION_CLIENT | G_DBUS_CONNECTION_FLAGS_MESSAGE_BUS_CONNECTION);
+            g_dbus_connection_new_for_address(address, flags, nullptr, nullptr, onMonitorConnected, GUINT_TO_POINTER(s.monitorRun));
+            g_free(address);
         }
 
         void setOwners(const std::string& shellOwner, const std::string& portalOwner) {
@@ -396,7 +423,6 @@ namespace ngosen {
             update();
             s.names.setOverviewActive(false);
             setOwners("", s.portalOwner);
-            publish();
         }
     } // namespace
 

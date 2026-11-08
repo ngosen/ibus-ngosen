@@ -5,7 +5,7 @@
  */
 #include "ngosen-ibus-program-name.h"
 
-#include <cstdlib>
+#include <filesystem>
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <iostream>
@@ -55,6 +55,10 @@ int main() {
     expect("a space in the key", wmClass("[Desktop Entry]\nStartupWMClass = imgview\n"), "");
     expect("no class", wmClass("[Desktop Entry]\nName=Viewer\n"), "");
     expect("a class outside the entry", wmClass("[Desktop Action new]\nStartupWMClass=other\n"), "");
+    expect("a quoted value", wmClass("[Desktop Entry]\nStartupWMClass=\"Mullvad Browser\"\n"), "Mullvad Browser");
+    expect("an escape in a quoted value", wmClass("[Desktop Entry]\nStartupWMClass=\"a\\\\b\"\n"), "a\\b");
+    expect("a bad quoted value is skipped", wmClass("[Desktop Entry]\nStartupWMClass=imgview\nStartupWMClass=\"a\"b\"\n"), "imgview");
+    expect("a backslash outside quotes stays", wmClass("[Desktop Entry]\nStartupWMClass=a\\sb\n"), "a\\sb");
     expect("a line that does not parse", wmClass("[Desktop Entry]\nnot a line\nStartupWMClass=imgview\n"), "imgview");
     expect("a file that cannot be read", readStartupWmClass(root + "/missing.desktop").value_or("(unreadable)"), "(unreadable)");
 
@@ -79,8 +83,7 @@ int main() {
     writeFile(systemExports, "com.example.Viewer.desktop", "[Desktop Entry]\nStartupWMClass=imgview\n");
     expect("an unreadable export", gnomeProgramName("com.example.Viewer.desktop"), "imgview");
 
-    gchar* argv[] = {const_cast<gchar*>("rm"), const_cast<gchar*>("-rf"), const_cast<gchar*>(root.c_str()), nullptr}; //NOLINT
-    g_spawn_sync(nullptr, argv, nullptr, G_SPAWN_SEARCH_PATH, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+    std::filesystem::remove_all(root);
     if (failures == 0)
         std::cout << "ibus_program_name: all passed\n";
     return failures == 0 ? 0 : 1;
