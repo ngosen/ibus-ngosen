@@ -4,6 +4,7 @@
 import ctypes
 import glob
 import os
+import re
 import sys
 import time
 import warnings
@@ -169,12 +170,14 @@ class App:
     def on_commit(self, _ic, text):
         self.commits.append(text.get_text())
         self.events.append(("commit", text.get_text()))
-        rest = text.get_text()
         if self.terminal:
-            while rest.startswith("\x7f"):
-                self.backspace()
-                rest = rest[1:]
-        self.insert(rest)
+            for part in re.split("(\x7f)", text.get_text()):
+                if part == "\x7f":
+                    self.backspace()
+                else:
+                    self.insert(part)
+        else:
+            self.insert(text.get_text())
         self.report()
 
     def on_delete(self, _ic, offset, count):
@@ -829,6 +832,7 @@ listen(app.ic, "forward-key-event", lambda _ic, keyval, _keycode, _state: forwar
 app.type("vieetj ")
 pump(500)
 check(app.text == "xin việt ", "reporting terminal: the word", app.text)
+check(app.preedits == [], "reporting terminal: no underline", app.preedits)
 check(any("\x7f" in c for c in app.commits), "reporting terminal: the commit erases with DEL", app.commits)
 check(IBus.KEY_BackSpace not in forwarded, "reporting terminal: no forwarded BackSpace", forwarded)
 app.close()
