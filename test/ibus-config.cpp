@@ -363,8 +363,16 @@ namespace {
 
         paths = pathsIn(root / "macro-no-fcitx5");
         earlier(paths, "InputMethod=VNI\n");
-        check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("EnableMacroInOffMode") == "False",
+        check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.count("EnableMacroInOffMode") != 0 &&
+                  !readSettings(parseIni(read(paths.settingsFile()))).options.enableMacroInOffMode,
               "macros in English take the default without fcitx5 settings");
+
+        // This edition has its own switch key, so an earlier file without one keeps Ctrl+Shift.
+        paths = pathsIn(root / "toggle-key");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "ToggleKey=Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R\n");
+        check(prepareSettings(paths) && readSettings(parseIni(read(paths.settingsFile()))).toggleKeys == defaultToggleKeys(),
+              "fcitx5's switch key does not replace this edition's");
     }
 
     // A run killed after any write leaves files the next run finishes into the same result.

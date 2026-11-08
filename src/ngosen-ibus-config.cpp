@@ -454,10 +454,11 @@ namespace ngosen {
     }
 
     namespace {
-        // A key this edition began to read after the first import is missing from the file, as it was
-        // never chosen here: take fcitx5's value, or the default.
+        // Options this edition began to read after the first import, where fcitx5's choice still applies; a
+        // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            std::string text;
+            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode"};
+            std::string              text;
             if (!readFile(paths.settingsFile(), text))
                 return true;
             const IniFile current = parseIni(text);
@@ -465,9 +466,9 @@ namespace ngosen {
             readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx);
             const IniFile     wanted = parseIni(settingsText(readSettings(parseIni(fcitx))));
             const std::string before = text;
-            for (const auto& [key, value] : wanted.top) {
+            for (const char* key : later) {
                 if (current.top.count(key) == 0)
-                    text = withSetting(text, key, value);
+                    text = withSetting(text, key, wanted.top.at(key));
             }
             return text == before || write(paths.settingsFile(), text);
         }
