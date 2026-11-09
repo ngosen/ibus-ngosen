@@ -113,7 +113,7 @@ namespace {
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 31, "the file has every key");
+        check(parseIni(text).top.size() == 37, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -172,6 +172,35 @@ namespace {
         changed.shortcutDefault = "z";
         const IBusSettings rt   = readSettings(parseIni(settingsText(changed)));
         check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x" && rt.shortcutDefault == "z", "menu settings round trip");
+    }
+
+    std::vector<MenuMode> menuModes(const IBusSettings& settings) {
+        std::vector<MenuMode> modes;
+        for (const auto& item : modeMenuItems(settings))
+            modes.push_back(item.mode);
+        return modes;
+    }
+
+    void testModeMenuOrder() {
+        IBusSettings settings = defaultSettings();
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Off, MenuMode::Default}, "the menu lists the modes in fcitx5's order");
+        settings.modeOrder = "Off,Default,Sen,Emoji,Nope";
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Default, MenuMode::Sen, MenuMode::Preedit},
+              "ModeOrder sorts the menu, the modes it leaves out come last");
+        settings.modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        settings.showModePreedit = false;
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off, MenuMode::Default}, "a hidden mode is left out");
+        check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Swallow, "the key of a hidden mode picks nothing");
+        settings.showModeSen = settings.showModeOff = settings.showModeDefault = false;
+        check(modeMenuItems(settings).empty(), "every mode can be hidden");
+
+        const IBusSettings read = readSettings(parseIni("ShowModeOff=False\nModeOrder=Default,Off\nCycleModeKey=Control+grave Shift_L\n"));
+        check(!read.showModeOff && read.showModeSen && read.modeOrder == "Default,Off", "ShowMode and ModeOrder are read");
+        check(read.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the cycle key is read, a lone modifier left out");
+        check(defaultSettings().cycleModeKeys.empty(), "the cycle key is off by default, as in fcitx5");
+        check(readSettings(parseIni("[CycleModeKey]\n0=Alt+m\n")).cycleModeKeys == std::vector<std::string>{"Alt+m"}, "fcitx5's key list is read");
+        const IBusSettings again = readSettings(parseIni(settingsText(read)));
+        check(!again.showModeOff && again.modeOrder == "Default,Off" && again.cycleModeKeys == read.cycleModeKeys, "they round trip");
     }
 
     void testModeMenuKeys() {
@@ -451,6 +480,7 @@ int main() {
     testToggleKeys();
     testModeMenuSettings();
     testModeMenuKeys();
+    testModeMenuOrder();
     testKeyMatching();
     testMenu();
     testImport(root / "import");

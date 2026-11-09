@@ -10,6 +10,7 @@
 #include <glib/gi18n-lib.h>
 #include <ibus.h>
 #include <algorithm>
+#include <sstream>
 #include <string_view>
 
 namespace ngosen {
@@ -44,17 +45,46 @@ namespace ngosen {
     } // namespace
 
     std::vector<MenuItem> modeMenuItems(const IBusSettings& settings) {
-        std::vector<MenuItem> items = {
-            {MenuMode::Sen, _("Sen"), ibus_keyval_from_name(settings.shortcutSen.c_str())},
-            {MenuMode::Preedit, _("Preedit"), ibus_keyval_from_name(settings.shortcutPreedit.c_str())},
-            {MenuMode::Off, _("OFF"), ibus_keyval_from_name(settings.shortcutOff.c_str())},
+        struct Known {
+            const char* name;
+            MenuItem    item;
+            bool        shown;
         };
-        // Its key came after the others, which a user may already have given its letter.
-        guint key = ibus_keyval_from_name(settings.shortcutDefault.c_str());
-        if (std::any_of(items.begin(), items.end(), [&](const MenuItem& item) { return item.key == key; }))
-            key = IBUS_KEY_VoidSymbol;
-        items.push_back({MenuMode::Default, _("Default Typing"), key});
+        const auto  key     = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
+        const Known known[] = {
+            {"Sen", {MenuMode::Sen, _("Sen"), key(settings.shortcutSen)}, settings.showModeSen},
+            {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
+            {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
+            {"Default", {MenuMode::Default, _("Default Typing"), key(settings.shortcutDefault)}, settings.showModeDefault},
+        };
+        std::vector<const Known*> ordered;
+        const auto                add = [&ordered](const Known& entry) {
+            if (std::find(ordered.begin(), ordered.end(), &entry) == ordered.end())
+                ordered.push_back(&entry);
+        };
+        std::istringstream names(settings.modeOrder);
+        for (std::string name; std::getline(names, name, ',');) {
+            for (const auto& entry : known) {
+                if (trimIni(name) == entry.name)
+                    add(entry);
+            }
+        }
+        for (const auto& entry : known)
+            add(entry);
+        std::vector<MenuItem> items;
+        for (const Known* entry : ordered) {
+            if (!entry->shown)
+                continue;
+            MenuItem item = entry->item;
+            if (std::any_of(items.begin(), items.end(), [&](const MenuItem& other) { return other.key == item.key; }))
+                item.key = IBUS_KEY_VoidSymbol;
+            items.push_back(item);
+        }
         return items;
+    }
+
+    bool cyclesMode(const IBusSettings& settings, guint keyval, guint state) {
+        return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.cycleModeKeys, keyval, state);
     }
 
     bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state) {

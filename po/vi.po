@@ -897,3 +897,39 @@ msgstr "Một chữ cái hoặc chữ số."
 
 msgid "Another mode already uses this key."
 msgstr "Chế độ khác đã dùng phím này."
+
+msgid "Cycle Mode Hotkey"
+msgstr "Phím tắt chuyển nhanh chế độ"
+
+msgid "Moves the app in use to the next mode in the list below, and remembers it for that app."
+msgstr "Chuyển app đang dùng sang chế độ kế tiếp trong danh sách bên dưới và nhớ cho app đó."
+
+msgid "Mode Order"
+msgstr "Thứ tự chế độ"
+
+msgid "With the mode menu open, press a mode's key to pick it for the app in use. Pick Default Typing to make the app follow the switch key again."
+msgstr "Khi menu chế độ đang mở, bấm phím của một chế độ để chọn cho app đang dùng. Chọn Chế độ gõ mặc định để app đó lại theo phím chuyển như thường."
+
+msgid "Sen, Preedit, OFF, Default Typing"
+msgstr "Gõ Sen, Gạch chân, Tắt, Chế độ gõ mặc định"
+
+msgid "Preedit, Sen, OFF, Default Typing"
+msgstr "Gạch chân, Gõ Sen, Tắt, Chế độ gõ mặc định"
+
+msgid "Default Typing, Sen, Preedit, OFF"
+msgstr "Chế độ gõ mặc định, Gõ Sen, Gạch chân, Tắt"
+
+msgid "OFF, Sen, Preedit, Default Typing"
+msgstr "Tắt, Gõ Sen, Gạch chân, Chế độ gõ mặc định"
+
+msgid "Show Sen"
+msgstr "Hiển thị chế độ Gõ Sen"
+
+msgid "Show Preedit"
+msgstr "Hiển thị chế độ Gạch chân"
+
+msgid "Show OFF"
+msgstr "Hiển thị chế độ Tắt"
+
+msgid "Show Default Typing"
+msgstr "Hiển thị chế độ gõ mặc định"

@@ -49,6 +49,14 @@ namespace ngosen {
         std::string shortcutPreedit = "q";
         std::string shortcutOff     = "e";
         std::string shortcutDefault = "r";
+        // Which modes the menu shows, and in what order; fcitx5's names, Emoji included.
+        bool        showModeSen     = true;
+        bool        showModePreedit = true;
+        bool        showModeOff     = true;
+        bool        showModeDefault = true;
+        std::string modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        // Moves the app to the next mode in that order; off by default, as in fcitx5.
+        std::vector<std::string> cycleModeKeys;
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.

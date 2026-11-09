@@ -22,6 +22,19 @@ MODE_MENU_KEYS = [
     ("Shift+asciitilde", "Shift+~"),
     ("", N_("Disabled")),
 ]
+# Off by default, as in fcitx5; the menu key stays on ` without Ctrl.
+CYCLE_MODE_KEYS = [
+    ("", N_("Disabled")),
+    ("Control+grave", "Ctrl+`"),
+]
+# fcitx5 drags the modes into any order; these are the common ones, and a saved order stays offered.
+MODE_ORDERS = [
+    ("Sen,Preedit,Emoji,Off,Default", N_("Sen, Preedit, OFF, Default Typing")),
+    ("Preedit,Sen,Emoji,Off,Default", N_("Preedit, Sen, OFF, Default Typing")),
+    ("Default,Sen,Preedit,Emoji,Off", N_("Default Typing, Sen, Preedit, OFF")),
+    ("Off,Sen,Preedit,Emoji,Default", N_("OFF, Sen, Preedit, Default Typing")),
+]
+SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"]
 # The keys that pick a mode in the menu, each one letter or digit.
 SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutDefault"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
@@ -45,6 +58,12 @@ LABELS = {
     "InputMethod": N_("Input Method"),
     "ToggleKey": N_("Switch Between English and Vietnamese"),
     "ModeMenuKey": N_("Mode Menu Hotkey"),
+    "CycleModeKey": N_("Cycle Mode Hotkey"),
+    "ModeOrder": N_("Mode Order"),
+    "ShowModeSen": N_("Show Sen"),
+    "ShowModePreedit": N_("Show Preedit"),
+    "ShowModeOff": N_("Show OFF"),
+    "ShowModeDefault": N_("Show Default Typing"),
     "ShortcutSen": N_("Shortcut for Sen"),
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
@@ -83,6 +102,12 @@ HINTS = {
     ),
     "ModeMenuKey": N_(
         "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
+    ),
+    "CycleModeKey": N_(
+        "Moves the app in use to the next mode in the list below, and remembers it for that app."
+    ),
+    "ModeOrder": N_(
+        "With the mode menu open, press a mode's key to pick it for the app in use. Pick Default Typing to make the app follow the switch key again."
     ),
     "DirectTyping": N_(
         "Text goes straight into fields that report the text around the cursor, without an underline. Elsewhere words keep the underline."
@@ -138,7 +163,17 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "ToggleKey", "ModeMenuKey", "DirectTyping", "OutputCharset"]),
+    (
+        None,
+        [
+            "InputMethod",
+            "ToggleKey",
+            "ModeMenuKey",
+            "CycleModeKey",
+            "DirectTyping",
+            "OutputCharset",
+        ],
+    ),
     (
         N_("Tone marks"),
         [
@@ -164,13 +199,15 @@ TYPING_GROUPS = [
             "DoubleHyphenToEmDash",
         ],
     ),
-    (N_("Mode menu"), SHORTCUTS),
+    (N_("Mode menu"), ["ModeOrder", *SHOW_MODES, *SHORTCUTS]),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 
 CHOICES = {
     "ToggleKey": TOGGLE_KEYS,
     "ModeMenuKey": MODE_MENU_KEYS,
+    "CycleModeKey": CYCLE_MODE_KEYS,
+    "ModeOrder": MODE_ORDERS,
     "W2U": POSITIONS,
     "BracketTransform": POSITIONS,
     "LockWordModifier": LOCK_KEYS,

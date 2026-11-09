@@ -71,6 +71,14 @@ namespace {
         return sharedVietnameseMode();
     }
 
+    ngosen::MenuMode menuModeOf(ngosen::Mode mode) {
+        return mode == ngosen::Mode::Off ? ngosen::MenuMode::Off : mode == ngosen::Mode::Sen ? ngosen::MenuMode::Sen : ngosen::MenuMode::Preedit;
+    }
+
+    ngosen::Mode modeOfMenu(ngosen::MenuMode mode) {
+        return mode == ngosen::MenuMode::Off ? ngosen::Mode::Off : mode == ngosen::MenuMode::Sen ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
+    }
+
     bool typesEnglish() {
         return realMode == ngosen::Mode::Off;
     }
@@ -301,8 +309,11 @@ namespace {
         session.state->resetAfterAppCommit(false);
         session.menuOpen   = true;
         session.menuCursor = 0;
-        const auto items   = ngosen::modeMenuItems(resources().settings());
-        const auto current = realMode == ngosen::Mode::Off ? ngosen::MenuMode::Off : realMode == ngosen::Mode::Sen ? ngosen::MenuMode::Sen : ngosen::MenuMode::Preedit;
+        // As in fcitx5 the cursor starts on the app's mode, or on Default Typing while it has no pick.
+        const std::string app     = currentApp(*session.host);
+        const bool        follows = !appModes().find(app) && !appSwitches().find(app);
+        const auto        items   = ngosen::modeMenuItems(resources().settings());
+        const auto        current = follows ? ngosen::MenuMode::Default : menuModeOf(realMode);
         for (guint i = 0; i < items.size(); ++i) {
             if (items[i].mode == current)
                 session.menuCursor = i;
@@ -341,6 +352,31 @@ namespace {
             resources().noticeChange();
     }
 
+    const char* modeLabel(ngosen::Mode mode) {
+        return mode == ngosen::Mode::Off ? _("OFF") : mode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
+    }
+
+    // As in fcitx5: the next mode the menu shows, Default Typing standing for the shared mode, kept for
+    // the app like a pick in the menu.
+    void cycleMode(IBusEngine* engine, Session& session) {
+        std::vector<ngosen::Mode> modes;
+        for (const auto& item : ngosen::modeMenuItems(resources().settings())) {
+            const ngosen::Mode mode = item.mode == ngosen::MenuMode::Default ? sharedVietnameseMode() : modeOfMenu(item.mode);
+            if (std::find(modes.begin(), modes.end(), mode) == modes.end())
+                modes.push_back(mode);
+        }
+        if (modes.empty())
+            return;
+        const auto         it   = std::find(modes.begin(), modes.end(), typingMode(*session.host));
+        const ngosen::Mode next = it == modes.end() || it + 1 == modes.end() ? modes.front() : *(it + 1);
+        keepMode(*session.host, menuModeOf(next));
+        if (session.applyMode())
+            showLanguageItem(engine);
+        NGOSEN_INFO(std::string("Cycle mode key: ") + modeName(realMode));
+        session.host->showNotice(modeLabel(realMode));
+        session.showsNotice = true;
+    }
+
     void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
         closeModeMenu(engine, session);
         keepMode(*session.host, item.mode);
@@ -348,8 +384,7 @@ namespace {
             showLanguageItem(engine);
         NGOSEN_INFO("Mode menu: " + item.label);
         // Default names no mode, so the notice says which one the app now types in.
-        const char* shown = realMode == ngosen::Mode::Off ? _("OFF") : realMode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
-        session.host->showNotice(item.mode == ngosen::MenuMode::Default ? shown : item.label);
+        session.host->showNotice(item.mode == ngosen::MenuMode::Default ? modeLabel(realMode) : item.label);
         session.showsNotice = true;
     }
 
@@ -397,10 +432,12 @@ namespace {
             return false;
         if (session.menuOpen) {
             applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval);
+        } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
+            cycleMode(engine, session);
         } else {
-            // In English the key types as usual, as in the fcitx5 edition.
+            // In English the key types as usual, as in the fcitx5 edition, and so it does with every mode hidden.
             const auto keymap = resources().settings().options.inputMethod == "Custom" ? resources().customKeymap() : std::vector<ngosen::KeymapEntry>{};
-            if (typesEnglish() || !ngosen::opensModeMenu(resources().settings(), keymap, keyval, state))
+            if (typesEnglish() || !ngosen::opensModeMenu(resources().settings(), keymap, keyval, state) || ngosen::modeMenuItems(resources().settings()).empty())
                 return false;
             openModeMenu(engine, session);
         }

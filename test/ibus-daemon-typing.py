@@ -1766,13 +1766,75 @@ panel.cursor_down()
 pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
+# As in fcitx5 the cursor starts on Default Typing for an app with no pick, and wraps to Sen.
+check(
+    app_mode("menu-arrow") == "menu-arrow=2",
+    "menu: the panel's arrow moves from Default Typing to Sen",
+    app_mode("menu-arrow"),
+)
+app.key(IBus.KEY_grave)
+pump(200)
+panel.cursor_down()
+pump(200)
+app.key(IBus.KEY_Return)
+pump(500)
 check(
     app_mode("menu-arrow") == "menu-arrow=5",
-    "menu: the panel's arrow moves from Sen to the underline",
+    "menu: with Sen picked the arrow moves from Sen to the underline",
     app_mode("menu-arrow"),
 )
 app.close()
 # Later checks reuse app names and expect the shared mode.
+os.remove(app_modes_path)
+
+set_setting("ShowModePreedit", "False")
+set_setting("ModeOrder", "Off,Sen,Emoji,Preedit,Default")
+app = menu_app("menu-order")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    app.menu == ["Tắt", "Gõ Sen", "Chế độ gõ mặc định"],
+    "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
+    app.menu,
+)
+app.key(IBus.KEY_q)
+pump(300)
+check(
+    app.menu is not None and app_mode("menu-order") == "",
+    "menu: q picks nothing while hidden",
+    app.menu,
+)
+app.key(IBus.KEY_Escape)
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeDefault"):
+    set_setting(name, "False")
+app.key(IBus.KEY_grave)
+pump(200)
+check(app.menu is None and app.text == "`", "menu: with every mode hidden ` types itself", app.text)
+app.close()
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"):
+    set_setting(name, "True")
+set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Default")
+
+# As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
+set_setting("CycleModeKey", "Control+m")
+app = menu_app("cycle")
+seen = []
+for _ in range(4):
+    app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+    pump(300)
+    seen.append(app_mode("cycle"))
+check(
+    seen == ["cycle=5", "cycle=0", "cycle=2", "cycle=5"],
+    "cycle: Sen, underline, Off, then Default (Sen) again",
+    seen,
+)
+check(app.text == "", "cycle: the app sees neither the press nor the release", app.text)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(app.text == "vieetj ", "cycle: it also works while Off, which types English", app.text)
+app.close()
+set_setting("CycleModeKey", "")
 os.remove(app_modes_path)
 
 # As in fcitx5 each app keeps the language the toggle key last chose in it; an app never switched
