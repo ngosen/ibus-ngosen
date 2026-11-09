@@ -11,7 +11,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Thêm
 
 - Trên GNOME, Ngó Sen tự bỏ nguồn nhập "Tiếng Anh (Mỹ)" một lần khi vừa được thêm, vì Ctrl+Shift đã chuyển sang
-  tiếng Anh; mục "Kiểm tra" có nút "Chỉ dùng Ngó Sen" làm việc này sau đó (#PR).
+  tiếng Anh; mục "Kiểm tra" có nút "Chỉ dùng Ngó Sen" làm việc này sau đó (#106).
 
 ### Sửa
 
