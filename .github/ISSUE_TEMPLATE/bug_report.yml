@@ -32,10 +32,10 @@ body:
     id: mode
     attributes:
       label: Cách gõ
-      description: Xem trong menu nguồn nhập trên thanh trên cùng, mục "Gõ Sen ở app cho phép (thử nghiệm)".
+      description: Bấm ` trong app gặp lỗi để xem app đang Gõ Sen hay gạch chân.
       options:
-        - Gạch chân (mặc định)
-        - Gõ thẳng ("Gõ Sen ở app cho phép" đang bật)
+        - Gõ Sen (mặc định)
+        - Gạch chân
         - Không rõ
     validations:
       required: true
@@ -83,7 +83,7 @@ body:
     id: version
     attributes:
       label: Version ibus-ngosen
-      description: Xem ở "Cài đặt Ngó Sen" → "Giới thiệu", hoặc chạy `dpkg -l ibus-ngosen` / `rpm -q ibus-ngosen` / `pacman -Q ibus-ngosen`.
+      description: Xem ở "Cài đặt Ngó Sen" → menu ☰ → "Giới thiệu Ngó Sen", hoặc chạy `dpkg -l ibus-ngosen` / `rpm -q ibus-ngosen` / `pacman -Q ibus-ngosen`.
       placeholder: 1.1.2-1
     validations:
       required: true

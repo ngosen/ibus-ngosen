@@ -34,6 +34,24 @@ class StepsTest(unittest.TestCase):
         found = sc.steps(facts(ibus_running=False))
         self.assertEqual([(f.level, f.action) for f in found], [(sc.FAIL, sc.START_IBUS)])
 
+    def test_fcitx5_holding_the_session_is_the_only_step(self):
+        found = sc.steps(facts(ibus_running=False, fcitx_owns_session=True))
+        self.assertEqual([(f.level, f.action) for f in found], [(sc.FAIL, "")])
+        self.assertEqual(found[0].title, "fcitx5 holds the input method")
+
+    def test_engine_in_use_is_only_information(self):
+        other = facts(current_engine="xkb:us::eng", switch_keys=["Super+Space", "Alt+Shift"])
+        found = sc.steps(other)
+        (step,) = [f for f in found if f.level == sc.INFO]
+        self.assertIn("Super+Space or Alt+Shift", step.fix)
+        self.assertEqual(sc.summary(found)[0], "This machine is ready")
+        self.assertEqual(titles(sc.steps(facts(current_engine="ngosen")), sc.INFO), [])
+        self.assertEqual(titles(sc.steps(facts(current_engine="")), sc.INFO), [])
+        xfce = {"XDG_CURRENT_DESKTOP": "XFCE", "XDG_SESSION_TYPE": "x11"}
+        found = sc.steps(facts(xfce, in_gnome_sources=None, current_engine="Unikey"))
+        (step,) = [f for f in found if f.level == sc.INFO]
+        self.assertNotIn("top bar", step.fix)
+
     def test_engine_unknown_or_replaced_asks_for_a_restart(self):
         for kwargs in ({"engine_known": False}, {"engine_replaced": True}):
             found = sc.steps(facts(**kwargs))
@@ -76,6 +94,10 @@ class StepsTest(unittest.TestCase):
         self.assertEqual(titles(sc.steps(facts(both)), sc.FAIL), [])
         x11 = {**READY, "GTK_IM_MODULE": "wayland"}
         self.assertEqual(len(titles(sc.steps(facts(x11)), sc.FAIL)), 1)
+
+    def test_xim_through_fcitx5_is_named(self):
+        warned = titles(sc.steps(facts({**GNOME_X11, "XMODIFIERS": "@im=fcitx"})), sc.WARN)
+        self.assertEqual(warned, ["Older X11 apps use fcitx5"])
 
     def test_xim_and_fcitx5_warnings(self):
         warned = titles(sc.steps(facts(GNOME_X11, fcitx_running=True)), sc.WARN)
@@ -158,14 +180,89 @@ class FactsTest(unittest.TestCase):
         for pid, expected in (("20", True), ("21", False), ("99", False)):
             with open(address, "w", encoding="utf-8") as f:
                 f.write(f"IBUS_ADDRESS=unix:path=/x\nIBUS_DAEMON_PID={pid}\n")
-            self.assertEqual(sc.ibus_owns_session(env, self.proc), expected, pid)
+            self.assertEqual(sc.session_owner(env, self.proc) == "ibus", expected, pid)
+
+    def test_session_owner_from_the_address_file(self):
+        self.make_proc("20", "ibus-daemon")
+        self.make_proc("21", "fcitx5")
+        address = os.path.join(self.proc, "address")
+        env = {"IBUS_ADDRESS_FILE": address}
+        for pid, expected in (("20", "ibus"), ("21", "fcitx5"), ("99", "")):
+            with open(address, "w", encoding="utf-8") as f:
+                f.write(f"IBUS_ADDRESS=unix:path=/x\nIBUS_DAEMON_PID={pid}\n")
+            self.assertEqual(sc.session_owner(env, self.proc), expected, pid)
+        # A running fcitx5 that wrote no address file of this session does not hold it.
+        env = {"IBUS_ADDRESS_FILE": os.path.join(self.proc, "missing")}
+        self.assertNotEqual(sc.session_owner(env, self.proc), "fcitx5")
+
+    def test_engine_in_use_needs_a_clean_answer(self):
+        for answer, expected in (
+            ((0, "xkb:us::eng\n"), "xkb:us::eng"),
+            ((1, "xkb:us::eng\n"), ""),
+            ((0, "a\nb\n"), ""),
+            ((0, "no engine is set.\n"), ""),
+            ((0, ""), ""),
+        ):
+            with mock.patch.object(sc, "_run", return_value=answer):
+                self.assertEqual(sc.engine_in_use(), expected, answer)
+
+    def test_switch_key_names(self):
+        names = sc.switch_key_names(
+            ["<Super>space", "<Shift><Super>space", "", "<Primary>period", "XF86Keyboard"],
+            ["grp:lalt_lshift_toggle", "grp:ctrl_alt_toggle_bidir", "caps:none"],
+        )
+        self.assertEqual(
+            names, ["Super+Space", "Shift+Super+Space", "Ctrl+.", "Shift+Alt", "Ctrl+Alt"]
+        )
 
     def test_ibus_running_without_an_address_file(self):
         env = {"IBUS_ADDRESS_FILE": os.path.join(self.proc, "missing")}
         self.make_proc(str(os.getpid()), "fcitx5")
-        self.assertFalse(sc.ibus_owns_session(env, self.proc))
+        self.assertEqual(sc.session_owner(env, self.proc), "")
         self.make_proc("1" + str(os.getpid()), "ibus-daemon")
-        self.assertTrue(sc.ibus_owns_session(env, self.proc))
+        self.assertEqual(sc.session_owner(env, self.proc), "ibus")
+
+
+class AppModesTest(unittest.TestCase):
+    def test_only_a_newline_ends_a_line(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "ngosen-app-rules.conf")
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write("firefox=2\rcode=2\ngedit=2\r\n")
+            self.assertEqual(sc.app_modes(sc._read(path)), {"gedit": sc.SEN})
+
+    def test_read_as_the_engine_reads_them(self):
+        text = "\n".join(
+            [
+                "# The typing mode picked for each app",
+                "firefox=1",
+                "code.desktop=2",
+                "gtk3-im:gedit=5",
+                "kate=2",
+                "kate=5",
+                "term=5",
+                "term=7",
+                "gnome-shell=2",
+                "#hidden=2",
+                "bad=x",
+                "=2",
+                "  spaced =  8 ",
+                "long=123",
+                "org.app_org.app=3",
+            ]
+        )
+        self.assertEqual(
+            sc.app_modes(text),
+            {
+                "firefox": sc.SEN,
+                "code": sc.SEN,
+                "gedit": sc.PREEDIT,
+                "kate": sc.PREEDIT,
+                "term": sc.PREEDIT,
+                "spaced": sc.SEN,
+                "org.app": sc.SEN,
+            },
+        )
 
 
 GNOME_WAYLAND = {**READY, "XDG_SESSION_TYPE": "wayland"}
@@ -191,6 +288,10 @@ class ShellStepsTest(unittest.TestCase):
             self.assertEqual(self.forward_keys(version, "INACTIVE"), [], version)
         # The underlined mode sends no keys on to the app.
         self.assertEqual(self.forward_keys("50.1", "INACTIVE", direct_typing=False), [])
+
+    def test_forward_keys_step_for_an_app_that_picked_sen(self):
+        (step,) = self.forward_keys("50.2", "INACTIVE", direct_typing=False, sen_apps=1)
+        self.assertEqual(step.action, sc.ENABLE_FORWARD_KEYS)
 
     def test_missing_portal_warns_on_gnome_wayland(self):
         title = "Ngó Sen cannot tell which app is in use"
@@ -253,9 +354,78 @@ class ReportTest(unittest.TestCase):
             "GNOME Shell 50.1, forward-keys: ACTIVE, portal: not installed, mode: underlined",
             sc.report(shell, []),
         )
+        picked = facts(GNOME_X11, gnome_shell_version="50.1", picked_apps=3)
+        text = sc.report(picked, [])
+        self.assertIn("forward-keys: not found", text)
+        self.assertIn("apps with their own mode: 3", text)
         query = parse_qs(urlparse(sc.issue_url(f, text)).query)
         self.assertEqual(query["setup"], [text])
         self.assertEqual(query["template"], ["bug_report.yml"])
+
+
+US, FR, NGOSEN = ("xkb", "us"), ("xkb", "fr"), ("ibus", "ngosen")
+
+
+class OnlyNgosenTest(unittest.TestCase):
+    def test_duplicate_layout_is_a_note_left_out_of_fix_all(self):
+        found = sc.steps(facts(duplicate_layout=True))
+        (step,) = [f for f in found if f.level == sc.INFO]
+        self.assertEqual(step.action, sc.ONLY_NGOSEN)
+        self.assertEqual(sc.summary(found)[0], "This machine is ready")
+        self.assertNotIn(sc.ONLY_NGOSEN, sc.Fixes(FakeSources()).fixable(found))
+        self.assertEqual(titles(sc.steps(facts()), sc.INFO), [])
+
+    def test_removes_us_and_undo_puts_it_back_in_place(self):
+        sources = FakeSources([FR, US, NGOSEN])
+        fixes = sc.Fixes(sources)
+        done, undos, _settle = fixes.run([sc.ONLY_NGOSEN])
+        self.assertEqual(sources.get(), [FR, NGOSEN])
+        message, undo = fixes.finish(done, undos, [])
+        self.assertEqual(message, "Removed English (US) from the input sources.")
+        self.assertTrue(undo())
+        self.assertEqual(sources.get(), [FR, US, NGOSEN])
+
+    def test_undo_does_not_add_us_twice(self):
+        sources = FakeSources([US, NGOSEN])
+        _done, undo = sc.run_fix(sc.ONLY_NGOSEN, sources)
+        sources.set([NGOSEN, US])
+        self.assertTrue(undo())
+        self.assertEqual(sources.get(), [NGOSEN, US])
+
+    def test_fails_without_us_or_gnome_settings(self):
+        for sources in (FakeSources(None), FakeSources([NGOSEN])):
+            self.assertEqual(sc.run_fix(sc.ONLY_NGOSEN, sources), (False, None))
+
+    def test_failed_fix_stays_on_its_note(self):
+        found = sc.steps(facts(duplicate_layout=True))
+        fixes = sc.Fixes(FakeSources([NGOSEN]))
+        done, undos, _settle = fixes.run([sc.ONLY_NGOSEN])
+        self.assertEqual(fixes.finish(done, undos, found), ("", None))
+        self.assertIn(sc.ONLY_NGOSEN, fixes.failed)
+        (step,) = [f for f in found if f.action == sc.ONLY_NGOSEN]
+        self.assertIn("English (US)", sc.failed_text(step))
+
+    def test_marks_the_source_handled_for_the_engine(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = os.path.join(home, "ngosen")
+            sources = FakeSources([US, NGOSEN])
+            _done, undo = sc.run_fix(sc.ONLY_NGOSEN, sources, folder)
+            self.assertTrue(undo())
+            self.assertTrue(os.path.exists(os.path.join(folder, sc.LAYOUT_MARK)))
+            self.assertEqual(sources.get(), [US, NGOSEN])
+
+    def test_collect_needs_both_sources_and_a_toggle_key(self):
+        cases = [([US, NGOSEN], True, True), ([US, NGOSEN], False, False), ([US], True, False)]
+        for current, toggle_key, expected in cases:
+            with (
+                mock.patch.object(sc, "session_owner", return_value=""),
+                mock.patch.object(sc, "_output", return_value=""),
+                mock.patch.object(sc, "_pids_named", return_value=[]),
+                mock.patch.object(sc, "_fcitx_gtk_modules", return_value=[]),
+                mock.patch.object(sc.fcitx5_leftovers, "find", return_value=None),
+            ):
+                got = sc.collect(FakeSources(current), env=READY, toggle_key=toggle_key)
+            self.assertEqual(got.duplicate_layout, expected, (current, toggle_key))
 
 
 if __name__ == "__main__":

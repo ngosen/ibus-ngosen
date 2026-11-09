@@ -8,6 +8,7 @@
 #include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-mode-menu.h"
+#include "ngosen-ibus-sources.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -431,6 +432,49 @@ namespace {
         }
     }
 
+    void testDuplicateLayout(const fs::path& root) {
+        using Sources = std::vector<InputSource>;
+        const InputSource us{"xkb", "us"}, fr{"xkb", "fr"}, ngosen{"ibus", "ngosen"}, other{"ibus", "bamboo"};
+        check(withoutDuplicateLayout({us, ngosen}) == Sources{ngosen}, "the US layout next to Ngó Sen goes");
+        check(withoutDuplicateLayout({fr, us, ngosen}) == Sources{fr, ngosen}, "another language's layout stays");
+        check(withoutDuplicateLayout({us, other}) == Sources{us, other}, "without Ngó Sen nothing goes");
+
+        Sources                stored;
+        bool                   readable = true;
+        int                    writes   = 0;
+        const InputSourceStore store{[&]() { return readable ? std::optional<Sources>(stored) : std::nullopt; },
+                                     [&](const Sources& sources) {
+                                         ++writes;
+                                         stored = sources;
+                                         return true;
+                                     }};
+
+        const SettingsPaths    noKey = pathsIn(root / "no-key");
+        stored                       = {us, ngosen};
+        check(dropDuplicateLayoutOnce(noKey, false, store) && stored == Sources{us, ngosen}, "without a toggle key the US layout stays");
+        check(dropDuplicateLayoutOnce(noKey, true, store) && stored == Sources{us, ngosen}, "a toggle key turned on later keeps the US layout");
+
+        const SettingsPaths early = pathsIn(root / "early");
+        stored                    = {us};
+        check(dropDuplicateLayoutOnce(early, true, store) && stored == Sources{us}, "before Ngó Sen is a source nothing changes");
+        stored = {us, ngosen};
+        check(dropDuplicateLayoutOnce(early, true, store) && stored == Sources{ngosen}, "once Ngó Sen is added the US layout goes");
+        stored = {us, ngosen};
+        check(dropDuplicateLayoutOnce(early, true, store) && stored == Sources{us, ngosen}, "a US layout added back stays");
+
+        const SettingsPaths elsewhere = pathsIn(root / "elsewhere");
+        readable                      = false;
+        writes                        = 0;
+        check(dropDuplicateLayoutOnce(elsewhere, true, store) && writes == 0, "without GNOME's settings nothing is written");
+        readable = true;
+        stored   = {us, ngosen};
+        check(dropDuplicateLayoutOnce(elsewhere, true, store) && stored == Sources{ngosen}, "a desktop that gains GNOME's settings still gets the change");
+
+        stored                   = {us, ngosen};
+        const FileWriter noWrite = [](const std::string&, const std::string&) { return false; };
+        check(!dropDuplicateLayoutOnce(pathsIn(root / "failing"), true, store, noWrite) && stored == Sources{us, ngosen}, "an unwritable mark leaves the sources alone");
+    }
+
 } // namespace
 
 int main() {
@@ -455,6 +499,7 @@ int main() {
     testKilledHalfway(root / "killed");
     testLaterSettingsCarriedOver(root / "later");
     testSenDefault(root / "sen");
+    testDuplicateLayout(root / "sources");
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all settings checks passed\n";

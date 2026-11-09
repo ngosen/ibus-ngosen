@@ -22,4 +22,7 @@ Conflicts: fcitx5-ngosen
 Depends: ibus (>= 1.5.27), ibus-gtk3, ibus-gtk4, libxcb1, libxcb-xtest0, libxcb-xinput0, python3, python3-gi, gir1.2-gtk-4.0, gir1.2-adw-1 (>= 1.5), ${misc:Depends}, ${shlibs:Depends}
 Description: Ngó Sen for GNOME, a Vietnamese input method for IBus
  Ngó Sen for GNOME types Vietnamese through IBus, the input method GNOME
- comes with. The word being typed is underlined until it is done.
+ comes with. It types straight into apps that report the text around the
+ cursor and underlines the word being typed elsewhere; the typing mode can
+ be picked for each app. A tap of Ctrl+Shift switches between English and
+ Vietnamese.

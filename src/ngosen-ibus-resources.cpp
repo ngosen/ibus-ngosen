@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-resources.h"
 
+#include "ngosen-ibus-sources.h"
 #include "bamboo-core.h"
 #include "ngosen-log.h"
 
@@ -82,6 +83,7 @@ namespace ngosen {
         Init();
         prepareSettings(paths_);
         load();
+        dropDuplicateLayoutOnce(paths_, !settings().toggleKeys.empty(), gnomeInputSources());
         monitor_ = watchDirectory(paths_.configDir, G_CALLBACK(onDirChanged), this);
         // GLib notices a folder created later only seconds after, missing a file written at once.
         g_mkdir_with_parents(paths_.dataDir.c_str(), 0700);

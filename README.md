@@ -36,13 +36,19 @@ Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch
 Mint 22 dùng package của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch và openSUSE chỉ có
 x86_64. Không có package cho Debian 12 và Ubuntu 22.04.
 
-Hai bản không chạy cùng lúc trong một tài khoản; nếu đang dùng [bản fcitx5](https://github.com/ngosen/ngosen), gỡ
-bản đó trước.
+Hai bản không chạy cùng lúc trong một tài khoản; nếu đang dùng [bản fcitx5](https://github.com/ngosen/ngosen), xem
+[Chuyển qua lại với bản fcitx5](#chuyển-qua-lại-với-bản-fcitx5).
 
 Cài xong, trên GNOME:
 
-1. Chạy `ibus restart`.
+1. Đăng xuất rồi đăng nhập lại, để IBus thấy bộ gõ vừa cài.
 2. Mở Settings → Keyboard → Input Sources, thêm "Tiếng Việt (Ngó Sen)".
+
+Lần đầu gõ bằng Ngó Sen, nó tự bỏ nguồn nhập "Tiếng Anh (Mỹ)" vì Ctrl+Shift đã chuyển sang tiếng Anh, nên chỉ
+còn một nguồn nhập. Việc này chỉ làm một lần: thêm lại "Tiếng Anh (Mỹ)" thì nó được giữ, và bàn phím của ngôn ngữ
+khác không bị đụng tới. Nếu lúc đó phím Ctrl+Shift đang tắt thì Ngó Sen không bỏ nguồn nào, kể cả khi bật
+phím lại sau này. Mục "Kiểm tra" trong cửa sổ cài đặt có nút "Chỉ dùng Ngó Sen" để bỏ nó sau. Ngó Sen
+luôn gõ trên bàn phím kiểu Mỹ, kể cả khi đang ở tiếng Anh bằng Ctrl+Shift.
 
 Trên desktop khác GNOME như Cinnamon, Xfce:
 
@@ -62,6 +68,22 @@ Trên Debian, Ubuntu, Arch và openSUSE, có thể cài từ kho APT, pacman, zy
 `pacman -Syu`, `zypper up` tự lên version mới: thêm kho theo
 [hướng dẫn của bản fcitx5](https://github.com/ngosen/ngosen#cập-nhật-bằng-trình-quản-lý-gói), rồi cài `ibus-ngosen`
 thay cho `fcitx5-ngosen`.
+
+## Chuyển qua lại với bản fcitx5
+
+Từ bản fcitx5 sang bản này: gỡ bản fcitx5 bằng `install.sh --uninstall` như hướng dẫn của nó, rồi cài bản này. Nếu
+đã gỡ bằng trình quản lý gói, lệnh cài fcitx5 có thể còn để lại biến môi trường hay mục tự chạy làm app vẫn đi qua
+fcitx5: mở tab "Kiểm tra" trong cửa sổ cài đặt, bấm "Xoá" ở bước "Tài khoản này còn cài đặt của bản fcitx5" rồi
+đăng xuất và đăng nhập lại. Nút chỉ xoá những tệp còn y nguyên như lệnh cài đã ghi; tệp đã sửa tay thì bước kế bên
+chỉ ra đường dẫn để tự sửa.
+
+Từ bản này sang bản fcitx5: trong cửa sổ cài đặt, mục "Có ở bản fcitx5" có lệnh cài để chép. Trên Debian và Ubuntu
+lệnh tự thay bản này; trên Fedora, openSUSE và Arch, chép lệnh, gỡ `ibus-ngosen` rồi mới chạy.
+
+Cài đặt chỉ được chép một lần, lúc bản này chạy lần đầu trên máy đã có bản fcitx5. Sau đó hai bản không đồng bộ
+với nhau; muốn mang thay đổi sang bản kia thì sao lưu ở bản này rồi khôi phục ở bản kia. Trước khi khôi phục một
+bản sao lưu của bản này vào bản fcitx5, hãy sao lưu cài đặt của bản fcitx5: bản fcitx5 cũ hơn
+[ngosen/ngosen#648](https://github.com/ngosen/ngosen/pull/648) xoá các app đã chọn riêng tiếng Việt hay tiếng Anh.
 
 ## Gỡ
 
@@ -92,10 +114,9 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)"
 ctest --test-dir build
 sudo cmake --install build
-ibus restart
 ```
 
-Sau đó thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
+Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
 
 Mở cửa sổ cài đặt từ Cài đặt › Bàn phím › "Tiếng Việt (Ngó Sen)", hoặc tìm "Ngó Sen" trong danh sách
 app. Đổi gì lưu ngay; nút Hoàn tác trên thông báo ở đáy đưa cài đặt về như trước lần đổi đó.
@@ -105,7 +126,7 @@ Lần chạy đầu, nếu máy đã có Ngó Sen cho fcitx5 thì kiểu gõ, g�
 chép sang (từ điển vào `~/.local/share/ngosen/`); file của fcitx5 giữ nguyên. Sửa `ngosen.conf`, bảng gõ
 tắt hay bảng phím thì có hiệu lực từ chữ gõ tiếp theo. Xoá `ngosen.conf` là về cài đặt mặc định.
 
-Không gõ được tiếng Việt thì mở tab "Kiểm tra máy" trong cửa sổ cài đặt: nó kiểm IBus, nguồn nhập và
+Không gõ được tiếng Việt thì mở mục "Kiểm tra" trong cửa sổ cài đặt: nó kiểm IBus, nguồn nhập và
 biến môi trường, sửa được vài bước bằng một nút, và chép kết quả để gửi kèm báo lỗi.
 
 Gõ ra chữ sai thì chọn "Lưu nhật ký gõ" trong menu nguồn nhập ngay sau đó: những gì vừa gõ được lưu vào

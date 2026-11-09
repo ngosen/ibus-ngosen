@@ -15,7 +15,8 @@
       <license>GPL-3.0-or-later</license>
       <author>Ngó Sen contributors</author>
       <icon>@NGOSEN_IBUS_ICON@</icon>
-      <layout>default</layout>
+      <!-- GNOME applies no layout for "default" and keeps the last one, which need not be US. -->
+      <layout>us</layout>
       <longname>Ngó Sen</longname>
       <description>Vietnamese input method</description>
       <symbol>vi</symbol>

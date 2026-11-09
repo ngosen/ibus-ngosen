@@ -138,8 +138,8 @@ msgid "Retype text typed before switching on"
 msgstr "Cứu chữ: gõ lại có dấu khi quên bật tiếng Việt"
 
 #: settings/ngosen_settings/options.py
-msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
-msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ."
+msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it. X11 sessions only."
+msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ. Chỉ chạy ở phiên X11."
 
 #: settings/ngosen_settings/options.py
 msgid "Change the tone of a typed word"
@@ -306,14 +306,6 @@ msgid "Shows the install command to copy."
 msgstr "Hiện lệnh cài để chép vào terminal."
 
 #: settings/ngosen_settings/pages.py
-msgid ""
-"Run this command in a terminal. It asks before removing this edition. Log "
-"out and back in when it is done."
-msgstr ""
-"Chạy lệnh này trong terminal. Lệnh hỏi lại trước khi gỡ bản cho GNOME. Cài "
-"xong thì đăng xuất rồi đăng nhập lại."
-
-#: settings/ngosen_settings/pages.py
 msgid "Close"
 msgstr "Đóng"
 
@@ -326,16 +318,8 @@ msgid "Command copied."
 msgstr "Đã chép lệnh."
 
 #: settings/ngosen_settings/pages.py
-msgid "Licensed under the GNU General Public License v3.0"
-msgstr "Được cấp phép dưới Giấy phép Công cộng GNU v3.0"
-
-#: settings/ngosen_settings/pages.py
 msgid "Typing"
 msgstr "Gõ chữ"
-
-#: settings/ngosen_settings/pages.py
-msgid "About"
-msgstr "Giới thiệu"
 
 #: settings/ngosen_settings/pages.py
 msgid "Ngó Sen full edition"
@@ -344,14 +328,6 @@ msgstr "Ngó Sen đầy đủ"
 #: settings/ngosen_settings/pages.py
 msgid "Runs on fcitx5 and has all of these."
 msgstr "Chạy trên fcitx5, có đủ những thứ trên."
-
-#: settings/ngosen_settings/pages.py
-msgid "Report Bug"
-msgstr "Báo cáo lỗi"
-
-#: settings/ngosen_settings/pages.py
-msgid "Source code"
-msgstr "Mã nguồn"
 
 #: settings/ngosen_settings/pages.py
 #, python-brace-format
@@ -401,11 +377,6 @@ msgstr "Gõ thử"
 #: settings/ngosen_settings/pages.py
 msgid "No macros yet."
 msgstr "Chưa có gõ tắt nào."
-
-#: settings/ngosen_settings/pages.py
-#, python-brace-format
-msgid "Version {}"
-msgstr "Phiên bản {}"
 
 #: settings/ngosen_settings/window.py
 msgid "Cannot read the settings"
@@ -483,6 +454,10 @@ msgstr "Từ điển"
 msgid "Word (e.g. ngoãy)"
 msgstr "Từ (ví dụ: ngoãy)"
 
+#: settings/ngosen_settings/pages.py
+msgid "No words yet."
+msgstr "Chưa có từ nào."
+
 msgid "Search words..."
 msgstr "Tìm từ..."
 
@@ -497,9 +472,6 @@ msgstr "Không tìm thấy từ nào."
 
 msgid "Showing {} of {} words found."
 msgstr "Đang hiện {} trên {} từ tìm thấy."
-
-msgid "Check my machine"
-msgstr "Kiểm tra máy"
 
 msgid "Check again"
 msgstr "Kiểm tra lại"
@@ -612,11 +584,20 @@ msgstr "Khởi động lại IBus, hoặc đăng xuất rồi đăng nhập lạ
 msgid "Ngó Sen is in the input sources"
 msgstr "Ngó Sen đã có trong nguồn nhập"
 
+msgid "English (US) is also an input source"
+msgstr "Tiếng Anh (Mỹ) cũng là một nguồn nhập"
+
+msgid "Ngó Sen switches to English with its own key, so one input source is enough."
+msgstr "Ngó Sen có phím riêng để chuyển sang tiếng Anh, nên chỉ cần một nguồn nhập."
+
 msgid "Ngó Sen is not in the input sources"
 msgstr "Ngó Sen chưa có trong nguồn nhập"
 
 msgid "Settings › Keyboard › Input Sources: add “Vietnamese (Ngó Sen)”."
 msgstr "Cài đặt › Bàn phím › Nguồn nhập: thêm “Tiếng Việt (Ngó Sen)”."
+
+msgid "Settings › Keyboard › Input Sources: remove “English (US)”."
+msgstr "Cài đặt › Bàn phím › Nguồn nhập: bỏ “Tiếng Anh (Mỹ)”."
 
 msgid "GTK apps"
 msgstr "App GTK"
@@ -660,6 +641,9 @@ msgstr "Khởi động lại IBus"
 msgid "Add Ngó Sen"
 msgstr "Thêm Ngó Sen"
 
+msgid "Use only Ngó Sen"
+msgstr "Chỉ dùng Ngó Sen"
+
 msgid "Started IBus."
 msgstr "Đã chạy IBus."
 
@@ -668,6 +652,9 @@ msgstr "Đã khởi động lại IBus."
 
 msgid "Added Ngó Sen to the input sources."
 msgstr "Đã thêm Ngó Sen vào nguồn nhập."
+
+msgid "Removed English (US) from the input sources."
+msgstr "Đã bỏ Tiếng Anh (Mỹ) khỏi nguồn nhập."
 
 msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
 msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"
@@ -893,3 +880,112 @@ msgstr "Một chữ cái hoặc chữ số."
 
 msgid "Another mode already uses this key."
 msgstr "Chế độ khác đã dùng phím này."
+
+#: settings/ngosen_settings/system_check.py
+msgid "fcitx5 holds the input method"
+msgstr "fcitx5 đang giữ bộ gõ"
+
+#: settings/ngosen_settings/system_check.py
+msgid "Stop fcitx5 from starting at login, then log out and back in."
+msgstr "Tắt fcitx5 tự chạy khi đăng nhập, rồi đăng xuất và đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Ngó Sen is not the input source in use"
+msgstr "Nguồn nhập đang dùng không phải Ngó Sen"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "Switch to Ngó Sen with {}."
+msgstr "Chuyển sang Ngó Sen bằng {}."
+
+#: settings/ngosen_settings/system_check.py
+msgid " or "
+msgstr " hoặc "
+
+#: settings/ngosen_settings/system_check.py
+msgid "Switch to Ngó Sen from the input source menu in the top bar."
+msgstr "Chuyển sang Ngó Sen ở menu nguồn nhập trên thanh trên cùng."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Switch to Ngó Sen from the IBus menu."
+msgstr "Chuyển sang Ngó Sen ở menu IBus."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Older X11 apps use fcitx5"
+msgstr "App X11 cũ gõ qua fcitx5"
+
+#: settings/ngosen_settings/window.py
+msgid "_About Ngó Sen"
+msgstr "_Giới thiệu Ngó Sen"
+
+#: settings/ngosen_settings/check_page.py
+msgid "Check"
+msgstr "Kiểm tra"
+
+#: settings/ngosen_settings/pages.py
+msgid "Run this command in a terminal, then log out and back in. On Debian and Ubuntu it replaces this edition. On Fedora, openSUSE and Arch, copy the command, remove ibus-ngosen, then run it; this window goes with the package."
+msgstr "Chạy lệnh này trong terminal rồi đăng xuất và đăng nhập lại. Trên Debian và Ubuntu lệnh tự thay bản này. Trên Fedora, openSUSE và Arch, chép lệnh, gỡ ibus-ngosen rồi mới chạy; cửa sổ này mất cùng gói."
+
+#: settings/ngosen_settings/pages.py
+msgid "Settings made here are not copied over. Back them up, then restore the file in the fcitx5 edition."
+msgstr "Cài đặt ở đây không tự chép sang. Hãy sao lưu, rồi khôi phục tệp đó trong bản fcitx5."
+
+#: settings/ngosen_settings/pages.py
+msgid "Back Up First…"
+msgstr "Sao lưu trước…"
+
+#: settings/ngosen_settings/system_check.py
+msgid "Settings of the fcitx5 edition are left on this account"
+msgstr "Tài khoản này còn cài đặt của bản fcitx5"
+
+#: settings/ngosen_settings/system_check.py
+msgid "Remove the files the fcitx5 installer wrote, then log out and back in."
+msgstr "Xoá các tệp trình cài fcitx5 đã ghi, rồi đăng xuất và đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+msgid "fcitx5 settings that only you can change"
+msgstr "Cài đặt fcitx5 chỉ bạn tự đổi được"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "{} sends apps to fcitx5; remove those lines if you do not use fcitx5."
+msgstr "{} đưa app sang fcitx5; không dùng fcitx5 thì xoá các dòng đó."
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "{} starts fcitx5 at login; remove it if you do not use fcitx5."
+msgstr "{} chạy fcitx5 khi đăng nhập; không dùng fcitx5 thì xoá tệp này."
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "The fcitx5 package starts fcitx5 at login for every account. To stop it for this account only, run: {}"
+msgstr "Gói fcitx5 tự chạy fcitx5 khi đăng nhập cho mọi tài khoản. Muốn tắt riêng cho tài khoản này thì chạy: {}"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "im-config still starts fcitx5 at login. If you do not use fcitx5, run: {}"
+msgstr "im-config vẫn chạy fcitx5 khi đăng nhập. Không dùng fcitx5 thì chạy: {}"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "{} still starts fcitx5 at login; remove its run_im fcitx5 line."
+msgstr "{} vẫn chạy fcitx5 khi đăng nhập; xoá dòng run_im fcitx5 trong đó."
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "IBus does not use the Input Method Panel extension the fcitx5 installer added: {}"
+msgstr "IBus không dùng extension Input Method Panel mà trình cài fcitx5 đã thêm: {}"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "Removed {}. Log out and back in."
+msgstr "Đã xoá {}. Hãy đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "Removed {} and set im-config back to its default. Log out and back in."
+msgstr "Đã xoá {} và đặt im-config về mặc định. Hãy đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Set im-config back to its default. Log out and back in."
+msgstr "Đã đặt im-config về mặc định. Hãy đăng xuất rồi đăng nhập lại."
