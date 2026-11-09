@@ -1663,8 +1663,8 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen", "Gạch chân", "Tắt", "Chế độ gõ mặc định", "Vim mode: tắt"],
-    "menu: ` shows the five items",
+    items == ["Gõ Sen", "Gạch chân", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes and Vim mode",
     items,
 )
 app.key(IBus.KEY_q)
@@ -1698,13 +1698,13 @@ check(
     app.preedits,
 )
 app.key(IBus.KEY_grave)
-app.key(IBus.KEY_r)
-pump(500)
-check(app_mode("menu") == "", "menu: r forgets the pick for this app", app_mode("menu"))
-app.key(IBus.KEY_grave)
 app.key(IBus.KEY_1)
 pump(500)
-check(app_mode("menu") == "menu=2", "menu: 1 keeps Sen for this app", app_mode("menu"))
+check(
+    app_mode("menu") == "",
+    "menu: 1 picks the shared mode, Sen, and forgets the pick for this app",
+    app_mode("menu"),
+)
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_grave)
 pump(200)
@@ -1810,14 +1810,12 @@ app.key(IBus.KEY_grave)
 pump(200)
 panel.cursor_down()
 pump(200)
-panel.cursor_down()
-pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
-# As in fcitx5 the cursor starts on Default Typing for an app with no pick, and wraps past Vim mode to Sen.
+# As in fcitx5 the cursor starts on the mode the app types in.
 check(
-    app_mode("menu-arrow") == "menu-arrow=2",
-    "menu: the panel's arrow moves from Default Typing to Sen",
+    app_mode("menu-arrow") == "menu-arrow=5",
+    "menu: the panel's arrow moves from the shared Sen to the underline",
     app_mode("menu-arrow"),
 )
 app.key(IBus.KEY_grave)
@@ -1827,8 +1825,8 @@ pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
 check(
-    app_mode("menu-arrow") == "menu-arrow=5",
-    "menu: with Sen picked the arrow moves from Sen to the underline",
+    app_mode("menu-arrow") == "menu-arrow=0",
+    "menu: with the underline picked the arrow moves from it to Off",
     app_mode("menu-arrow"),
 )
 app.close()
@@ -1836,12 +1834,12 @@ app.close()
 os.remove(app_modes_path)
 
 set_setting("ShowModePreedit", "False")
-set_setting("ModeOrder", "Off,Sen,Emoji,Preedit,Default")
+set_setting("ModeOrder", "Off,Sen,Emoji,Preedit")
 app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen", "Chế độ gõ mặc định", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -1853,15 +1851,15 @@ check(
     app.menu,
 )
 app.key(IBus.KEY_Escape)
-for name in ("ShowModeSen", "ShowModeOff", "ShowModeDefault", "ShowModeVim"):
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "False")
 app.key(IBus.KEY_grave)
 pump(200)
 check(app.menu is None and app.text == "`", "menu: with every mode hidden ` types itself", app.text)
 app.close()
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault", "ShowModeVim"):
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "True")
-set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Default,Vim")
+set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Vim")
 
 # Vim mode is switched for the app in use and kept in the file the fcitx5 edition uses.
 vim_apps_path = os.path.join(config_dir, "ngosen-vim-apps.conf")
@@ -1905,8 +1903,8 @@ for _ in range(4):
     pump(300)
     seen.append(app_mode("cycle"))
 check(
-    seen == ["cycle=5", "cycle=0", "cycle=2", "cycle=5"],
-    "cycle: from the shared Sen to underline, Off, Sen and underline again",
+    seen == ["cycle=5", "cycle=0", "", "cycle=5"],
+    "cycle: from the shared Sen to underline, Off, back to the shared Sen and underline again",
     seen,
 )
 check(app.text == "", "cycle: the app sees neither the press nor the release", app.text)
@@ -1916,8 +1914,31 @@ app.type("vieetj ")
 check(app.text == "vieetj ", "cycle: Off types English", app.text)
 app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
 pump(300)
-check(app_mode("cycle") == "cycle=2", "cycle: the key still works while Off", app_mode("cycle"))
+app.type("vieetj ")
+check(
+    app_mode("cycle") == "" and app.text == "vieetj việt ",
+    "cycle: the key still works while Off and brings back the shared Sen",
+    (app_mode("cycle"), app.text),
+)
 app.close()
+# With English everywhere, the shared mode would leave the app in English, so Sen is kept for it.
+app = menu_app("cycle-english")
+tap_ctrl_shift(app)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(
+    os.path.exists(english_mark)
+    and app_mode("cycle-english") == "cycle-english=2"
+    and app.text == "việt ",
+    "cycle: from Off to Sen while English is on everywhere keeps Sen for the app",
+    (os.path.exists(english_mark), app_mode("cycle-english"), app.text),
+)
+app.close()
+app = menu_app("cycle-vietnamese")
+tap_ctrl_shift(app)
+app.close()
+os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
 set_setting("CycleModeKey", "")
 os.remove(app_modes_path)
 
@@ -1974,8 +1995,8 @@ first.key(IBus.KEY_grave)
 first.key(IBus.KEY_1)
 pump(500)
 check(
-    app_switch("switch-first") is None and app_mode("switch-first") == "switch-first=2",
-    "switch: a mode picked in the menu forgets the app's switch",
+    app_switch("switch-first") is None and app_mode("switch-first") == "",
+    "switch: picking the shared mode in the menu forgets the app's switch and pick",
     (app_switch("switch-first"), app_mode("switch-first")),
 )
 first.type("vieetj ")
@@ -2344,7 +2365,7 @@ app.close()
 app = menu_app("menu-shrinks")
 app.key(IBus.KEY_grave)
 pump(200)
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault", "ShowModeVim"):
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "False")
 app.key(IBus.KEY_Down)
 pump(300)

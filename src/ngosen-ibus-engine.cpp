@@ -326,11 +326,9 @@ namespace {
         session.state->resetAfterAppCommit(false);
         session.menuOpen   = true;
         session.menuCursor = 0;
-        // As in fcitx5 the cursor starts on the app's mode, or on Default Typing while it has no pick.
-        const std::string app     = currentApp(*session.host);
-        const bool        follows = !appModes().find(app) && !appSwitches().find(app);
-        const auto        items   = menuItems(session);
-        const auto        current = follows ? ngosen::MenuMode::Default : menuModeOf(realMode);
+        // As in fcitx5 the cursor starts on the mode the app types in.
+        const auto items   = menuItems(session);
+        const auto current = menuModeOf(realMode);
         for (guint i = 0; i < items.size(); ++i) {
             if (items[i].mode == current)
                 session.menuCursor = i;
@@ -339,16 +337,16 @@ namespace {
         showModeMenu(engine, session);
     }
 
-    // As in the fcitx5 edition, a mode picked in the menu is kept for the app in use and wins over where
-    // the toggle key last left it. An app without a name of its own changes the shared mode and the
-    // language every app without a pick follows.
+    // As in fcitx5, a pick is kept for the app unless it is the mode the app gets anyway; Off and picks made
+    // while English is on everywhere are always kept, or the app would follow the shared language instead.
+    // An app without a name of its own changes the shared mode and language instead.
     void keepMode(ngosen::IBusHost& host, ngosen::MenuMode mode) {
         const std::string app = currentApp(host);
         if (!app.empty()) {
             std::optional<ngosen::AppMode> kept;
             if (mode == ngosen::MenuMode::Off)
                 kept = ngosen::AppMode::Off;
-            else if (mode != ngosen::MenuMode::Default)
+            else if (englishOn || modeOfMenu(mode) != sharedVietnameseMode())
                 kept = mode == ngosen::MenuMode::Sen ? ngosen::AppMode::Sen : ngosen::AppMode::Preedit;
             if (!appModes().set(app, kept))
                 NGOSEN_WARN("Cannot save the typing mode for " + app);
@@ -360,7 +358,7 @@ namespace {
             englishOn = english;
             ngosen::saveEnglishOn(resources().paths(), englishOn);
         }
-        if (mode == ngosen::MenuMode::Default || mode == ngosen::MenuMode::Off)
+        if (mode == ngosen::MenuMode::Off)
             return;
         const bool           direct = mode == ngosen::MenuMode::Sen;
         ngosen::IBusSettings saved;
@@ -373,15 +371,11 @@ namespace {
         return mode == ngosen::Mode::Off ? _("OFF") : mode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
     }
 
-    // As in fcitx5: the next mode the menu shows, Default Typing standing for the shared mode, kept for
-    // the app like a pick in the menu.
+    // As in fcitx5: the next mode the menu shows, kept for the app like a pick in the menu.
     void cycleMode(IBusEngine* engine, Session& session) {
         std::vector<ngosen::Mode> modes;
-        for (const ngosen::MenuMode item : ngosen::cycleMenuModes(resources().settings())) {
-            const ngosen::Mode mode = item == ngosen::MenuMode::Default ? sharedVietnameseMode() : modeOfMenu(item);
-            if (std::find(modes.begin(), modes.end(), mode) == modes.end())
-                modes.push_back(mode);
-        }
+        for (const ngosen::MenuMode item : ngosen::cycleMenuModes(resources().settings()))
+            modes.push_back(modeOfMenu(item));
         if (modes.empty())
             return;
         const auto         it   = std::find(modes.begin(), modes.end(), typingMode(*session.host));
@@ -419,8 +413,7 @@ namespace {
         if (session.applyMode())
             showLanguageItem(engine);
         NGOSEN_INFO("Mode menu: " + item.label);
-        // Default names no mode, so the notice says which one the app now types in.
-        session.host->showNotice(item.mode == ngosen::MenuMode::Default ? modeLabel(realMode) : item.label);
+        session.host->showNotice(item.label);
         session.showsNotice = true;
     }
 

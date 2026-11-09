@@ -53,7 +53,6 @@ namespace ngosen {
                 {"Sen", {MenuMode::Sen, _("Sen"), key(settings.shortcutSen)}, settings.showModeSen},
                 {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
                 {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
-                {"Default", {MenuMode::Default, _("Default Typing"), key(settings.shortcutDefault)}, settings.showModeDefault},
                 {"Vim", {MenuMode::Vim, vimOn ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
             };
             std::vector<const Known*> ordered;

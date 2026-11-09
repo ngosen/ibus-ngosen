@@ -16,13 +16,12 @@ typedef struct _IBusLookupTable IBusLookupTable;
 
 namespace ngosen {
 
-    // The modes the menu offers, kept for the app in use; Default forgets its pick. Vim is no mode but
-    // switches Vim mode for the app, as in fcitx5.
+    // The modes the menu offers, kept for the app in use. Vim is no mode but switches Vim mode for the
+    // app, as in fcitx5.
     enum class MenuMode {
         Sen,
         Preedit,
         Off,
-        Default,
         Vim
     };
 

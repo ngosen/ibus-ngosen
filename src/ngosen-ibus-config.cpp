@@ -88,7 +88,6 @@ namespace ngosen {
             {"ShowModeSen", &IBusSettings::showModeSen},
             {"ShowModePreedit", &IBusSettings::showModePreedit},
             {"ShowModeOff", &IBusSettings::showModeOff},
-            {"ShowModeDefault", &IBusSettings::showModeDefault},
             {"ShowModeVim", &IBusSettings::showModeVim},
             {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
             {"ShowMenuCharset", &IBusSettings::showMenuCharset},
@@ -144,6 +143,17 @@ namespace ngosen {
             for (const auto& word : words)
                 line += (line.empty() ? "" : " ") + word;
             return line;
+        }
+
+        // Default Typing is no longer a mode, but configs that name it must still load.
+        std::string withoutDefaultTyping(const std::string& order) {
+            std::string        kept;
+            std::istringstream names(order);
+            for (std::string name; std::getline(names, name, ',');) {
+                if (trimIni(name) != "Default")
+                    kept += (kept.empty() ? "" : ",") + name;
+            }
+            return kept;
         }
 
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
@@ -315,11 +325,11 @@ namespace ngosen {
         read.shortcut("ShortcutSen", settings.shortcutSen);
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
-        read.shortcut("ShortcutDefault", settings.shortcutDefault);
         read.shortcut("ShortcutVim", settings.shortcutVim);
         for (const auto& [key, shown] : ShownItems)
             read.boolean(key, settings.*shown);
         read.text("ModeOrder", settings.modeOrder);
+        settings.modeOrder = withoutDefaultTyping(settings.modeOrder);
         read.text("UiLanguage", settings.uiLanguage);
         settings.cycleModeKeys = readKeys(ini, CycleModeKeyName, {}, parseMenuKey);
         return settings;
@@ -359,7 +369,6 @@ namespace ngosen {
         line("ShortcutSen", settings.shortcutSen);
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
-        line("ShortcutDefault", settings.shortcutDefault);
         line("ShortcutVim", settings.shortcutVim);
         for (const auto& [key, shown] : ShownItems)
             line(key, boolText(settings.*shown));

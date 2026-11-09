@@ -42,6 +42,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron (VS Code, Discord…), Chrome và terminal trên X11: Ngó Sen không
   còn tự gạch chân ở những app này. App nào gõ sai thì bấm phím ` chọn Gạch chân cho riêng app đó. Tuỳ chọn trong cửa
   sổ cài đặt đổi tên thành "Gõ Sen" (#116).
+- Menu phím ` bỏ mục "Chế độ gõ mặc định" như bản fcitx5: chọn lại chế độ app vẫn dùng là app đó lại theo cài đặt
+  chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
 
 ### Sửa
 
