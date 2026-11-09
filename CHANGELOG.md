@@ -10,6 +10,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Chuyển từ bản fcitx5 sang: tab Kiểm tra tìm biến môi trường, mục tự chạy, biểu tượng ẩn và lựa chọn im-config mà
+  lệnh cài fcitx5 để lại, kể cả khi fcitx5 đang giữ bộ gõ, và có nút xoá những tệp còn y nguyên (có Hoàn tác); tệp
+  đã sửa tay thì chỉ ra đường dẫn. Hộp thoại "Chuyển sang bản fcitx5" bỏ câu hứa sai, nói rõ cách làm trên từng
+  distro và có nút sao lưu trước; README thêm mục chuyển qua lại hai bản (#99).
 - Tab Kiểm tra báo đúng hơn: fcitx5 đang giữ bộ gõ thì nói thẳng thế thay vì bảo chạy IBus; extension sửa
   lỗi GNOME 50.0–50.3 được kiểm cả khi chỉ vài app chọn Gõ Sen; nguồn nhập đang dùng không phải Ngó Sen thì nhắc
   phím đổi nguồn mà không tính là bước phải sửa; app X11 đi qua fcitx5 được gọi đúng tên; kết quả chép ra ghi số

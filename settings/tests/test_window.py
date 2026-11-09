@@ -257,6 +257,17 @@ class WindowTest(unittest.TestCase):
         dialog = window.pages.show_switch_dialog(self.window, self.window._show)
         dialog.emit("response", "copy")
         self.assertEqual(self.window.toast.get_title(), "Command copied.")
+        self.assertNotIn("asks before", dialog.get_body())
+        self.assertFalse(dialog.has_response("backup"))
+
+    def test_switch_dialog_offers_a_backup_first(self):
+        asked = []
+        dialog = window.pages.show_switch_dialog(
+            self.window, self.window._show, lambda: asked.append(True)
+        )
+        self.assertTrue(dialog.has_response("backup"))
+        dialog.emit("response", "backup")
+        self.assertEqual(asked, [True])
 
     def test_dictionary_add_and_remove(self):
         page = self.window.dictionary
