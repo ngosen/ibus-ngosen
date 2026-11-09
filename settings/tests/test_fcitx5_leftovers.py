@@ -167,9 +167,28 @@ class FindTest(LeftoversCase):
 
     def test_system_autostart_suggests_a_mask(self):
         self.write(lo.SYSTEM_AUTOSTART, self.read(self.source))
+        self.write(lo.changes_file(self.env), "")
         (note,) = lo.find(self.env, has_im_config=False).notes
         self.assertEqual(note[0], lo.SYSTEM_STARTS_FCITX5)
         self.assertIn("Hidden=true", note[2])
+        self.assertIn("~/.config/autostart/", note[2])
+
+    def test_package_autostart_alone_is_not_a_leftover(self):
+        self.write(lo.SYSTEM_AUTOSTART, self.read(self.source))
+        self.assertEqual(lo.find(self.env, has_im_config=False).notes, [])
+
+    def test_mask_command_follows_xdg_config_home(self):
+        self.write(lo.SYSTEM_AUTOSTART, self.read(self.source))
+        self.write(lo.changes_file(self.env), "")
+        self.env["XDG_CONFIG_HOME"] = self.path("cfg")
+        (note,) = lo.find(self.env, has_im_config=False).notes
+        self.assertIn("~/cfg/autostart/", note[2])
+        self.assertNotIn(".config", note[2])
+
+    def test_commented_lines_are_not_reported(self):
+        path = self.path(".config", "environment.d", "90-ngosen.conf")
+        self.write(path, "#XMODIFIERS=@im=fcitx\n# GTK_IM_MODULE=fcitx\n")
+        self.assertEqual(lo.find(self.env, has_im_config=False).notes, [])
 
     def test_im_config(self):
         self.install_gnome(im_config=True)
@@ -205,8 +224,9 @@ class CleanTest(LeftoversCase):
         with mock.patch.object(lo, "_im_config_is_1_1", return_value=False):
             done, undo, removed = lo.clean(self.env, has_im_config=True)
         self.assertTrue(done)
-        self.assertEqual(sorted(removed), sorted([self.env_file, self.autostart, self.launcher]))
-        for path in removed:
+        files = [self.env_file, self.autostart, self.launcher]
+        self.assertEqual(sorted(removed), sorted(files + [lo.IM_CONFIG_CHANGE]))
+        for path in files:
             self.assertFalse(os.path.exists(path))
         self.assertIn(["im-config", "-n", "REMOVE"], self.commands)
         self.assertIn(["systemctl", "--user", "daemon-reload"], self.commands)
@@ -216,6 +236,17 @@ class CleanTest(LeftoversCase):
         self.assertTrue(undo())
         self.assertEqual(self.snapshot(), before)
         self.assertIn(["systemctl", "--user", "daemon-reload"], self.commands)
+
+    def test_an_im_config_reset_alone_is_named(self):
+        self.write(self.path(".xinputrc"), "run_im fcitx5\n")
+        self.write(lo.changes_file(self.env), "im-config\n")
+        with mock.patch.object(lo, "_im_config_is_1_1", return_value=True):
+            done, _undo, removed = lo.clean(self.env, has_im_config=True)
+        self.assertTrue(done)
+        self.assertEqual(removed, [lo.IM_CONFIG_CHANGE])
+        message = sc.fixed_message(sc.CLEAN_FCITX5, removed)
+        self.assertNotIn("Removed", message)
+        self.assertIn("im-config", message)
 
     def test_undo_refuses_after_a_later_change(self):
         self.install_gnome()
@@ -270,6 +301,18 @@ class CheckPageTest(LeftoversCase):
         self.install_gnome()
         titles = [f.title for f in sc.steps(self.facts(fcitx_running=True))]
         self.assertNotIn("fcitx5 is running next to IBus", titles)
+
+    def test_the_running_warning_stays_next_to_an_unrelated_note(self):
+        self.write(lo.changes_file(self.env), f"installed {lo.KIMPANEL}\n")
+        os.makedirs(self.path(".local", "share", "gnome-shell", "extensions", lo.KIMPANEL))
+        titles = [f.title for f in sc.steps(self.facts(fcitx_running=True))]
+        self.assertIn("fcitx5 settings that only you can change", titles)
+        self.assertIn("fcitx5 is running next to IBus", titles)
+
+    def test_summary_works_without_failed_fixes(self):
+        self.install_gnome()
+        heading, _text = sc.summary(sc.steps(self.facts()))
+        self.assertTrue(heading)
 
     def test_never_in_fix_all_but_its_own_button_works(self):
         self.install_gnome()

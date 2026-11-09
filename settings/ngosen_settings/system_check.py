@@ -125,7 +125,7 @@ def steps(facts):
     found += _variable_findings(facts)
     found += _shell_findings(facts)
     found += leftovers
-    if facts.fcitx_running and not leftovers:
+    if facts.fcitx_running and not _leftovers_start_fcitx5(facts.leftovers):
         found.append(
             Finding(
                 WARN,
@@ -134,6 +134,13 @@ def steps(facts):
             )
         )
     return found
+
+
+def _leftovers_start_fcitx5(leftovers):
+    if leftovers is None:
+        return False
+    kinds = {kind for kind, _path, _command in leftovers.notes}
+    return leftovers.fixable or bool(kinds - {fcitx5_leftovers.KIMPANEL_INSTALLED})
 
 
 def _leftover_findings(facts):
@@ -336,7 +343,14 @@ def fix_label(action):
 
 def fixed_message(action, removed=()):
     if action == CLEAN_FCITX5:
-        paths = ", ".join(_short_path(p) for p in removed)
+        reset = fcitx5_leftovers.IM_CONFIG_CHANGE in removed
+        paths = ", ".join(_short_path(p) for p in removed if p != fcitx5_leftovers.IM_CONFIG_CHANGE)
+        if paths and reset:
+            return _(
+                "Removed {} and set im-config back to its default. Log out and back in."
+            ).format(paths)
+        if reset:
+            return _("Set im-config back to its default. Log out and back in.")
         return _("Removed {}. Log out and back in.").format(paths)
     return {
         START_IBUS: _("Started IBus."),
@@ -354,7 +368,7 @@ RETRY_MS, RETRIES = 500, 8
 FIX_ORDER = (CLEAN_FCITX5, START_IBUS, ADD_SOURCE, ENABLE_FORWARD_KEYS, RESTART_IBUS)
 
 
-def summary(found, failed=()):
+def summary(found, failed=frozenset()):
     """Heading and text above the steps; failed fixes have no button left."""
     problems = steps_left(found)
     if not problems:

@@ -977,3 +977,12 @@ msgstr "IBus không dùng extension Input Method Panel mà trình cài fcitx5 đ
 #, python-brace-format
 msgid "Removed {}. Log out and back in."
 msgstr "Đã xoá {}. Hãy đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "Removed {} and set im-config back to its default. Log out and back in."
+msgstr "Đã xoá {} và đặt im-config về mặc định. Hãy đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Set im-config back to its default. Log out and back in."
+msgstr "Đã đặt im-config về mặc định. Hãy đăng xuất rồi đăng nhập lại."

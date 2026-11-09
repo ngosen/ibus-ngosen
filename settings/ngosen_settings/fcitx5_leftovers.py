@@ -7,8 +7,10 @@ A file goes only while it holds exactly what the installer wrote, as with instal
 so the texts below have to stay the same as in ngosen/install.sh.
 """
 
+import functools
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from dataclasses import dataclass, field
@@ -31,9 +33,7 @@ KIMPANEL = "kimpanel@kde.org"
 EDITED_ENVIRONMENT, EDITED_AUTOSTART, SYSTEM_STARTS_FCITX5 = "environment", "autostart", "system"
 IM_CONFIG_PICK, KIMPANEL_INSTALLED = "im-config", "kimpanel"
 # The variables that send apps to fcitx5.
-_TO_FCITX = re.compile(
-    r"^\s*(GTK_IM_MODULE|QT_IM_MODULE|SDL_IM_MODULE)=\s*fcitx|XMODIFIERS=@im=fcitx", re.M
-)
+_TO_FCITX = re.compile(r"^\s*(?:(?:GTK|QT|SDL)_IM_MODULE=\s*fcitx|XMODIFIERS=@im=fcitx)", re.M)
 
 
 def hidden_launcher_entry(launcher_id):
@@ -101,10 +101,11 @@ def find(env, has_im_config=None):
     if has_im_config is None:
         has_im_config = shutil.which("im-config") is not None
     found = Leftovers()
+    data = _read(changes_file(env))
+    changes = (data or b"").decode("utf-8", "replace").splitlines()
     _find_environment(env, found)
-    _find_autostart(env, found)
-    _find_im_config(env, found, has_im_config)
-    changes = (_read(changes_file(env)) or b"").decode("utf-8", "replace").splitlines()
+    _find_autostart(env, found, installer_ran=data is not None)
+    _find_im_config(env, found, has_im_config, changes)
     kimpanel = os.path.join(
         os.path.dirname(applications_dir(env)), "gnome-shell", "extensions", KIMPANEL
     )
@@ -130,7 +131,7 @@ def _find_environment(env, found):
         found.notes.append((EDITED_ENVIRONMENT, path, ""))
 
 
-def _find_autostart(env, found):
+def _find_autostart(env, found, installer_ran):
     path = os.path.join(config_home(env), "autostart", AUTOSTART_NAME)
     data = _read(path)
     source = _read(AUTOSTART_SOURCE)
@@ -140,21 +141,26 @@ def _find_autostart(env, found):
         found.files.append(path)
     elif data is not None and source is not None and b"Hidden=true" not in data:
         found.notes.append((EDITED_AUTOSTART, path, ""))
-    if data is None and os.path.exists(SYSTEM_AUTOSTART):
+    if data is None and installer_ran and os.path.exists(SYSTEM_AUTOSTART):
         # The fcitx5 package starts it for every account; only a mask of this account's stops it.
-        found.notes.append((SYSTEM_STARTS_FCITX5, SYSTEM_AUTOSTART, _mask_command()))
+        found.notes.append((SYSTEM_STARTS_FCITX5, SYSTEM_AUTOSTART, _mask_command(env)))
 
 
-def _mask_command():
+def _mask_command(env):
+    folder = os.path.join(config_home(env), "autostart")
+    home = _home(env)
+    if folder.startswith(home + "/"):
+        folder = "~/" + shlex.quote(folder[len(home) + 1 :])
+    else:
+        folder = shlex.quote(folder)
     text = AUTOSTART_MASK.replace("\n", "\\n")
-    return f"mkdir -p ~/.config/autostart && printf '{text}' > ~/.config/autostart/{AUTOSTART_NAME}"
+    return f"mkdir -p {folder} && printf '{text}' > {folder}/{AUTOSTART_NAME}"
 
 
-def _find_im_config(env, found, has_im_config):
+def _find_im_config(env, found, has_im_config, changes):
     runs_fcitx5 = re.search(rb"^run_im fcitx5$", _read(xinputrc(env)) or b"", re.M) is not None
     if not runs_fcitx5:
         return
-    changes = (_read(changes_file(env)) or b"").decode("utf-8", "replace").splitlines()
     if IM_CONFIG_CHANGE in changes and has_im_config:
         found.im_config = True
     else:
@@ -163,6 +169,8 @@ def _find_im_config(env, found, has_im_config):
         found.notes.append((IM_CONFIG_PICK, xinputrc(env), command))
 
 
+# The check page runs on the main loop, and the installed im-config does not change under it.
+@functools.cache
 def _im_config_is_1_1():
     try:
         out = subprocess.run(["im-config", "-h"], capture_output=True, text=True, timeout=3)
@@ -217,7 +225,8 @@ def _without_im_config(data):
 def clean(env, has_im_config=None):
     """Takes back what find() reports, all or nothing.
 
-    Returns (done, undo, paths removed); undo puts every byte back while nothing changed since.
+    Returns (done, undo, what went): the paths removed, and IM_CONFIG_CHANGE if im-config was reset.
+    Undo puts every byte back while nothing changed since.
     """
     found = find(env, has_im_config)
     if not found.fixable:
@@ -250,4 +259,4 @@ def clean(env, has_im_config=None):
             _reload_user_environment()
         return ok
 
-    return True, undo, list(found.files)
+    return True, undo, list(found.files) + ([IM_CONFIG_CHANGE] if found.im_config else [])
