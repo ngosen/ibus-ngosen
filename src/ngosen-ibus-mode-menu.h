@@ -16,12 +16,11 @@ typedef struct _IBusLookupTable IBusLookupTable;
 
 namespace ngosen {
 
-    // The modes the menu offers, kept for the app in use; Default forgets its pick.
+    // The modes the menu offers, kept for the app in use.
     enum class MenuMode {
         Sen,
         Preedit,
-        Off,
-        Default
+        Off
     };
 
     struct MenuItem {

@@ -77,10 +77,6 @@ msgstr "Tiếng Anh"
 msgid "OFF"
 msgstr "Tắt"
 
-#: src/ngosen-ibus-mode-menu.cpp
-msgid "Default Typing"
-msgstr "Chế độ gõ mặc định"
-
 #: settings/ngosen_settings/options.py
 msgid "Output Charset"
 msgstr "Bảng mã"
@@ -872,9 +868,6 @@ msgstr "Phím tắt cho Gạch chân"
 msgid "Shortcut for OFF"
 msgstr "Phím tắt cho Tắt"
 
-msgid "Shortcut for Default Typing"
-msgstr "Phím tắt cho Mặc định"
-
 msgid "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
 msgstr "Mở menu để chọn Gõ Sen, gạch chân hay Tắt cho app đang dùng. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
 
@@ -896,20 +889,17 @@ msgstr "Chuyển app đang dùng sang chế độ kế tiếp trong danh sách b
 msgid "Mode Order"
 msgstr "Thứ tự chế độ"
 
-msgid "With the mode menu open, press a mode's key to pick it for the app in use. Pick Default Typing to make the app follow the switch key again."
-msgstr "Khi menu chế độ đang mở, bấm phím của một chế độ để chọn cho app đang dùng. Chọn Chế độ gõ mặc định để app đó lại theo phím chuyển như thường."
+msgid "With the mode menu open, press a mode's key to pick it for the app in use. Pick the app's usual mode again to make it follow the global setting."
+msgstr "Khi menu chế độ đang mở, bấm phím của một chế độ để chọn cho app đang dùng. Chọn lại chế độ app vẫn dùng để app đó lại theo cài đặt chung."
 
-msgid "Sen, Preedit, OFF, Default Typing"
-msgstr "Gõ Sen, Gạch chân, Tắt, Chế độ gõ mặc định"
+msgid "Sen, Preedit, OFF"
+msgstr "Gõ Sen, Gạch chân, Tắt"
 
-msgid "Preedit, Sen, OFF, Default Typing"
-msgstr "Gạch chân, Gõ Sen, Tắt, Chế độ gõ mặc định"
+msgid "Preedit, Sen, OFF"
+msgstr "Gạch chân, Gõ Sen, Tắt"
 
-msgid "Default Typing, Sen, Preedit, OFF"
-msgstr "Chế độ gõ mặc định, Gõ Sen, Gạch chân, Tắt"
-
-msgid "OFF, Sen, Preedit, Default Typing"
-msgstr "Tắt, Gõ Sen, Gạch chân, Chế độ gõ mặc định"
+msgid "OFF, Sen, Preedit"
+msgstr "Tắt, Gõ Sen, Gạch chân"
 
 msgid "Show Sen"
 msgstr "Hiển thị chế độ Gõ Sen"
@@ -919,9 +909,6 @@ msgstr "Hiển thị chế độ Gạch chân"
 
 msgid "Show OFF"
 msgstr "Hiển thị chế độ Tắt"
-
-msgid "Show Default Typing"
-msgstr "Hiển thị chế độ gõ mặc định"
 
 msgid "Show in the top bar menu"
 msgstr "Hiện trong menu thanh trên cùng"

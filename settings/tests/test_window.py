@@ -51,7 +51,6 @@ class FakeEngine:
             "ShortcutSen": "1",
             "ShortcutPreedit": "q",
             "ShortcutOff": "e",
-            "ShortcutDefault": "r",
             "UiLanguage": "Vietnamese",
         }
 
