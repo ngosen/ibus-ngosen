@@ -667,10 +667,10 @@ namespace {
             return;
         closeModeMenu(engine, *session);
         session->state->fieldResetWhileOff();
-        // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
-        // straight in survives that while the engine sees clicks itself.
+        // Firefox and Chromium on X11 reset after keys they are let through. As in the fcitx5 edition, a word
+        // typed straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
-        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
+        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeys() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
     }
@@ -785,10 +785,8 @@ namespace ngosen {
     }
 
     std::thread watchClicks(const std::atomic<bool>& stop) {
-        // On Wayland the X server sees clicks on X11 windows only, and a missed click would let a
-        // reset be ignored after the cursor moved.
-        if (isWaylandSession())
-            return {};
+        // On Wayland Xwayland still reports clicks on X11 windows, where XIM clients send no reset on a
+        // click, so the watcher runs there too, as in the fcitx5 edition.
         return std::thread([&stop] {
             clicksWatched.store(true, std::memory_order_release);
             watchX11PointerClicks(stop, [] {
