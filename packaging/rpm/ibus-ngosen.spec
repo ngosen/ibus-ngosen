@@ -61,6 +61,8 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 
 %changelog
 * Mon Nov 09 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.1-1
+- On GNOME the engine removes the duplicate English (US) input source once and always types on
+  the US layout.
 - Sen types straight into the Chrome and Chromium address bar, as the fcitx5 edition does.
 - Settings window: pages in a sidebar, About moves to the main menu, and the Check page reports
   what holds the input method and the forward-keys extension correctly; it also finds and

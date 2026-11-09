@@ -363,5 +363,70 @@ class ReportTest(unittest.TestCase):
         self.assertEqual(query["template"], ["bug_report.yml"])
 
 
+US, FR, NGOSEN = ("xkb", "us"), ("xkb", "fr"), ("ibus", "ngosen")
+
+
+class OnlyNgosenTest(unittest.TestCase):
+    def test_duplicate_layout_is_a_note_left_out_of_fix_all(self):
+        found = sc.steps(facts(duplicate_layout=True))
+        (step,) = [f for f in found if f.level == sc.INFO]
+        self.assertEqual(step.action, sc.ONLY_NGOSEN)
+        self.assertEqual(sc.summary(found)[0], "This machine is ready")
+        self.assertNotIn(sc.ONLY_NGOSEN, sc.Fixes(FakeSources()).fixable(found))
+        self.assertEqual(titles(sc.steps(facts()), sc.INFO), [])
+
+    def test_removes_us_and_undo_puts_it_back_in_place(self):
+        sources = FakeSources([FR, US, NGOSEN])
+        fixes = sc.Fixes(sources)
+        done, undos, _settle = fixes.run([sc.ONLY_NGOSEN])
+        self.assertEqual(sources.get(), [FR, NGOSEN])
+        message, undo = fixes.finish(done, undos, [])
+        self.assertEqual(message, "Removed English (US) from the input sources.")
+        self.assertTrue(undo())
+        self.assertEqual(sources.get(), [FR, US, NGOSEN])
+
+    def test_undo_does_not_add_us_twice(self):
+        sources = FakeSources([US, NGOSEN])
+        _done, undo = sc.run_fix(sc.ONLY_NGOSEN, sources)
+        sources.set([NGOSEN, US])
+        self.assertTrue(undo())
+        self.assertEqual(sources.get(), [NGOSEN, US])
+
+    def test_fails_without_us_or_gnome_settings(self):
+        for sources in (FakeSources(None), FakeSources([NGOSEN])):
+            self.assertEqual(sc.run_fix(sc.ONLY_NGOSEN, sources), (False, None))
+
+    def test_failed_fix_stays_on_its_note(self):
+        found = sc.steps(facts(duplicate_layout=True))
+        fixes = sc.Fixes(FakeSources([NGOSEN]))
+        done, undos, _settle = fixes.run([sc.ONLY_NGOSEN])
+        self.assertEqual(fixes.finish(done, undos, found), ("", None))
+        self.assertIn(sc.ONLY_NGOSEN, fixes.failed)
+        (step,) = [f for f in found if f.action == sc.ONLY_NGOSEN]
+        self.assertIn("English (US)", sc.failed_text(step))
+
+    def test_marks_the_source_handled_for_the_engine(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = os.path.join(home, "ngosen")
+            sources = FakeSources([US, NGOSEN])
+            _done, undo = sc.run_fix(sc.ONLY_NGOSEN, sources, folder)
+            self.assertTrue(undo())
+            self.assertTrue(os.path.exists(os.path.join(folder, sc.LAYOUT_MARK)))
+            self.assertEqual(sources.get(), [US, NGOSEN])
+
+    def test_collect_needs_both_sources_and_a_toggle_key(self):
+        cases = [([US, NGOSEN], True, True), ([US, NGOSEN], False, False), ([US], True, False)]
+        for current, toggle_key, expected in cases:
+            with (
+                mock.patch.object(sc, "session_owner", return_value=""),
+                mock.patch.object(sc, "_output", return_value=""),
+                mock.patch.object(sc, "_pids_named", return_value=[]),
+                mock.patch.object(sc, "_fcitx_gtk_modules", return_value=[]),
+                mock.patch.object(sc.fcitx5_leftovers, "find", return_value=None),
+            ):
+                got = sc.collect(FakeSources(current), env=READY, toggle_key=toggle_key)
+            self.assertEqual(got.duplicate_layout, expected, (current, toggle_key))
+
+
 if __name__ == "__main__":
     unittest.main()

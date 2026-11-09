@@ -10,13 +10,26 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [1.2.1-1] — 09/11/2026
 
+Trên GNOME chỉ còn một nguồn nhập: Ngó Sen tự bỏ "Tiếng Anh (Mỹ)" trùng một lần và luôn gõ trên bàn phím kiểu Mỹ.
 Ô địa chỉ Chrome và Chromium gõ thẳng khi Gõ Sen như bản fcitx5; cửa sổ cài đặt xếp các mục ở thanh bên trái; tab
 Kiểm tra báo đúng hơn và dọn được những gì lệnh cài fcitx5 để lại; bản sao lưu ghi rõ bản nào tạo ra. Dùng lõi Ngó
 Sen `ngosen-1.9.0-1`. Tải gói ở
 [release ibus-ngosen-1.2.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.1-1).
 
+### Thêm
+
+- Trên GNOME, Ngó Sen tự bỏ nguồn nhập "Tiếng Anh (Mỹ)" một lần khi vừa được thêm, vì Ctrl+Shift đã chuyển sang
+  tiếng Anh; mục "Kiểm tra" có nút "Chỉ dùng Ngó Sen" làm việc này sau đó (#106).
+
+### Thay đổi
+
+- Ngó Sen luôn gõ trên bàn phím kiểu Mỹ, như Telex và VNI cần; trước đây nó giữ bàn phím của nguồn nhập dùng
+  ngay trước, có thể là bàn phím Đức hay Pháp (#106).
+
 ### Sửa
 
+- Hướng dẫn cài bảo đăng xuất rồi đăng nhập lại thay cho `ibus restart`: sau lệnh đó GNOME không báo loại ô
+  cho bộ gõ tới lần đăng nhập sau, nên ô địa chỉ và terminal có thể gõ sai (#107).
 - Bản sao lưu ghi rõ do bản IBus tạo, để bản fcitx5 (từ lõi có ngosen/ngosen#648) khôi phục nó mà không xoá các
   app đã chọn riêng tiếng Việt hay tiếng Anh trong máy (#98).
 - Khi Gõ Sen, ô địa chỉ của Chrome và Chromium gõ thẳng như bản fcitx5, không còn gạch chân; lõi vẫn kiểm

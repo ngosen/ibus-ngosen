@@ -12,6 +12,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-program-name.cpp
     ngosen-ibus-resources.cpp
     ngosen-ibus-shell.cpp
+    ngosen-ibus-sources.cpp
     ngosen-ibus-typing-log.cpp
 )
 target_include_directories(ngosen_ibus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
