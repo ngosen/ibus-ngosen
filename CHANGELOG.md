@@ -26,7 +26,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   mở thẳng trang "Có gì mới & mẹo"; cài mới thì không báo (#113).
 - Như bản fcitx5, khi terminal hỏi password ẩn chữ (sudo, passwd…) Ngó Sen tự ngừng gõ tiếng Việt: phím đi
   nguyên vẹn, không ghi vào nhật ký gõ; xong tự bật lại. Gõ `vim` hay `nvim` ở terminal rồi Enter thì Ngó Sen
-  cho lệnh Vim đi qua nguyên vẹn, từ đầu tiên gõ trong file có dấu ngay; thoát bằng `:q`, `:wq`, `ZZ` (#PR).
+  cho lệnh Vim đi qua nguyên vẹn, từ đầu tiên gõ trong file có dấu ngay; thoát bằng `:q`, `:wq`, `ZZ` (#120).
 
 ### Thay đổi
 
