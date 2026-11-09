@@ -17,6 +17,10 @@ namespace ngosen {
         const char* const Path      = "/org/freedesktop/Notifications";
         const char* const Interface = "org.freedesktop.Notifications";
 
+        // Names the release, so it changes with each feature release.
+        const char* const NoticeText = "Version 1.3: Ctrl+Shift and OFF switch the app in use only, the ` menu can be set up your way, "
+                                       "and settings can be searched. See also typing tips.";
+
         struct Notice {
             GDBusConnection*      bus     = nullptr;
             guint32               id      = 0;
@@ -63,9 +67,8 @@ namespace ngosen {
             auto*       notice = static_cast<Notice*>(data);
             const char* show   = _("Show");
             const char* title  = _("What's new in Ngó Sen?");
-            // Names the release, so it changes with each feature release.
-            const char* body      = _("Version 1.3: Ctrl+Shift and OFF switch the app in use only, the ` menu can be set up your way, and settings can be "
-                                      "searched. See also typing tips.");
+            const char* body   = _(NoticeText);
+
             const char* actions[] = {"default", show, "show", show, nullptr};
             // It is shown once, so it stays until the user closes it.
             const gint32 neverExpire = 0;
