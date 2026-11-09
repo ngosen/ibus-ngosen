@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Check my machine page: each setup step, with a fix where the window can do it."""
+"""The Check page: each setup step, with a fix where the window can do it."""
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
@@ -122,7 +122,7 @@ class CheckPage:
         self.on_count = on_count
         self.fixes = system_check.Fixes(sources)
         self.rows = []
-        page = Adw.PreferencesPage(title=_("Check my machine"), icon_name="emblem-system-symbolic")
+        page = Adw.PreferencesPage(title=_("Check"), icon_name="emblem-system-symbolic")
         page.add(self._summary_group())
         self.steps = Adw.PreferencesGroup(title=_("Steps to type Vietnamese"))
         page.add(self.steps)

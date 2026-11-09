@@ -83,7 +83,7 @@ body:
     id: version
     attributes:
       label: Version ibus-ngosen
-      description: Xem ở "Cài đặt Ngó Sen" → "Giới thiệu", hoặc chạy `dpkg -l ibus-ngosen` / `rpm -q ibus-ngosen` / `pacman -Q ibus-ngosen`.
+      description: Xem ở "Cài đặt Ngó Sen" → menu ☰ → "Giới thiệu Ngó Sen", hoặc chạy `dpkg -l ibus-ngosen` / `rpm -q ibus-ngosen` / `pacman -Q ibus-ngosen`.
       placeholder: 1.1.2-1
     validations:
       required: true

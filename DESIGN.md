@@ -1,9 +1,7 @@
 ---
 name: Ngó Sen for GNOME settings
-description: A plain libadwaita window with the three Ngó Sen marks.
+description: A plain libadwaita window with the Ngó Sen marks.
 typography:
-  wordmark:
-    fontSize: "26px"
   typed:
     fontSize: "17px"
   everything: "system font (libadwaita default)"
@@ -12,14 +10,14 @@ typography:
 # Design: Ngó Sen for GNOME settings window
 
 The window is a GNOME app first: stock libadwaita widgets, the system accent colour, light and dark
-from the system. Ngó Sen shows itself in three places only, the same marks as the fcitx5 edition's
-settings window (its `DESIGN.md`): the icon, the wordmark "Ngó Sen" in larger text, and typed text in
-larger text.
+from the system. Ngó Sen shows itself in two places only: the icon, and typed text in larger text, as
+in the fcitx5 edition's settings window (its `DESIGN.md`). The header bar has no wordmark, so the page
+names fit at the default width.
 
 ## Rules
 
 1. **Stock widgets.** `AdwPreferencesPage` with `AdwSwitchRow`, `AdwComboRow` and `AdwEntryRow`. The
-   only CSS is a larger font size on `.wordmark` and on the text of `.typed` entries
+   only CSS is a larger font size on the text of `.typed` entries
    (`settings/ngosen_settings/brand.py`). No custom colours.
 2. **Changes save at once.** No OK or Apply. Each change writes the file and shows an `AdwToast`
    "Đã lưu “<setting>”." with "Hoàn tác", which puts back the file as it was before that change.
@@ -36,15 +34,17 @@ larger text.
 
 ## Layout
 
-- Header bar: icon and wordmark on the left, the page switcher in the middle. Below 550sp wide the
-  switcher moves to a bar at the bottom.
+- Header bar: the page switcher in the middle, the menu on the right (Sao lưu, Khôi phục, Giới thiệu
+  Ngó Sen). Below 550sp wide the switcher moves to a bar at the bottom.
 - Gõ chữ: Kiểu gõ (with a keys-to-result example such as `vieetj → việt`), Phím chuyển Anh/Việt, Bảng mã, Keymap tuỳ chỉnh,
   the Gõ thử field; then the "Cách bỏ dấu" and "Gõ nhanh" groups; last "Có ở bản fcitx5": what the
   GNOME edition does not have, a row that shows the fcitx5 install command to copy (the window never
   runs it), and a link to Ngó Sen đầy đủ.
 - Gõ tắt: the switches and $TIME/$DATE formats; two entries and a Thêm button (Cập nhật when the
   abbreviation exists); a searchable list, click a row to edit it, the bin to remove it.
-- Giới thiệu: icon, wordmark, version; bug report and source links; the credit line.
+- Kiểm tra: the setup steps, each with a fix where the window can do it, and the report to copy.
+- Giới thiệu Ngó Sen (from the menu): an `AdwAboutDialog` with the icon, version, bug report and
+  source links, the licence and the credit line.
 
 ## Opening the window
 

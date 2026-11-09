@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Tên các tab trong cửa sổ cài đặt không còn bị cắt ở cỡ cửa sổ mặc định: thanh tiêu đề bỏ chữ "Ngó Sen", tab
+  "Kiểm tra máy" thành "Kiểm tra", và Giới thiệu chuyển vào menu ☰ thành hộp thoại "Giới thiệu Ngó Sen" (#95).
 - Tab Kiểm tra báo đúng hơn: fcitx5 đang giữ bộ gõ thì nói thẳng thế thay vì bảo chạy IBus; extension sửa
   lỗi GNOME 50.0–50.3 được kiểm cả khi chỉ vài app chọn Gõ Sen; nguồn nhập đang dùng không phải Ngó Sen thì nhắc
   phím đổi nguồn mà không tính là bước phải sửa; app X11 đi qua fcitx5 được gọi đúng tên; kết quả chép ra ghi số
