@@ -29,7 +29,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   cho lệnh Vim đi qua nguyên vẹn, từ đầu tiên gõ trong file có dấu ngay; thoát bằng `:q`, `:wq`, `ZZ` (#120).
 - Mục Vim mode trong menu phím ` (phím `v`) như bản fcitx5: bật cho app đang dùng thì Ngó Sen theo phím lệnh của
   Vim ở chế độ normal, nhớ riêng cho từng app trong `ngosen-vim-apps.conf`, chép sang từ bản fcitx5 lúc chạy lần
-  đầu. Ẩn mục hay đổi phím của nó trong nhóm "Menu chế độ gõ" của cửa sổ cài đặt (#PR2).
+  đầu. Ẩn mục hay đổi phím của nó trong nhóm "Menu chế độ gõ" của cửa sổ cài đặt (#121).
 
 ### Thay đổi
 
