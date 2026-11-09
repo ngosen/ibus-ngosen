@@ -18,8 +18,8 @@ body:
     attributes:
       label: Cách gõ
       options:
-        - Gạch chân (mặc định)
-        - Gõ thẳng ("Gõ Sen ở app cho phép" đang bật)
+        - Gõ Sen (mặc định)
+        - Gạch chân
     validations:
       required: true
 

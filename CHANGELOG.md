@@ -24,6 +24,50 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   nào thì theo lần đổi gần nhất. Mục "Tiếng Anh" trong menu phím ` thành "Tắt" và cũng chỉ tắt cho app đang dùng.
   Sao lưu và khôi phục mang theo lựa chọn Anh/Việt của từng app, cùng tệp với bản fcitx5 (#94).
 
+## [1.2.1-1] — 09/11/2026
+
+Trên GNOME chỉ còn một nguồn nhập: Ngó Sen tự bỏ "Tiếng Anh (Mỹ)" trùng một lần và luôn gõ trên bàn phím kiểu Mỹ.
+Ô địa chỉ Chrome và Chromium gõ thẳng khi Gõ Sen như bản fcitx5; cửa sổ cài đặt xếp các mục ở thanh bên trái; tab
+Kiểm tra báo đúng hơn và dọn được những gì lệnh cài fcitx5 để lại; bản sao lưu ghi rõ bản nào tạo ra. Dùng lõi Ngó
+Sen `ngosen-1.9.0-1`. Tải gói ở
+[release ibus-ngosen-1.2.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.1-1).
+
+### Thêm
+
+- Trên GNOME, Ngó Sen tự bỏ nguồn nhập "Tiếng Anh (Mỹ)" một lần khi vừa được thêm, vì Ctrl+Shift đã chuyển sang
+  tiếng Anh; mục "Kiểm tra" có nút "Chỉ dùng Ngó Sen" làm việc này sau đó (#106).
+
+### Thay đổi
+
+- Ngó Sen luôn gõ trên bàn phím kiểu Mỹ, như Telex và VNI cần; trước đây nó giữ bàn phím của nguồn nhập dùng
+  ngay trước, có thể là bàn phím Đức hay Pháp (#106).
+
+### Sửa
+
+- Hướng dẫn cài bảo đăng xuất rồi đăng nhập lại thay cho `ibus restart`: sau lệnh đó GNOME không báo loại ô
+  cho bộ gõ tới lần đăng nhập sau, nên ô địa chỉ và terminal có thể gõ sai (#107).
+- Bản sao lưu ghi rõ do bản IBus tạo, để bản fcitx5 (từ lõi có ngosen/ngosen#648) khôi phục nó mà không xoá các
+  app đã chọn riêng tiếng Việt hay tiếng Anh trong máy (#98).
+- Khi Gõ Sen, ô địa chỉ của Chrome và Chromium gõ thẳng như bản fcitx5, không còn gạch chân; lõi vẫn kiểm
+  phần trình duyệt tự điền trước khi xoá (#103).
+- Tên các tab trong cửa sổ cài đặt không còn bị cắt ở cỡ cửa sổ mặc định: thanh tiêu đề bỏ chữ "Ngó Sen", tab
+  "Kiểm tra máy" thành "Kiểm tra", và Giới thiệu chuyển vào menu ☰ thành hộp thoại "Giới thiệu Ngó Sen" (#95).
+- Cửa sổ cài đặt xếp các mục ở thanh bên trái như Cài đặt của GNOME, tên mục không còn bị cắt khi thu hẹp
+  cửa sổ; cửa sổ hẹp thì chỉ hiện một bên, có nút quay lại (#102).
+- Tab Kiểm tra báo đúng hơn: fcitx5 đang giữ bộ gõ thì nói thẳng thế thay vì bảo chạy IBus; extension sửa
+  lỗi GNOME 50.0–50.3 được kiểm cả khi chỉ vài app chọn Gõ Sen; nguồn nhập đang dùng không phải Ngó Sen thì nhắc
+  phím đổi nguồn mà không tính là bước phải sửa; app X11 đi qua fcitx5 được gọi đúng tên; kết quả chép ra ghi số
+  app chọn cách gõ riêng (#96).
+- Chuyển từ bản fcitx5 sang: tab Kiểm tra tìm biến môi trường, mục tự chạy, biểu tượng ẩn và lựa chọn im-config mà
+  lệnh cài fcitx5 để lại, kể cả khi fcitx5 đang giữ bộ gõ, và có nút xoá những tệp còn y nguyên (có Hoàn tác); tệp
+  đã sửa tay thì chỉ ra đường dẫn. Hộp thoại "Chuyển sang bản fcitx5" bỏ câu hứa sai, nói rõ cách làm trên từng
+  distro và có nút sao lưu trước; README thêm mục chuyển qua lại hai bản (#99).
+- Mục 1.2.0-1 trong lịch sử gói deb và rpm ghi đúng thứ Hai 09/11/2026; rpmbuild hết cảnh báo ngày sai, và
+  bộ kiểm phiên bản trước khi phát hành giờ bắt lỗi thứ sai (#93).
+- Chữ cũ từ trước 1.2.0 được sửa: mô tả gói và trang AppStream nói Gõ Sen là mặc định và Ctrl+Shift đổi Anh/Việt,
+  mẫu báo lỗi hỏi Gõ Sen hay gạch chân, Cứu chữ ghi rõ chỉ chạy ở phiên X11, từ điển trống ghi "Chưa có từ nào."
+  thay vì "0 từ" (#97).
+
 ## [1.2.0-1] — 09/11/2026
 
 Gõ Sen là mặc định và nhớ cách gõ chọn riêng cho từng app; nhấp Ctrl+Shift đổi Anh/Việt; thêm Cứu chữ, Cứu dấu,
@@ -68,8 +112,8 @@ Wayland biết app đang gõ qua portal của GNOME. Dùng lõi Ngó Sen `ngosen
   biết đang gõ trong app nào (#86).
 - Cửa sổ cài đặt có tab "Keymap" để thêm, sửa, xoá phím của keymap tuỳ chỉnh (dùng với kiểu gõ Custom) và
   nạp sẵn bảng phím Telex, VNI, VIQR… như bản fcitx5; không cần sang bản fcitx5 để soạn nữa (#53).
-- Bấm ` để mở menu chế độ gõ như bản fcitx5: 1 chọn Gõ Sen, q chọn gạch chân, e chọn tiếng Anh, đổi cho mọi app cùng
-  lúc. Bấm ` hai lần để gõ ra `; lúc gõ tiếng Anh ` gõ như thường, kiểu gõ VIQR hay keymap tuỳ chỉnh dùng phím
+- Bấm ` để mở menu chế độ gõ như bản fcitx5: 1 chọn Gõ Sen, q chọn gạch chân cho app đang dùng, e chọn tiếng Anh
+  cho mọi app. Bấm ` hai lần để gõ ra `; lúc gõ tiếng Anh ` gõ như thường, kiểu gõ VIQR hay keymap tuỳ chỉnh dùng phím
   nào để bỏ dấu thì phím đó vẫn bỏ dấu. Cửa sổ cài đặt cho đổi phím mở menu sang Shift+~ như ibus-unikey hoặc
   tắt, và đổi phím của từng chế độ (#55).
 - Bấm chuột vào một mục của menu ` để chọn chế độ, hoặc dùng mũi tên trên bảng menu; bản IBus cũng hiện được
@@ -84,9 +128,9 @@ Wayland biết app đang gõ qua portal của GNOME. Dùng lõi Ngó Sen `ngosen
 - Ngó Sen gõ thẳng (Gõ Sen) theo mặc định như bản fcitx5, thay cho gạch chân, và tuỳ chọn hết ghi "thử nghiệm".
   Người dùng bản cũ được chuyển sang Gõ Sen một lần khi cập nhật; muốn gạch chân thì bấm ` rồi chọn gạch chân cho
   app đang dùng, hoặc tắt Gõ Sen trong cửa sổ cài đặt cho mọi app chưa chọn riêng (#89).
-- Dùng lõi Ngó Sen `ngosen-1.8.2-1`: Cứu chữ hết xoá nhầm chữ khi bấm chuột sang chỗ khác ngay sau phím chuyển
+- Dùng lõi Ngó Sen `ngosen-1.9.0-1`: Cứu chữ hết xoá nhầm chữ khi bấm chuột sang chỗ khác ngay sau phím chuyển
   Anh/Việt (ngosen/ngosen#605), gõ tắt khi đang tiếng Anh hết chèn cụm chữ sau chữ tắt (ngosen/ngosen#604); #69.
-- Dùng lõi Ngó Sen mới nhất trên nhánh phát triển: trong terminal như Ptyxis và GNOME Terminal, Ngó Sen sửa chữ đã
+- Lõi `ngosen-1.9.0-1`: trong terminal như Ptyxis và GNOME Terminal, Ngó Sen sửa chữ đã
   gõ bằng ký tự DEL gửi kèm chữ mới, terminal xoá bằng nó như khi bấm BackSpace (ngosen/ngosen#620; #80).
 - Ở game SDL trong phiên X11, Ngó Sen xoá chữ bằng phím BackSpace bấm qua XTEST như bản fcitx5, thay vì commit
   chữ mới khi chưa xoá được chữ cũ; gói Debian và openSUSE thêm `libxcb-xtest` (#69).

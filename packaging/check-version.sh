@@ -30,5 +30,21 @@ spec_version() {
 check rpm "$(spec_version rpm/ibus-ngosen.spec)" "$want"
 check rpm/opensuse "$(spec_version rpm/opensuse/ibus-ngosen.spec)" "$want"
 check arch/PKGBUILD "$(pkgbuild_version arch/PKGBUILD)" "$want"
+# rpmbuild warns about a changelog date whose weekday is wrong, and dpkg does not check at all.
+weekday_of() {
+    LC_ALL=C date -d "$1" +%a
+}
+
+deb_date=$(sed -n '/^ -- /{s/.*>  *//;p;q}' debian/changelog)
+check "debian/changelog weekday" "${deb_date%%,*}" "$(weekday_of "$(echo "$deb_date" | cut -d' ' -f2-4)")"
+
+spec_entry() {
+    sed -n '/^\* /{p;q}' "$1"
+}
+for spec in rpm/ibus-ngosen.spec rpm/opensuse/ibus-ngosen.spec; do
+    entry=$(spec_entry "$spec")
+    check "$spec weekday" "$(echo "$entry" | cut -d' ' -f2)" "$(weekday_of "$(echo "$entry" | cut -d' ' -f3-5)")"
+done
+
 check CMakeLists.txt "$(sed -n 's/^project(ibus-ngosen VERSION \([0-9.]*\).*/\1/p' ../CMakeLists.txt)" "${want%-*}"
 exit "$fail"

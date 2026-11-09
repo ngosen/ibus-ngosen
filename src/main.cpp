@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
         IBusComponent* component = ibus_component_new("org.freedesktop.IBus.NgoSen", "Ngó Sen", NGOSEN_IBUS_VERSION, "GPL-3.0-or-later", "Ngó Sen contributors",
                                                       "https://github.com/ngosen/ibus-ngosen", "", "ibus-ngosen");
         ibus_component_add_engine(component,
-                                  ibus_engine_desc_new("ngosen", "Ngó Sen", "Vietnamese input method", "vi", "GPL-3.0-or-later", "Ngó Sen contributors", "ibus-ngosen", "default"));
+                                  ibus_engine_desc_new("ngosen", "Ngó Sen", "Vietnamese input method", "vi", "GPL-3.0-or-later", "Ngó Sen contributors", "ibus-ngosen", "us"));
         if (!ibus_bus_register_component(bus, component)) {
             std::fprintf(stderr, "ibus-engine-ngosen: the IBus daemon refused the engine\n");
             return 1;

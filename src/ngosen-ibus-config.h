@@ -101,6 +101,8 @@ namespace ngosen {
         std::string englishMark() const;
         // Marks the forward-keys extension as enabled once, so turning it off is not undone.
         std::string extensionEnabledMark() const;
+        // Marks the duplicate English (US) source as handled once, so a source added back stays.
+        std::string duplicateLayoutMark() const;
     };
 
     bool readFile(const std::string& path, std::string& content);
