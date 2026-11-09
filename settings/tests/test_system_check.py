@@ -180,7 +180,7 @@ class FactsTest(unittest.TestCase):
         for pid, expected in (("20", True), ("21", False), ("99", False)):
             with open(address, "w", encoding="utf-8") as f:
                 f.write(f"IBUS_ADDRESS=unix:path=/x\nIBUS_DAEMON_PID={pid}\n")
-            self.assertEqual(sc.ibus_owns_session(env, self.proc), expected, pid)
+            self.assertEqual(sc.session_owner(env, self.proc) == "ibus", expected, pid)
 
     def test_session_owner_from_the_address_file(self):
         self.make_proc("20", "ibus-daemon")
@@ -209,19 +209,28 @@ class FactsTest(unittest.TestCase):
     def test_switch_key_names(self):
         names = sc.switch_key_names(
             ["<Super>space", "<Shift><Super>space", "", "<Primary>period", "XF86Keyboard"],
-            ["grp:alt_shift_toggle", "grp:ctrl_alt_toggle_bidir", "caps:none"],
+            ["grp:lalt_lshift_toggle", "grp:ctrl_alt_toggle_bidir", "caps:none"],
         )
-        self.assertEqual(names, ["Super+Space", "Shift+Super+Space", "Ctrl+.", "Alt+Shift"])
+        self.assertEqual(
+            names, ["Super+Space", "Shift+Super+Space", "Ctrl+.", "Shift+Alt", "Ctrl+Alt"]
+        )
 
     def test_ibus_running_without_an_address_file(self):
         env = {"IBUS_ADDRESS_FILE": os.path.join(self.proc, "missing")}
         self.make_proc(str(os.getpid()), "fcitx5")
-        self.assertFalse(sc.ibus_owns_session(env, self.proc))
+        self.assertEqual(sc.session_owner(env, self.proc), "")
         self.make_proc("1" + str(os.getpid()), "ibus-daemon")
-        self.assertTrue(sc.ibus_owns_session(env, self.proc))
+        self.assertEqual(sc.session_owner(env, self.proc), "ibus")
 
 
 class AppModesTest(unittest.TestCase):
+    def test_only_a_newline_ends_a_line(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "ngosen-app-rules.conf")
+            with open(path, "w", encoding="utf-8", newline="") as f:
+                f.write("firefox=2\rcode=2\ngedit=2\r\n")
+            self.assertEqual(sc.app_modes(sc._read(path)), {"gedit": sc.SEN})
+
     def test_read_as_the_engine_reads_them(self):
         text = "\n".join(
             [
@@ -347,7 +356,7 @@ class ReportTest(unittest.TestCase):
         )
         picked = facts(GNOME_X11, gnome_shell_version="50.1", picked_apps=3)
         text = sc.report(picked, [])
-        self.assertIn("forward-keys: not loaded", text)
+        self.assertIn("forward-keys: not found", text)
         self.assertIn("apps with their own mode: 3", text)
         query = parse_qs(urlparse(sc.issue_url(f, text)).query)
         self.assertEqual(query["setup"], [text])

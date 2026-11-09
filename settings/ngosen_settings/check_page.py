@@ -54,19 +54,19 @@ class GnomeSources:
                     accelerators += [custom_binding(path) for path in value.unpack()]
                 elif value.get_type_string() == "as":
                     accelerators += value.unpack()
-        options = self.settings.get_strv("xkb-options") if self.settings is not None else []
-        return accelerators, options
+        return accelerators, self._xkb_options()
 
     def switch_keys(self):
         """The shortcuts that switch input sources, and the xkb options that may switch layouts."""
-        schema_id = KEYBINDINGS[0]
         schemas = Gio.SettingsSchemaSource.get_default()
-        found = schemas.lookup(schema_id, True) if schemas is not None else None
+        schema = schemas.lookup(KEYBINDINGS[0], True) if schemas is not None else None
         accelerators = []
-        if found is not None and found.has_key("switch-input-source"):
-            accelerators = Gio.Settings.new(schema_id).get_strv("switch-input-source")
-        options = self.settings.get_strv("xkb-options") if self.settings is not None else []
-        return accelerators, options
+        if schema is not None and schema.has_key("switch-input-source"):
+            accelerators = Gio.Settings.new(KEYBINDINGS[0]).get_strv("switch-input-source")
+        return accelerators, self._xkb_options()
+
+    def _xkb_options(self):
+        return self.settings.get_strv("xkb-options") if self.settings is not None else []
 
     def set(self, sources):
         if self.settings is None:

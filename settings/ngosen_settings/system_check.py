@@ -10,6 +10,7 @@ import subprocess
 from dataclasses import dataclass
 from urllib.parse import urlencode
 
+from . import keys
 from .i18n import _
 
 ISSUE_URL = "https://github.com/ngosen/ibus-ngosen/issues/new"
@@ -158,7 +159,8 @@ def _engine_findings(facts):
     # Typing English with another source is normal, so this only says how to switch back.
     if facts.current_engine in ("", ENGINE) or facts.in_gnome_sources is False:
         return []
-    title = _("Ngó Sen is not the input source in use ({})").format(facts.current_engine)
+    # GNOME runs xkb:us::eng for every keyboard layout, so the name stays out of the title.
+    title = _("Ngó Sen is not the input source in use")
     if not facts.gnome:
         fix = _("Switch to Ngó Sen from the IBus menu.")
     elif facts.switch_keys:
@@ -432,14 +434,14 @@ def report(facts, findings):
     marks = {OK: "OK", INFO: "i", WARN: "!", FAIL: "X"}
     desktop = ":".join(facts.desktops) or "?"
     lines = [
-        f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}",
+        f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}"
+        + (f", engine {facts.current_engine}" if facts.current_engine else ""),
         f"{facts.distro or '?'}, {desktop}, {facts.session or '?'}",
         " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES),
     ]
     if facts.gnome_shell_version:
         line = f"GNOME Shell {facts.gnome_shell_version}"
-        # GNOME Shell reads a newly installed extension only at login.
-        line += f", forward-keys: {facts.forward_keys_state or 'not loaded'}"
+        line += f", forward-keys: {facts.forward_keys_state or 'not found'}"
         line += f", portal: {'installed' if facts.has_gnome_portal else 'not installed'}"
         mode = "Sen" if facts.direct_typing else "underlined"
         lines.append(f"{line}, mode: {mode}, apps with their own mode: {facts.picked_apps}")
@@ -493,7 +495,8 @@ def collect(
 
 def _read(path):
     try:
-        with open(path, encoding="utf-8", errors="replace") as f:
+        # The engine splits lines at \n only.
+        with open(path, encoding="utf-8", errors="replace", newline="") as f:
             return f.read()
     except OSError:
         return ""
@@ -542,20 +545,14 @@ def engine_in_use():
 def switch_key_names(accelerators, xkb_options):
     """GNOME's switch-input-source keys and xkb layout toggles, written as the user reads them."""
     # XF86 keys are special keys most keyboards do not have.
-    names = [_accelerator_name(a) for a in accelerators if a and "XF86" not in a]
-    for option in xkb_options:
-        match = re.fullmatch(r"grp:(\w+)_toggle", option)
-        if match:
-            names.append("+".join(part.capitalize() for part in match.group(1).split("_")))
+    chords = [keys.accelerator(a) for a in accelerators if "XF86" not in a]
+    chords += [keys.xkb_toggle(option) for option in xkb_options]
+    names = []
+    for chord in chords:
+        name = chord and keys.label(keys.value(chord))
+        if name and name not in names:
+            names.append(name)
     return names
-
-
-def _accelerator_name(accelerator):
-    modifiers = re.findall(r"<(\w+)>", accelerator)
-    key = re.sub(r"<\w+>", "", accelerator)
-    words = {"Primary": "Ctrl", "Control": "Ctrl", "space": "Space", "period": "."}
-    parts = [words.get(m, m) for m in modifiers] + [words.get(key, key[:1].upper() + key[1:])]
-    return "+".join(parts)
 
 
 def extension_state(text):
@@ -654,11 +651,6 @@ def _ibus_address_name(env):
         return "unix-" + env["WAYLAND_DISPLAY"]
     host, _sep, rest = env.get("DISPLAY", ":0").partition(":")
     return f"{host or 'unix'}-{rest.split('.')[0] or '0'}"
-
-
-def ibus_owns_session(env, proc="/proc", machine_id=None):
-    """Whether this session's IBus address file names a running ibus-daemon."""
-    return session_owner(env, proc, machine_id) == "ibus"
 
 
 def session_owner(env, proc="/proc", machine_id=None):

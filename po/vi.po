@@ -903,9 +903,8 @@ msgid "Stop fcitx5 from starting at login, then log out and back in."
 msgstr "Tắt fcitx5 tự chạy khi đăng nhập, rồi đăng xuất và đăng nhập lại."
 
 #: settings/ngosen_settings/system_check.py
-#, python-brace-format
-msgid "Ngó Sen is not the input source in use ({})"
-msgstr "Nguồn nhập đang dùng không phải Ngó Sen ({})"
+msgid "Ngó Sen is not the input source in use"
+msgstr "Nguồn nhập đang dùng không phải Ngó Sen"
 
 #: settings/ngosen_settings/system_check.py
 #, python-brace-format
