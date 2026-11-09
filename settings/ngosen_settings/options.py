@@ -29,14 +29,13 @@ CYCLE_MODE_KEYS = [
 ]
 # fcitx5 drags the modes into any order; these are the common ones, and a saved order stays offered.
 MODE_ORDERS = [
-    ("Sen,Preedit,Emoji,Off,Default", N_("Sen, Preedit, OFF, Default Typing")),
-    ("Preedit,Sen,Emoji,Off,Default", N_("Preedit, Sen, OFF, Default Typing")),
-    ("Default,Sen,Preedit,Emoji,Off", N_("Default Typing, Sen, Preedit, OFF")),
-    ("Off,Sen,Preedit,Emoji,Default", N_("OFF, Sen, Preedit, Default Typing")),
+    ("Sen,Preedit,Emoji,Off", N_("Sen, Preedit, OFF")),
+    ("Preedit,Sen,Emoji,Off", N_("Preedit, Sen, OFF")),
+    ("Off,Sen,Preedit,Emoji", N_("OFF, Sen, Preedit")),
 ]
 # Named in their own language, as in fcitx5.
 UI_LANGUAGES = [("Vietnamese", "Tiếng Việt"), ("English", "English")]
-SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"]
+SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff"]
 SHOW_MENUS = [
     "ShowMenuInputMethod",
     "ShowMenuCharset",
@@ -48,7 +47,7 @@ SHOW_MENUS = [
     "ShowMenuDictionary",
 ]
 # The keys that pick a mode in the menu, each one letter or digit.
-SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutDefault"]
+SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -75,7 +74,6 @@ LABELS = {
     "ShowModeSen": N_("Show Sen"),
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
-    "ShowModeDefault": N_("Show Default Typing"),
     "UiLanguage": N_("Interface Language"),
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
@@ -89,7 +87,6 @@ LABELS = {
     "ShortcutSen": N_("Shortcut for Sen"),
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
-    "ShortcutDefault": N_("Shortcut for Default Typing"),
     "DirectTyping": N_("Type with Sen"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
@@ -130,7 +127,7 @@ HINTS = {
         "Moves the app in use to the next mode in the list below, and remembers it for that app."
     ),
     "ModeOrder": N_(
-        "With the mode menu open, press a mode's key to pick it for the app in use. Pick Default Typing to make the app follow the switch key again."
+        "With the mode menu open, press a mode's key to pick it for the app in use. Pick the app's usual mode again to make it follow the global setting."
     ),
     "DirectTyping": N_(
         "Text goes straight into the field, without an underline, in every app not set on its own with the mode menu. Off: those apps underline the word being typed."

@@ -114,7 +114,7 @@ namespace {
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 46, "the file has every key");
+        check(parseIni(text).top.size() == 44, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -157,8 +157,7 @@ namespace {
     void testModeMenuSettings() {
         const IBusSettings defaults = readSettings(parseIni(""));
         check(defaults.modeMenuKeys == std::vector<std::string>{"grave"}, "the mode menu opens with ` by default, as in fcitx5");
-        check(defaults.shortcutSen == "1" && defaults.shortcutPreedit == "q" && defaults.shortcutOff == "e" && defaults.shortcutDefault == "r",
-              "menu shortcuts default to fcitx5's");
+        check(defaults.shortcutSen == "1" && defaults.shortcutPreedit == "q" && defaults.shortcutOff == "e", "menu shortcuts default to fcitx5's");
         check(readSettings(parseIni("ModeMenuKey=Shift+asciitilde\n")).modeMenuKeys == std::vector<std::string>{"Shift+asciitilde"}, "Shift+~ opens the menu");
         check(readSettings(parseIni("ModeMenuKey=\n")).modeMenuKeys.empty(), "an empty menu key turns the menu off");
         check(readSettings(parseIni("ModeMenuKey=Shift_L Nope\n")).modeMenuKeys == std::vector<std::string>{"grave"}, "a lone modifier falls back to `");
@@ -167,12 +166,14 @@ namespace {
         const IBusSettings shortcuts = readSettings(parseIni("ShortcutSen=a\nShortcutPreedit=semicolon\nShortcutOff=\n"));
         check(shortcuts.shortcutSen == "a" && shortcuts.shortcutPreedit == "q" && shortcuts.shortcutOff == "e", "a shortcut is one letter or digit");
         check(readSettings(parseIni("ShortcutOff=X\n")).shortcutOff == "x", "a shortcut written in capitals is read in lowercase");
-        IBusSettings changed    = defaults;
-        changed.modeMenuKeys    = {};
-        changed.shortcutOff     = "x";
-        changed.shortcutDefault = "z";
-        const IBusSettings rt   = readSettings(parseIni(settingsText(changed)));
-        check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x" && rt.shortcutDefault == "z", "menu settings round trip");
+        IBusSettings changed  = defaults;
+        changed.modeMenuKeys  = {};
+        changed.shortcutOff   = "x";
+        const IBusSettings rt = readSettings(parseIni(settingsText(changed)));
+        check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x", "menu settings round trip");
+        const IBusSettings old = readSettings(parseIni("ShortcutDefault=r\nShowModeDefault=False\nModeOrder=Sen,Preedit,Emoji,Off,Default\n"));
+        check(old.modeOrder == "Sen,Preedit,Emoji,Off" && old.showModeSen && old.shortcutSen == "1", "a config saved with Default Typing still reads");
+        check(settingsText(old).find("Default") == std::string::npos, "and is saved without it");
     }
 
     std::vector<MenuMode> menuModes(const IBusSettings& settings) {
@@ -184,32 +185,31 @@ namespace {
 
     void testModeMenuOrder() {
         IBusSettings settings = defaultSettings();
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Off, MenuMode::Default}, "the menu lists the modes in fcitx5's order");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Off}, "the menu lists the modes in fcitx5's order");
         settings.modeOrder = "Off,Default,Sen,Emoji,Nope";
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Default, MenuMode::Sen, MenuMode::Preedit},
-              "ModeOrder sorts the menu, the modes it leaves out come last");
-        settings.modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Preedit}, "ModeOrder sorts the menu, the modes it leaves out come last");
+        settings.modeOrder       = "Sen,Preedit,Emoji,Off";
         settings.showModePreedit = false;
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off, MenuMode::Default}, "a hidden mode is left out");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off}, "a hidden mode is left out");
         check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Swallow, "the key of a hidden mode picks nothing");
         settings.modeOrder = "Off,Sen";
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key skips the modes ModeOrder leaves out");
-        settings.modeOrder       = "Sen,Preedit,Emoji,Off,Default";
-        settings.shortcutDefault = settings.shortcutSen;
-        IBusLookupTable* table   = newModeMenuTable(modeMenuItems(settings), 0);
-        check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 2))).empty(), "an item whose key an earlier one took shows no key");
+        settings.modeOrder     = "Sen,Preedit,Emoji,Off";
+        settings.shortcutOff   = settings.shortcutSen;
+        IBusLookupTable* table = newModeMenuTable(modeMenuItems(settings), 0);
+        check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 1))).empty(), "an item whose key an earlier one took shows no key");
         g_object_unref(g_object_ref_sink(table));
-        settings.shortcutDefault = defaultSettings().shortcutDefault;
-        settings.showModeSen = settings.showModeOff = settings.showModeDefault = false;
+        settings.shortcutOff = defaultSettings().shortcutOff;
+        settings.showModeSen = settings.showModeOff = false;
         check(modeMenuItems(settings).empty(), "every mode can be hidden");
 
         const IBusSettings read = readSettings(parseIni("ShowModeOff=False\nModeOrder=Default,Off\nCycleModeKey=Control+grave Shift_L\n"));
-        check(!read.showModeOff && read.showModeSen && read.modeOrder == "Default,Off", "ShowMode and ModeOrder are read");
+        check(!read.showModeOff && read.showModeSen && read.modeOrder == "Off", "ShowMode and ModeOrder are read, Default Typing dropped");
         check(read.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the cycle key is read, a lone modifier left out");
         check(defaultSettings().cycleModeKeys.empty(), "the cycle key is off by default, as in fcitx5");
         check(readSettings(parseIni("[CycleModeKey]\n0=Alt+m\n")).cycleModeKeys == std::vector<std::string>{"Alt+m"}, "fcitx5's key list is read");
         const IBusSettings again = readSettings(parseIni(settingsText(read)));
-        check(!again.showModeOff && again.modeOrder == "Default,Off" && again.cycleModeKeys == read.cycleModeKeys, "they round trip");
+        check(!again.showModeOff && again.modeOrder == "Off" && again.cycleModeKeys == read.cycleModeKeys, "they round trip");
     }
 
     void testModeMenuKeys() {
@@ -232,10 +232,7 @@ namespace {
         settings.options.inputMethod = "Telex";
         check(!opensModeMenu(settings, {{"~", "DauNga"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "a custom keymap keeps its keys");
         check(opensModeMenu(settings, {{"s", "DauSac"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "other keymap keys leave the menu alone");
-        check(menuKey(settings, IBUS_KEY_r, 0).mode == MenuMode::Default, "r picks Default Typing");
-        settings.shortcutSen = "r";
-        check(menuKey(settings, IBUS_KEY_r, 0).mode == MenuMode::Sen && modeMenuItems(settings).back().key == IBUS_KEY_VoidSymbol,
-              "a shortcut the user gave r keeps it, and Default Typing goes without one");
+        check(menuKey(settings, IBUS_KEY_r, 0).kind == MenuKey::Swallow, "r picks nothing, since Default Typing is gone");
     }
 
     bool matches(const std::string& key, guint keyval, guint state) {
