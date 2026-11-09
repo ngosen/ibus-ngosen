@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <sstream>
 #include <unistd.h>
+#include <utility>
 
 namespace ngosen {
 
@@ -76,9 +77,25 @@ namespace ngosen {
 
         // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
         // in its own section, which is read when importing its settings.
-        const char* const        ToggleKeyName    = "ToggleKey";
-        const char* const        ModeMenuKeyName  = "ModeMenuKey";
-        const char* const        CycleModeKeyName = "CycleModeKey";
+        const char* const ToggleKeyName    = "ToggleKey";
+        const char* const ModeMenuKeyName  = "ModeMenuKey";
+        const char* const CycleModeKeyName = "CycleModeKey";
+
+        // The items each menu shows, as fcitx5 names their switches.
+        const std::pair<const char*, bool IBusSettings::*> ShownItems[] = {
+            {"ShowModeSen", &IBusSettings::showModeSen},
+            {"ShowModePreedit", &IBusSettings::showModePreedit},
+            {"ShowModeOff", &IBusSettings::showModeOff},
+            {"ShowModeDefault", &IBusSettings::showModeDefault},
+            {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
+            {"ShowMenuCharset", &IBusSettings::showMenuCharset},
+            {"ShowMenuSpellCheck", &IBusSettings::showMenuSpellCheck},
+            {"ShowMenuMacro", &IBusSettings::showMenuMacro},
+            {"ShowMenuCapitalizeMacro", &IBusSettings::showMenuCapitalizeMacro},
+            {"ShowMenuAutoCapitalize", &IBusSettings::showMenuAutoCapitalize},
+            {"ShowMenuAutoRestore", &IBusSettings::showMenuAutoRestore},
+            {"ShowMenuDictionary", &IBusSettings::showMenuDictionary},
+        };
 
         std::vector<std::string> splitWords(const std::string& text) {
             std::istringstream       words(text);
@@ -296,18 +313,8 @@ namespace ngosen {
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
         read.shortcut("ShortcutDefault", settings.shortcutDefault);
-        read.boolean("ShowModeSen", settings.showModeSen);
-        read.boolean("ShowModePreedit", settings.showModePreedit);
-        read.boolean("ShowModeOff", settings.showModeOff);
-        read.boolean("ShowModeDefault", settings.showModeDefault);
-        read.boolean("ShowMenuInputMethod", settings.showMenuInputMethod);
-        read.boolean("ShowMenuCharset", settings.showMenuCharset);
-        read.boolean("ShowMenuSpellCheck", settings.showMenuSpellCheck);
-        read.boolean("ShowMenuMacro", settings.showMenuMacro);
-        read.boolean("ShowMenuCapitalizeMacro", settings.showMenuCapitalizeMacro);
-        read.boolean("ShowMenuAutoCapitalize", settings.showMenuAutoCapitalize);
-        read.boolean("ShowMenuAutoRestore", settings.showMenuAutoRestore);
-        read.boolean("ShowMenuDictionary", settings.showMenuDictionary);
+        for (const auto& [key, shown] : ShownItems)
+            read.boolean(key, settings.*shown);
         read.text("ModeOrder", settings.modeOrder);
         settings.cycleModeKeys = readKeys(ini, CycleModeKeyName, {}, parseMenuKey);
         return settings;
@@ -348,18 +355,8 @@ namespace ngosen {
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
         line("ShortcutDefault", settings.shortcutDefault);
-        line("ShowModeSen", boolText(settings.showModeSen));
-        line("ShowModePreedit", boolText(settings.showModePreedit));
-        line("ShowModeOff", boolText(settings.showModeOff));
-        line("ShowModeDefault", boolText(settings.showModeDefault));
-        line("ShowMenuInputMethod", boolText(settings.showMenuInputMethod));
-        line("ShowMenuCharset", boolText(settings.showMenuCharset));
-        line("ShowMenuSpellCheck", boolText(settings.showMenuSpellCheck));
-        line("ShowMenuMacro", boolText(settings.showMenuMacro));
-        line("ShowMenuCapitalizeMacro", boolText(settings.showMenuCapitalizeMacro));
-        line("ShowMenuAutoCapitalize", boolText(settings.showMenuAutoCapitalize));
-        line("ShowMenuAutoRestore", boolText(settings.showMenuAutoRestore));
-        line("ShowMenuDictionary", boolText(settings.showMenuDictionary));
+        for (const auto& [key, shown] : ShownItems)
+            line(key, boolText(settings.*shown));
         line("ModeOrder", settings.modeOrder);
         line(CycleModeKeyName, joinWords(settings.cycleModeKeys));
         return out.str();
@@ -499,10 +496,10 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode",
-                                                "ShowModeSen",       "ShowModePreedit",     "ShowModeOff",          "ShowModeDefault",
-                                                "ModeOrder",         CycleModeKeyName};
-            std::string              text;
+            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder", CycleModeKeyName};
+            for (const auto& item : ShownItems)
+                later.push_back(item.first);
+            std::string text;
             if (!readFile(paths.settingsFile(), text))
                 return true;
             const IniFile current = parseIni(text);

@@ -1341,6 +1341,17 @@ def prop_states(props):
     return found
 
 
+def hidden_items(props):
+    found = set()
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        if not prop.get_visible():
+            found.add(prop.get_key())
+        found |= hidden_items(prop.get_sub_props())
+        i += 1
+    return found
+
+
 # GNOME Shell takes the whole menu once after the engine is chosen, then only single updates.
 class GnomeMenu:
     def __init__(self):
@@ -1352,11 +1363,7 @@ class GnomeMenu:
         if self.states is None and props.get(0) is not None:
             self.states = prop_states(props)
             self.labels = labels(props)
-            self.hidden = {
-                props.get(i).get_key()
-                for i in range(len(self.states))
-                if props.get(i) and not props.get(i).get_visible()
-            }
+            self.hidden = hidden_items(props)
 
     def update(self, prop):
         if self.states is not None and prop.get_key() in self.states:
