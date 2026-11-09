@@ -18,7 +18,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Chọn giao diện tiếng Anh ở "Ngôn ngữ giao diện" trong cửa sổ cài đặt như bản fcitx5: menu trên thanh trên cùng, menu
   phím ` và thông báo đổi ngay, cửa sổ cài đặt đổi ở lần mở sau (#104).
 - Ô "Tìm cài đặt" trên thanh bên của cửa sổ cài đặt như bản fcitx5: gõ không dấu cũng tìm được, Enter hay bấm vào
-  kết quả thì mở đúng mục đó; Ctrl+F đưa về ô tìm (#PR).
+  kết quả thì mở đúng mục đó; Ctrl+F đưa về ô tìm (#111).
 
 ### Thay đổi
 
