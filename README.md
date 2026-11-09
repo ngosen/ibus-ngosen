@@ -41,7 +41,7 @@ Hai bản không chạy cùng lúc trong một tài khoản; nếu đang dùng [
 
 Cài xong, trên GNOME:
 
-1. Chạy `ibus restart`.
+1. Đăng xuất rồi đăng nhập lại, để IBus thấy bộ gõ vừa cài.
 2. Mở Settings → Keyboard → Input Sources, thêm "Tiếng Việt (Ngó Sen)".
 
 Trên desktop khác GNOME như Cinnamon, Xfce:
@@ -108,10 +108,9 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)"
 ctest --test-dir build
 sudo cmake --install build
-ibus restart
 ```
 
-Sau đó thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
+Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
 
 Mở cửa sổ cài đặt từ Cài đặt › Bàn phím › "Tiếng Việt (Ngó Sen)", hoặc tìm "Ngó Sen" trong danh sách
 app. Đổi gì lưu ngay; nút Hoàn tác trên thông báo ở đáy đưa cài đặt về như trước lần đổi đó.

@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Hướng dẫn cài bảo đăng xuất rồi đăng nhập lại thay cho `ibus restart`: sau lệnh đó GNOME không báo loại ô
+  cho bộ gõ tới lần đăng nhập sau, nên ô địa chỉ và terminal có thể gõ sai (#107).
 - Bản sao lưu ghi rõ do bản IBus tạo, để bản fcitx5 (từ lõi có ngosen/ngosen#648) khôi phục nó mà không xoá các
   app đã chọn riêng tiếng Việt hay tiếng Anh trong máy (#98).
 - Khi Gõ Sen, ô địa chỉ của Chrome và Chromium gõ thẳng như bản fcitx5, không còn gạch chân; lõi vẫn kiểm
