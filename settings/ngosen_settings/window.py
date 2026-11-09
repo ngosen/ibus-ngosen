@@ -47,9 +47,10 @@ class Window(Adw.ApplicationWindow):
             self.notify,
             self._count,
             self._direct_typing,
+            backup.Paths(store).app_modes,
         )
 
-        stack = Adw.ViewStack()
+        self.stack = stack = Adw.ViewStack()
         typing = pages.typing_page(self.rows)
         typing.add(pages.fcitx5_group(self._show))
         for page in (
@@ -58,7 +59,6 @@ class Window(Adw.ApplicationWindow):
             self.dictionary.page,
             self.keymap.page,
             self.check.page,
-            pages.about_page(version),
         ):
             tab = stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
             if page is self.check.page:
@@ -66,8 +66,7 @@ class Window(Adw.ApplicationWindow):
         self._count(len(self.check.findings))
         switcher = Adw.ViewSwitcher(stack=stack, policy=Adw.ViewSwitcherPolicy.WIDE)
         header = Adw.HeaderBar(title_widget=switcher)
-        header.pack_start(brand_mark())
-        header.pack_end(self._backup_menu())
+        header.pack_end(self._menu(version))
         switcher_bar = Adw.ViewSwitcherBar(stack=stack)
 
         view = Adw.ToolbarView(content=stack)
@@ -154,19 +153,28 @@ class Window(Adw.ApplicationWindow):
             self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
         self.refresh()
 
-    def _backup_menu(self):
-        menu = Gio.Menu()
-        for label, name, run in (
-            (_("Back _Up…"), "backup", self.choose_backup_file),
-            (_("_Restore…"), "restore-backup", self.choose_restore_file),
+    def _menu(self, version):
+        backups, about = Gio.Menu(), Gio.Menu()
+        for section, label, name, run in (
+            (backups, _("Back _Up…"), "backup", self.choose_backup_file),
+            (backups, _("_Restore…"), "restore-backup", self.choose_restore_file),
+            (about, _("_About Ngó Sen"), "about", lambda: self.show_about(version)),
         ):
-            menu.append(label, f"win.{name}")
+            section.append(label, f"win.{name}")
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", lambda *_args, run=run: run())
             self.add_action(action)
+        menu = Gio.Menu()
+        menu.append_section(None, backups)
+        menu.append_section(None, about)
         return Gtk.MenuButton(
             icon_name="open-menu-symbolic", menu_model=menu, tooltip_text=_("Menu")
         )
+
+    def show_about(self, version):
+        dialog = pages.about_dialog(version)
+        dialog.present(self)
+        return dialog
 
     def choose_backup_file(self):
         dialog = self._file_dialog(_("Back Up Settings"))
@@ -270,15 +278,6 @@ class Window(Adw.ApplicationWindow):
 
 def reason(error):
     return getattr(error, "strerror", None) or str(error)
-
-
-def brand_mark():
-    box = Gtk.Box(spacing=8)
-    box.append(Gtk.Image(icon_name=APP_ID, pixel_size=24))
-    label = Gtk.Label(label="Ngó Sen")
-    label.add_css_class("wordmark")
-    box.append(label)
-    return box
 
 
 def error_window(app, message):

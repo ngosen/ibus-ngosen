@@ -326,16 +326,8 @@ msgid "Command copied."
 msgstr "Đã chép lệnh."
 
 #: settings/ngosen_settings/pages.py
-msgid "Licensed under the GNU General Public License v3.0"
-msgstr "Được cấp phép dưới Giấy phép Công cộng GNU v3.0"
-
-#: settings/ngosen_settings/pages.py
 msgid "Typing"
 msgstr "Gõ chữ"
-
-#: settings/ngosen_settings/pages.py
-msgid "About"
-msgstr "Giới thiệu"
 
 #: settings/ngosen_settings/pages.py
 msgid "Ngó Sen full edition"
@@ -344,14 +336,6 @@ msgstr "Ngó Sen đầy đủ"
 #: settings/ngosen_settings/pages.py
 msgid "Runs on fcitx5 and has all of these."
 msgstr "Chạy trên fcitx5, có đủ những thứ trên."
-
-#: settings/ngosen_settings/pages.py
-msgid "Report Bug"
-msgstr "Báo cáo lỗi"
-
-#: settings/ngosen_settings/pages.py
-msgid "Source code"
-msgstr "Mã nguồn"
 
 #: settings/ngosen_settings/pages.py
 #, python-brace-format
@@ -401,11 +385,6 @@ msgstr "Gõ thử"
 #: settings/ngosen_settings/pages.py
 msgid "No macros yet."
 msgstr "Chưa có gõ tắt nào."
-
-#: settings/ngosen_settings/pages.py
-#, python-brace-format
-msgid "Version {}"
-msgstr "Phiên bản {}"
 
 #: settings/ngosen_settings/window.py
 msgid "Cannot read the settings"
@@ -483,6 +462,10 @@ msgstr "Từ điển"
 msgid "Word (e.g. ngoãy)"
 msgstr "Từ (ví dụ: ngoãy)"
 
+#: settings/ngosen_settings/pages.py
+msgid "No words yet."
+msgstr "Chưa có từ nào."
+
 msgid "Search words..."
 msgstr "Tìm từ..."
 
@@ -497,9 +480,6 @@ msgstr "Không tìm thấy từ nào."
 
 msgid "Showing {} of {} words found."
 msgstr "Đang hiện {} trên {} từ tìm thấy."
-
-msgid "Check my machine"
-msgstr "Kiểm tra máy"
 
 msgid "Check again"
 msgstr "Kiểm tra lại"
@@ -894,6 +874,43 @@ msgstr "Một chữ cái hoặc chữ số."
 msgid "Another mode already uses this key."
 msgstr "Chế độ khác đã dùng phím này."
 
-#: settings/ngosen_settings/pages.py
-msgid "No words yet."
-msgstr "Chưa có từ nào."
+#: settings/ngosen_settings/system_check.py
+msgid "fcitx5 holds the input method"
+msgstr "fcitx5 đang giữ bộ gõ"
+
+#: settings/ngosen_settings/system_check.py
+msgid "Stop fcitx5 from starting at login, then log out and back in."
+msgstr "Tắt fcitx5 tự chạy khi đăng nhập, rồi đăng xuất và đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Ngó Sen is not the input source in use"
+msgstr "Nguồn nhập đang dùng không phải Ngó Sen"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "Switch to Ngó Sen with {}."
+msgstr "Chuyển sang Ngó Sen bằng {}."
+
+#: settings/ngosen_settings/system_check.py
+msgid " or "
+msgstr " hoặc "
+
+#: settings/ngosen_settings/system_check.py
+msgid "Switch to Ngó Sen from the input source menu in the top bar."
+msgstr "Chuyển sang Ngó Sen ở menu nguồn nhập trên thanh trên cùng."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Switch to Ngó Sen from the IBus menu."
+msgstr "Chuyển sang Ngó Sen ở menu IBus."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Older X11 apps use fcitx5"
+msgstr "App X11 cũ gõ qua fcitx5"
+
+#: settings/ngosen_settings/window.py
+msgid "_About Ngó Sen"
+msgstr "_Giới thiệu Ngó Sen"
+
+#: settings/ngosen_settings/check_page.py
+msgid "Check"
+msgstr "Kiểm tra"

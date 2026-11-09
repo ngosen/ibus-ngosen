@@ -83,6 +83,9 @@ class FakeSources:
             "grp:alt_caps_toggle",
         ]
 
+    def switch_keys(self):
+        return ["<Super>space", "<Shift><Super>space"], ["grp:alt_caps_toggle"]
+
 
 class RequiredTest(unittest.TestCase):
     @unittest.skipUnless(REQUIRED, "not required here")
@@ -423,11 +426,26 @@ class WindowTest(unittest.TestCase):
         self.assertTrue(capture.dialog.get_response_enabled("save"))
         self.assertIn("menu bar", capture.note.get_label())
 
+    def test_about_is_in_the_menu_not_a_tab(self):
+        tabs = self.window.stack.get_pages()
+        titles = [tabs.get_item(i).get_title() for i in range(tabs.get_n_items())]
+        self.assertEqual(titles[-1], "Check")
+        self.assertNotIn("About", titles)
+        self.assertIsNotNone(self.window.lookup_action("about"))
+        dialog = self.window.show_about("1.0.0")
+        self.assertEqual(dialog.get_version(), "1.0.0")
+        self.assertEqual(dialog.get_license_type(), window.Gtk.License.GPL_3_0)
+        for name, _url in (window.pages.FORK, window.pages.VMK):
+            self.assertIn(name, dialog.get_comments())
+        dialog.close()
+
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check
         self.assertEqual(self.window.check_tab.get_badge_number(), len(check.findings))
         self.assertEqual(len(check.rows), len(check.found))
         self.assertIn("Ngó Sen", check.report_text())
+        rules = os.path.join(self.folder, "ngosen-app-rules.conf")
+        self.assertEqual(check.app_modes_file, rules)
 
     def test_check_page_reads_the_typing_mode(self):
         self.window.save("DirectTyping", "True")
