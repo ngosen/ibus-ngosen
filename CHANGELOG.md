@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.2.0-1] — 09/11/2026
+
+Gõ Sen là mặc định và nhớ cách gõ chọn riêng cho từng app; nhấp Ctrl+Shift đổi Anh/Việt; thêm Cứu chữ, Cứu dấu,
+gõ tắt khi tiếng Anh, sao lưu và khôi phục, tab Keymap, menu phím ` và tab "Kiểm tra máy" như bản fcitx5; trên
+Wayland biết app đang gõ qua portal của GNOME. Dùng lõi Ngó Sen `ngosen-1.9.0-1`. Tải gói ở
+[release ibus-ngosen-1.2.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.0-1).
+
 ### Thêm
 
 - Nhấp Ctrl+Shift để đổi Anh/Việt như UniKey, ngay trong Ngó Sen: đổi cho mọi app cùng lúc, nhớ cả khi khởi động
@@ -78,6 +85,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Gõ Sen hiện chữ ngay khi thêm dấu trong Ptyxis, GNOME Console và GNOME Terminal (ngosen/ngosen#630, #83).
 - Đổi cài đặt khi đang gõ dở một chữ, từ menu hay cửa sổ cài đặt, không còn làm mất chữ đó: cài đặt mới áp dụng
   khi gõ xong chữ (#83).
+- Nhận ra Firefox cài từ gói Fedora, Mullvad Browser và các bản Flatpak của Firefox trên GNOME, để chữ gõ trong
+  ô địa chỉ không lẫn với autofill (ngosen/ngosen#634, lõi `ngosen-1.9.0-1`).
 
 ## [1.1.4-1] — 08/11/2026
 
