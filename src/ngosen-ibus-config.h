@@ -64,6 +64,8 @@ namespace ngosen {
         bool showMenuAutoCapitalize  = true;
         bool showMenuAutoRestore     = true;
         bool showMenuDictionary      = true;
+        // Menus and notices in English when "English"; Vietnamese otherwise, as in fcitx5.
+        std::string uiLanguage = "Vietnamese";
         // Moves the app to the next mode in that order; off by default, as in fcitx5.
         std::vector<std::string> cycleModeKeys;
     };

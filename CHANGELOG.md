@@ -15,6 +15,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   chế độ của app, hoặc vào Chế độ gõ mặc định khi app chưa chọn chế độ và chưa đổi Anh/Việt riêng (#100).
 - Ẩn bớt mục trong menu trên thanh trên cùng (Kiểu gõ, Bảng mã, Kiểm tra chính tả, Gõ tắt, Tự viết hoa…) ở nhóm
   "Hiện trong menu thanh trên cùng" của cửa sổ cài đặt, như bản fcitx5 ẩn mục trong menu khay (#101).
+- Chọn giao diện tiếng Anh ở "Ngôn ngữ giao diện" trong cửa sổ cài đặt như bản fcitx5: menu trên thanh trên cùng, menu
+  phím ` và thông báo đổi ngay, cửa sổ cài đặt đổi ở lần mở sau (#PR).
 
 ### Thay đổi
 

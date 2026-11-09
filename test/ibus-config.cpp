@@ -113,7 +113,7 @@ namespace {
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 45, "the file has every key");
+        check(parseIni(text).top.size() == 46, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -417,11 +417,12 @@ namespace {
 
         paths = pathsIn(root / "mode-menu");
         earlier(paths, "InputMethod=VNI\n");
-        write(paths.fcitxConfigDir + "/ngosen.conf", "ShowModeOff=False\nShowMenuCharset=False\nModeOrder=Off,Sen\n[CycleModeKey]\n0=Control+grave\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "ShowModeOff=False\nShowMenuCharset=False\nUiLanguage=English\nModeOrder=Off,Sen\n[CycleModeKey]\n0=Control+grave\n");
         check(prepareSettings(paths), "mode menu settings added after the import are carried over");
         const IBusSettings menu = readSettings(parseIni(read(paths.settingsFile())));
         check(!menu.showModeOff && menu.modeOrder == "Off,Sen" && menu.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the mode menu set up in fcitx5 comes over");
         check(!menu.showMenuCharset && menu.showMenuSpellCheck, "items hidden from the fcitx5 tray menu stay hidden");
+        check(menu.uiLanguage == "English", "the interface language picked in fcitx5 comes over");
 
         paths = pathsIn(root / "macro-chosen-here");
         earlier(paths, "EnableMacroInOffMode=False\n");

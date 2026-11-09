@@ -2199,6 +2199,20 @@ check("SpellCheck" in gnome.hidden, "menu: hiding an item reaches GNOME at once"
 set_setting("ShowMenuSpellCheck", "True")
 pump(1000)
 check("SpellCheck" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
+set_setting("UiLanguage", "English")
+pump(1000)
+check(
+    (gnome.labels.get("SpellCheck") or "").endswith(" Spell Check"),
+    "menu: an English interface reaches GNOME at once",
+    gnome.labels.get("SpellCheck"),
+)
+set_setting("UiLanguage", "Vietnamese")
+pump(1000)
+check(
+    (gnome.labels.get("SpellCheck") or "").endswith(" Kiểm tra chính tả"),
+    "menu: and Vietnamese again",
+    gnome.labels.get("SpellCheck"),
+)
 updates.clear()
 tap_ctrl_shift(app)
 check(updates == ["InputMode"], "menu: the toggle key resends only its own item", updates)

@@ -511,6 +511,8 @@ namespace {
             states += ibus_property_get_state(item) == PROP_STATE_CHECKED ? "+" : "-";
             // Hiding an item changes no state, and must still reach the panel.
             states += ibus_property_get_visible(item) ? "" : "~";
+            // So does a new interface language, which changes only the labels.
+            states += ibus_text_get_text(ibus_property_get_label(item));
             states += itemStates(ibus_property_get_sub_props(item));
         }
         return states;
@@ -521,6 +523,7 @@ namespace {
 
     // clicked: the panel already flipped the item itself, so its state goes out even when unchanged.
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked) {
+        ngosen::useUiLanguage(settings);
         IBusPropList* menu = ngosen::newSettingsMenu(settings, typesEnglish());
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
