@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Bản sao lưu ghi rõ do bản IBus tạo, để bản fcitx5 (từ lõi có ngosen/ngosen#648) khôi phục nó mà không xoá các
+  app đã chọn riêng tiếng Việt hay tiếng Anh trong máy (#98).
 - Tên các tab trong cửa sổ cài đặt không còn bị cắt ở cỡ cửa sổ mặc định: thanh tiêu đề bỏ chữ "Ngó Sen", tab
   "Kiểm tra máy" thành "Kiểm tra", và Giới thiệu chuyển vào menu ☰ thành hộp thoại "Giới thiệu Ngó Sen" (#95).
 - Tab Kiểm tra báo đúng hơn: fcitx5 đang giữ bộ gõ thì nói thẳng thế thay vì bảo chạy IBus; extension sửa
