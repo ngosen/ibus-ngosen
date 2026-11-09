@@ -14,7 +14,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   (như Ctrl+`) đưa app đang dùng sang chế độ kế tiếp rồi nhớ cho app đó, như bản fcitx5. Menu mở ra trỏ sẵn vào
   chế độ của app, hoặc vào Chế độ gõ mặc định khi app chưa chọn chế độ và chưa đổi Anh/Việt riêng (#100).
 - Ẩn bớt mục trong menu trên thanh trên cùng (Kiểu gõ, Bảng mã, Kiểm tra chính tả, Gõ tắt, Tự viết hoa…) ở nhóm
-  "Hiện trong menu thanh trên cùng" của cửa sổ cài đặt, như bản fcitx5 ẩn mục trong menu khay (#PR).
+  "Hiện trong menu thanh trên cùng" của cửa sổ cài đặt, như bản fcitx5 ẩn mục trong menu khay (#101).
 
 ### Thay đổi
 
