@@ -29,14 +29,14 @@ CYCLE_MODE_KEYS = [
 ]
 # fcitx5 drags the modes into any order; these are the common ones, and a saved order stays offered.
 MODE_ORDERS = [
-    ("Sen,Preedit,Emoji,Off,Default", N_("Sen, Preedit, OFF, Default Typing")),
-    ("Preedit,Sen,Emoji,Off,Default", N_("Preedit, Sen, OFF, Default Typing")),
-    ("Default,Sen,Preedit,Emoji,Off", N_("Default Typing, Sen, Preedit, OFF")),
-    ("Off,Sen,Preedit,Emoji,Default", N_("OFF, Sen, Preedit, Default Typing")),
+    ("Sen,Preedit,Emoji,Off,Default,Vim", N_("Sen, Preedit, OFF, Default Typing")),
+    ("Preedit,Sen,Emoji,Off,Default,Vim", N_("Preedit, Sen, OFF, Default Typing")),
+    ("Default,Sen,Preedit,Emoji,Off,Vim", N_("Default Typing, Sen, Preedit, OFF")),
+    ("Off,Sen,Preedit,Emoji,Default,Vim", N_("OFF, Sen, Preedit, Default Typing")),
 ]
 # Named in their own language, as in fcitx5.
 UI_LANGUAGES = [("Vietnamese", "Tiếng Việt"), ("English", "English")]
-SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"]
+SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault", "ShowModeVim"]
 SHOW_MENUS = [
     "ShowMenuInputMethod",
     "ShowMenuCharset",
@@ -48,7 +48,7 @@ SHOW_MENUS = [
     "ShowMenuDictionary",
 ]
 # The keys that pick a mode in the menu, each one letter or digit.
-SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutDefault"]
+SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutDefault", "ShortcutVim"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -76,6 +76,7 @@ LABELS = {
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
     "ShowModeDefault": N_("Show Default Typing"),
+    "ShowModeVim": N_("Show Vim mode"),
     "UiLanguage": N_("Interface Language"),
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
@@ -90,6 +91,7 @@ LABELS = {
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
     "ShortcutDefault": N_("Shortcut for Default Typing"),
+    "ShortcutVim": N_("Shortcut for Vim mode"),
     "DirectTyping": N_("Type with Sen where the app allows"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),

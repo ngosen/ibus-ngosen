@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 
 namespace ngosen {
@@ -74,6 +75,30 @@ namespace ngosen {
         std::string                                    path_;
         FileWriter                                     write_;
         AppSwitchMap                                   switches_;
+        std::optional<std::filesystem::file_time_type> mtime_;
+        bool                                           loaded_ = false;
+    };
+
+    // The fcitx5 edition's ngosen-vim-apps.conf: one app per line, # for comments.
+    using VimAppSet = std::set<std::string>;
+    VimAppSet   parseVimApps(const std::string& text);
+    std::string vimAppsText(const VimAppSet& apps);
+
+    // The apps whose fields follow Vim's normal-mode keys, picked in the mode menu.
+    class VimApps {
+      public:
+        explicit VimApps(std::string path, FileWriter write = writeFileAtomically);
+
+        bool has(const std::string& app);
+        // False when the file was not written.
+        bool set(const std::string& app, bool on);
+
+      private:
+        void                                           reloadIfChanged();
+
+        std::string                                    path_;
+        FileWriter                                     write_;
+        VimAppSet                                      apps_;
         std::optional<std::filesystem::file_time_type> mtime_;
         bool                                           loaded_ = false;
     };

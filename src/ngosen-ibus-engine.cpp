@@ -46,6 +46,11 @@ namespace {
         return switches;
     }
 
+    ngosen::VimApps& vimApps() {
+        static ngosen::VimApps apps(resources().paths().vimAppsFile());
+        return apps;
+    }
+
     std::string currentApp(const ngosen::IBusHost& host) {
         return ngosen::modeAppName(host.field().program);
     }
@@ -140,7 +145,9 @@ namespace {
         ToggleTap                            tap;
         bool                                 showsNotice = false;
         bool                                 menuOpen    = false;
-        guint                                menuCursor  = 0;
+        // Vim mode for a field whose app has no name to keep it under, as fcitx5 keeps it for the field.
+        bool  vimHere    = false;
+        guint menuCursor = 0;
         // The key whose release the app must not see, as it never saw the press.
         guint menuKeyDown = 0;
 
@@ -300,8 +307,17 @@ namespace {
         return false;
     }
 
+    bool vimModeHere(const Session& session) {
+        const std::string app = currentApp(*session.host);
+        return app.empty() ? session.vimHere : vimApps().has(app);
+    }
+
+    std::vector<ngosen::MenuItem> menuItems(const Session& session) {
+        return ngosen::modeMenuItems(resources().settings(), vimModeHere(session));
+    }
+
     void showModeMenu(IBusEngine* engine, const Session& session) {
-        ibus_engine_update_lookup_table(engine, ngosen::newModeMenuTable(ngosen::modeMenuItems(resources().settings()), session.menuCursor), TRUE);
+        ibus_engine_update_lookup_table(engine, ngosen::newModeMenuTable(menuItems(session), session.menuCursor), TRUE);
     }
 
     void openModeMenu(IBusEngine* engine, Session& session) {
@@ -313,7 +329,7 @@ namespace {
         // As in fcitx5 the cursor starts on the app's mode, or on Default Typing while it has no pick.
         const std::string app     = currentApp(*session.host);
         const bool        follows = !appModes().find(app) && !appSwitches().find(app);
-        const auto        items   = ngosen::modeMenuItems(resources().settings());
+        const auto        items   = menuItems(session);
         const auto        current = follows ? ngosen::MenuMode::Default : menuModeOf(realMode);
         for (guint i = 0; i < items.size(); ++i) {
             if (items[i].mode == current)
@@ -378,7 +394,26 @@ namespace {
         session.showsNotice = true;
     }
 
+    void switchVimMode(IBusEngine* engine, Session& session) {
+        closeModeMenu(engine, session);
+        const bool        on  = !vimModeHere(session);
+        const std::string app = currentApp(*session.host);
+        if (app.empty())
+            session.vimHere = on;
+        else if (!vimApps().set(app, on))
+            NGOSEN_WARN("Cannot save Vim mode for " + app);
+        session.state->setVimKeys(on);
+        const char* label = on ? _("Vim mode: on") : _("Vim mode: off");
+        NGOSEN_INFO(std::string("Mode menu: ") + label);
+        session.host->showNotice(label);
+        session.showsNotice = true;
+    }
+
     void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
+        if (item.mode == ngosen::MenuMode::Vim) {
+            switchVimMode(engine, session);
+            return;
+        }
         closeModeMenu(engine, session);
         keepMode(*session.host, item.mode);
         if (session.applyMode())
@@ -390,13 +425,13 @@ namespace {
     }
 
     void moveMenuCursor(IBusEngine* engine, Session& session, int step) {
-        const auto count   = static_cast<int>(ngosen::modeMenuItems(resources().settings()).size());
+        const auto count   = static_cast<int>(menuItems(session).size());
         session.menuCursor = static_cast<guint>((static_cast<int>(session.menuCursor) + step + count) % count);
         showModeMenu(engine, session);
     }
 
     void applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
-        const auto items = ngosen::modeMenuItems(resources().settings());
+        const auto items = menuItems(session);
         // A restore may hide items while the menu is open.
         if (items.empty()) {
             closeModeMenu(engine, session);
@@ -491,6 +526,8 @@ namespace {
         // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
         else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
             session->state->commitBuffer();
+        // The portal may name the app after focus-in, so its Vim mode is looked up at each key.
+        session->state->setVimKeys(vimModeHere(*session));
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -712,7 +749,7 @@ namespace {
             session->host->clickCandidate(index);
             return;
         }
-        const auto items = ngosen::modeMenuItems(resources().settings());
+        const auto items = menuItems(*session);
         if (index < items.size())
             pickMode(engine, *session, items[index]);
     }

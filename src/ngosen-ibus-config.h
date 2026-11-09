@@ -49,12 +49,14 @@ namespace ngosen {
         std::string shortcutPreedit = "q";
         std::string shortcutOff     = "e";
         std::string shortcutDefault = "r";
+        std::string shortcutVim     = "v";
         // Which modes the menu shows, and in what order; fcitx5's names, Emoji included.
         bool        showModeSen     = true;
         bool        showModePreedit = true;
         bool        showModeOff     = true;
         bool        showModeDefault = true;
-        std::string modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        bool        showModeVim     = true;
+        std::string modeOrder       = "Sen,Preedit,Emoji,Off,Default,Vim";
         // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
         bool showMenuInputMethod     = true;
         bool showMenuCharset         = true;
@@ -93,6 +95,7 @@ namespace ngosen {
         std::string          dictionaryFile() const;
         std::string          appModesFile() const;
         std::string          appSwitchesFile() const;
+        std::string          vimAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // Marks Sen as switched on once, so turning it off afterwards sticks.

@@ -42,7 +42,7 @@ namespace ngosen {
             return false;
         }
 
-        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted) {
+        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, bool vimOn) {
             struct Known {
                 const char* name;
                 MenuItem    item;
@@ -54,6 +54,7 @@ namespace ngosen {
                 {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
                 {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
                 {"Default", {MenuMode::Default, _("Default Typing"), key(settings.shortcutDefault)}, settings.showModeDefault},
+                {"Vim", {MenuMode::Vim, vimOn ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
             };
             std::vector<const Known*> ordered;
             const auto                add = [&ordered](const Known& entry) {
@@ -81,8 +82,8 @@ namespace ngosen {
 
     } // namespace
 
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings) {
-        std::vector<MenuItem> items = shownModes(settings, true);
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn) {
+        std::vector<MenuItem> items = shownModes(settings, true, vimOn);
         for (auto item = items.begin(); item != items.end(); ++item) {
             if (std::any_of(items.begin(), item, [&](const MenuItem& other) { return other.key == item->key; }))
                 item->key = IBUS_KEY_VoidSymbol;
@@ -92,8 +93,10 @@ namespace ngosen {
 
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings) {
         std::vector<MenuMode> modes;
-        for (const auto& item : shownModes(settings, false))
-            modes.push_back(item.mode);
+        for (const auto& item : shownModes(settings, false, false)) {
+            if (item.mode != MenuMode::Vim)
+                modes.push_back(item.mode);
+        }
         return modes;
     }
 

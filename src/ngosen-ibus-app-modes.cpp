@@ -206,8 +206,10 @@ namespace ngosen {
         AppSwitchMap changed = switches_;
         if (vietnamese)
             changed[app] = *vietnamese;
-        else
+        else {
             changed.erase(app);
+            changed.erase(app + ".desktop");
+        }
         // Every tap of the toggle key and every pick in the menu ends here; an unchanged list needs no write.
         if (changed == switches_ && (mtime_ || changed.empty()))
             return true;
@@ -215,6 +217,67 @@ namespace ngosen {
             return false;
         switches_ = std::move(changed);
         // The write is ours; reading it back would change nothing.
+        std::error_code error;
+        if (const auto time = std::filesystem::last_write_time(path_, error); !error)
+            mtime_ = time;
+        return true;
+    }
+
+    VimAppSet parseVimApps(const std::string& text) {
+        VimAppSet          apps;
+        std::istringstream lines(text);
+        for (std::string line; std::getline(lines, line);) {
+            if (!line.empty() && line[0] != '#')
+                apps.insert(line);
+        }
+        return apps;
+    }
+
+    std::string vimAppsText(const VimAppSet& apps) {
+        std::string text = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line\n";
+        for (const auto& app : apps)
+            text += app + "\n";
+        return text;
+    }
+
+    VimApps::VimApps(std::string path, FileWriter write) : path_(std::move(path)), write_(std::move(write)) {}
+
+    void VimApps::reloadIfChanged() {
+        std::error_code                                error;
+        const auto                                     time = std::filesystem::last_write_time(path_, error);
+        std::optional<std::filesystem::file_time_type> now;
+        if (!error)
+            now = time;
+        if (loaded_ && now == mtime_)
+            return;
+        loaded_ = true;
+        mtime_  = now;
+        std::string text;
+        apps_ = now && readFile(path_, text) ? parseVimApps(text) : VimAppSet{};
+    }
+
+    bool VimApps::has(const std::string& app) {
+        if (app.empty())
+            return false;
+        reloadIfChanged();
+        // fcitx5 may have saved the name as GNOME reports it.
+        return apps_.count(app) > 0 || apps_.count(app + ".desktop") > 0;
+    }
+
+    bool VimApps::set(const std::string& app, bool on) {
+        if (app.empty())
+            return false;
+        reloadIfChanged();
+        VimAppSet changed = apps_;
+        if (on)
+            changed.insert(app);
+        else {
+            changed.erase(app);
+            changed.erase(app + ".desktop");
+        }
+        if (!write_(path_, vimAppsText(changed)))
+            return false;
+        apps_ = std::move(changed);
         std::error_code error;
         if (const auto time = std::filesystem::last_write_time(path_, error); !error)
             mtime_ = time;
