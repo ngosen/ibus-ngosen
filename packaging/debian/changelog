@@ -1,3 +1,17 @@
+ibus-ngosen (1.2.1-1) unstable; urgency=medium
+
+  * Sen types straight into the Chrome and Chromium address bar, as the
+    fcitx5 edition does.
+  * The settings window lists its pages in a sidebar, About moves to the
+    main menu, and the Check page reports what holds the input method and
+    the forward-keys extension correctly.
+  * The Check page finds what the fcitx5 installer left on the account
+    and removes the files it wrote unchanged.
+  * Backups record the edition that made them; older text fixed.
+  * Core ngosen-1.9.0-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Mon, 09 Nov 2026 18:00:00 +0700
+
 ibus-ngosen (1.2.0-1) unstable; urgency=medium
 
   * Sen is the default and remembers the mode picked for each app.

@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.2.0
+Version:        1.2.1
 Release:        1
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -65,6 +65,13 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Mon Nov 09 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.1-1
+- Sen types straight into the Chrome and Chromium address bar, as the fcitx5 edition does.
+- Settings window: pages in a sidebar, About moves to the main menu, and the Check page reports
+  what holds the input method and the forward-keys extension correctly; it also finds and
+  removes what the fcitx5 installer left unchanged; backups record their edition; core
+  ngosen-1.9.0-1.
+
 * Mon Nov 09 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.0-1
 - Sen is the default and remembers the mode picked for each app; Ctrl+Shift switches Vietnamese
   and English; retype, retone, macros in English, backup and restore, the keymap editor, the mode

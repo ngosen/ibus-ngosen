@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.2.1-1] — 09/11/2026
+
+Ô địa chỉ Chrome và Chromium gõ thẳng khi Gõ Sen như bản fcitx5; cửa sổ cài đặt xếp các mục ở thanh bên trái; tab
+Kiểm tra báo đúng hơn và dọn được những gì lệnh cài fcitx5 để lại; bản sao lưu ghi rõ bản nào tạo ra. Dùng lõi Ngó
+Sen `ngosen-1.9.0-1`. Tải gói ở
+[release ibus-ngosen-1.2.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.1-1).
+
 ### Sửa
 
 - Bản sao lưu ghi rõ do bản IBus tạo, để bản fcitx5 (từ lõi có ngosen/ngosen#648) khôi phục nó mà không xoá các
