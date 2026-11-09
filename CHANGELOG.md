@@ -23,7 +23,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   nút mở thẳng tới cài đặt liên quan; đầu trang Gõ hiện một mẹo ngẫu nhiên. Nhãn nút không còn bị gãy thành
   nhiều dòng như lỗi vừa sửa ở bản fcitx5 (#112).
 - Sau khi cập nhật lên bản có tính năng mới, Ngó Sen báo một lần "Ngó Sen có gì mới?" như bản fcitx5, nút "Xem"
-  mở thẳng trang "Có gì mới & mẹo"; cài mới thì không báo (#PR).
+  mở thẳng trang "Có gì mới & mẹo"; cài mới thì không báo (#113).
 
 ### Thay đổi
 
