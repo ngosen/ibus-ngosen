@@ -21,7 +21,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   kết quả thì mở đúng mục đó; Ctrl+F đưa về ô tìm (#111).
 - Trang "Có gì mới & mẹo" trong cửa sổ cài đặt như bản fcitx5: tính năng mới của từng bản và mẹo gõ, mỗi mục có
   nút mở thẳng tới cài đặt liên quan; đầu trang Gõ hiện một mẹo ngẫu nhiên. Nhãn nút không còn bị gãy thành
-  nhiều dòng như lỗi vừa sửa ở bản fcitx5 (#PR).
+  nhiều dòng như lỗi vừa sửa ở bản fcitx5 (#112).
 
 ### Thay đổi
 
