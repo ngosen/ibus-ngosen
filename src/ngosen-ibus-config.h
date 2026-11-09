@@ -48,13 +48,11 @@ namespace ngosen {
         std::string shortcutSen     = "1";
         std::string shortcutPreedit = "q";
         std::string shortcutOff     = "e";
-        std::string shortcutDefault = "r";
         // Which modes the menu shows, and in what order; fcitx5's names, Emoji included.
         bool        showModeSen     = true;
         bool        showModePreedit = true;
         bool        showModeOff     = true;
-        bool        showModeDefault = true;
-        std::string modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        std::string modeOrder       = "Sen,Preedit,Emoji,Off";
         // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
         bool showMenuInputMethod     = true;
         bool showMenuCharset         = true;
