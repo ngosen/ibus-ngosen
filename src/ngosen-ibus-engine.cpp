@@ -51,9 +51,7 @@ namespace {
 
     // In Preedit every word goes into the preedit; in Sen the core picks for each word whether it goes
     // straight into the field or into the preedit.
-    ngosen::Mode sharedMode() {
-        if (englishOn)
-            return ngosen::Mode::Off;
+    ngosen::Mode sharedVietnameseMode() {
         return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
     }
 
@@ -70,7 +68,7 @@ namespace {
             return ngosen::Mode::Sen;
         if (mode == ngosen::AppMode::Preedit)
             return ngosen::Mode::Preedit;
-        return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
+        return sharedVietnameseMode();
     }
 
     bool typesEnglish() {
@@ -223,7 +221,8 @@ namespace {
 
     void toggleLanguage(IBusEngine* engine, Session& session) {
         closeModeMenu(engine, session);
-        const bool        vietnamese = typesEnglish();
+        // Read again: the portal or a restore may have changed the app's language since the last key.
+        const bool        vietnamese = typingMode(*session.host) == ngosen::Mode::Off;
         const std::string app        = currentApp(*session.host);
         if (!app.empty() && !appSwitches().set(app, vietnamese))
             NGOSEN_WARN("Cannot save the language for " + app);
@@ -715,7 +714,7 @@ namespace ngosen {
 
     void addEngine(IBusFactory* factory) {
         englishOn = readEnglishOn(resources().paths());
-        realMode  = sharedMode();
+        realMode  = englishOn ? ngosen::Mode::Off : sharedVietnameseMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
     }

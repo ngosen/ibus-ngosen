@@ -1834,7 +1834,19 @@ check(
 )
 first.type("vieetj ")
 check(first.text.endswith(" việt "), "switch: the picked mode types Vietnamese", first.text)
+# A switch written elsewhere, such as by a restore, counts before the next key is typed.
+write_file(app_switches_path, "[Switches]\n[Switches/0]\nApp=switch-first\nVietnamese=False\n\n")
+os.utime(app_switches_path, (time.time() + 5, time.time() + 5))
+tap_ctrl_shift(first)
+check(
+    app_switch("switch-first") == "Vietnamese=True",
+    "switch: the toggle key reads the app's language before it switches",
+    app_switch("switch-first"),
+)
 first.close()
+# Later checks start in Vietnamese whatever this one did.
+if os.path.exists(english_mark):
+    os.remove(english_mark)
 if os.path.exists(app_switches_path):
     os.remove(app_switches_path)
 os.remove(app_modes_path)

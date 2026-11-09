@@ -134,12 +134,12 @@ def _app_rules(path):
 
 def _app_switches(path):
     """The language the toggle key left each app in, as fcitx5 backs up its switches."""
-    sections = ini.parse((read_bytes(path) or b"").decode("utf-8", "surrogateescape"))[1]
-    return [
-        {"App": values.get("App", ""), "Vietnamese": values.get("Vietnamese", "")}
-        for name, values in sections.items()
-        if name.startswith(SWITCHES + "/")
-    ]
+    # A name that is not UTF-8 matches no app, and would stop the backup from being written.
+    sections = ini.parse((read_bytes(path) or b"").decode("utf-8", "replace"))[1]
+    switches = []
+    while (values := sections.get(f"{SWITCHES}/{len(switches)}")) is not None:
+        switches.append({"App": values.get("App", ""), "Vietnamese": values.get("Vietnamese", "")})
+    return switches
 
 
 def _entries(path, name):
@@ -352,7 +352,7 @@ def _app_switches_file(current, switches):
         vietnamese = switch.get("Vietnamese")
         value = _text(vietnamese) if isinstance(vietnamese, (str, bool)) else ""
         if app and value in ("True", "False") and not any(c in app for c in "=\n\r["):
-            kept.append(f"App={app}\nVietnamese={value}\n")
+            kept.append(f"App={ini.escape(app)}\nVietnamese={value}\n")
     if current is None and not kept:
         return None
     sections = "".join(f"[{SWITCHES}/{i}]\n{entry}\n" for i, entry in enumerate(kept))

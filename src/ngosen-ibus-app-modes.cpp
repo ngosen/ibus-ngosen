@@ -151,27 +151,18 @@ namespace ngosen {
     }
 
     AppSwitchMap parseAppSwitches(const std::string& text) {
-        AppSwitchMap       switches;
-        std::istringstream lines(text);
-        std::string        app;
-        // A group starts each entry; App comes before Vietnamese, as fcitx5 writes them.
-        for (std::string line; std::getline(lines, line);) {
-            line = trimIni(line);
-            if (line.empty() || line[0] == '#')
-                continue;
-            if (line[0] == '[') {
-                app.clear();
-                continue;
-            }
-            const size_t equals = line.find('=');
-            if (equals == std::string::npos)
-                continue;
-            const std::string key   = trimIni(line.substr(0, equals));
-            const std::string value = trimIni(line.substr(equals + 1));
-            if (key == "App")
-                app = modeAppName(value);
-            else if (key == "Vietnamese" && !app.empty() && (value == "True" || value == "False"))
-                switches[app] = value == "True";
+        AppSwitchMap  switches;
+        const IniFile ini = parseIni(text);
+        // fcitx5 stops at the first missing index.
+        for (size_t i = 0;; ++i) {
+            const auto section = ini.sections.find("Switches/" + std::to_string(i));
+            if (section == ini.sections.end())
+                break;
+            const auto        app        = section->second.find("App");
+            const auto        vietnamese = section->second.find("Vietnamese");
+            const std::string name       = app == section->second.end() ? std::string() : modeAppName(app->second);
+            if (!name.empty() && vietnamese != section->second.end() && (vietnamese->second == "True" || vietnamese->second == "False"))
+                switches[name] = vietnamese->second == "True";
         }
         return switches;
     }
@@ -180,7 +171,7 @@ namespace ngosen {
         std::string text  = "[Switches]\n";
         size_t      index = 0;
         for (const auto& [app, vietnamese] : switches)
-            text += "[Switches/" + std::to_string(index++) + "]\nApp=" + app + "\nVietnamese=" + (vietnamese ? "True" : "False") + "\n\n";
+            text += "[Switches/" + std::to_string(index++) + "]\nApp=" + escapeIniValue(app) + "\nVietnamese=" + (vietnamese ? "True" : "False") + "\n\n";
         return text;
     }
 
@@ -217,8 +208,8 @@ namespace ngosen {
             changed[app] = *vietnamese;
         else
             changed.erase(app);
-        // Every tap of the toggle key ends here; an unchanged list needs no write.
-        if (changed == switches_ && mtime_)
+        // Every tap of the toggle key and every pick in the menu ends here; an unchanged list needs no write.
+        if (changed == switches_ && (mtime_ || changed.empty()))
             return true;
         if (!write_(path_, appSwitchesText(changed)))
             return false;

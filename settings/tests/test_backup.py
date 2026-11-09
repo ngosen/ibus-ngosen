@@ -227,7 +227,7 @@ class BackupTest(UserFiles, unittest.TestCase):
             read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "firefox=5\nkate=2\n"
         )
 
-    def test_off_and_emoji_rules_are_kept_and_reported(self):
+    def test_emoji_rules_are_kept_and_reported(self):
         data = fcitx5_backup()
         data["rules"] = [{"App": "code", "Mode": "0"}, {"App": "kate", "Mode": "6"}]
         _, notes = self.restore(data)
@@ -257,6 +257,20 @@ class BackupTest(UserFiles, unittest.TestCase):
         )
         self.restore({"rules": [{"App": "kate", "Mode": "2"}]})
         self.assertEqual(read_text(self.paths.app_switches), "[Switches]\n")
+
+    def test_switches_export_as_fcitx5_reads_them(self):
+        write_bytes = backup.put
+        write_bytes(
+            self.paths.app_switches,
+            b'[Switches/0]\nApp="My App"\nVietnamese=False\n\n[Switches/1]\nApp=\xff\nVietnamese=True\n\n'
+            b"[Switches/3]\nApp=late\nVietnamese=True\n\n",
+        )
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        self.assertEqual(
+            backup.load(target)["switches"],
+            [{"App": "My App", "Vietnamese": "False"}, {"App": "\ufffd", "Vietnamese": "True"}],
+        )
 
     def test_no_switches_write_no_file(self):
         self.restore({"switches": []})

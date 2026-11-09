@@ -56,12 +56,16 @@ namespace {
         check(parseAppSwitches(appSwitchesText(switches)) == switches, "app switches round trip");
         check(appSwitchesText({{"kate", false}}) == "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n", "written as fcitx5 writes it");
         check(parseAppSwitches("").empty(), "an empty file has no switches");
+        const AppSwitchMap quoted = parseAppSwitches("[Switches/0]\nApp=\"My App\"\nVietnamese=False\n[Switches/2]\nApp=late\nVietnamese=True\n");
+        check(quoted.size() == 1 && quoted.count("My App"), "a quoted name is read as fcitx5 writes it, and the list stops at a gap");
+        check(parseAppSwitches(appSwitchesText({{"My App", true}})) == AppSwitchMap{{"My App", true}}, "a name with a space round trips");
     }
 
     void testSwitchFile(const fs::path& root) {
         const std::string path = (root / "ngosen-app-switch.conf").string();
         AppSwitches       switches(path);
         check(!switches.find("kate"), "no file, no switches");
+        check(switches.set("kate", std::nullopt) && !fs::exists(path), "forgetting nothing writes no file");
         check(switches.set("kate", false) && switches.find("kate") == false, "a switch is saved");
         check(!switches.find("firefox"), "another app was never switched");
         check(AppSwitches(path).find("kate") == false, "the switch is kept after a restart");
