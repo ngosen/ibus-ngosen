@@ -483,7 +483,9 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode"};
+            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode",
+                                                "ShowModeSen",       "ShowModePreedit",     "ShowModeOff",          "ShowModeDefault",
+                                                "ModeOrder",         CycleModeKeyName};
             std::string              text;
             if (!readFile(paths.settingsFile(), text))
                 return true;

@@ -405,6 +405,13 @@ namespace {
         check(carried.options.enableMacroInOffMode, "macros in English turned on in fcitx5 comes over");
         check(carried.options.doubleSpaceToPeriod && carried.options.doubleHyphenToEmDash, "punctuation turned on in fcitx5 comes over");
 
+        paths = pathsIn(root / "mode-menu");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "ShowModeOff=False\nModeOrder=Off,Sen\n[CycleModeKey]\n0=Control+grave\n");
+        check(prepareSettings(paths), "mode menu settings added after the import are carried over");
+        const IBusSettings menu = readSettings(parseIni(read(paths.settingsFile())));
+        check(!menu.showModeOff && menu.modeOrder == "Off,Sen" && menu.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the mode menu set up in fcitx5 comes over");
+
         paths = pathsIn(root / "macro-chosen-here");
         earlier(paths, "EnableMacroInOffMode=False\n");
         write(paths.fcitxConfigDir + "/ngosen.conf", "EnableMacroInOffMode=True\n");
