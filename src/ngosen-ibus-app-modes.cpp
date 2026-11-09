@@ -221,4 +221,66 @@ namespace ngosen {
         return true;
     }
 
+    VimAppSet parseVimApps(const std::string& text) {
+        VimAppSet          apps;
+        std::istringstream lines(text);
+        for (std::string line; std::getline(lines, line);) {
+            // Named as the other app files name them, so a name fcitx5 saved as GNOME reports it matches.
+            const std::string app = line.empty() || line[0] == '#' ? std::string() : modeAppName(trimIni(line));
+            if (!app.empty())
+                apps.insert(app);
+        }
+        return apps;
+    }
+
+    std::string vimAppsText(const VimAppSet& apps) {
+        std::string text = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line\n";
+        for (const auto& app : apps)
+            text += app + "\n";
+        return text;
+    }
+
+    VimApps::VimApps(std::string path, FileWriter write) : path_(std::move(path)), write_(std::move(write)) {}
+
+    void VimApps::reloadIfChanged() {
+        std::error_code                                error;
+        const auto                                     time = std::filesystem::last_write_time(path_, error);
+        std::optional<std::filesystem::file_time_type> now;
+        if (!error)
+            now = time;
+        if (loaded_ && now == mtime_)
+            return;
+        loaded_ = true;
+        mtime_  = now;
+        std::string text;
+        apps_ = now && readFile(path_, text) ? parseVimApps(text) : VimAppSet{};
+    }
+
+    bool VimApps::has(const std::string& app) {
+        if (app.empty())
+            return false;
+        reloadIfChanged();
+        return apps_.count(app) > 0;
+    }
+
+    bool VimApps::set(const std::string& app, bool on) {
+        if (app.empty())
+            return false;
+        reloadIfChanged();
+        VimAppSet changed = apps_;
+        if (on)
+            changed.insert(app);
+        else
+            changed.erase(app);
+        if (changed == apps_ && (mtime_ || changed.empty()))
+            return true;
+        if (!write_(path_, vimAppsText(changed)))
+            return false;
+        apps_ = std::move(changed);
+        std::error_code error;
+        if (const auto time = std::filesystem::last_write_time(path_, error); !error)
+            mtime_ = time;
+        return true;
+    }
+
 } // namespace ngosen

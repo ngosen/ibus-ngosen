@@ -67,6 +67,11 @@ class SettingRows:
         else:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
+        if key == "ModeOrder" and "Vim" not in current.split(","):
+            # The menu puts Vim mode last when the order leaves it out, so such an order is its preset.
+            pairs = [
+                (current if value == current + ",Vim" else value, label) for value, label in pairs
+            ]
         if current not in (value for value, _label in pairs):
             shown = (
                 keys.label(current)

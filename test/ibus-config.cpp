@@ -114,7 +114,7 @@ namespace {
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 44, "the file has every key");
+        check(parseIni(text).top.size() == 46, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -169,8 +169,12 @@ namespace {
         IBusSettings changed  = defaults;
         changed.modeMenuKeys  = {};
         changed.shortcutOff   = "x";
+        changed.shortcutVim   = "m";
+        changed.showModeVim   = false;
         const IBusSettings rt = readSettings(parseIni(settingsText(changed)));
         check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x", "menu settings round trip");
+        check(rt.shortcutVim == "m" && !rt.showModeVim, "the Vim item's settings round trip");
+        check(defaults.shortcutVim == "v" && defaults.showModeVim, "Vim mode is in the menu on v by default, as in fcitx5");
         const IBusSettings old = readSettings(parseIni("ShortcutDefault=r\nShowModeDefault=False\nModeOrder=Sen,Preedit,Emoji,Off,Default\n"));
         check(old.modeOrder == "Sen,Preedit,Emoji,Off" && old.showModeSen && old.shortcutSen == "1", "a config saved with Default Typing still reads");
         check(settingsText(old).find("Default") == std::string::npos, "and is saved without it");
@@ -185,22 +189,27 @@ namespace {
 
     void testModeMenuOrder() {
         IBusSettings settings = defaultSettings();
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Off}, "the menu lists the modes in fcitx5's order");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Off, MenuMode::Vim}, "the menu lists the modes in fcitx5's order");
         settings.modeOrder = "Off,Default,Sen,Emoji,Nope";
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Preedit}, "ModeOrder sorts the menu, the modes it leaves out come last");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Preedit, MenuMode::Vim},
+              "ModeOrder sorts the menu, the modes it leaves out come last");
         settings.modeOrder       = "Sen,Preedit,Emoji,Off";
         settings.showModePreedit = false;
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off}, "a hidden mode is left out");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off, MenuMode::Vim}, "a hidden mode is left out");
         check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Swallow, "the key of a hidden mode picks nothing");
         settings.modeOrder = "Off,Sen";
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key skips the modes ModeOrder leaves out");
+        settings.modeOrder = "Vim,Off,Sen";
+        check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key never switches Vim mode");
+        check(modeMenuItems(settings, false).front().label == "Vim mode: off" && modeMenuItems(settings, true).front().label == "Vim mode: on",
+              "the Vim item says whether the app has Vim mode");
         settings.modeOrder     = "Sen,Preedit,Emoji,Off";
         settings.shortcutOff   = settings.shortcutSen;
         IBusLookupTable* table = newModeMenuTable(modeMenuItems(settings), 0);
         check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 1))).empty(), "an item whose key an earlier one took shows no key");
         g_object_unref(g_object_ref_sink(table));
         settings.shortcutOff = defaultSettings().shortcutOff;
-        settings.showModeSen = settings.showModeOff = false;
+        settings.showModeSen = settings.showModeOff = settings.showModeVim = false;
         check(modeMenuItems(settings).empty(), "every mode can be hidden");
 
         const IBusSettings read = readSettings(parseIni("ShowModeOff=False\nModeOrder=Default,Off\nCycleModeKey=Control+grave Shift_L\n"));
@@ -233,6 +242,7 @@ namespace {
         check(!opensModeMenu(settings, {{"~", "DauNga"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "a custom keymap keeps its keys");
         check(opensModeMenu(settings, {{"s", "DauSac"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "other keymap keys leave the menu alone");
         check(menuKey(settings, IBUS_KEY_r, 0).kind == MenuKey::Swallow, "r picks nothing, since Default Typing is gone");
+        check(menuKey(settings, IBUS_KEY_v, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_v, 0).mode == MenuMode::Vim, "v switches Vim mode, as in fcitx5");
     }
 
     bool matches(const std::string& key, guint keyval, guint state) {
@@ -352,6 +362,7 @@ namespace {
         write(paths.fcitxDataDir + "/vietnamese.cm.dict", "người dùng\n");
         write(paths.fcitxConfigDir + "/ngosen-app-rules.conf", "firefox=5\ncode=0\n");
         write(paths.fcitxConfigDir + "/ngosen-app-switch.conf", FcitxSwitches);
+        write(paths.fcitxConfigDir + "/ngosen-vim-apps.conf", "kitty\n");
         check(prepareSettings(paths), "import succeeds");
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
@@ -362,6 +373,7 @@ namespace {
         check(!fs::exists(paths.keymapFile()), "no keymap file without one to copy");
         check(read(paths.appModesFile()) == "firefox=5\ncode=0\n", "the modes picked for each app copied as they are");
         check(read(paths.appSwitchesFile()) == FcitxSwitches, "the language each app was switched to copied as it is");
+        check(read(paths.vimAppsFile()) == "kitty\n", "the apps with Vim mode copied as they are");
 
         write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
         check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");

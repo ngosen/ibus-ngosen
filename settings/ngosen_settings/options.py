@@ -29,13 +29,13 @@ CYCLE_MODE_KEYS = [
 ]
 # fcitx5 drags the modes into any order; these are the common ones, and a saved order stays offered.
 MODE_ORDERS = [
-    ("Sen,Preedit,Emoji,Off", N_("Sen, Preedit, OFF")),
-    ("Preedit,Sen,Emoji,Off", N_("Preedit, Sen, OFF")),
-    ("Off,Sen,Preedit,Emoji", N_("OFF, Sen, Preedit")),
+    ("Sen,Preedit,Emoji,Off,Vim", N_("Sen, Preedit, OFF")),
+    ("Preedit,Sen,Emoji,Off,Vim", N_("Preedit, Sen, OFF")),
+    ("Off,Sen,Preedit,Emoji,Vim", N_("OFF, Sen, Preedit")),
 ]
 # Named in their own language, as in fcitx5.
 UI_LANGUAGES = [("Vietnamese", "Tiếng Việt"), ("English", "English")]
-SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff"]
+SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"]
 SHOW_MENUS = [
     "ShowMenuInputMethod",
     "ShowMenuCharset",
@@ -47,7 +47,7 @@ SHOW_MENUS = [
     "ShowMenuDictionary",
 ]
 # The keys that pick a mode in the menu, each one letter or digit.
-SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff"]
+SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutVim"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -74,6 +74,7 @@ LABELS = {
     "ShowModeSen": N_("Show Sen"),
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
+    "ShowModeVim": N_("Show Vim mode"),
     "UiLanguage": N_("Interface Language"),
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
@@ -87,6 +88,7 @@ LABELS = {
     "ShortcutSen": N_("Shortcut for Sen"),
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
+    "ShortcutVim": N_("Shortcut for Vim mode"),
     "DirectTyping": N_("Type with Sen"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),

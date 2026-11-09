@@ -16,11 +16,13 @@ typedef struct _IBusLookupTable IBusLookupTable;
 
 namespace ngosen {
 
-    // The modes the menu offers, kept for the app in use.
+    // The modes the menu offers, kept for the app in use. Vim is no mode but switches Vim mode for the
+    // app, as in fcitx5.
     enum class MenuMode {
         Sen,
         Preedit,
-        Off
+        Off,
+        Vim
     };
 
     struct MenuItem {
@@ -30,9 +32,10 @@ namespace ngosen {
     };
 
     // The shown modes in ModeOrder, then the ones it leaves out; a key an earlier item has picks nothing.
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings);
+    // vimOn: whether the app in use has Vim mode, which its item says.
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn = false);
 
-    // As in fcitx5 the cycle key goes through only the modes ModeOrder names.
+    // As in fcitx5 the cycle key goes through only the modes ModeOrder names, Vim mode left out.
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings);
 
     bool                  cyclesMode(const IBusSettings& settings, guint keyval, guint state);

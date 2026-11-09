@@ -146,6 +146,25 @@ class WindowTest(unittest.TestCase):
         row.set_selected(1)
         self.assertEqual(self.settings()["ModeMenuKey"], "Shift+asciitilde")
 
+    def test_mode_order_saved_without_vim_is_its_preset(self):
+        engine = FakeEngine(self.folder)
+        saved = engine.settings()
+        saved["ModeOrder"] = "Off,Sen,Preedit,Emoji"
+        engine.settings = lambda: saved
+        store = Store(engine, self.folder)
+        win = window.Window(
+            None,
+            store,
+            {"InputMethod": ["Telex"], "OutputCharset": ["Unicode"]},
+            "1.0.0",
+            FakeSources(),
+        )
+        model = win.rows.rows["ModeOrder"].get_model()
+        self.assertEqual(model.get_n_items(), 3)
+        self.assertEqual(
+            model.get_string(win.rows.rows["ModeOrder"].get_selected()), "OFF, Sen, Preedit"
+        )
+
     def test_languages_are_named_in_their_own_language(self):
         model = self.window.rows.rows["UiLanguage"].get_model()
         self.assertEqual(

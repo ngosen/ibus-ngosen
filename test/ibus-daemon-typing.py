@@ -1663,8 +1663,8 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen", "Gạch chân", "Tắt"],
-    "menu: ` shows the three modes",
+    items == ["Gõ Sen", "Gạch chân", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes and Vim mode",
     items,
 )
 app.key(IBus.KEY_q)
@@ -1839,7 +1839,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen"],
+    app.menu == ["Tắt", "Gõ Sen", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -1851,15 +1851,73 @@ check(
     app.menu,
 )
 app.key(IBus.KEY_Escape)
-for name in ("ShowModeSen", "ShowModeOff"):
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "False")
 app.key(IBus.KEY_grave)
 pump(200)
 check(app.menu is None and app.text == "`", "menu: with every mode hidden ` types itself", app.text)
 app.close()
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff"):
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "True")
-set_setting("ModeOrder", "Sen,Preedit,Emoji,Off")
+set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Vim")
+
+# Vim mode is switched for the app in use and kept in the file the fcitx5 edition uses.
+vim_apps_path = os.path.join(config_dir, "ngosen-vim-apps.conf")
+
+
+def vim_apps():
+    if not os.path.exists(vim_apps_path):
+        return []
+    with open(vim_apps_path) as f:
+        return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+app = menu_app("menu-vim")
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_v)
+pump(300)
+check(
+    app.menu is None and vim_apps() == ["menu-vim"],
+    "menu: v switches Vim mode on for this app",
+    vim_apps(),
+)
+app.key(IBus.KEY_grave)
+pump(200)
+check((app.menu or [""])[-1] == "Vim mode: bật", "menu: the Vim item says it is on", app.menu)
+app.key(IBus.KEY_v)
+pump(300)
+check(
+    vim_apps() == [] and app_mode("menu-vim") == "",
+    "menu: v again switches it off, the app's mode untouched",
+    vim_apps(),
+)
+app.close()
+# GNOME Shell relays many apps under its own name; Vim mode then stays with the field in focus.
+app = menu_app("gnome-shell")
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_v)
+pump(300)
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    (app.menu or [""])[-1] == "Vim mode: bật" and vim_apps() == [],
+    "menu: an app without a name keeps Vim mode for its field, not in the file",
+    (app.menu, vim_apps()),
+)
+app.key(IBus.KEY_Escape)
+app.close()
+app = menu_app("gnome-shell")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    (app.menu or [""])[-1] == "Vim mode: tắt",
+    "menu: the next field without a name starts without Vim mode",
+    app.menu,
+)
+app.key(IBus.KEY_Escape)
+app.close()
 
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")
@@ -2332,7 +2390,7 @@ app.close()
 app = menu_app("menu-shrinks")
 app.key(IBus.KEY_grave)
 pump(200)
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff"):
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "False")
 app.key(IBus.KEY_Down)
 pump(300)

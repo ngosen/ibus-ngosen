@@ -88,6 +88,7 @@ namespace ngosen {
             {"ShowModeSen", &IBusSettings::showModeSen},
             {"ShowModePreedit", &IBusSettings::showModePreedit},
             {"ShowModeOff", &IBusSettings::showModeOff},
+            {"ShowModeVim", &IBusSettings::showModeVim},
             {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
             {"ShowMenuCharset", &IBusSettings::showMenuCharset},
             {"ShowMenuSpellCheck", &IBusSettings::showMenuSpellCheck},
@@ -324,6 +325,7 @@ namespace ngosen {
         read.shortcut("ShortcutSen", settings.shortcutSen);
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
+        read.shortcut("ShortcutVim", settings.shortcutVim);
         for (const auto& [key, shown] : ShownItems)
             read.boolean(key, settings.*shown);
         read.text("ModeOrder", settings.modeOrder);
@@ -367,6 +369,7 @@ namespace ngosen {
         line("ShortcutSen", settings.shortcutSen);
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
+        line("ShortcutVim", settings.shortcutVim);
         for (const auto& [key, shown] : ShownItems)
             line(key, boolText(settings.*shown));
         line("ModeOrder", settings.modeOrder);
@@ -427,6 +430,9 @@ namespace ngosen {
     }
     std::string SettingsPaths::appSwitchesFile() const {
         return configDir + "/ngosen-app-switch.conf";
+    }
+    std::string SettingsPaths::vimAppsFile() const {
+        return configDir + "/ngosen-vim-apps.conf";
     }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
@@ -514,7 +520,7 @@ namespace ngosen {
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
             std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode",
-                                              "ModeOrder",         "UiLanguage",          CycleModeKeyName};
+                                              "ModeOrder",         "UiLanguage",          CycleModeKeyName,       "ShortcutVim"};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;
@@ -570,7 +576,7 @@ namespace ngosen {
             const std::pair<std::string, std::string> copies[] = {
                 {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},        {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
                 {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},   {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
-                {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()}, {paths.fcitxConfigDir + "/ngosen-vim-apps.conf", paths.vimAppsFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))
