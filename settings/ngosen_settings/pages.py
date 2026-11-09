@@ -602,17 +602,26 @@ FULL_EDITION_COMMAND = (
     "curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash"
 )
 PROJECT_URL = "https://github.com/ngosen/ibus-ngosen"
+# The name and its link stay on one line: it is the only place this project may name it.
+FORK = ("fcitx5-lotus", "https://github.com/LotusInputMethod/fcitx5-lotus")
+VMK = ("VMK", "https://github.com/thanhpy2009/VMK")
 
 
-def about_page(version):
-    page = Adw.PreferencesPage(title=_("About"), icon_name="help-about-symbolic")
-    page.add(_about_header(version))
-    links = preferences_group()
-    links.add(_link_row(_("Report Bug"), None, PROJECT_URL + "/issues/new/choose"))
-    links.add(_link_row(_("Source code"), None, PROJECT_URL))
-    page.add(links)
-    page.add(_credit())
-    return page
+def about_dialog(version):
+    dialog = Adw.AboutDialog(
+        application_name="Ngó Sen",
+        application_icon="io.github.ngosen.IBusNgoSen",
+        version=version,
+        comments=_("Vietnamese input method for GNOME")
+        + "\n\n"
+        + _("Based on the code of {fork} and {vmk}.").format(fork=FORK[0], vmk=VMK[0]),
+        website=PROJECT_URL,
+        issue_url=PROJECT_URL + "/issues/new/choose",
+        license_type=Gtk.License.GPL_3_0,
+    )
+    for name, url in (FORK, VMK):
+        dialog.add_link(name, url)
+    return dialog
 
 
 def fcitx5_group(show_toast, back_up):
@@ -684,21 +693,6 @@ def _switch_response(dialog, response, show_toast, back_up):
     show_toast(Adw.Toast(title=_("Command copied.")))
 
 
-def _about_header(version):
-    group = Adw.PreferencesGroup()
-    box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, halign=Gtk.Align.CENTER)
-    box.append(Gtk.Image(icon_name="io.github.ngosen.IBusNgoSen", pixel_size=96))
-    wordmark = Gtk.Label(label="Ngó Sen")
-    wordmark.add_css_class("wordmark")
-    box.append(wordmark)
-    box.append(Gtk.Label(label=_("Vietnamese input method for GNOME")))
-    version_label = Gtk.Label(label=_("Version {}").format(version))
-    version_label.add_css_class("dim-label")
-    box.append(version_label)
-    group.add(box)
-    return group
-
-
 def _link_row(title, subtitle, url):
     row = Adw.ActionRow(title=title, activatable=True)
     if subtitle:
@@ -708,18 +702,3 @@ def _link_row(title, subtitle, url):
         "activated", lambda r: Gtk.UriLauncher(uri=url).launch(r.get_root(), None, None, None)
     )
     return row
-
-
-def _credit():
-    group = Adw.PreferencesGroup()
-    credit = _("Based on the code of {fork} and {vmk}.").format(
-        fork='<a href="https://github.com/LotusInputMethod/fcitx5-lotus">fcitx5-lotus</a>',
-        vmk='<a href="https://github.com/thanhpy2009/VMK">VMK</a>',
-    )
-    licence = GLib.markup_escape_text(_("Licensed under the GNU General Public License v3.0"))
-    label = Gtk.Label(
-        label=f"{credit}\n{licence}", use_markup=True, justify=Gtk.Justification.CENTER, wrap=True
-    )
-    label.add_css_class("dim-label")
-    group.add(label)
-    return group

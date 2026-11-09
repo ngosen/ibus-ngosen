@@ -318,16 +318,8 @@ msgid "Command copied."
 msgstr "Đã chép lệnh."
 
 #: settings/ngosen_settings/pages.py
-msgid "Licensed under the GNU General Public License v3.0"
-msgstr "Được cấp phép dưới Giấy phép Công cộng GNU v3.0"
-
-#: settings/ngosen_settings/pages.py
 msgid "Typing"
 msgstr "Gõ chữ"
-
-#: settings/ngosen_settings/pages.py
-msgid "About"
-msgstr "Giới thiệu"
 
 #: settings/ngosen_settings/pages.py
 msgid "Ngó Sen full edition"
@@ -336,14 +328,6 @@ msgstr "Ngó Sen đầy đủ"
 #: settings/ngosen_settings/pages.py
 msgid "Runs on fcitx5 and has all of these."
 msgstr "Chạy trên fcitx5, có đủ những thứ trên."
-
-#: settings/ngosen_settings/pages.py
-msgid "Report Bug"
-msgstr "Báo cáo lỗi"
-
-#: settings/ngosen_settings/pages.py
-msgid "Source code"
-msgstr "Mã nguồn"
 
 #: settings/ngosen_settings/pages.py
 #, python-brace-format
@@ -393,11 +377,6 @@ msgstr "Gõ thử"
 #: settings/ngosen_settings/pages.py
 msgid "No macros yet."
 msgstr "Chưa có gõ tắt nào."
-
-#: settings/ngosen_settings/pages.py
-#, python-brace-format
-msgid "Version {}"
-msgstr "Phiên bản {}"
 
 #: settings/ngosen_settings/window.py
 msgid "Cannot read the settings"
@@ -489,9 +468,6 @@ msgstr "Không tìm thấy từ nào."
 
 msgid "Showing {} of {} words found."
 msgstr "Đang hiện {} trên {} từ tìm thấy."
-
-msgid "Check my machine"
-msgstr "Kiểm tra máy"
 
 msgid "Check again"
 msgstr "Kiểm tra lại"
@@ -918,6 +894,14 @@ msgstr "Chuyển sang Ngó Sen ở menu IBus."
 #: settings/ngosen_settings/system_check.py
 msgid "Older X11 apps use fcitx5"
 msgstr "App X11 cũ gõ qua fcitx5"
+
+#: settings/ngosen_settings/window.py
+msgid "_About Ngó Sen"
+msgstr "_Giới thiệu Ngó Sen"
+
+#: settings/ngosen_settings/check_page.py
+msgid "Check"
+msgstr "Kiểm tra"
 
 #: settings/ngosen_settings/pages.py
 msgid "Run this command in a terminal, then log out and back in. On Debian and Ubuntu it replaces this edition. On Fedora, openSUSE and Arch, copy the command, remove ibus-ngosen, then run it; this window goes with the package."
