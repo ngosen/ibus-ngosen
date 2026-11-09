@@ -4,10 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-mode-menu.h"
+#include "ngosen-ibus-i18n.h"
 
 #include "ngosen-ibus-keys.h"
 
-#include <glib/gi18n-lib.h>
 #include <ibus.h>
 #include <algorithm>
 #include <sstream>

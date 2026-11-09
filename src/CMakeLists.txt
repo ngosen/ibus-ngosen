@@ -6,6 +6,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-config.cpp
     ngosen-ibus-engine.cpp
     ngosen-ibus-host.cpp
+    ngosen-ibus-i18n.cpp
     ngosen-ibus-keys.cpp
     ngosen-ibus-menu.cpp
     ngosen-ibus-mode-menu.cpp

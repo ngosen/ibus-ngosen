@@ -34,6 +34,8 @@ MODE_ORDERS = [
     ("Default,Sen,Preedit,Emoji,Off", N_("Default Typing, Sen, Preedit, OFF")),
     ("Off,Sen,Preedit,Emoji,Default", N_("OFF, Sen, Preedit, Default Typing")),
 ]
+# Named in their own language, as in fcitx5.
+UI_LANGUAGES = [("Vietnamese", "Tiếng Việt"), ("English", "English")]
 SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"]
 SHOW_MENUS = [
     "ShowMenuInputMethod",
@@ -74,6 +76,7 @@ LABELS = {
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
     "ShowModeDefault": N_("Show Default Typing"),
+    "UiLanguage": N_("Interface Language"),
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
     "ShowMenuCharset": N_("Charset"),
@@ -122,6 +125,7 @@ HINTS = {
     "ModeMenuKey": N_(
         "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
     ),
+    "UiLanguage": N_("The top bar menu changes at once, this window the next time it opens."),
     "CycleModeKey": N_(
         "Moves the app in use to the next mode in the list below, and remembers it for that app."
     ),
@@ -220,6 +224,7 @@ TYPING_GROUPS = [
     ),
     (N_("Mode menu"), ["ModeOrder", *SHOW_MODES, *SHORTCUTS]),
     (N_("Show in the top bar menu"), SHOW_MENUS),
+    (N_("Language"), ["UiLanguage"]),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 
@@ -228,6 +233,7 @@ CHOICES = {
     "ModeMenuKey": MODE_MENU_KEYS,
     "CycleModeKey": CYCLE_MODE_KEYS,
     "ModeOrder": MODE_ORDERS,
+    "UiLanguage": UI_LANGUAGES,
     "W2U": POSITIONS,
     "BracketTransform": POSITIONS,
     "LockWordModifier": LOCK_KEYS,

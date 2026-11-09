@@ -316,6 +316,7 @@ namespace ngosen {
         for (const auto& [key, shown] : ShownItems)
             read.boolean(key, settings.*shown);
         read.text("ModeOrder", settings.modeOrder);
+        read.text("UiLanguage", settings.uiLanguage);
         settings.cycleModeKeys = readKeys(ini, CycleModeKeyName, {}, parseMenuKey);
         return settings;
     }
@@ -358,6 +359,7 @@ namespace ngosen {
         for (const auto& [key, shown] : ShownItems)
             line(key, boolText(settings.*shown));
         line("ModeOrder", settings.modeOrder);
+        line("UiLanguage", settings.uiLanguage);
         line(CycleModeKeyName, joinWords(settings.cycleModeKeys));
         return out.str();
     }
@@ -496,7 +498,8 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder", CycleModeKeyName};
+            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode",
+                                              "ModeOrder",         "UiLanguage",          CycleModeKeyName};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;

@@ -936,3 +936,12 @@ msgstr "Hiển thị chế độ gõ mặc định"
 
 msgid "Show in the top bar menu"
 msgstr "Hiện trong menu thanh trên cùng"
+
+msgid "Interface Language"
+msgstr "Ngôn ngữ giao diện"
+
+msgid "The top bar menu changes at once, this window the next time it opens."
+msgstr "Menu thanh trên cùng đổi ngay, cửa sổ này đổi ở lần mở sau."
+
+msgid "Language"
+msgstr "Ngôn ngữ"

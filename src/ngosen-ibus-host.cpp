@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-host.h"
+#include "ngosen-ibus-i18n.h"
 
 #include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
@@ -12,7 +13,6 @@
 #include "ngosen-xtest.h"
 
 #include <algorithm>
-#include <libintl.h>
 
 namespace ngosen {
 
@@ -336,7 +336,7 @@ namespace ngosen {
     }
 
     std::string IBusHost::translate(const char* text) const {
-        return dgettext("ibus-ngosen", text);
+        return uiText(text);
     }
 
     std::unique_ptr<Timer> IBusHost::startTimer(uint64_t deadlineUs, uint64_t /*accuracyUs*/, std::function<bool(Timer&)> onTime) {
