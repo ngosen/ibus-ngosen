@@ -168,16 +168,11 @@ namespace ngosen {
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
         f.terminal        = purpose_ == IBUS_INPUT_PURPOSE_TERMINAL;
-        // Outside GNOME Shell only a click watcher tells a click from a reset; Chromium and Electron report
-        // no text and show the preedit well.
-        if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
-            f.surroundingText = false;
-        // Terminals erase with DEL, whatever the Shell does with keys. Address bars forward BackSpace as in
-        // the fcitx5 edition, where the core checks for a selected completion first.
-        const bool shellKeys   = throughShell() && reportsText() && !f.terminal;
-        const bool preeditOnly = (throughShell() && !shellKeys) || (direct_ && !f.surroundingText);
-        f.sendsNoKeys          = preeditOnly;
-        f.preeditFallback      = preeditOnly && f.preedit;
+        // As in the fcitx5 edition, every field types straight in unless the Shell drops the keys; an app that
+        // goes wrong is switched to the underline from the mode menu.
+        const bool keysDropped = throughShell() && !shellDeliversKeys();
+        f.sendsNoKeys          = keysDropped;
+        f.preeditFallback      = keysDropped && f.preedit;
         // With the underline or in English the Shell still drops forwarded keys, but deleting through the
         // text reaches the app, so an edit of committed text goes that way. The Shell maps it onto the text
         // last reported: a field with none, a terminal or an address bar's selected completion would go wrong.

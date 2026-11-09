@@ -633,18 +633,28 @@ def tap_ctrl_shift(app, extra=0, hold_ms=0):
     pump(200)
 
 
-# Without a click watcher a reset may be a click, so X11 apps keep the preedit.
+# Without a click watcher a reset may be a click, so an X11 app that resets after each key loses the
+# word typed straight in. As in the fcitx5 edition it is not underlined unasked: the mode menu does that.
 if no_x:
     set_setting("DirectTyping", "True")
+    app = App("gtk3-im:code")
+    app.type("xin vieetj ")
+    check(app.text == "xin việt ", "no click watcher, X11 app: the words", app.text)
+    check(app.preedits == [], "no click watcher, X11 app: no underline", app.preedits)
+    app.close()
     app = App("gtk3-im:firefox", resets_after_key=True)
+    app.key(IBus.KEY_grave)
+    pump(200)
+    app.key(IBus.KEY_q)
+    pump(500)
     app.type("xin vieetj ")
     check(
-        app.text == "xin việt ",
-        "no click watcher, X11 app resetting after each key: the words",
-        app.text,
+        app.text == "xin việt " and "việt" in app.preedits,
+        "no click watcher, X11 app resetting after each key, underline picked: the words",
+        (app.text, app.preedits),
     )
-    check("việt" in app.preedits, "no click watcher, X11 app: underlined", app.preedits)
     app.close()
+    os.remove(os.path.join(config_dir, "ngosen-app-rules.conf"))
     app = App("toggle-reset")
     ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
     app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
@@ -1113,10 +1123,11 @@ check(app.text == "xin việt ", "direct, cursor reported back and forth: the wo
 check(app.preedits == [], "direct, cursor reported back and forth: no underline", app.preedits)
 app.close()
 
+# A field the Shell relays without its text still gets the engine's BackSpace, as in the fcitx5 edition.
 app = App("gnome-shell", surrounding=False)
 app.type("vieetj ")
-check(app.text == "việt ", "direct, terminal: the word", app.text)
-check("việt" in app.preedits, "direct, terminal: underlined", app.preedits)
+check(app.text == "việt ", "direct, Shell field without text: the word", app.text)
+check(app.preedits == [], "direct, Shell field without text: no underline", app.preedits)
 app.close()
 
 # On X11 the engine's BackSpace reaches the app, so the word goes straight in even where the IBus
@@ -1127,11 +1138,11 @@ check(app.text == "việt ", "direct, X11 app: the word", app.text)
 check(app.preedits == [], "direct, X11 app: no underline", app.preedits)
 app.close()
 
-# Chromium and Electron report no text on X11.
+# Chromium and Electron report no text on X11, and take the engine's BackSpace.
 app = App("gtk3-im:google-chrome", surrounding=False)
 app.type("vieetj ")
 check(app.text == "việt ", "direct, X11 app without text: the word", app.text)
-check("việt" in app.preedits, "direct, X11 app without text: underlined", app.preedits)
+check(app.preedits == [], "direct, X11 app without text: no underline", app.preedits)
 app.close()
 
 app = App("gtk3-im:firefox", resets_after_key=True)
