@@ -870,6 +870,39 @@ msgstr "Một chữ cái hoặc chữ số."
 msgid "Another mode already uses this key."
 msgstr "Chế độ khác đã dùng phím này."
 
+#: settings/ngosen_settings/system_check.py
+msgid "fcitx5 holds the input method"
+msgstr "fcitx5 đang giữ bộ gõ"
+
+#: settings/ngosen_settings/system_check.py
+msgid "Stop fcitx5 from starting at login, then log out and back in."
+msgstr "Tắt fcitx5 tự chạy khi đăng nhập, rồi đăng xuất và đăng nhập lại."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Ngó Sen is not the input source in use"
+msgstr "Nguồn nhập đang dùng không phải Ngó Sen"
+
+#: settings/ngosen_settings/system_check.py
+#, python-brace-format
+msgid "Switch to Ngó Sen with {}."
+msgstr "Chuyển sang Ngó Sen bằng {}."
+
+#: settings/ngosen_settings/system_check.py
+msgid " or "
+msgstr " hoặc "
+
+#: settings/ngosen_settings/system_check.py
+msgid "Switch to Ngó Sen from the input source menu in the top bar."
+msgstr "Chuyển sang Ngó Sen ở menu nguồn nhập trên thanh trên cùng."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Switch to Ngó Sen from the IBus menu."
+msgstr "Chuyển sang Ngó Sen ở menu IBus."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Older X11 apps use fcitx5"
+msgstr "App X11 cũ gõ qua fcitx5"
+
 #: settings/ngosen_settings/window.py
 msgid "_About Ngó Sen"
 msgstr "_Giới thiệu Ngó Sen"

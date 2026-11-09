@@ -83,6 +83,9 @@ class FakeSources:
             "grp:alt_caps_toggle",
         ]
 
+    def switch_keys(self):
+        return ["<Super>space", "<Shift><Super>space"], ["grp:alt_caps_toggle"]
+
 
 class RequiredTest(unittest.TestCase):
     @unittest.skipUnless(REQUIRED, "not required here")
@@ -430,6 +433,8 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.window.check_tab.get_badge_number(), len(check.findings))
         self.assertEqual(len(check.rows), len(check.found))
         self.assertIn("Ngó Sen", check.report_text())
+        rules = os.path.join(self.folder, "ngosen-app-rules.conf")
+        self.assertEqual(check.app_modes_file, rules)
 
     def test_check_page_reads_the_typing_mode(self):
         self.window.save("DirectTyping", "True")

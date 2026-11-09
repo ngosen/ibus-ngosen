@@ -10,6 +10,7 @@ from .i18n import _
 
 ICONS = {
     system_check.OK: ("emblem-ok-symbolic", "success"),
+    system_check.INFO: ("dialog-information-symbolic", "accent"),
     system_check.WARN: ("dialog-warning-symbolic", "warning"),
     system_check.FAIL: ("dialog-error-symbolic", "error"),
 }
@@ -53,8 +54,19 @@ class GnomeSources:
                     accelerators += [custom_binding(path) for path in value.unpack()]
                 elif value.get_type_string() == "as":
                     accelerators += value.unpack()
-        options = self.settings.get_strv("xkb-options") if self.settings is not None else []
-        return accelerators, options
+        return accelerators, self._xkb_options()
+
+    def switch_keys(self):
+        """The shortcuts that switch input sources, and the xkb options that may switch layouts."""
+        schemas = Gio.SettingsSchemaSource.get_default()
+        schema = schemas.lookup(KEYBINDINGS[0], True) if schemas is not None else None
+        accelerators = []
+        if schema is not None and schema.has_key("switch-input-source"):
+            accelerators = Gio.Settings.new(KEYBINDINGS[0]).get_strv("switch-input-source")
+        return accelerators, self._xkb_options()
+
+    def _xkb_options(self):
+        return self.settings.get_strv("xkb-options") if self.settings is not None else []
 
     def set(self, sources):
         if self.settings is None:
@@ -92,9 +104,18 @@ def _copy(text):
 
 
 class CheckPage:
-    def __init__(self, sources, ngosen_version, notify, on_count, direct_typing=lambda: False):
+    def __init__(
+        self,
+        sources,
+        ngosen_version,
+        notify,
+        on_count,
+        direct_typing=lambda: False,
+        app_modes_file=None,
+    ):
         """notify(text, undo) shows a toast; on_count(n) gets the number of steps left."""
         self.sources = sources
+        self.app_modes_file = app_modes_file
         self.direct_typing = direct_typing
         self.ngosen_version = ngosen_version
         self.notify = notify
@@ -153,10 +174,13 @@ class CheckPage:
 
     def run(self):
         self.facts = system_check.collect(
-            self.sources, self.ngosen_version, direct_typing=self.direct_typing()
+            self.sources,
+            self.ngosen_version,
+            direct_typing=self.direct_typing(),
+            app_modes_file=self.app_modes_file,
         )
         self.found = system_check.steps(self.facts)
-        self.findings = [f for f in self.found if f.level != system_check.OK]
+        self.findings = system_check.steps_left(self.found)
         self._show_steps()
 
     def _show_steps(self):
