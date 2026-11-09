@@ -8,6 +8,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Biểu tượng bộ gõ và logo cửa sổ cài đặt giống bản fcitx5, bỏ chữ V gạch chân (#115).
+
 ## [1.2.1-1] — 09/11/2026
 
 Trên GNOME chỉ còn một nguồn nhập: Ngó Sen tự bỏ "Tiếng Anh (Mỹ)" trùng một lần và luôn gõ trên bàn phím kiểu Mỹ.
