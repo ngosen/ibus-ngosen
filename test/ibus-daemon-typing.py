@@ -1216,11 +1216,11 @@ check(app.text == "abc\nViệt ", "direct, X11 app: capitalizes at the start of 
 app.close()
 set_setting("CapitalizeStartOfText", "False")
 
-# The Chrome address bar drops some deletions, which leaves letters of the old word behind.
+# As in the fcitx5 edition, an address bar types straight in; the core checks for a completion first.
 app = App("gnome-shell", IBus.InputPurpose.URL)
 app.type("vieetj ")
 check(app.text == "việt ", "direct, address bar: the word", app.text)
-check("việt" in app.preedits, "direct, address bar: underlined", app.preedits)
+check("việt" not in app.preedits, "direct, address bar: typed straight in", app.preedits)
 app.close()
 
 
