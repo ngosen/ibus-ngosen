@@ -509,6 +509,8 @@ namespace {
         for (guint i = 0; IBusProperty* item = ibus_prop_list_get(items, i); ++i) {
             states += ibus_property_get_key(item);
             states += ibus_property_get_state(item) == PROP_STATE_CHECKED ? "+" : "-";
+            // Hiding an item changes no state, and must still reach the panel.
+            states += ibus_property_get_visible(item) ? "" : "~";
             states += itemStates(ibus_property_get_sub_props(item));
         }
         return states;

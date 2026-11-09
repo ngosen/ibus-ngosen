@@ -1341,21 +1341,35 @@ def prop_states(props):
     return found
 
 
+def hidden_items(props):
+    found = set()
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        if not prop.get_visible():
+            found.add(prop.get_key())
+        found |= hidden_items(prop.get_sub_props())
+        i += 1
+    return found
+
+
 # GNOME Shell takes the whole menu once after the engine is chosen, then only single updates.
 class GnomeMenu:
     def __init__(self):
         self.states = None
         self.labels = {}
+        self.hidden = set()
 
     def register(self, props):
         if self.states is None and props.get(0) is not None:
             self.states = prop_states(props)
             self.labels = labels(props)
+            self.hidden = hidden_items(props)
 
     def update(self, prop):
         if self.states is not None and prop.get_key() in self.states:
             self.states[prop.get_key()] = prop.get_state()
             self.labels[prop.get_key()] = prop.get_label().get_text()
+            (self.hidden.discard if prop.get_visible() else self.hidden.add)(prop.get_key())
 
     def checked(self):
         return {
@@ -2179,6 +2193,12 @@ check(
 )
 set_setting("EnableMacro", "True")
 pump(500)
+set_setting("ShowMenuSpellCheck", "False")
+pump(1000)
+check("SpellCheck" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
+set_setting("ShowMenuSpellCheck", "True")
+pump(1000)
+check("SpellCheck" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
 updates.clear()
 tap_ctrl_shift(app)
 check(updates == ["InputMode"], "menu: the toggle key resends only its own item", updates)
