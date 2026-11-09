@@ -14,7 +14,18 @@ gi.require_version("PangoCairo", "1.0")
 
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402,F401
 
-from . import backup, brand, check_page, i18n, ini, keys, options, pages, search  # noqa: E402
+from . import (  # noqa: E402
+    backup,
+    brand,
+    check_page,
+    i18n,
+    ini,
+    keys,
+    options,
+    pages,
+    search,
+    whats_new,
+)
 from .i18n import _  # noqa: E402
 from .store import Engine, Store, read_text  # noqa: E402
 
@@ -54,15 +65,22 @@ class Window(Adw.ApplicationWindow):
         )
 
         self.stack = stack = Adw.ViewStack()
-        typing = pages.typing_page(self.rows)
+        self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
-        for page in (
-            typing,
-            self.macros.page,
-            self.dictionary.page,
-            self.keymap.page,
-            self.check.page,
-        ):
+        self.whats_new = whats_new.WhatsNewPage(
+            self.open_setting,
+            self.show_page,
+            {"macros": self.macros.page.get_title(), "check": self.check.page.get_title()},
+        )
+        self.named_pages = {
+            "typing": typing,
+            "macros": self.macros.page,
+            "dictionary": self.dictionary.page,
+            "keymap": self.keymap.page,
+            "whats-new": self.whats_new.page,
+            "check": self.check.page,
+        }
+        for page in self.named_pages.values():
             tab = stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
             if page is self.check.page:
                 self.check_tab = tab
@@ -156,9 +174,29 @@ class Window(Adw.ApplicationWindow):
         row, page = result.found
         self.search_entry.set_text("")
         self.side_stack.set_visible_child_name("pages")
+        self._show_row(page, row)
+
+    def _show_row(self, page, row):
         self.stack.set_visible_child(page)
         self.split.set_show_content(True)
         search.focus_when_laid_out(row)
+
+    def open_setting(self, key):
+        row = self.rows.rows.get(key)
+        if row is None:
+            return False
+        self._show_row(row.get_ancestor(Adw.PreferencesPage), row)
+        return True
+
+    def show_page(self, name):
+        """Shows the named page; a name this window does not have is ignored."""
+        if name in self.named_pages:
+            self.stack.set_visible_child(self.named_pages[name])
+            self.split.set_show_content(True)
+
+    def show_tips(self):
+        # Scrolling follows the focus, so focusing the first tip brings the list into view.
+        self._show_row(self.whats_new.page, self.whats_new.tip_rows[0])
 
     def _sidebar_row(self, tab):
         box = Gtk.Box(spacing=12, margin_top=6, margin_bottom=6, margin_start=6, margin_end=6)
@@ -417,21 +455,39 @@ def load(engine):
         return None, None, str(error)
 
 
+def requested_page(argv):
+    """The NAME of --page NAME, as the fcitx5 settings take it."""
+    if "--page" in argv[:-1]:
+        return argv[argv.index("--page") + 1]
+    return None
+
+
 def main(engine_path, localedir, version):
     i18n.setup(localedir)
-    app = Adw.Application(application_id=APP_ID)
+    # A second launch hands its arguments to the open window, which then shows the page asked for.
+    app = Adw.Application(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
 
     def activate(app):
-        if app.get_active_window() is not None:
-            app.get_active_window().present()
-            return
-        brand.install_css()
-        engine = Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path))
-        store, names, error = load(engine)
-        window = (
-            error_window(app, error) if error else Window(app, store, names, version, engine=engine)
-        )
+        window = app.get_active_window()
+        if window is None:
+            brand.install_css()
+            engine = Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path))
+            store, names, error = load(engine)
+            window = (
+                error_window(app, error)
+                if error
+                else Window(app, store, names, version, engine=engine)
+            )
         window.present()
+        return window
+
+    def command_line(app, command_line):
+        window = activate(app)
+        page = requested_page(command_line.get_arguments())
+        if page is not None and isinstance(window, Window):
+            window.show_page(page)
+        return 0
 
     app.connect("activate", activate)
-    return app.run(sys.argv[:1])
+    app.connect("command-line", command_line)
+    return app.run(sys.argv)

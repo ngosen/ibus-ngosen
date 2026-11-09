@@ -1049,3 +1049,129 @@ msgstr "Tìm cài đặt"
 #: settings/ngosen_settings/window.py
 msgid "No settings found"
 msgstr "Không thấy cài đặt nào"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "What's new & tips"
+msgstr "Có gì mới & mẹo"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "New in {}"
+msgstr "Version {} có gì mới"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Tips"
+msgstr "Mẹo hay"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Open setting"
+msgstr "Mở cài đặt"
+
+#: settings/ngosen_settings/whats_new.py
+#, python-brace-format
+msgid "Open the {} page"
+msgstr "Mở trang {}"
+
+#: settings/ngosen_settings/pages.py
+#, python-brace-format
+msgid "Tip: {}"
+msgstr "Mẹo: {}"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "English/Vietnamese per app"
+msgstr "Anh/Việt riêng từng app"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Ctrl+Shift and OFF in the ` menu now apply to the app in use only; an app you never switched follows your last switch."
+msgstr "Ctrl+Shift và mục Tắt trong menu ` giờ chỉ đổi cho app đang dùng; app chưa đổi lần nào thì theo lần đổi gần nhất."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Your own mode menu"
+msgstr "Menu chế độ theo ý bạn"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Reorder or hide the modes of the ` menu, and set a key that moves the app in use to the next mode."
+msgstr "Đổi thứ tự hay ẩn bớt chế độ trong menu `, và đặt một phím đưa app đang dùng sang chế độ kế tiếp."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Type in the field above the page list to find a setting; Ctrl+F gets there."
+msgstr "Gõ vào ô phía trên danh sách trang để tìm một cài đặt; Ctrl+F đưa tới ô đó."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Type with Sen"
+msgstr "Gõ Sen"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Text goes straight into the field instead of an underlined word. Press ` to pick the underline for one app."
+msgstr "Chữ vào thẳng ô đang gõ thay vì hiện gạch chân. Bấm ` để chọn gạch chân cho riêng một app."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Cứu chữ"
+msgstr "Cứu chữ"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Forgot to switch Vietnamese on? Press the English/Vietnamese key and the word is fixed; Tab or Esc gives back what you typed. X11 sessions only for now."
+msgstr "Quên bật tiếng Việt? Bấm phím chuyển Anh/Việt là chữ được sửa; Tab hay Esc trả lại như đã gõ. Hiện chỉ chạy ở phiên X11."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Cứu dấu"
+msgstr "Cứu dấu"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Click right after a word and type a tone key to change its tone mark; Tab or Esc gives it back."
+msgstr "Bấm chuột ngay sau một chữ rồi gõ phím dấu để đổi dấu chữ đó; Tab hay Esc trả lại như cũ."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "The Check page"
+msgstr "Trang Kiểm tra"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Shows what keeps Vietnamese typing from working on this machine, with a button to fix each item."
+msgstr "Cho biết điều gì khiến máy này gõ tiếng Việt chưa được, kèm nút sửa từng mục."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Press ` to pick Sen, Preedit or OFF for the app in use."
+msgstr "Bấm ` để chọn Gõ Sen, Gạch chân hay Tắt cho app đang dùng."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Tap Ctrl alone to keep the word as typed: tunx, Ctrl, Space keeps tũn."
+msgstr "Nhấp thả Ctrl để chốt chữ như đã gõ: tunx, Ctrl, Space giữ tũn."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "A macro ko → không also types Không when you type Ko."
+msgstr "Gõ tắt ko → không thì gõ Ko ra Không."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "] types ư and [ types ơ, so ch]a gives chưa. Off by default."
+msgstr "] ra ư, [ ra ơ, nên ch]a ra chưa. Mặc định tắt."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Space twice types a period. Off by default."
+msgstr "Bấm Space hai lần ra dấu chấm. Mặc định tắt."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "-- types an em dash (—). Off by default."
+msgstr "-- ra gạch dài (—). Mặc định tắt."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "A capital letter after . ! ? and Enter. Off by default; the top bar menu's Auto Capitalize pauses it."
+msgstr "Viết hoa sau . ! ? và Enter. Mặc định tắt; mục Tự viết hoa trên menu thanh trên cùng tạm dừng nó."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "hoà or hòa? Pick with “Use oà, uý (Instead Of òa, úy)”."
+msgstr "hoà hay hòa? Chọn ở ô “Bỏ dấu kiểu mới (oà, uý)”."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "$DATE and $TIME in a macro type today's date and time: hn → Hôm nay $DATE."
+msgstr "$DATE và $TIME trong gõ tắt ra ngày giờ hôm nay: hn → Hôm nay $DATE."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Typing wrong in some app? The Check page says why."
+msgstr "Gõ sai ở app nào đó? Trang Kiểm tra cho biết vì sao."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "“Save typing log” in the top bar menu records what you type, to attach to a bug report."
+msgstr "“Lưu nhật ký gõ” trên menu thanh trên cùng ghi lại những gì bạn gõ, để đính kèm khi báo lỗi."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "“Back Up…” and “Restore…” in the window menu keep your settings, macros and dictionary."
+msgstr "“Sao lưu…” và “Khôi phục…” trong menu của cửa sổ giữ cài đặt, gõ tắt và từ điển."

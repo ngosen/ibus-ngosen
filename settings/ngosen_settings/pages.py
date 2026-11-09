@@ -232,8 +232,21 @@ def preferences_group(title=None, description=None):
     return group
 
 
-def typing_page(rows):
+def typing_page(rows, tip=None, on_tip=None):
+    """tip, if given, shows above the settings; on_tip() runs when it is clicked."""
     page = Adw.PreferencesPage(title=_("Typing"), icon_name="input-keyboard-symbolic")
+    if tip is not None:
+        row = Adw.ActionRow(
+            title=_("Tip: {}").format(_(tip["text"])), use_markup=False, activatable=True
+        )
+        row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
+        if on_tip is not None:
+            row.connect("activated", lambda _r: on_tip())
+        page.tip_row = row
+        group = preferences_group()
+        group.searchable = False  # A tip is not a setting.
+        group.add(row)
+        page.add(group)
     for title, names in options.TYPING_GROUPS:
         group = preferences_group(title)
         for key in names:

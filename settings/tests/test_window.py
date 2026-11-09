@@ -4,6 +4,7 @@
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 from ngosen_settings import ini, keymap
 from ngosen_settings.store import Store, read_text, write_text
@@ -56,6 +57,14 @@ class FakeEngine:
 CAN_RUN = bool(window and os.environ.get("DISPLAY"))
 # CI sets this, so a missing package fails the run instead of skipping these tests.
 REQUIRED = os.environ.get("NGOSEN_WINDOW_TESTS") == "required"
+
+
+def descendants(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        yield child
+        yield from descendants(child)
+        child = child.get_next_sibling()
 
 
 def labels(widget):
@@ -530,6 +539,49 @@ class WindowTest(unittest.TestCase):
         self.assertIs(
             self.window.get_focus().get_ancestor(window.Gtk.SearchEntry), self.window.search_entry
         )
+
+    def test_every_whats_new_button_leads_somewhere(self):
+        targets = [f["target"] for f in window.whats_new.FEATURES + window.whats_new.TIPS]
+        for kind, name in filter(None, targets):
+            if kind == "setting":
+                self.assertTrue(self.window.open_setting(name), name)
+                self.assertIs(self.window.get_focus(), self.window.rows.rows[name])
+            else:
+                self.window.show_page(name)
+                self.assertIs(self.window.stack.get_visible_child(), self.window.named_pages[name])
+
+    def test_the_tip_opens_the_tips(self):
+        self.window.typing.tip_row.emit("activated")
+        self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
+        self.assertIs(self.window.get_focus(), self.window.whats_new.tip_rows[0])
+
+    def test_button_labels_keep_their_width(self):
+        page = self.window.whats_new.page
+        buttons = [w for w in descendants(page) if isinstance(w, window.Gtk.Button)]
+        self.assertTrue(any("{}" not in b.get_child().get_label() for b in buttons))
+        for button in buttons:
+            label = button.get_child()
+            self.assertEqual(label.get_width_chars(), min(len(label.get_label()), 15))
+
+    def test_page_from_the_command_line(self):
+        self.assertEqual(window.requested_page(["x", "--page", "whats-new"]), "whats-new")
+        self.assertIsNone(window.requested_page(["x", "--page"]))
+        self.assertIsNone(window.requested_page(["x"]))
+        self.window.show_page("whats-new")
+        self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
+        self.window.show_page("no-such-page")
+        self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
+
+    def test_whats_new_and_tips_are_not_settings(self):
+        self.assertFalse([r for r in self.search("per app") if hasattr(r, "found")])
+        # The tip above the typing settings is picked at random; a short one is short enough to match.
+        short = {"text": "Space twice types a period.", "target": None}
+        with mock.patch.object(window.whats_new, "random_tip", return_value=short):
+            self.window.destroy()
+            self.window = window.Window(
+                None, self.store, self.window.rows.names, "1.0.0", FakeSources()
+            )
+        self.assertFalse([r for r in self.search("space twice") if hasattr(r, "found")])
 
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check
