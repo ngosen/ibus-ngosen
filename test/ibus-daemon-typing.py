@@ -637,11 +637,12 @@ def tap_ctrl_shift(app, extra=0, hold_ms=0):
 # word typed straight in. As in the fcitx5 edition it is not underlined unasked: the mode menu does that.
 if no_x:
     set_setting("DirectTyping", "True")
-    app = App("gtk3-im:code")
-    app.type("xin vieetj ")
-    check(app.text == "xin việt ", "no click watcher, X11 app: the words", app.text)
-    check(app.preedits == [], "no click watcher, X11 app: no underline", app.preedits)
-    app.close()
+    for kwargs in ({}, {"surrounding": False}):
+        app = App("gtk3-im:code", **kwargs)
+        app.type("xin vieetj ")
+        check(app.text == "xin việt ", f"no click watcher, X11 app {kwargs}: the words", app.text)
+        check(app.preedits == [], f"no click watcher, X11 app {kwargs}: no underline", app.preedits)
+        app.close()
     app = App("gtk3-im:firefox", resets_after_key=True)
     app.key(IBus.KEY_grave)
     pump(200)
@@ -654,7 +655,12 @@ if no_x:
         (app.text, app.preedits),
     )
     app.close()
-    os.remove(os.path.join(config_dir, "ngosen-app-rules.conf"))
+    rules = os.path.join(config_dir, "ngosen-app-rules.conf")
+    check(
+        os.path.exists(rules), "no click watcher: the menu saves the underline for the app", rules
+    )
+    if os.path.exists(rules):
+        os.remove(rules)
     app = App("toggle-reset")
     ctrl, shift = IBus.ModifierType.CONTROL_MASK, IBus.ModifierType.SHIFT_MASK
     app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
@@ -1149,6 +1155,16 @@ app = App("gtk3-im:firefox", resets_after_key=True)
 app.type("xin vieetj ")
 check(app.text == "xin việt ", "direct, X11 app resetting after each key: the words", app.text)
 app.close()
+
+if not no_x:
+    app = App("gtk3-im:code", surrounding=False, resets_after_key=True)
+    app.type("xin vieetj ")
+    check(
+        app.text == "xin việt " and app.preedits == [],
+        "direct, X11 app without text resetting after each key: the words",
+        (app.text, app.preedits),
+    )
+    app.close()
 
 # A copy behind the word makes the replacement delete with BackSpace and wait for the app; a cursor
 # key pressed meanwhile must land after the new letters.

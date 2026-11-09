@@ -564,10 +564,10 @@ namespace {
             return;
         closeModeMenu(engine, *session);
         session->state->fieldResetWhileOff();
-        // Firefox on X11 resets after every key it is let through. As in the fcitx5 edition, a word typed
-        // straight in survives that while the engine sees clicks itself.
+        // Firefox and Chromium on X11 reset after keys they are let through. As in the fcitx5 edition, a word
+        // typed straight in survives that while the engine sees clicks itself.
         const ngosen::IBusHost& host = *session->host;
-        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeysBesideText() && !host.hasPreedit() && !session->state->isEmptyHistory())
+        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeys() && !host.hasPreedit() && !session->state->isEmptyHistory())
             return;
         session->state->resetAfterAppCommit(false);
     }
