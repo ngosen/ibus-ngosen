@@ -141,9 +141,10 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
-    // Not every app resets on a click (XIM clients never do), and IBus text comes too late to check.
+    // Apps GNOME Shell relays reset on a click that moves the cursor; XIM clients never do, and IBus
+    // text comes too late to check, so elsewhere only clicks the engine watches itself count.
     bool IBusHost::seesCursorMoves() const {
-        return clicksWatched.load(std::memory_order_acquire);
+        return client_ == "gnome-shell" || clicksWatched.load(std::memory_order_acquire);
     }
 
     bool IBusHost::typesWithKeysBesideText() const {
