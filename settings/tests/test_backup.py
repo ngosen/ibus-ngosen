@@ -98,6 +98,7 @@ class UserFiles:
             paths.keymaps,
             paths.dictionary,
             paths.app_modes,
+            paths.app_switches,
             paths.english,
         )
         return {path: backup.read_bytes(path) for path in names}
@@ -235,6 +236,32 @@ class BackupTest(UserFiles, unittest.TestCase):
             read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "code=0\nkate=6\n"
         )
 
+    def test_switches_come_back_for_each_app(self):
+        data = fcitx5_backup()
+        data["switches"] = [
+            {"App": "kate", "Vietnamese": "False"},
+            {"App": "firefox", "Vietnamese": True},
+            {"App": "bad=name", "Vietnamese": "False"},
+            {"App": "odd", "Vietnamese": "Maybe"},
+        ]
+        self.restore(data)
+        self.assertEqual(
+            read_text(self.paths.app_switches),
+            "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n"
+            "[Switches/1]\nApp=firefox\nVietnamese=True\n\n",
+        )
+
+    def test_rules_without_switches_clear_the_switches_as_fcitx5_does(self):
+        write_text(
+            self.paths.app_switches, "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n"
+        )
+        self.restore({"rules": [{"App": "kate", "Mode": "2"}]})
+        self.assertEqual(read_text(self.paths.app_switches), "[Switches]\n")
+
+    def test_no_switches_write_no_file(self):
+        self.restore({"switches": []})
+        self.assertFalse(os.path.exists(self.paths.app_switches))
+
     def test_rules_that_would_break_the_file_are_skipped(self):
         data = fcitx5_backup()
         data["rules"] = [
@@ -274,6 +301,8 @@ class BackupTest(UserFiles, unittest.TestCase):
             {"macros": [{"Key": 1}]},
             {"rules": [1]},
             {"rules": [{"App": 1}]},
+            {"switches": [1]},
+            {"switches": [{"App": 1}]},
             {"config": {}, "keymaps": None},
             '{"dictionary": "\\ud800"}',
         ):
@@ -356,6 +385,9 @@ class BackupTest(UserFiles, unittest.TestCase):
         write_text(self.paths.keymaps, "[CustomKeymap/0]\nKey=a\nValue=b\n\n")
         write_text(self.paths.dictionary, "khô\ngà\n")
         write_text(self.paths.app_modes, backup.APP_MODES_HEADER + "firefox=5\ncode=0\n")
+        write_text(
+            self.paths.app_switches, "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n"
+        )
         backup.put(self.paths.english, b"")
         before = self.files()
         target = os.path.join(self.home, "out.json")
@@ -364,6 +396,7 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(
             exported["rules"], [{"App": "firefox", "Mode": "5"}, {"App": "code", "Mode": "0"}]
         )
+        self.assertEqual(exported["switches"], [{"App": "kate", "Vietnamese": "False"}])
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["ToggleKey"], {"0": "Alt+z"})
         self.assertEqual(exported["config"]["ModeMenuKey"], {"0": "Shift+asciitilde"})
@@ -373,7 +406,7 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.restore(fcitx5_backup())
         self.assertNotEqual(self.files(), before)
         _, notes = self.restore(exported)
-        self.assertEqual(len(notes), 2)  # Switching to English, and code's Off rule.
+        self.assertEqual(len(notes), 1)  # Switching to English.
         self.assertEqual(self.files(), before)
         again = os.path.join(self.home, "again.json")
         backup.export(self.engine, self.paths, again)
@@ -392,7 +425,8 @@ class BackupTest(UserFiles, unittest.TestCase):
         exported = backup.load(target)
         self.assertEqual(exported["dictionary"], "việt\n")
         self.assertEqual(
-            exported["meta"]["components"], ["config", "macros", "keymaps", "dictionary"]
+            exported["meta"]["components"],
+            ["config", "macros", "keymaps", "switches", "dictionary"],
         )
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["VietnameseOn"], "True")

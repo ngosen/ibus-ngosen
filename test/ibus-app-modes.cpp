@@ -36,12 +36,47 @@ namespace {
 
     void testFormat() {
         const AppModeMap modes = parseAppModes("# comment\nfirefox=5\nkate = 2\nlegacy=1\ncode=0\nemoji=6\nwide=99\nword=abc\nno equals\ngnome-shell=5\n");
-        check(modes.size() == 3, "only Sen and Preedit for a named app are kept");
+        check(modes.size() == 4, "Sen, Preedit and Off for a named app are kept");
+        check(modes.count("code") && modes.at("code") == AppMode::Off, "0 is Off");
+        check(!modes.count("emoji"), "an emoji pick has no meaning here");
         check(modes.count("firefox") && modes.at("firefox") == AppMode::Preedit, "5 is Preedit");
         check(modes.count("kate") && modes.at("kate") == AppMode::Sen, "2 is Sen, spaces trimmed");
         check(modes.count("legacy") && modes.at("legacy") == AppMode::Sen, "a former Sen number is Sen");
         check(parseAppModes(appModesText(modes)) == modes, "app modes round trip");
         check(appModesText({{"firefox", AppMode::Preedit}}).find("\nfirefox=5\n") != std::string::npos, "written as fcitx5 writes it");
+        check(appModesText({{"code", AppMode::Off}}).find("\ncode=0\n") != std::string::npos, "Off written as 0");
+    }
+
+    void testSwitchFormat() {
+        const AppSwitchMap switches = parseAppSwitches("[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n[Switches/1]\nApp=firefox.desktop\nVietnamese=True\n"
+                                                       "[Switches/2]\nApp=gnome-shell\nVietnamese=True\n[Switches/3]\nApp=broken\nVietnamese=Maybe\n");
+        check(switches.size() == 2, "named apps with a clear value are kept");
+        check(switches.count("kate") && !switches.at("kate"), "False is English");
+        check(switches.count("firefox") && switches.at("firefox"), "True is Vietnamese, named without .desktop");
+        check(parseAppSwitches(appSwitchesText(switches)) == switches, "app switches round trip");
+        check(appSwitchesText({{"kate", false}}) == "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n", "written as fcitx5 writes it");
+        check(parseAppSwitches("").empty(), "an empty file has no switches");
+    }
+
+    void testSwitchFile(const fs::path& root) {
+        const std::string path = (root / "ngosen-app-switch.conf").string();
+        AppSwitches       switches(path);
+        check(!switches.find("kate"), "no file, no switches");
+        check(switches.set("kate", false) && switches.find("kate") == false, "a switch is saved");
+        check(!switches.find("firefox"), "another app was never switched");
+        check(AppSwitches(path).find("kate") == false, "the switch is kept after a restart");
+        check(switches.set("firefox", true) && switches.find("kate") == false && switches.find("firefox") == true, "two apps keep their own");
+
+        writeFileAtomically(path, "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=True\n");
+        fs::last_write_time(path, fs::last_write_time(path) + std::chrono::seconds(2));
+        check(switches.find("kate") == true && !switches.find("firefox"), "an edit elsewhere applies without a restart");
+
+        check(switches.set("kate", std::nullopt) && !switches.find("kate"), "a mode picked for the app forgets its switch");
+        check(!switches.set("", true) && !switches.find(""), "an app without a name keeps no switch");
+
+        AppSwitches failing(path, [](const std::string&, const std::string&) { return false; });
+        check(!failing.set("kate", false), "a failed write is reported");
+        check(!failing.find("kate"), "a failed write changes nothing");
     }
 
     void testFile(const fs::path& root) {
@@ -85,6 +120,8 @@ int main() {
     testNames();
     testFormat();
     testFile(root);
+    testSwitchFormat();
+    testSwitchFile(root);
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all app mode checks passed\n";

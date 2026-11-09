@@ -47,7 +47,7 @@ namespace ngosen {
         std::vector<MenuItem> items = {
             {MenuMode::Sen, _("Sen"), ibus_keyval_from_name(settings.shortcutSen.c_str())},
             {MenuMode::Preedit, _("Preedit"), ibus_keyval_from_name(settings.shortcutPreedit.c_str())},
-            {MenuMode::English, _("English"), ibus_keyval_from_name(settings.shortcutOff.c_str())},
+            {MenuMode::Off, _("OFF"), ibus_keyval_from_name(settings.shortcutOff.c_str())},
         };
         // Its key came after the others, which a user may already have given its letter.
         guint key = ibus_keyval_from_name(settings.shortcutDefault.c_str());

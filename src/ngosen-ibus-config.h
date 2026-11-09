@@ -73,6 +73,7 @@ namespace ngosen {
         std::string          keymapFile() const;
         std::string          dictionaryFile() const;
         std::string          appModesFile() const;
+        std::string          appSwitchesFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // Marks Sen as switched on once, so turning it off afterwards sticks.

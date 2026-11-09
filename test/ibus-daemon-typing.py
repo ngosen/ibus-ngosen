@@ -1568,7 +1568,7 @@ check(app.text == "việt ", "toggle: there and back before the first word", app
 app.close()
 
 
-# The mode menu: its key ends the word, then a key picks Sen or underline for the app, or English for every app.
+# The mode menu: its key ends the word, then a key picks Sen, underline or Off for the app.
 def menu_app(name):
     app = App(name)
     # Without this capability IBus draws the menu in its own panel instead of telling the app.
@@ -1617,7 +1617,7 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen", "Gạch chân", "Tiếng Anh", "Chế độ gõ mặc định"],
+    items == ["Gõ Sen", "Gạch chân", "Tắt", "Chế độ gõ mặc định"],
     "menu: ` shows the four items",
     items,
 )
@@ -1674,10 +1674,26 @@ check(
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_e)
 pump(500)
-check(os.path.exists(english_mark), "menu: e switches to English", english_mark)
+check(
+    app_mode("menu") == "menu=0" and not os.path.exists(english_mark),
+    "menu: e turns Vietnamese off for this app only",
+    (app_mode("menu"), os.path.exists(english_mark)),
+)
 app.type(" vieetj`")
-check(app.text == "việt việt nam` vieetj`", "menu: in English ` types itself", app.text)
+check(app.text == "việt việt nam` vieetj`", "menu: while Off ` types itself", app.text)
+other = menu_app("menu-other")
+other.type("vieetj ")
+check(other.text == "việt ", "menu: Off in one app leaves another in Vietnamese", other.text)
+other.close()
+app.ic.focus_in()
+pump(300)
 tap_ctrl_shift(app)
+app.type("vieetj ")
+check(
+    app.text.endswith("`việt ") and app_mode("menu") == "menu=0",
+    "menu: the toggle key types Vietnamese again in an app set to Off",
+    (app.text, app_mode("menu")),
+)
 app.close()
 
 # Qt and XIM clients of any app share one name, so a pick there changes the mode every app follows.
@@ -1757,6 +1773,70 @@ check(
 )
 app.close()
 # Later checks reuse app names and expect the shared mode.
+os.remove(app_modes_path)
+
+# As in fcitx5 each app keeps the language the toggle key last chose in it; an app never switched
+# follows the last switch.
+app_switches_path = os.path.join(config_dir, "ngosen-app-switch.conf")
+
+
+def app_switch(name):
+    if not os.path.exists(app_switches_path):
+        return None
+    with open(app_switches_path) as f:
+        text = f.read()
+    marker = "App=" + name + "\n"
+    if marker not in text:
+        return None
+    return text.split(marker, 1)[1].split("\n", 1)[0]
+
+
+first = App("switch-first")
+tap_ctrl_shift(first)
+first.type("vieetj ")
+check(
+    first.text == "vieetj " and app_switch("switch-first") == "Vietnamese=False",
+    "switch: the toggle key keeps English for the app",
+    (first.text, app_switch("switch-first")),
+)
+second = App("switch-second")
+second.type("vieetj ")
+check(
+    second.text == "vieetj ", "switch: an app never switched follows the last switch", second.text
+)
+tap_ctrl_shift(second)
+second.type("vieetj ")
+check(
+    second.text.endswith(" việt ") and app_switch("switch-second") == "Vietnamese=True",
+    "switch: the toggle key in another app keeps Vietnamese there",
+    (second.text, app_switch("switch-second")),
+)
+second.close()
+first.ic.focus_in()
+pump(300)
+first.type("vieetj ")
+check(first.text == "vieetj vieetj ", "switch: the first app stays in English", first.text)
+third = App("switch-third")
+third.type("vieetj ")
+check(third.text == "việt ", "switch: a new app follows the last switch again", third.text)
+third.close()
+first.ic.focus_in()
+pump(300)
+# In English ` types itself, so the menu opens only once the app is back in Vietnamese.
+tap_ctrl_shift(first)
+first.key(IBus.KEY_grave)
+first.key(IBus.KEY_1)
+pump(500)
+check(
+    app_switch("switch-first") is None and app_mode("switch-first") == "switch-first=2",
+    "switch: a mode picked in the menu forgets the app's switch",
+    (app_switch("switch-first"), app_mode("switch-first")),
+)
+first.type("vieetj ")
+check(first.text.endswith(" việt "), "switch: the picked mode types Vietnamese", first.text)
+first.close()
+if os.path.exists(app_switches_path):
+    os.remove(app_switches_path)
 os.remove(app_modes_path)
 
 
@@ -2056,7 +2136,9 @@ check(
 app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
 pump(500)
 check(symbols[-1:] == ["V"], "menu: a click with a stale state still flips", symbols)
-# A restore in the settings window writes the marker while a field has focus.
+# A restore in the settings window writes the switches of each app, then the marker, while a field
+# has focus.
+write_file(app_switches_path, "[Switches]\n")
 write_file(english_mark, "")
 check(symbols[-1:] == ["E"], "menu: a marker written elsewhere switches to English", symbols)
 before = len(app.commits)

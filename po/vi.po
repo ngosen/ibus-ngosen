@@ -73,6 +73,10 @@ msgstr "Tiếng Việt"
 msgid "English"
 msgstr "Tiếng Anh"
 
+#: src/ngosen-ibus-mode-menu.cpp src/ngosen-ibus-engine.cpp
+msgid "OFF"
+msgstr "Tắt"
+
 #: src/ngosen-ibus-mode-menu.cpp
 msgid "Default Typing"
 msgstr "Chế độ gõ mặc định"
@@ -773,8 +777,8 @@ msgid "The backup was made while typing English, so typing switches to English."
 msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
 
 #: settings/ngosen_settings/backup.py
-msgid "Rules that turn Vietnamese off or pick emoji for an app are kept but do nothing here."
-msgstr "Luật tắt tiếng Việt hay chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
+msgid "Rules that pick emoji for an app are kept but do nothing here."
+msgstr "Luật chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
 
 #: settings/ngosen_settings/window.py
 msgid "The settings changed after the restore, so nothing was undone."
@@ -876,14 +880,14 @@ msgstr "Phím tắt cho Gõ Sen"
 msgid "Shortcut for Preedit"
 msgstr "Phím tắt cho Gạch chân"
 
-msgid "Shortcut for English"
-msgstr "Phím tắt cho Tiếng Anh"
+msgid "Shortcut for OFF"
+msgstr "Phím tắt cho Tắt"
 
 msgid "Shortcut for Default Typing"
 msgstr "Phím tắt cho Mặc định"
 
-msgid "Opens a menu to pick Sen or underlined typing for the app in use, or English for every app. Press it twice to type the key itself; in English it types as usual."
-msgstr "Mở menu để chọn Gõ Sen hay gạch chân cho app đang dùng, hoặc tiếng Anh cho mọi app. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
+msgid "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
+msgstr "Mở menu để chọn Gõ Sen, gạch chân hay Tắt cho app đang dùng. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
 
 msgid "Mode menu"
 msgstr "Menu chế độ gõ"

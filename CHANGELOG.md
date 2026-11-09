@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Ctrl+Shift đổi Anh/Việt riêng cho app đang dùng như bản fcitx5: mỗi app nhớ lựa chọn của nó, app chưa đổi lần
+  nào thì theo lần đổi gần nhất. Mục "Tiếng Anh" trong menu phím ` thành "Tắt" và cũng chỉ tắt cho app đang dùng.
+  Sao lưu và khôi phục mang theo lựa chọn Anh/Việt của từng app, cùng tệp với bản fcitx5 (#PRNUM).
+
 ## [1.2.0-1] — 09/11/2026
 
 Gõ Sen là mặc định và nhớ cách gõ chọn riêng cho từng app; nhấp Ctrl+Shift đổi Anh/Việt; thêm Cứu chữ, Cứu dấu,
