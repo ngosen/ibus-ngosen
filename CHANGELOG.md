@@ -8,6 +8,16 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Trên GNOME, Ngó Sen tự bỏ nguồn nhập "Tiếng Anh (Mỹ)" một lần khi vừa được thêm, vì Ctrl+Shift đã chuyển sang
+  tiếng Anh; mục "Kiểm tra" có nút "Chỉ dùng Ngó Sen" làm việc này sau đó (#106).
+
+### Thay đổi
+
+- Ngó Sen luôn gõ trên bàn phím kiểu Mỹ, như Telex và VNI cần; trước đây nó giữ bàn phím của nguồn nhập dùng
+  ngay trước, có thể là bàn phím Đức hay Pháp (#106).
+
 ### Sửa
 
 - Hướng dẫn cài bảo đăng xuất rồi đăng nhập lại thay cho `ibus restart`: sau lệnh đó GNOME không báo loại ô

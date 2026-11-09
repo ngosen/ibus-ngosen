@@ -23,14 +23,18 @@ OK, WARN, FAIL = "ok", "warn", "fail"
 INFO = "info"
 
 ENGINE = "ngosen"
+US_LAYOUT = ("xkb", "us")
+# As the engine names it (SettingsPaths::duplicateLayoutMark), so it does not remove the source again.
+LAYOUT_MARK = ".us-source-removed"
 GNOME_SOURCES = "org.gnome.desktop.input-sources"
 FORWARD_KEYS = "forward-keys@ngosen.github.io"
 
 START_IBUS, RESTART_IBUS, ADD_SOURCE = "start-ibus", "restart-ibus", "add-source"
 ENABLE_FORWARD_KEYS = "enable-forward-keys"
 CLEAN_FCITX5 = "clean-fcitx5"
-# Fixes that delete the user's files run only from their own button, never from "Fix all".
-MANUAL_ONLY = {CLEAN_FCITX5}
+ONLY_NGOSEN = "only-ngosen"
+# Fixes that delete the user's files or settings run only from their own button, never from "Fix all".
+MANUAL_ONLY = {CLEAN_FCITX5, ONLY_NGOSEN}
 
 SEN, PREEDIT = "sen", "preedit"
 # As the engine reads ngosen-app-rules.conf (src/ngosen-ibus-app-modes.cpp).
@@ -54,6 +58,8 @@ class Facts:
     engine_replaced: bool = False
     # None outside GNOME, where IBus keeps its own list.
     in_gnome_sources: bool = None
+    # English (US) is a GNOME input source next to Ngó Sen, whose toggle key already switches to it.
+    duplicate_layout: bool = False
     fcitx_running: bool = False
     # A GTK module of fcitx5 is installed, which GTK may pick on X11 when nothing names one.
     fcitx_gtk_module: bool = False
@@ -206,7 +212,19 @@ def _source_findings(facts):
     if facts.in_gnome_sources is None:
         return []
     if facts.in_gnome_sources:
-        return [Finding(OK, _("Ngó Sen is in the input sources"))]
+        found = [Finding(OK, _("Ngó Sen is in the input sources"))]
+        if facts.duplicate_layout:
+            found.append(
+                Finding(
+                    INFO,
+                    _("English (US) is also an input source"),
+                    _(
+                        "Ngó Sen switches to English with its own key, so one input source is enough."
+                    ),
+                    ONLY_NGOSEN,
+                )
+            )
+        return found
     return [
         Finding(
             FAIL,
@@ -338,6 +356,7 @@ def fix_label(action):
         ADD_SOURCE: _("Add Ngó Sen"),
         ENABLE_FORWARD_KEYS: _("Turn on"),
         CLEAN_FCITX5: _("Remove"),
+        ONLY_NGOSEN: _("Use only Ngó Sen"),
     }[action]
 
 
@@ -356,6 +375,7 @@ def fixed_message(action, removed=()):
         START_IBUS: _("Started IBus."),
         RESTART_IBUS: _("Restarted IBus."),
         ADD_SOURCE: _("Added Ngó Sen to the input sources."),
+        ONLY_NGOSEN: _("Removed English (US) from the input sources."),
         ENABLE_FORWARD_KEYS: _("Turned on the GNOME extension."),
     }[action]
 
@@ -365,7 +385,7 @@ SETTLE_MS = {START_IBUS: 1500, RESTART_IBUS: 1500, ENABLE_FORWARD_KEYS: 500}
 # A slow machine may need longer; check again this often before calling the fix failed.
 RETRY_MS, RETRIES = 500, 8
 # Restarting last, so it also picks up the input source just added.
-FIX_ORDER = (CLEAN_FCITX5, START_IBUS, ADD_SOURCE, ENABLE_FORWARD_KEYS, RESTART_IBUS)
+FIX_ORDER = (CLEAN_FCITX5, START_IBUS, ADD_SOURCE, ONLY_NGOSEN, ENABLE_FORWARD_KEYS, RESTART_IBUS)
 
 
 def summary(found, failed=frozenset()):
@@ -392,6 +412,12 @@ def steps_left(found):
 
 
 def failed_text(finding):
+    if finding.action == ONLY_NGOSEN:
+        return (
+            _("Could not fix this.")
+            + " "
+            + _("Settings › Keyboard › Input Sources: remove “English (US)”.")
+        )
     if not finding.command:
         return finding.fix
     return _("Could not fix this.") + " " + finding.fix
@@ -404,16 +430,27 @@ def with_ngosen(sources):
     return list(sources) + [("ibus", ENGINE)]
 
 
-def run_fix(action, sources):
+def run_fix(action, sources, config_dir=None):
     """Runs a step's fix. Returns (done, undo), where undo puts things back or is None.
 
-    sources is an object with get() and set(list) for the GNOME input sources.
+    sources is an object with get() and set(list) for the GNOME input sources; config_dir is the
+    engine's settings folder, where removing English (US) is marked as done.
     """
     if action == ADD_SOURCE:
         before = sources.get()
         if before is None or not sources.set(with_ngosen(before)):
             return False, None
         return True, lambda: _remove_ngosen(sources)
+    if action == ONLY_NGOSEN:
+        before = sources.get()
+        if before is None or US_LAYOUT not in before:
+            return False, None
+        # Also kept after an undo, so the engine does not remove the source the user brought back.
+        if config_dir and not _mark_layout_handled(config_dir):
+            return False, None
+        if not sources.set([s for s in before if s != US_LAYOUT]):
+            return False, None
+        return True, lambda: _add_back_layout(sources, before.index(US_LAYOUT))
     if action == RESTART_IBUS:
         return _succeeds(["ibus", "restart"]), None
     if action == START_IBUS:
@@ -431,6 +468,24 @@ def _remove_ngosen(sources):
     return current is not None and sources.set([s for s in current if s != ("ibus", ENGINE)])
 
 
+def _mark_layout_handled(config_dir):
+    try:
+        os.makedirs(config_dir, exist_ok=True)
+        with open(os.path.join(config_dir, LAYOUT_MARK), "a", encoding="utf-8"):
+            return True
+    except OSError:
+        return False
+
+
+def _add_back_layout(sources, index):
+    current = sources.get()
+    if current is None:
+        return False
+    if US_LAYOUT in current:
+        return True
+    return sources.set(current[:index] + [US_LAYOUT] + current[index:])
+
+
 def _succeeds(cmd):
     # Not pipes: a daemon it starts keeps them open, and reading them would wait for it.
     out = subprocess.DEVNULL
@@ -443,8 +498,9 @@ def _succeeds(cmd):
 class Fixes:
     """What the check page's fix buttons are doing; the page only draws it."""
 
-    def __init__(self, sources, env=None):
+    def __init__(self, sources, env=None, config_dir=None):
         self.sources = sources
+        self.config_dir = config_dir
         self.env = os.environ if env is None else env
         self.busy = set()
         self.failed = set()
@@ -463,7 +519,7 @@ class Fixes:
             if action == CLEAN_FCITX5:
                 ok, undo, self.removed = fcitx5_leftovers.clean(self.env)
             else:
-                ok, undo = run_fix(action, self.sources)
+                ok, undo = run_fix(action, self.sources, self.config_dir)
             if not ok:
                 self.failed.add(action)
                 continue
@@ -540,7 +596,13 @@ def issue_url(facts, text):
 
 
 def collect(
-    sources, ngosen_version="", env=None, proc="/proc", direct_typing=False, app_modes_file=None
+    sources,
+    ngosen_version="",
+    env=None,
+    proc="/proc",
+    direct_typing=False,
+    app_modes_file=None,
+    toggle_key=False,
 ):
     env = dict(os.environ if env is None else env)
     facts = Facts(env={k: v for k, v in env.items() if k in IM_VARIABLES or k.startswith("XDG_")})
@@ -569,6 +631,9 @@ def collect(
         facts.has_gnome_portal = has_gnome_portal(env)
         current = sources.get()
         facts.in_gnome_sources = None if current is None else ("ibus", ENGINE) in current
+        facts.duplicate_layout = bool(
+            toggle_key and facts.in_gnome_sources and US_LAYOUT in current
+        )
         facts.switch_keys = switch_key_names(*sources.switch_keys())
     facts.leftovers = fcitx5_leftovers.find(env)
     return facts

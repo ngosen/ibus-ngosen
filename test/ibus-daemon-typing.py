@@ -56,6 +56,11 @@ def connect():
 
 bus = connect()
 
+# Telex and VNI expect US keys, and GNOME applies no layout for "default".
+(engine_desc,) = bus.get_engines_by_names(["ngosen"])
+if engine_desc.get_layout() != "us":
+    sys.exit(f"the engine asks for layout {engine_desc.get_layout()!r}, not us")
+
 xlib = ctypes.CDLL("libX11.so.6")
 xtst = ctypes.CDLL("libXtst.so.6")
 xlib.XOpenDisplay.restype = ctypes.c_void_p

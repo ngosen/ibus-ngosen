@@ -11,6 +11,8 @@ cp "${NGOSEN_IBUS_SIMPLE_COMPONENT:-/usr/share/ibus/component/simple.xml}" "$tmp
 export HOME="$tmp" XDG_CONFIG_HOME="$tmp/config" XDG_CACHE_HOME="$tmp/cache" XDG_DATA_HOME="$tmp/data" XDG_STATE_HOME="$tmp/state"
 export IBUS_ADDRESS="unix:path=$tmp/ibus" IBUS_COMPONENT_PATH="$tmp/component" NGOSEN_IBUS_DICTIONARY="$3"
 export NGOSEN_DEBUG=1 NGOSEN_IBUS_LOG_FILE="$tmp/engine.log"
+# The engine edits GNOME's input sources once; keep that off the desktop's settings.
+export GSETTINGS_BACKEND=memory
 # Where Flatpak puts the desktop files of the apps a user installs.
 export XDG_DATA_DIRS="$tmp/data/flatpak/exports/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
 # A private X server, so the engine watches the clicks the test makes and never the desktop's.

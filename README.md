@@ -44,6 +44,12 @@ Cài xong, trên GNOME:
 1. Đăng xuất rồi đăng nhập lại, để IBus thấy bộ gõ vừa cài.
 2. Mở Settings → Keyboard → Input Sources, thêm "Tiếng Việt (Ngó Sen)".
 
+Lần đầu gõ bằng Ngó Sen, nó tự bỏ nguồn nhập "Tiếng Anh (Mỹ)" vì Ctrl+Shift đã chuyển sang tiếng Anh, nên chỉ
+còn một nguồn nhập. Việc này chỉ làm một lần: thêm lại "Tiếng Anh (Mỹ)" thì nó được giữ, và bàn phím của ngôn ngữ
+khác không bị đụng tới. Nếu lúc đó phím Ctrl+Shift đang tắt thì Ngó Sen không bỏ nguồn nào, kể cả khi bật
+phím lại sau này. Mục "Kiểm tra" trong cửa sổ cài đặt có nút "Chỉ dùng Ngó Sen" để bỏ nó sau. Ngó Sen
+luôn gõ trên bàn phím kiểu Mỹ, kể cả khi đang ở tiếng Anh bằng Ctrl+Shift.
+
 Trên desktop khác GNOME như Cinnamon, Xfce:
 
 1. Chạy `im-config -n ibus` nếu máy có `im-config`.
