@@ -584,6 +584,12 @@ msgstr "Khởi động lại IBus, hoặc đăng xuất rồi đăng nhập lạ
 msgid "Ngó Sen is in the input sources"
 msgstr "Ngó Sen đã có trong nguồn nhập"
 
+msgid "English (US) is also an input source"
+msgstr "Tiếng Anh (Mỹ) cũng là một nguồn nhập"
+
+msgid "Ngó Sen switches to English with its own key, so one input source is enough."
+msgstr "Ngó Sen có phím riêng để chuyển sang tiếng Anh, nên chỉ cần một nguồn nhập."
+
 msgid "Ngó Sen is not in the input sources"
 msgstr "Ngó Sen chưa có trong nguồn nhập"
 
@@ -632,6 +638,9 @@ msgstr "Khởi động lại IBus"
 msgid "Add Ngó Sen"
 msgstr "Thêm Ngó Sen"
 
+msgid "Use only Ngó Sen"
+msgstr "Chỉ dùng Ngó Sen"
+
 msgid "Started IBus."
 msgstr "Đã chạy IBus."
 
@@ -640,6 +649,9 @@ msgstr "Đã khởi động lại IBus."
 
 msgid "Added Ngó Sen to the input sources."
 msgstr "Đã thêm Ngó Sen vào nguồn nhập."
+
+msgid "Removed English (US) from the input sources."
+msgstr "Đã bỏ Tiếng Anh (Mỹ) khỏi nguồn nhập."
 
 msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
 msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"

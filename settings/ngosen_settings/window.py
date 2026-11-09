@@ -49,6 +49,7 @@ class Window(Adw.ApplicationWindow):
             self._count,
             self._direct_typing,
             backup.Paths(store).app_modes,
+            self._toggle_key,
         )
 
         self.stack = stack = Adw.ViewStack()
@@ -132,6 +133,10 @@ class Window(Adw.ApplicationWindow):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
         if key == "DirectTyping":
             self.check.run()
+
+    def _toggle_key(self):
+        saved = ini.parse(read_text(self.store.settings_file) or "")[0]
+        return bool(saved.get("ToggleKey", self.store.values.get("ToggleKey", "")).strip())
 
     def _direct_typing(self):
         # The engine saves the mode itself when it is picked from its menu.
