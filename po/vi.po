@@ -138,8 +138,8 @@ msgid "Retype text typed before switching on"
 msgstr "Cứu chữ: gõ lại có dấu khi quên bật tiếng Việt"
 
 #: settings/ngosen_settings/options.py
-msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
-msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ."
+msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it. X11 sessions only."
+msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ. Chỉ chạy ở phiên X11."
 
 #: settings/ngosen_settings/options.py
 msgid "Change the tone of a typed word"
@@ -893,3 +893,7 @@ msgstr "Một chữ cái hoặc chữ số."
 
 msgid "Another mode already uses this key."
 msgstr "Chế độ khác đã dùng phím này."
+
+#: settings/ngosen_settings/pages.py
+msgid "No words yet."
+msgstr "Chưa có từ nào."

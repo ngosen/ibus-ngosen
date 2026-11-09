@@ -270,6 +270,17 @@ class WindowTest(unittest.TestCase):
         self.window.undo()
         self.assertEqual(read_text(self.store.dictionary_file), "việt\nnam\nngoãy\n")
 
+    def test_dictionary_says_when_it_has_no_words(self):
+        page = self.window.dictionary
+        self.assertEqual(page.list_group.get_description(), "2 words. Search to see them.")
+        page.search.set_text("zzz")
+        page._show()
+        self.assertEqual(page.list_group.get_description(), "No words found.")
+        page.search.set_text("")
+        self.window.save_words([])
+        page._show()
+        self.assertEqual(page.list_group.get_description(), "No words yet.")
+
     def test_dictionary_list_follows_the_switch(self):
         page = self.window.dictionary
         self.assertTrue(page.editor.get_sensitive())

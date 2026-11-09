@@ -32,10 +32,10 @@ body:
     id: mode
     attributes:
       label: Cách gõ
-      description: Xem trong menu nguồn nhập trên thanh trên cùng, mục "Gõ Sen ở app cho phép (thử nghiệm)".
+      description: Bấm ` trong app gặp lỗi để xem app đang Gõ Sen hay gạch chân.
       options:
-        - Gạch chân (mặc định)
-        - Gõ thẳng ("Gõ Sen ở app cho phép" đang bật)
+        - Gõ Sen (mặc định)
+        - Gạch chân
         - Không rõ
     validations:
       required: true
