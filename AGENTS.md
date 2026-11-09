@@ -3,7 +3,7 @@
 Rules for anyone (human or coding agent) changing this repository. The typing logic lives in the
 `ngosen` submodule ([ngosen/ngosen](https://github.com/ngosen/ngosen)); its `AGENTS.md` applies to
 anything sent there, and the rules below follow it. Outside the code, fcitx5-lotus is named only in the
-README credit line and the credit line on the settings About page.
+README credit line and the credit line in the settings About dialog.
 
 Most of this work is done with an AI coding agent. That is allowed, but the output has to read like a
 careful human wrote it, and the person sending it must be able to explain every line.

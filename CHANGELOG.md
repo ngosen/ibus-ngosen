@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Tên các tab trong cửa sổ cài đặt không còn bị cắt ở cỡ cửa sổ mặc định: thanh tiêu đề bỏ chữ "Ngó Sen", tab
+  "Kiểm tra máy" thành "Kiểm tra", và Giới thiệu chuyển vào menu ☰ thành hộp thoại "Giới thiệu Ngó Sen" (#95).
 - Mục 1.2.0-1 trong lịch sử gói deb và rpm ghi đúng thứ Hai 09/11/2026; rpmbuild hết cảnh báo ngày sai, và
   bộ kiểm phiên bản trước khi phát hành giờ bắt lỗi thứ sai (#93).
 
