@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Mục 1.2.0-1 trong lịch sử gói deb và rpm ghi đúng thứ Hai 09/11/2026; rpmbuild hết cảnh báo ngày sai, và
+  bộ kiểm phiên bản trước khi phát hành giờ bắt lỗi thứ sai (#93).
+
 ## [1.2.0-1] — 09/11/2026
 
 Gõ Sen là mặc định và nhớ cách gõ chọn riêng cho từng app; nhấp Ctrl+Shift đổi Anh/Việt; thêm Cứu chữ, Cứu dấu,

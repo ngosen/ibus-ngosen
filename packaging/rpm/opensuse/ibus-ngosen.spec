@@ -63,7 +63,7 @@ with. The word being typed is underlined until it is done.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
-* Sun Nov 09 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.0-1
+* Mon Nov 09 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.0-1
 - Sen is the default and remembers the mode picked for each app; Ctrl+Shift switches Vietnamese
   and English; retype, retone, macros in English, backup and restore, the keymap editor, the mode
   menu and a Check my machine page, as in fcitx5-ngosen; core ngosen-1.9.0-1.
