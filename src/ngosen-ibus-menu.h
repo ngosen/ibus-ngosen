@@ -13,9 +13,7 @@
 namespace ngosen {
 
     // The items of the fcitx5 edition's tray menu, shown in the GNOME input source menu.
-    IBusPropList* newSettingsMenu(const IBusSettings& settings, bool english = false);
-    // Switches every translated string of the engine; the settings window follows when it next opens.
-    void                  useUiLanguage(const IBusSettings& settings);
+    IBusPropList*         newSettingsMenu(const IBusSettings& settings, bool english = false);
 
     constexpr const char* SettingsWindowItem = "Settings";
     constexpr const char* SaveTypingLogItem  = "SaveTypingLog";

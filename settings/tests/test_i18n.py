@@ -10,12 +10,20 @@ from ngosen_settings import i18n
 
 
 class I18nTest(unittest.TestCase):
-    def languages(self, settings):
+    def setUp(self):
+        saved = i18n._translation
+        self.addCleanup(setattr, i18n, "_translation", saved)
+
+    def languages(self, settings, fcitx5=None):
         with tempfile.TemporaryDirectory() as home:
             os.makedirs(os.path.join(home, "ngosen"))
+            os.makedirs(os.path.join(home, "fcitx5", "conf"))
             if settings is not None:
                 with open(os.path.join(home, "ngosen", "ngosen.conf"), "w") as f:
                     f.write(settings)
+            if fcitx5 is not None:
+                with open(os.path.join(home, "fcitx5", "conf", "ngosen.conf"), "w") as f:
+                    f.write(fcitx5)
             asked = []
 
             def translation(_domain, _localedir, languages, fallback):
@@ -34,6 +42,12 @@ class I18nTest(unittest.TestCase):
         self.assertEqual(self.languages("UiLanguage=Vietnamese\n"), [["vi"]])
         self.assertEqual(self.languages("UiLanguage=English\n"), [])
         self.assertEqual(self.languages("UiLanguage=Klingon\n"), [["vi"]])
+
+    def test_before_the_first_import_fcitx5_picks(self):
+        self.assertEqual(self.languages(None, fcitx5="UiLanguage=English\n"), [])
+        self.assertEqual(
+            self.languages("UiLanguage=Vietnamese\n", fcitx5="UiLanguage=English\n"), [["vi"]]
+        )
 
 
 if __name__ == "__main__":

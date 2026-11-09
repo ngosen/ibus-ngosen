@@ -23,7 +23,9 @@ class Vietnamese:
         # A real catalog answers the empty string with its header.
         if not text:
             return "Project-Id-Version: ibus-ngosen"
-        return {"Everywhere": "Mọi nơi", "Non-Start": "Trong từ"}.get(text, text)
+        return {"Everywhere": "Mọi nơi", "Non-Start": "Trong từ", "English": "Tiếng Anh"}.get(
+            text, text
+        )
 
 
 class FakeEngine:
@@ -47,6 +49,7 @@ class FakeEngine:
             "ShortcutPreedit": "q",
             "ShortcutOff": "e",
             "ShortcutDefault": "r",
+            "UiLanguage": "Vietnamese",
         }
 
 
@@ -129,6 +132,12 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(row.get_model().get_string(row.get_selected()), "`")
         row.set_selected(1)
         self.assertEqual(self.settings()["ModeMenuKey"], "Shift+asciitilde")
+
+    def test_languages_are_named_in_their_own_language(self):
+        model = self.window.rows.rows["UiLanguage"].get_model()
+        self.assertEqual(
+            [model.get_string(i) for i in range(model.get_n_items())], ["Tiếng Việt", "English"]
+        )
 
     def test_mode_menu_shortcut_must_be_free(self):
         row = self.window.rows.rows["ShortcutOff"]

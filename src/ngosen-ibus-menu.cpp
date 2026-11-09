@@ -4,14 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-menu.h"
+#include "ngosen-ibus-i18n.h"
 
 #include <algorithm>
-#include <glib/gi18n-lib.h>
 #include <iterator>
 #include <vector>
-
-// glibc keeps translations it already looked up until this counter changes.
-extern "C" int _nl_msg_cat_cntr; //NOLINT
 
 namespace ngosen {
 
@@ -73,14 +70,6 @@ namespace ngosen {
         }
 
     } // namespace
-
-    void useUiLanguage(const IBusSettings& settings) {
-        const char* const language = settings.uiLanguage == "English" ? "en" : "vi";
-        if (g_strcmp0(g_getenv("LANGUAGE"), language) == 0)
-            return;
-        g_setenv("LANGUAGE", language, TRUE);
-        ++_nl_msg_cat_cntr;
-    }
 
     IBusPropList* newSettingsMenu(const IBusSettings& settings, bool english) {
         IBusPropList* menu      = ibus_prop_list_new();

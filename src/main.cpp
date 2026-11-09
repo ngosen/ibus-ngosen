@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
             return status;
     }
     // For the menu items, which GNOME shows as the engine gives them: Vietnamese whatever the
-    // desktop language is, as in the settings window, until the first menu reads UiLanguage.
+    // desktop language is, as in the settings window; English shows the strings as written.
     g_setenv("LANGUAGE", "vi", TRUE);
     std::setlocale(LC_ALL, "");
     const char* localeDir = std::getenv("NGOSEN_IBUS_LOCALEDIR");

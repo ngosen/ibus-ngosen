@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-engine.h"
+#include "ngosen-ibus-i18n.h"
 
 #include "ngosen-globals.h"
 #include "ngosen-ibus-app-modes.h"
@@ -18,7 +19,6 @@
 #include "ngosen-pointer.h"
 #include "ngosen-state.h"
 
-#include <glib/gi18n-lib.h>
 #include <algorithm>
 #include <atomic>
 #include <memory>
@@ -511,25 +511,31 @@ namespace {
             states += ibus_property_get_state(item) == PROP_STATE_CHECKED ? "+" : "-";
             // Hiding an item changes no state, and must still reach the panel.
             states += ibus_property_get_visible(item) ? "" : "~";
-            // So does a new interface language, which changes only the labels.
-            states += ibus_text_get_text(ibus_property_get_label(item));
             states += itemStates(ibus_property_get_sub_props(item));
         }
         return states;
     }
 
-    // What the panel was last told, the same for every engine since the settings are shared.
+    // What the panel was last told, the same for every engine since the settings are shared. A new
+    // interface language changes only labels, so it counts as a change too.
     std::string shownStates;
+
+    std::string menuStates(IBusPropList* menu) {
+        return (ngosen::uiEnglish() ? "en:" : "vi:") + itemStates(menu);
+    }
+
+    void useUiLanguage(const ngosen::IBusSettings& settings) {
+        ngosen::setUiEnglish(settings.uiLanguage == "English");
+    }
 
     // clicked: the panel already flipped the item itself, so its state goes out even when unchanged.
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked) {
-        ngosen::useUiLanguage(settings);
         IBusPropList* menu = ngosen::newSettingsMenu(settings, typesEnglish());
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
         // GNOME Shell takes the whole menu only once after the engine is chosen, then single items.
         // It rebuilds the menu on each item, so resending them on every focus change stalls it (#28).
-        std::string states = itemStates(menu);
+        std::string states = menuStates(menu);
         if (clicked || states != shownStates) {
             updateItems(engine, menu);
             shownStates = std::move(states);
@@ -547,7 +553,7 @@ namespace {
             if (g_strcmp0(ibus_property_get_key(item), ngosen::InputModeItem) == 0)
                 ibus_engine_update_property(engine, item);
         }
-        shownStates = itemStates(menu);
+        shownStates = menuStates(menu);
         g_object_unref(menu);
     }
 
@@ -561,13 +567,16 @@ namespace {
             session->applyNewSettings();
         // The file, not settings(): in the middle of a word the reload waits, and the menu would
         // take back a click.
-        showMenu(focusedEngine, resources().savedSettings());
+        const ngosen::IBusSettings saved = resources().savedSettings();
+        useUiLanguage(saved);
+        showMenu(focusedEngine, saved);
     }
 
     void focusIn(IBusEngine* engine) {
         static bool watching = false;
         if (!watching) {
             resources().onChange(showNewSettings);
+            useUiLanguage(resources().savedSettings());
             watching = true;
         }
         focusedEngine = engine;

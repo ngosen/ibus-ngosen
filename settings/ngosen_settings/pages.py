@@ -48,7 +48,9 @@ class SettingRows:
     def choices(self, key):
         """(value, label) pairs; a value saved by hand that is not in the list stays offered."""
         if key in options.CHOICES:
-            pairs = [(value, _(label)) for value, label in options.CHOICES[key]]
+            # Each language keeps its own name, as in fcitx5.
+            translate = (lambda label: label) if key == "UiLanguage" else _
+            pairs = [(value, translate(label)) for value, label in options.CHOICES[key]]
         else:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
