@@ -5,10 +5,13 @@
  */
 #include "ngosen-ibus-host.h"
 
+#include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
+#include "ngosen-xtest.h"
 
+#include <algorithm>
 #include <libintl.h>
 
 namespace ngosen {
@@ -107,14 +110,19 @@ namespace ngosen {
         ibus_engine_delete_surrounding_text(engine_, offset, size);
     }
 
-    // The preedit never deletes text the app already has, so it never needs keys pressed at the X server.
-    bool IBusHost::pressSystemKeys(int /*count*/) {
-        return false;
+    // The core presses keys only where forwarded ones do not reach the app, as with fcitx5.
+    bool IBusHost::pressSystemKeys(int count) {
+        if (xtestAvailable())
+            return xtestSendKeys(count);
+        return takesSentKeyEvents(field()) && xsendKeys(count);
     }
 
     Surrounding IBusHost::surrounding() const {
         if (throughShell())
             return reportsText() ? reported_ : Surrounding();
+        // The Shell applies a deletion to the text last reported, not to the copy IBus edits itself.
+        if (client_ == "gnome-shell")
+            return field().surroundingText ? reported_ : Surrounding();
         if ((engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) == 0)
             return {};
         IBusText* text   = nullptr;
@@ -133,6 +141,11 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
+    // Not every app resets on a click (XIM clients never do), and IBus text comes too late to check.
+    bool IBusHost::seesCursorMoves() const {
+        return clicksWatched.load(std::memory_order_acquire);
+    }
+
     bool IBusHost::typesWithKeysBesideText() const {
         return direct_ && !throughShell() && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
     }
@@ -146,8 +159,11 @@ namespace ngosen {
     Field IBusHost::field() const {
         Field f;
         // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
-        f.frontend        = "ibus";
-        f.program         = client_;
+        f.frontend = "ibus";
+        // The Shell names every app it relays after itself, so the rules for one app need its own name.
+        f.program = client_ == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client_;
+        if (f.program != client_)
+            f.reportedProgram = client_;
         f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
@@ -161,7 +177,15 @@ namespace ngosen {
         const bool preeditOnly = (throughShell() && !shellKeys) || (direct_ && !f.surroundingText);
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;
-        f.password             = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        // With the underline or in English the Shell still drops forwarded keys, but deleting through the
+        // text reaches the app, so an edit of committed text goes that way. The Shell maps it onto the text
+        // last reported: a field with none, a terminal or an address bar's selected completion would go wrong.
+        if (!direct_ && client_ == "gnome-shell" && !shellDeliversKeys()) {
+            f.sendsNoKeys = true;
+            if (f.terminal || f.url || !reported_.isValid())
+                f.surroundingText = false;
+        }
+        f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 
@@ -185,6 +209,7 @@ namespace ngosen {
     void IBusHost::resetPanel() {
         preedit_.clear();
         status_.clear();
+        hideCandidates();
     }
 
     void IBusHost::refreshPreedit() {
@@ -198,23 +223,113 @@ namespace ngosen {
     }
 
     void IBusHost::refreshPanel() {
-        ibus_engine_update_auxiliary_text(engine_, ibus_text_new_from_string(status_.c_str()), !status_.empty());
+        showTable();
+        showAuxiliary();
     }
 
-    void IBusHost::showCandidates(const std::vector<std::string>& /*labels*/, int /*pageSize*/, std::function<void(size_t)> /*onPick*/) {
-        NGOSEN_WARN("The IBus edition has no candidate list");
+    // The core refreshes the panel on every key, so the table goes out only when it changed.
+    void IBusHost::showTable() {
+        if (menuOpen_ || (!tableDirty_ && tableShown_ == list_.has_value()))
+            return;
+        tableDirty_ = false;
+        if (!list_) {
+            if (tableShown_)
+                ibus_engine_hide_lookup_table(engine_);
+            tableShown_ = false;
+            return;
+        }
+        IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), TRUE, FALSE);
+        ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
+        // No labels of its own: the core numbers the candidates it lets the user pick by number.
+        for (const auto& label : list_->labels)
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(label.c_str()));
+        ibus_engine_update_lookup_table(engine_, table, TRUE);
+        tableShown_ = true;
     }
 
-    void                         IBusHost::hideCandidates() {}
+    void IBusHost::showAuxiliary() {
+        const std::string& text = status_.empty() ? notice_ : status_;
+        ibus_engine_update_auxiliary_text(engine_, ibus_text_new_from_string(text.c_str()), !text.empty());
+    }
+
+    void IBusHost::setMenuOpen(bool open) {
+        menuOpen_ = open;
+        // The menu takes the table; candidates still shown go out again on the next refresh.
+        if (open) {
+            tableShown_ = false;
+            tableDirty_ = true;
+        }
+    }
+
+    void IBusHost::showNotice(const std::string& text) {
+        notice_ = text;
+        showAuxiliary();
+    }
+
+    void IBusHost::hideNotice() {
+        notice_.clear();
+        showAuxiliary();
+    }
+
+    void IBusHost::showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick) {
+        tableDirty_ = true;
+        if (labels.empty()) {
+            list_.reset();
+            return;
+        }
+        // IBus aborts on a page of more than 16.
+        list_ = CandidateList{labels, std::clamp(pageSize, 1, 16), 0, std::move(onPick)};
+    }
+
+    void IBusHost::hideCandidates() {
+        list_.reset();
+        tableDirty_ = true;
+    }
 
     std::optional<CandidatePage> IBusHost::candidates() const {
-        return std::nullopt;
+        if (!list_)
+            return std::nullopt;
+        CandidatePage page;
+        page.total    = static_cast<int>(list_->labels.size());
+        page.pageSize = list_->pageSize;
+        page.cursor   = list_->cursor;
+        page.page     = list_->cursor / list_->pageSize;
+        page.hasPrev  = page.page > 0;
+        page.hasNext  = (page.page + 1) * page.pageSize < page.total;
+        return page;
     }
 
-    void IBusHost::highlightCandidate(int /*index*/) {}
-    void IBusHost::nextCandidatePage() {}
-    void IBusHost::prevCandidatePage() {}
-    void IBusHost::pickCandidate(int /*index*/) {}
+    void IBusHost::highlightCandidate(int index) {
+        if (list_ && index >= 0 && index < static_cast<int>(list_->labels.size())) {
+            list_->cursor = index;
+            tableDirty_   = true;
+        }
+    }
+
+    // The panel shows the page with the highlight, so a new page highlights its first candidate.
+    void IBusHost::nextCandidatePage() {
+        if (const auto page = candidates(); page && page->hasNext)
+            highlightCandidate((page->page + 1) * page->pageSize);
+    }
+
+    void IBusHost::prevCandidatePage() {
+        if (const auto page = candidates(); page && page->hasPrev)
+            highlightCandidate((page->page - 1) * page->pageSize);
+    }
+
+    void IBusHost::pickCandidate(int index) {
+        if (!list_ || index < 0 || index >= static_cast<int>(list_->labels.size()))
+            return;
+        // The callback may hide or replace the list it belongs to.
+        const auto onPick = list_->onPick;
+        if (onPick)
+            onPick(static_cast<size_t>(index));
+    }
+
+    void IBusHost::clickCandidate(guint indexInPage) {
+        if (const auto page = candidates())
+            pickCandidate(page->page * page->pageSize + static_cast<int>(indexInPage));
+    }
 
     void IBusHost::setStatus(const std::string& text) {
         status_ = text;

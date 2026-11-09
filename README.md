@@ -1,21 +1,24 @@
 # Ngó Sen cho GNOME
 
-Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Đổi Anh/Việt bằng
-Super+Space như các nguồn nhập khác của GNOME.
+Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Nhấp Ctrl+Shift để đổi
+Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Cửa sổ cài đặt cho đổi sang Shift+Alt, hoặc tắt phím này nếu
+không cần. Super+Space vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME. Lỡ gõ chữ lúc đang tiếng Anh thì
+chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (vieetj → việt), Tab hoặc Esc trả lại; hiện Cứu chữ chỉ
+chạy trên phiên X11.
 
 Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
 không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
 
-Chữ đang gõ được gạch chân (preedit) cho tới khi chốt. Đây là cách gõ mà IBus và GNOME hỗ trợ chính, nên chạy
-được ở hầu hết app trên Linux, kể cả terminal, game và app X11. Tuỳ chọn "Gõ Sen ở app cho phép (thử nghiệm)"
-(mặc định tắt) cho chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ quanh con trỏ (trên X11 là
-app GTK, Qt, Firefox, LibreOffice và terminal của GNOME, KDE, Xfce; Chrome, app Electron, xterm, Alacritty và
-kitty vẫn gạch chân). GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
-extension sửa lỗi này. Bật tuỳ chọn và đăng nhập lại một lần là Ngó Sen tự bật extension; chưa chạy thì chữ vẫn
-gạch chân. Tuỳ chọn này chưa ổn định, chữ có thể sai ở vài app; gặp lỗi thì tắt đi và báo cho Ngó Sen.
+Mặc định Ngó Sen dùng Gõ Sen như bản fcitx5: chữ hiện thẳng vào ô, không gạch chân, ở những app báo được chữ
+quanh con trỏ. Ô nào không báo được thì chữ đang gõ được gạch chân (preedit) cho tới khi chốt; trên X11 đó là
+Chrome, app Electron, xterm, Alacritty và kitty. Bấm phím ` rồi chọn Gõ Sen hay Gạch chân để đổi riêng cho app
+đang dùng, Ngó Sen nhớ lựa chọn đó cho app ấy. Muốn gạch chân ở mọi app chưa chọn riêng thì tắt tuỳ chọn "Gõ Sen ở app cho phép"
+trong cửa sổ cài đặt. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
+extension sửa lỗi này: đăng nhập lại một lần là Ngó Sen tự bật extension, chưa chạy thì chữ vẫn gạch chân. Gặp
+app gõ sai thì chuyển app đó sang Gạch chân và báo cho Ngó Sen.
 
-Nếu cần Cứu chữ, Cứu dấu, phím chuyển Anh/Việt riêng, gõ tắt khi ở tiếng Anh, chế độ riêng theo từng app như Vim
-mode hay chèn emoji, dùng [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
+Nếu cần Cứu dấu ở mọi app, chế độ riêng theo từng app như Vim mode hay chèn emoji, dùng
+[Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).
 
 ## Cài
 
@@ -101,6 +104,9 @@ Cài đặt nằm trong `~/.config/ngosen/`, cùng định dạng và tên khoá
 Lần chạy đầu, nếu máy đã có Ngó Sen cho fcitx5 thì kiểu gõ, gõ tắt, bảng phím riêng và từ điển riêng được
 chép sang (từ điển vào `~/.local/share/ngosen/`); file của fcitx5 giữ nguyên. Sửa `ngosen.conf`, bảng gõ
 tắt hay bảng phím thì có hiệu lực từ chữ gõ tiếp theo. Xoá `ngosen.conf` là về cài đặt mặc định.
+
+Không gõ được tiếng Việt thì mở tab "Kiểm tra máy" trong cửa sổ cài đặt: nó kiểm IBus, nguồn nhập và
+biến môi trường, sửa được vài bước bằng một nút, và chép kết quả để gửi kèm báo lỗi.
 
 Gõ ra chữ sai thì chọn "Lưu nhật ký gõ" trong menu nguồn nhập ngay sau đó: những gì vừa gõ được lưu vào
 `~/.local/state/ngosen/`, chỉ tài khoản của mình đọc được. Đọc lại file rồi gửi kèm báo lỗi.

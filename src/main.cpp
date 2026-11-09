@@ -6,6 +6,7 @@
 #include "bamboo-core.h"
 #include "ngosen-ibus-config.h"
 #include "ngosen-ibus-engine.h"
+#include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-resources.h"
 
 #include <atomic>
@@ -46,10 +47,21 @@ namespace {
         return 0;
     }
 
+    // The keys the toggle can use, one per line, so a restore names the others before writing.
+    int printUsableToggleKeys(int count, char** keys) {
+        for (int i = 0; i < count; ++i) {
+            if (ngosen::parseToggleKey(keys[i]))
+                std::printf("%s\n", keys[i]);
+        }
+        return 0;
+    }
+
 } // namespace
 
 int main(int argc, char** argv) {
     openlog("ibus-engine-ngosen", LOG_PID, LOG_USER);
+    if (argc > 1 && std::strcmp(argv[1], "--usable-toggle-keys") == 0)
+        return printUsableToggleKeys(argc - 2, argv + 2);
     if (argc > 1) {
         if (const int status = runSettingsCommand(argv[1]); status >= 0)
             return status;

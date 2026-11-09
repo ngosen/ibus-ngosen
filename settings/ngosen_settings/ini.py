@@ -75,6 +75,26 @@ def list_text(name, entries):
     )
 
 
+def replace_list(text, name, entries):
+    """text with the list name holding entries, keeping every line outside the list as it was."""
+    kept, at, inside = [], None, False
+    for row in lines(text):
+        stripped = row.strip(SPACE)
+        if stripped.startswith("[") and stripped.endswith("]"):
+            inside = stripped[1:-1].startswith(name + "/")
+            if inside and at is None:
+                at = len(kept)
+        if not inside:
+            kept.append(row)
+    if at is None:
+        at = len(kept)
+        if kept and kept[-1].strip(SPACE) and entries:
+            kept.append("")
+            at += 1
+    kept[at:at] = lines(list_text(name, entries))
+    return "".join(row + "\n" for row in kept)
+
+
 def set_value(text, key, value):
     """text with key set to value, keeping every other line as it was."""
     rows = lines(text)
