@@ -119,4 +119,11 @@ namespace ngosen {
     // by the next one. Returns false when a write failed.
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write = writeFileAtomically);
 
+    // "1.2.1-1" reads as "1.2": a bug-fix release shares its feature release's notice.
+    std::string featureRelease(const std::string& version);
+    // The feature release to tell an updated user about, recorded in the settings file so it is told
+    // once; empty when the file already names it or a later one. Kept out of IBusSettings, so a backup
+    // from the fcitx5 edition, which counts its releases its own way, does not carry it over.
+    std::string releaseToAnnounce(const SettingsPaths& paths, const std::string& version, const FileWriter& write = writeFileAtomically);
+
 } // namespace ngosen

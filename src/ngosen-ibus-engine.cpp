@@ -7,6 +7,7 @@
 #include "ngosen-ibus-i18n.h"
 
 #include "ngosen-globals.h"
+#include "ngosen-ibus-announce.h"
 #include "ngosen-ibus-app-modes.h"
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-keys.h"
@@ -577,6 +578,8 @@ namespace {
         if (!watching) {
             resources().onChange(showNewSettings);
             useUiLanguage(resources().savedSettings());
+            // After the language, which the notice is written in.
+            ngosen::announceRelease(ngosen::releaseToAnnounce(resources().paths(), NGOSEN_IBUS_VERSION));
             watching = true;
         }
         focusedEngine = engine;

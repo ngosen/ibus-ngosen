@@ -2,6 +2,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(IBus REQUIRED IMPORTED_TARGET ibus-1.0>=1.5.27)
 
 add_library(ngosen_ibus STATIC
+    ngosen-ibus-announce.cpp
     ngosen-ibus-app-modes.cpp
     ngosen-ibus-config.cpp
     ngosen-ibus-engine.cpp
