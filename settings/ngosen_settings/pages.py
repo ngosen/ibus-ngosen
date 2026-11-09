@@ -281,7 +281,9 @@ class MacroPage:
         self.search = Gtk.SearchEntry(placeholder_text=_("Search macros..."))
         self.search.connect("search-changed", lambda _s: self.list.invalidate_filter())
         group.set_header_suffix(self.search)
+        # The user's own entries are not settings to find.
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.searchable = False
         self.list.add_css_class("boxed-list")
         self.list.set_placeholder(
             Gtk.Label(label=_("No macros yet."), margin_top=12, margin_bottom=12)
@@ -388,6 +390,7 @@ class DictionaryPage:
         self.search.connect("search-changed", lambda _s: self._show())
         self.list_group.set_header_suffix(self.search)
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.searchable = False
         self.list.add_css_class("boxed-list")
         self.list_group.add(self.list)
         return self.list_group
@@ -498,6 +501,7 @@ class KeymapPage:
         self.search.connect("search-changed", lambda _s: self.list.invalidate_filter())
         group.set_header_suffix(self.search)
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.searchable = False
         self.list.add_css_class("boxed-list")
         self.list.set_placeholder(
             Gtk.Label(label=_("No keys yet."), margin_top=12, margin_bottom=12)

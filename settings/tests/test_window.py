@@ -480,6 +480,57 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.window.check_badge.get_label(), str(left))
         self.assertEqual(self.window.check_badge.get_visible(), left > 0)
 
+    def search(self, text):
+        self.window.search_entry.set_text(text)
+        self.window._on_search(self.window.search_entry)
+        results, i = [], 0
+        while (row := self.window.results.get_row_at_index(i)) is not None:
+            results.append(row)
+            i += 1
+        return results
+
+    def test_a_found_setting_opens_on_its_page_with_the_focus(self):
+        spell = self.window.rows.rows["SpellCheck"]
+        results = self.search("spell check dictionary")
+        self.assertEqual([r.found[0] for r in results if hasattr(r, "found")], [spell])
+        self.assertEqual(self.window.side_stack.get_visible_child_name(), "results")
+        self.window.stack.set_visible_child(self.window.check.page)
+        self.window.search_entry.emit("activate")
+        self.assertIs(
+            self.window.stack.get_visible_child(), spell.get_ancestor(Adw.PreferencesPage)
+        )
+        self.assertIs(self.window.get_focus(), spell)
+        self.assertEqual(self.window.side_stack.get_visible_child_name(), "pages")
+        self.assertEqual(self.window.search_entry.get_text(), "")
+
+    def test_search_ignores_tone_marks_and_case(self):
+        self.assertEqual(window.search.fold("Chính TẢ Đúng"), "chinh ta dung")
+        self.assertTrue(any(hasattr(r, "found") for r in self.search("SPELL")))
+
+    def test_enter_right_after_typing_opens_what_was_typed(self):
+        self.search("macro")
+        self.window.search_entry.set_text("spell check dictionary")
+        self.window.search_entry.emit("activate")
+        self.assertIs(self.window.get_focus(), self.window.rows.rows["SpellCheck"])
+
+    def test_the_users_own_entries_are_not_settings(self):
+        # A macro row's title is its abbreviation.
+        self.window.macros.key_row.set_text("zqx")
+        self.window.macros.value_row.set_text("khô gà")
+        self.window.macros._add()
+        (result,) = self.search("zqx")
+        self.assertFalse(hasattr(result, "found"))
+        self.assertEqual(result.get_child().get_label(), "No settings found")
+
+    def test_find_shows_the_sidebar_of_a_narrow_window(self):
+        self.window.split.set_collapsed(True)
+        self.window.split.set_show_content(True)
+        self.window.focus_search()
+        self.assertFalse(self.window.split.get_show_content())
+        self.assertIs(
+            self.window.get_focus().get_ancestor(window.Gtk.SearchEntry), self.window.search_entry
+        )
+
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check
         self.assertEqual(self.window.check_tab.get_badge_number(), len(check.findings))
