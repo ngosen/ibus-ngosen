@@ -34,6 +34,7 @@ class Window(Adw.ApplicationWindow):
         self.engine = engine
         self.toast = None
         self.check_tab = None
+        self.check_badge = None
         sources = sources or check_page.GnomeSources()
         self.rows = pages.SettingRows(
             store, names, self.save, lambda: keys.gnome_chords(*sources.gnome_keys())
@@ -63,23 +64,63 @@ class Window(Adw.ApplicationWindow):
             tab = stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
             if page is self.check.page:
                 self.check_tab = tab
+        # Header tabs cut the longer Vietnamese page names; a sidebar has room for them.
+        self.split = Adw.NavigationSplitView(
+            sidebar=self._sidebar_page(version), content=self._content_page()
+        )
         self._count(len(self.check.findings))
-        switcher = Adw.ViewSwitcher(stack=stack, policy=Adw.ViewSwitcherPolicy.WIDE)
-        header = Adw.HeaderBar(title_widget=switcher)
-        header.pack_end(self._menu(version))
-        switcher_bar = Adw.ViewSwitcherBar(stack=stack)
-
-        view = Adw.ToolbarView(content=stack)
-        view.add_top_bar(header)
-        view.add_bottom_bar(switcher_bar)
-        self.toasts = Adw.ToastOverlay(child=view)
+        stack.connect("notify::visible-child", self._page_shown)
+        self._page_shown(stack, None)
+        self.toasts = Adw.ToastOverlay(child=self.split)
         self.set_content(self.toasts)
 
-        narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 550sp"))
-        narrow.add_setter(switcher, "visible", False)
-        narrow.add_setter(switcher_bar, "reveal", True)
+        narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 700sp"))
+        narrow.add_setter(self.split, "collapsed", True)
         self.add_breakpoint(narrow)
         self.refresh()
+
+    def _sidebar_page(self, version):
+        self.sidebar = Gtk.ListBox(css_classes=["navigation-sidebar"])
+        tabs = self.stack.get_pages()
+        for i in range(tabs.get_n_items()):
+            self.sidebar.append(self._sidebar_row(tabs.get_item(i)))
+        self.sidebar.connect("row-selected", self._page_selected)
+        # Clicking the row already shown still opens it when the split view is collapsed.
+        self.sidebar.connect("row-activated", lambda _l, _r: self.split.set_show_content(True))
+        header = Adw.HeaderBar()
+        header.pack_end(self._menu(version))
+        view = Adw.ToolbarView(content=Gtk.ScrolledWindow(child=self.sidebar))
+        view.add_top_bar(header)
+        return Adw.NavigationPage(title="Ngó Sen", child=view)
+
+    def _sidebar_row(self, tab):
+        box = Gtk.Box(spacing=12, margin_top=6, margin_bottom=6, margin_start=6, margin_end=6)
+        box.append(Gtk.Image(icon_name=tab.get_icon_name()))
+        box.append(Gtk.Label(label=tab.get_title(), xalign=0, hexpand=True))
+        badge = Gtk.Label(css_classes=["numeric", "accent"], visible=False)
+        box.append(badge)
+        if tab is self.check_tab:
+            self.check_badge = badge
+        return Gtk.ListBoxRow(child=box)
+
+    def _content_page(self):
+        view = Adw.ToolbarView(content=self.stack)
+        view.add_top_bar(Adw.HeaderBar())
+        self.content = Adw.NavigationPage(title="", child=view)
+        return self.content
+
+    def _page_selected(self, _sidebar, row):
+        if row is None:
+            return
+        self.stack.set_visible_child(self.stack.get_pages().get_item(row.get_index()).get_child())
+        self.split.set_show_content(True)
+
+    def _page_shown(self, stack, _param):
+        tab = stack.get_page(stack.get_visible_child())
+        self.content.set_title(tab.get_title())
+        tabs = stack.get_pages()
+        index = next(i for i in range(tabs.get_n_items()) if tabs.get_item(i) is tab)
+        self.sidebar.select_row(self.sidebar.get_row_at_index(index))
 
     def refresh(self):
         self.rows.refresh()
@@ -129,6 +170,9 @@ class Window(Adw.ApplicationWindow):
         if self.check_tab is not None:
             self.check_tab.set_badge_number(left)
             self.check_tab.set_needs_attention(left > 0)
+        if self.check_badge is not None:
+            self.check_badge.set_label(str(left))
+            self.check_badge.set_visible(left > 0)
 
     def notify(self, text, undo):
         toast = Adw.Toast(title=text)

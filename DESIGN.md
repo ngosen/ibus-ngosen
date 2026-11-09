@@ -11,8 +11,8 @@ typography:
 
 The window is a GNOME app first: stock libadwaita widgets, the system accent colour, light and dark
 from the system. Ngó Sen shows itself in two places only: the icon, and typed text in larger text, as
-in the fcitx5 edition's settings window (its `DESIGN.md`). The header bar has no wordmark, so the page
-names fit at the default width.
+in the fcitx5 edition's settings window (its `DESIGN.md`). Pages are listed in a sidebar, so their
+Vietnamese names are never cut.
 
 ## Rules
 
@@ -34,8 +34,9 @@ names fit at the default width.
 
 ## Layout
 
-- Header bar: the page switcher in the middle, the menu on the right (Sao lưu, Khôi phục, Giới thiệu
-  Ngó Sen). Below 550sp wide the switcher moves to a bar at the bottom.
+- An `AdwNavigationSplitView`: the sidebar lists the pages, with the number of steps left next to
+  Kiểm tra, and its header holds the menu (Sao lưu, Khôi phục, Giới thiệu Ngó Sen); the page's header
+  shows its name. Below 700sp wide only one side shows, with a back button to the list.
 - Gõ chữ: Kiểu gõ (with a keys-to-result example such as `vieetj → việt`), Phím chuyển Anh/Việt, Bảng mã, Keymap tuỳ chỉnh,
   the Gõ thử field; then the "Cách bỏ dấu" and "Gõ nhanh" groups; last "Có ở bản fcitx5": what the
   GNOME edition does not have, a row that shows the fcitx5 install command to copy (the window never
