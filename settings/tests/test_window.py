@@ -555,13 +555,16 @@ class WindowTest(unittest.TestCase):
         self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
         self.assertIs(self.window.get_focus(), self.window.whats_new.tip_rows[0])
 
-    def test_button_labels_keep_their_width(self):
+    def test_button_labels_never_break(self):
         page = self.window.whats_new.page
         buttons = [w for w in descendants(page) if isinstance(w, window.Gtk.Button)]
         self.assertTrue(any("{}" not in b.get_child().get_label() for b in buttons))
         for button in buttons:
             label = button.get_child()
-            self.assertEqual(label.get_width_chars(), min(len(label.get_label()), 15))
+            self.assertTrue(
+                not label.get_wrap() or label.get_width_chars() >= len(label.get_label()),
+                label.get_label(),
+            )
 
     def test_page_from_the_command_line(self):
         self.assertEqual(window.requested_page(["x", "--page", "whats-new"]), "whats-new")

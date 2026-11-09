@@ -143,9 +143,6 @@ TIPS = [
     },
 ]
 
-# A button label wraps line by line when its row gives it only its minimum width.
-BUTTON_WIDTH = 15
-
 
 def random_tip():
     """A different tip each time the window opens."""
@@ -204,7 +201,5 @@ class WhatsNewPage:
             label = _("Open the {} page").format(self.page_titles[name])
             button = Gtk.Button(label=label, valign=Gtk.Align.CENTER)
             button.connect("clicked", lambda _b: self.show_page(name))
-        button.get_child().set_wrap(True)
-        button.get_child().set_width_chars(min(len(label), BUTTON_WIDTH))
         button.target = target
         row.add_suffix(button)
