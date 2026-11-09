@@ -53,7 +53,11 @@ class SettingRows:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
         if current not in (value for value, _label in pairs):
-            shown = keys.label(current) if key in ("ToggleKey", "ModeMenuKey") else current
+            shown = (
+                keys.label(current)
+                if key in ("ToggleKey", "ModeMenuKey", "CycleModeKey")
+                else current
+            )
             pairs.append((current, shown))
         if key == "ToggleKey":
             pairs.append((OTHER_KEYS, _("Other keys…")))

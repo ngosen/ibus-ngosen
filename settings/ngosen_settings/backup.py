@@ -14,7 +14,9 @@ from .store import KEYMAP_LIST, MACRO_LIST, read_words
 
 COMPONENTS = ("config", "macros", "keymaps", "rules", "switches", "dictionary")
 # The fcitx5 edition keeps these as Mode, VietnameseOn and indexed key lists.
-IBUS_ONLY = ("DirectTyping", "ToggleKey", "ModeMenuKey")
+# Key lists fcitx5 writes as {"0": …}; the engine keeps them as one line split at spaces.
+KEY_LISTS = ("ModeMenuKey", "CycleModeKey")
+IBUS_ONLY = ("DirectTyping", "ToggleKey", *KEY_LISTS)
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
 DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
 # The engine types English for 0, with Sen for 1, 2, 3, 4 and 8 and underlined for 5, as fcitx5 reads them.
@@ -153,7 +155,7 @@ def export(engine, paths, target):
     values = engine.settings()
     config = {key: value for key, value in values.items() if key not in IBUS_ONLY}
     config["Mode"] = "Sen" if values.get("DirectTyping") == "True" else "Preedit"
-    for name in ("ToggleKey", "ModeMenuKey"):
+    for name in ("ToggleKey", *KEY_LISTS):
         config[name] = {str(i): key for i, key in enumerate(values.get(name, "").split())}
     config["VietnameseOn"] = "False" if os.path.exists(paths.english) else "True"
     backup = {
@@ -296,14 +298,16 @@ def _settings(config, text, known, engine, taken, notes):
         toggle = _toggle_key(config["ToggleKey"], engine, taken, notes)
         if toggle is not None:
             text = ini.set_value(text, "ToggleKey", toggle)
-    if "ModeMenuKey" in config:
+    for name in KEY_LISTS:
+        if name not in config:
+            continue
         # The engine skips a key it cannot use; a key with a space would split the line.
-        menu = [
-            key
-            for key in _key_list(config["ModeMenuKey"])
-            if key and not any(c.isspace() for c in key)
+        wanted = [
+            key for key in _key_list(config[name]) if key and not any(c.isspace() for c in key)
         ]
-        text = ini.set_value(text, "ModeMenuKey", " ".join(menu))
+        # An empty list adds no line to a file that never had the key.
+        if wanted or name in ini.parse(text)[0]:
+            text = ini.set_value(text, name, " ".join(wanted))
     return text.encode("utf-8", "surrogateescape")
 
 

@@ -76,8 +76,9 @@ namespace ngosen {
 
         // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
         // in its own section, which is read when importing its settings.
-        const char* const        ToggleKeyName   = "ToggleKey";
-        const char* const        ModeMenuKeyName = "ModeMenuKey";
+        const char* const        ToggleKeyName    = "ToggleKey";
+        const char* const        ModeMenuKeyName  = "ModeMenuKey";
+        const char* const        CycleModeKeyName = "CycleModeKey";
 
         std::vector<std::string> splitWords(const std::string& text) {
             std::istringstream       words(text);
@@ -295,6 +296,12 @@ namespace ngosen {
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
         read.shortcut("ShortcutDefault", settings.shortcutDefault);
+        read.boolean("ShowModeSen", settings.showModeSen);
+        read.boolean("ShowModePreedit", settings.showModePreedit);
+        read.boolean("ShowModeOff", settings.showModeOff);
+        read.boolean("ShowModeDefault", settings.showModeDefault);
+        read.text("ModeOrder", settings.modeOrder);
+        settings.cycleModeKeys = readKeys(ini, CycleModeKeyName, {}, parseMenuKey);
         return settings;
     }
 
@@ -333,6 +340,12 @@ namespace ngosen {
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
         line("ShortcutDefault", settings.shortcutDefault);
+        line("ShowModeSen", boolText(settings.showModeSen));
+        line("ShowModePreedit", boolText(settings.showModePreedit));
+        line("ShowModeOff", boolText(settings.showModeOff));
+        line("ShowModeDefault", boolText(settings.showModeDefault));
+        line("ModeOrder", settings.modeOrder);
+        line(CycleModeKeyName, joinWords(settings.cycleModeKeys));
         return out.str();
     }
 
@@ -470,7 +483,9 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode"};
+            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode",
+                                                "ShowModeSen",       "ShowModePreedit",     "ShowModeOff",          "ShowModeDefault",
+                                                "ModeOrder",         CycleModeKeyName};
             std::string              text;
             if (!readFile(paths.settingsFile(), text))
                 return true;

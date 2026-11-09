@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Đổi thứ tự hay ẩn bớt Gõ Sen, Gạch chân, Tắt và Chế độ gõ mặc định trong menu phím `, và đặt phím chuyển nhanh
+  (như Ctrl+`) đưa app đang dùng sang chế độ kế tiếp rồi nhớ cho app đó, như bản fcitx5. Menu mở ra trỏ sẵn vào
+  chế độ của app, hoặc vào Chế độ gõ mặc định khi app chưa chọn chế độ và chưa đổi Anh/Việt riêng (#100).
+
 ### Thay đổi
 
 - Ctrl+Shift đổi Anh/Việt riêng cho app đang dùng như bản fcitx5: mỗi app nhớ lựa chọn của nó, app chưa đổi lần
