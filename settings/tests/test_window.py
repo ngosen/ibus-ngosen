@@ -450,6 +450,27 @@ class WindowTest(unittest.TestCase):
             self.assertIn(name, dialog.get_comments())
         dialog.close()
 
+    def test_pages_are_listed_in_a_sidebar(self):
+        tabs = self.window.stack.get_pages()
+        titles = [tabs.get_item(i).get_title() for i in range(tabs.get_n_items())]
+        sidebar = self.window.sidebar
+        names = []
+        row = sidebar.get_row_at_index(0)
+        while row is not None:
+            names.append(row.get_child().get_last_child().get_prev_sibling().get_label())
+            row = sidebar.get_row_at_index(len(names))
+        self.assertEqual(names, titles)
+        sidebar.select_row(sidebar.get_row_at_index(len(titles) - 1))
+        self.assertIs(self.window.stack.get_visible_child(), self.window.check.page)
+        self.assertEqual(self.window.content.get_title(), "Check")
+        # Shown another way, the page still names itself and its row follows.
+        self.window.stack.set_visible_child(self.window.macros.page)
+        self.assertEqual(self.window.content.get_title(), titles[1])
+        self.assertEqual(sidebar.get_selected_row().get_index(), 1)
+        left = len(self.window.check.findings)
+        self.assertEqual(self.window.check_badge.get_label(), str(left))
+        self.assertEqual(self.window.check_badge.get_visible(), left > 0)
+
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check
         self.assertEqual(self.window.check_tab.get_badge_number(), len(check.findings))
