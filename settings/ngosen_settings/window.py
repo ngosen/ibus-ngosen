@@ -52,7 +52,7 @@ class Window(Adw.ApplicationWindow):
 
         self.stack = stack = Adw.ViewStack()
         typing = pages.typing_page(self.rows)
-        typing.add(pages.fcitx5_group(self._show))
+        typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
         for page in (
             typing,
             self.macros.page,

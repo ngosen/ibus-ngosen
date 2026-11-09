@@ -598,7 +598,7 @@ FCITX5_ONLY = [
     N_("The emoji picker, and turning Vietnamese off for one app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
-# The installer asks before it removes this edition, so the window only hands the command over.
+# The window only hands the command over: the installer needs a terminal for sudo.
 FULL_EDITION_COMMAND = (
     "curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash"
 )
@@ -625,7 +625,7 @@ def about_dialog(version):
     return dialog
 
 
-def fcitx5_group(show_toast):
+def fcitx5_group(show_toast, back_up):
     group = preferences_group(
         N_("In the fcitx5 edition"),
         _("Ngó Sen for fcitx5 also has these. It runs on fcitx5 instead of IBus."),
@@ -638,7 +638,7 @@ def fcitx5_group(show_toast):
         activatable=True,
     )
     switch.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
-    switch.connect("activated", lambda r: show_switch_dialog(r.get_root(), show_toast))
+    switch.connect("activated", lambda r: show_switch_dialog(r.get_root(), show_toast, back_up))
     group.add(switch)
     group.add(
         _link_row(
@@ -648,12 +648,18 @@ def fcitx5_group(show_toast):
     return group
 
 
-def show_switch_dialog(parent, show_toast):
+def show_switch_dialog(parent, show_toast, back_up=None):
     dialog = Adw.AlertDialog(
         heading=_("Switch to the fcitx5 edition"),
         body=_(
-            "Run this command in a terminal. It asks before removing this edition. "
-            "Log out and back in when it is done."
+            "Run this command in a terminal, then log out and back in. On Debian and Ubuntu it "
+            "replaces this edition. On Fedora, openSUSE and Arch, copy the command, remove "
+            "ibus-ngosen, then run it; this window goes with the package."
+        )
+        + "\n\n"
+        + _(
+            "Settings made here are not copied over. Back them up, then restore the file in the "
+            "fcitx5 edition."
         ),
     )
     command = Gtk.Label(label=FULL_EDITION_COMMAND, selectable=True, wrap=True, xalign=0)
@@ -665,16 +671,23 @@ def show_switch_dialog(parent, show_toast):
     command.add_css_class("monospace")
     dialog.set_extra_child(command)
     dialog.add_response("close", _("Close"))
+    if back_up is not None:
+        dialog.add_response("backup", _("Back Up First…"))
     dialog.add_response("copy", _("Copy command"))
     dialog.set_response_appearance("copy", Adw.ResponseAppearance.SUGGESTED)
     dialog.set_default_response("copy")
     dialog.set_close_response("close")
-    dialog.connect("response", lambda d, response: _copy_command(d, response, show_toast))
+    dialog.connect(
+        "response", lambda d, response: _switch_response(d, response, show_toast, back_up)
+    )
     dialog.present(parent)
     return dialog
 
 
-def _copy_command(dialog, response, show_toast):
+def _switch_response(dialog, response, show_toast, back_up):
+    if response == "backup":
+        back_up()
+        return
     if response != "copy":
         return
     dialog.get_clipboard().set(FULL_EDITION_COMMAND)

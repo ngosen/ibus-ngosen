@@ -18,6 +18,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   lỗi GNOME 50.0–50.3 được kiểm cả khi chỉ vài app chọn Gõ Sen; nguồn nhập đang dùng không phải Ngó Sen thì nhắc
   phím đổi nguồn mà không tính là bước phải sửa; app X11 đi qua fcitx5 được gọi đúng tên; kết quả chép ra ghi số
   app chọn cách gõ riêng (#96).
+- Chuyển từ bản fcitx5 sang: tab Kiểm tra tìm biến môi trường, mục tự chạy, biểu tượng ẩn và lựa chọn im-config mà
+  lệnh cài fcitx5 để lại, kể cả khi fcitx5 đang giữ bộ gõ, và có nút xoá những tệp còn y nguyên (có Hoàn tác); tệp
+  đã sửa tay thì chỉ ra đường dẫn. Hộp thoại "Chuyển sang bản fcitx5" bỏ câu hứa sai, nói rõ cách làm trên từng
+  distro và có nút sao lưu trước; README thêm mục chuyển qua lại hai bản (#99).
 - Mục 1.2.0-1 trong lịch sử gói deb và rpm ghi đúng thứ Hai 09/11/2026; rpmbuild hết cảnh báo ngày sai, và
   bộ kiểm phiên bản trước khi phát hành giờ bắt lỗi thứ sai (#93).
 - Chữ cũ từ trước 1.2.0 được sửa: mô tả gói và trang AppStream nói Gõ Sen là mặc định và Ctrl+Shift đổi Anh/Việt,

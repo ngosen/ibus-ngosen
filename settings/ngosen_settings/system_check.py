@@ -10,7 +10,7 @@ import subprocess
 from dataclasses import dataclass
 from urllib.parse import urlencode
 
-from . import keys
+from . import fcitx5_leftovers, keys
 from .i18n import _
 
 ISSUE_URL = "https://github.com/ngosen/ibus-ngosen/issues/new"
@@ -28,6 +28,9 @@ FORWARD_KEYS = "forward-keys@ngosen.github.io"
 
 START_IBUS, RESTART_IBUS, ADD_SOURCE = "start-ibus", "restart-ibus", "add-source"
 ENABLE_FORWARD_KEYS = "enable-forward-keys"
+CLEAN_FCITX5 = "clean-fcitx5"
+# Fixes that delete the user's files run only from their own button, never from "Fix all".
+MANUAL_ONLY = {CLEAN_FCITX5}
 
 SEN, PREEDIT = "sen", "preedit"
 # As the engine reads ngosen-app-rules.conf (src/ngosen-ibus-app-modes.cpp).
@@ -63,6 +66,8 @@ class Facts:
     # What gnome-extensions info says; empty when GNOME Shell does not know the extension.
     forward_keys_state: str = ""
     has_gnome_portal: bool = False
+    # What the fcitx5 edition's installer left on this account (fcitx5_leftovers.Leftovers).
+    leftovers: object = None
     # Apps with a typing mode of their own, and how many of them picked Sen.
     picked_apps: int = 0
     sen_apps: int = 0
@@ -92,24 +97,24 @@ class Finding:
 
 def steps(facts):
     """Every check that applies to this machine, passed or not, in the order to fix them."""
+    leftovers = _leftover_findings(facts)
     if not facts.ibus_running:
         if facts.fcitx_owns_session:
-            return [
-                Finding(
-                    FAIL,
-                    _("fcitx5 holds the input method"),
-                    _("Stop fcitx5 from starting at login, then log out and back in."),
-                )
-            ]
-        return [
-            Finding(
+            first = Finding(
+                FAIL,
+                _("fcitx5 holds the input method"),
+                _("Stop fcitx5 from starting at login, then log out and back in."),
+            )
+        else:
+            first = Finding(
                 FAIL,
                 _("IBus is not running"),
                 _("Log out and back in, or run ibus start."),
                 START_IBUS,
                 "ibus start",
             )
-        ]
+        # The fcitx5 edition's files are often why IBus does not get the session.
+        return [first] + leftovers
     found = [Finding(OK, _("IBus is running"))]
     if facts.engine_replaced:
         found.append(_restart_finding(_("IBus still runs Ngó Sen from before the update")))
@@ -119,7 +124,8 @@ def steps(facts):
     found += _engine_findings(facts)
     found += _variable_findings(facts)
     found += _shell_findings(facts)
-    if facts.fcitx_running:
+    found += leftovers
+    if facts.fcitx_running and not _leftovers_start_fcitx5(facts.leftovers):
         found.append(
             Finding(
                 WARN,
@@ -128,6 +134,62 @@ def steps(facts):
             )
         )
     return found
+
+
+def _leftovers_start_fcitx5(leftovers):
+    if leftovers is None:
+        return False
+    kinds = {kind for kind, _path, _command in leftovers.notes}
+    return leftovers.fixable or bool(kinds - {fcitx5_leftovers.KIMPANEL_INSTALLED})
+
+
+def _leftover_findings(facts):
+    found = []
+    leftovers = facts.leftovers
+    if leftovers is None:
+        return found
+    if leftovers.fixable:
+        found.append(
+            Finding(
+                WARN,
+                _("Settings of the fcitx5 edition are left on this account"),
+                _("Remove the files the fcitx5 installer wrote, then log out and back in."),
+                CLEAN_FCITX5,
+            )
+        )
+    if leftovers.notes:
+        lines = [_note_text(kind, path, command) for kind, path, command in leftovers.notes]
+        found.append(Finding(WARN, _("fcitx5 settings that only you can change"), "\n".join(lines)))
+    return found
+
+
+def _note_text(kind, path, command):
+    path = _short_path(path)
+    if kind == fcitx5_leftovers.EDITED_ENVIRONMENT:
+        return _("{} sends apps to fcitx5; remove those lines if you do not use fcitx5.").format(
+            path
+        )
+    if kind == fcitx5_leftovers.EDITED_AUTOSTART:
+        return _("{} starts fcitx5 at login; remove it if you do not use fcitx5.").format(path)
+    if kind == fcitx5_leftovers.SYSTEM_STARTS_FCITX5:
+        return _(
+            "The fcitx5 package starts fcitx5 at login for every account. To stop it for this "
+            "account only, run: {}"
+        ).format(command)
+    if kind == fcitx5_leftovers.IM_CONFIG_PICK and command:
+        return _(
+            "im-config still starts fcitx5 at login. If you do not use fcitx5, run: {}"
+        ).format(command)
+    if kind == fcitx5_leftovers.IM_CONFIG_PICK:
+        return _("{} still starts fcitx5 at login; remove its run_im fcitx5 line.").format(path)
+    return _(
+        "IBus does not use the Input Method Panel extension the fcitx5 installer added: {}"
+    ).format(command)
+
+
+def _short_path(path):
+    home = os.path.expanduser("~")
+    return "~" + path[len(home) :] if home != "/" and path.startswith(home + "/") else path
 
 
 def _restart_finding(title):
@@ -275,10 +337,21 @@ def fix_label(action):
         RESTART_IBUS: _("Restart IBus"),
         ADD_SOURCE: _("Add Ngó Sen"),
         ENABLE_FORWARD_KEYS: _("Turn on"),
+        CLEAN_FCITX5: _("Remove"),
     }[action]
 
 
-def fixed_message(action):
+def fixed_message(action, removed=()):
+    if action == CLEAN_FCITX5:
+        reset = fcitx5_leftovers.IM_CONFIG_CHANGE in removed
+        paths = ", ".join(_short_path(p) for p in removed if p != fcitx5_leftovers.IM_CONFIG_CHANGE)
+        if paths and reset:
+            return _(
+                "Removed {} and set im-config back to its default. Log out and back in."
+            ).format(paths)
+        if reset:
+            return _("Set im-config back to its default. Log out and back in.")
+        return _("Removed {}. Log out and back in.").format(paths)
     return {
         START_IBUS: _("Started IBus."),
         RESTART_IBUS: _("Restarted IBus."),
@@ -292,16 +365,16 @@ SETTLE_MS = {START_IBUS: 1500, RESTART_IBUS: 1500, ENABLE_FORWARD_KEYS: 500}
 # A slow machine may need longer; check again this often before calling the fix failed.
 RETRY_MS, RETRIES = 500, 8
 # Restarting last, so it also picks up the input source just added.
-FIX_ORDER = (START_IBUS, ADD_SOURCE, ENABLE_FORWARD_KEYS, RESTART_IBUS)
+FIX_ORDER = (CLEAN_FCITX5, START_IBUS, ADD_SOURCE, ENABLE_FORWARD_KEYS, RESTART_IBUS)
 
 
-def summary(found, failed=()):
+def summary(found, failed=frozenset()):
     """Heading and text above the steps; failed fixes have no button left."""
     problems = steps_left(found)
     if not problems:
         return _("This machine is ready"), _("Try typing in any app.")
     title = _("Steps left to fix: {}").format(len(problems))
-    fixable = sum(1 for f in problems if f.action and f.action not in failed)
+    fixable = sum(1 for f in problems if f.action and f.action not in failed | MANUAL_ONLY)
     if fixable > 1:
         text = _(
             "Use the button on a step, or fix them all at once. Ngó Sen only changes this "
@@ -370,20 +443,27 @@ def _succeeds(cmd):
 class Fixes:
     """What the check page's fix buttons are doing; the page only draws it."""
 
-    def __init__(self, sources):
+    def __init__(self, sources, env=None):
         self.sources = sources
+        self.env = os.environ if env is None else env
         self.busy = set()
         self.failed = set()
+        self.removed = []
         self._retries = 0
 
     def fixable(self, findings):
-        return [f.action for f in findings if f.action and f.action not in self.failed]
+        """What "Fix all" runs."""
+        skipped = self.failed | MANUAL_ONLY
+        return [f.action for f in findings if f.action and f.action not in skipped]
 
     def run(self, actions):
         """Runs the fixes; returns (done, undos, ms to wait before checking again)."""
         done, undos = [], {}
         for action in sorted(actions, key=FIX_ORDER.index):
-            ok, undo = run_fix(action, self.sources)
+            if action == CLEAN_FCITX5:
+                ok, undo, self.removed = fcitx5_leftovers.clean(self.env)
+            else:
+                ok, undo = run_fix(action, self.sources)
             if not ok:
                 self.failed.add(action)
                 continue
@@ -418,7 +498,7 @@ class Fixes:
         if not fixed:
             return "", None
         steps_undone = [undos[a] for a in fixed if a in undos]
-        message = " ".join(fixed_message(a) for a in fixed)
+        message = " ".join(fixed_message(a, self.removed) for a in fixed)
         return message, self._undo(steps_undone) if steps_undone else None
 
     @staticmethod
@@ -490,6 +570,7 @@ def collect(
         current = sources.get()
         facts.in_gnome_sources = None if current is None else ("ibus", ENGINE) in current
         facts.switch_keys = switch_key_names(*sources.switch_keys())
+    facts.leftovers = fcitx5_leftovers.find(env)
     return facts
 
 

@@ -204,6 +204,8 @@ class CheckPage:
         # A step with a button needs no instructions unless the button fails.
         subtitle = "" if finding.action else finding.fix
         row = Adw.ActionRow(title=finding.title, subtitle=subtitle, use_markup=False)
+        # Some steps give a command to copy.
+        row.set_subtitle_selectable(not finding.action)
         icon, css = ICONS[finding.level]
         row.add_prefix(Gtk.Image(icon_name=icon, css_classes=[css]))
         row.level = finding.level
