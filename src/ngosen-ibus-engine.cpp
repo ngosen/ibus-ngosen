@@ -145,7 +145,7 @@ namespace {
         ToggleTap                            tap;
         bool                                 showsNotice = false;
         bool                                 menuOpen    = false;
-        // Vim mode for a field whose app has no name to keep it under, as fcitx5 keeps it for the field.
+        // Vim mode for the field in focus when its app has no name to keep it under, as fcitx5 keeps it for the field.
         bool  vimHere    = false;
         guint menuCursor = 0;
         // The key whose release the app must not see, as it never saw the press.
@@ -667,7 +667,8 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->tap = {};
+        session->tap     = {};
+        session->vimHere = false;
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();

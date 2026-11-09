@@ -206,10 +206,8 @@ namespace ngosen {
         AppSwitchMap changed = switches_;
         if (vietnamese)
             changed[app] = *vietnamese;
-        else {
+        else
             changed.erase(app);
-            changed.erase(app + ".desktop");
-        }
         // Every tap of the toggle key and every pick in the menu ends here; an unchanged list needs no write.
         if (changed == switches_ && (mtime_ || changed.empty()))
             return true;
@@ -227,8 +225,10 @@ namespace ngosen {
         VimAppSet          apps;
         std::istringstream lines(text);
         for (std::string line; std::getline(lines, line);) {
-            if (!line.empty() && line[0] != '#')
-                apps.insert(line);
+            // Named as the other app files name them, so a name fcitx5 saved as GNOME reports it matches.
+            const std::string app = line.empty() || line[0] == '#' ? std::string() : modeAppName(trimIni(line));
+            if (!app.empty())
+                apps.insert(app);
         }
         return apps;
     }
@@ -260,8 +260,7 @@ namespace ngosen {
         if (app.empty())
             return false;
         reloadIfChanged();
-        // fcitx5 may have saved the name as GNOME reports it.
-        return apps_.count(app) > 0 || apps_.count(app + ".desktop") > 0;
+        return apps_.count(app) > 0;
     }
 
     bool VimApps::set(const std::string& app, bool on) {
@@ -271,10 +270,10 @@ namespace ngosen {
         VimAppSet changed = apps_;
         if (on)
             changed.insert(app);
-        else {
+        else
             changed.erase(app);
-            changed.erase(app + ".desktop");
-        }
+        if (changed == apps_ && (mtime_ || changed.empty()))
+            return true;
         if (!write_(path_, vimAppsText(changed)))
             return false;
         apps_ = std::move(changed);

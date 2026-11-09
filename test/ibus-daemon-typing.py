@@ -1893,6 +1893,31 @@ check(
     vim_apps(),
 )
 app.close()
+# GNOME Shell relays many apps under its own name; Vim mode then stays with the field in focus.
+app = menu_app("gnome-shell")
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_v)
+pump(300)
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    (app.menu or [""])[-1] == "Vim mode: bật" and vim_apps() == [],
+    "menu: an app without a name keeps Vim mode for its field, not in the file",
+    (app.menu, vim_apps()),
+)
+app.key(IBus.KEY_Escape)
+app.close()
+app = menu_app("gnome-shell")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    (app.menu or [""])[-1] == "Vim mode: tắt",
+    "menu: the next field without a name starts without Vim mode",
+    app.menu,
+)
+app.key(IBus.KEY_Escape)
+app.close()
 
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")
