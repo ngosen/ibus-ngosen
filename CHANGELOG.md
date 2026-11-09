@@ -31,7 +31,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   nào thì theo lần đổi gần nhất. Mục "Tiếng Anh" trong menu phím ` thành "Tắt" và cũng chỉ tắt cho app đang dùng.
   Sao lưu và khôi phục mang theo lựa chọn Anh/Việt của từng app, cùng tệp với bản fcitx5 (#94).
 - Cứu chữ chạy cả trên phiên Wayland như bản fcitx5, không chỉ X11: lỡ gõ vieetj lúc tiếng Anh rồi nhấp Ctrl+Shift
-  là thành việt. Bấm chuột sang chỗ khác trước khi chuyển thì chữ giữ nguyên (#PR).
+  là thành việt. Bấm chuột sang chỗ khác trước khi chuyển thì chữ giữ nguyên (#117).
 
 ## [1.2.1-1] — 09/11/2026
 
