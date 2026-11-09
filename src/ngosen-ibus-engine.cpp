@@ -477,6 +477,11 @@ namespace {
         }
         if (handleToggleKey(engine, *session, keyval, state))
             return TRUE;
+        // A terminal password prompt gets the keys as typed, and they stay out of the typing log.
+        if (session->state->passesHiddenInput()) {
+            closeModeMenu(engine, *session);
+            return FALSE;
+        }
         if (handleModeMenu(engine, *session, keyval, keycode, state))
             return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
