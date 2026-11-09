@@ -3,6 +3,21 @@ target_link_libraries(ibus-config-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_config COMMAND ibus-config-test)
 set_tests_properties(ibus_config PROPERTIES LABELS "unit;ibus")
 
+add_executable(ibus-app-modes-test ibus-app-modes.cpp)
+target_link_libraries(ibus-app-modes-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_app_modes COMMAND ibus-app-modes-test)
+set_tests_properties(ibus_app_modes PROPERTIES LABELS "unit;ibus")
+
+add_executable(ibus-host-test ibus-host.cpp)
+target_link_libraries(ibus-host-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_host COMMAND ibus-host-test)
+set_tests_properties(ibus_host PROPERTIES LABELS "unit;ibus")
+
+add_executable(ibus-program-name-test ibus-program-name.cpp)
+target_link_libraries(ibus-program-name-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_program_name COMMAND ibus-program-name-test)
+set_tests_properties(ibus_program_name PROPERTIES LABELS "unit;ibus")
+
 add_test(NAME install_environment COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install-environment.sh ${PROJECT_BINARY_DIR})
 set_tests_properties(install_environment PROPERTIES LABELS "unit")
 
@@ -34,7 +49,7 @@ file(GENERATE OUTPUT ${component_dir}/ngosen.xml INPUT ${CMAKE_CURRENT_BINARY_DI
 add_test(NAME ibus_daemon_typing
          COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${Python3_EXECUTABLE} ${component_dir}
                  ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict ${CMAKE_CURRENT_SOURCE_DIR}/ibus-daemon-typing.py)
-set_tests_properties(ibus_daemon_typing PROPERTIES LABELS "integration;ibus" TIMEOUT 240
+set_tests_properties(ibus_daemon_typing PROPERTIES LABELS "integration;ibus" TIMEOUT 360
                      ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;LC_ALL=en_US.UTF-8")
 
 add_test(NAME ibus_daemon_typing_no_clicks

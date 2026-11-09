@@ -14,6 +14,11 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 SOURCES = sorted((ROOT / "settings" / "ngosen_settings").glob("*.py"))
 ENGINE_SOURCES = sorted((ROOT / "src").glob("*.cpp"))
 CPP_STRING = re.compile(r'\bN?_\("((?:[^"\\]|\\.)*)"\)')
+# The core asks the host to translate its status lines, so they come from our catalog.
+CORE_SOURCES = sorted((ROOT / "ngosen" / "src" / "core").glob("*.cpp"))
+CORE_STRING = re.compile(r'\btranslate\("((?:[^"\\]|\\.)*)"\)')
+# Emoji picking has no IBus candidate list, so its paging label never appears.
+CORE_UNSHOWN = {"Page "}
 OURS = ROOT / "po" / "vi.po"
 FULL_EDITION = ROOT / "ngosen" / "po" / "vi.po"
 
@@ -36,6 +41,12 @@ def used_strings():
             for match in CPP_STRING.finditer(line):
                 text = ast.literal_eval(f'"{match.group(1)}"')
                 found.setdefault(text, f"{path.relative_to(ROOT)}:{number}")
+    for path in CORE_SOURCES:
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            for match in CORE_STRING.finditer(line):
+                text = ast.literal_eval(f'"{match.group(1)}"')
+                if text not in CORE_UNSHOWN:
+                    found.setdefault(text, f"{path.relative_to(ROOT)}:{number}")
     return found
 
 

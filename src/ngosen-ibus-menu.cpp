@@ -20,7 +20,7 @@ namespace ngosen {
             bool (*isOn)(const IBusSettings&);
         };
 
-        const Toggle        DirectTyping     = {"DirectTyping", N_("Type with Sen where the app allows (experimental)"), [](const IBusSettings& s) { return s.directTyping; }};
+        const Toggle        DirectTyping     = {"DirectTyping", N_("Type with Sen where the app allows"), [](const IBusSettings& s) { return s.directTyping; }};
         const Toggle        SpellCheck       = {"SpellCheck", N_("Spell Check"), [](const IBusSettings& s) { return s.options.spellCheck; }};
         const Toggle        Macro            = {"EnableMacro", N_("Macro"), [](const IBusSettings& s) { return s.options.enableMacro; }};
         const Toggle        CapitalizeMacro  = {"CapitalizeMacro", N_("Capitalize Macro"), [](const IBusSettings& s) { return s.options.capitalizeMacro; }};
@@ -42,10 +42,13 @@ namespace ngosen {
 
         // A plain item marked like the fcitx5 tray menu: GNOME Shell closes its menu on some switch
         // clicks and not others, but always on a plain item.
+        IBusProperty* newMarkedItem(const std::string& key, const char* label, bool on) {
+            const std::string marked = std::string(on ? "✔ " : "✖ ") + label;
+            return newItem(key, PROP_TYPE_NORMAL, marked.c_str(), on);
+        }
+
         IBusProperty* newToggle(const Toggle& toggle, const IBusSettings& settings) {
-            const bool        on    = toggle.isOn(settings);
-            const std::string label = std::string(on ? "✔ " : "✖ ") + _(toggle.label);
-            return newItem(toggle.key, PROP_TYPE_NORMAL, label.c_str(), on);
+            return newMarkedItem(toggle.key, _(toggle.label), toggle.isOn(settings));
         }
 
         IBusProperty* newChoice(const std::string& key, const char* label, const std::vector<std::string>& names, const std::string& current) {
@@ -61,8 +64,11 @@ namespace ngosen {
 
     } // namespace
 
-    IBusPropList* newSettingsMenu(const IBusSettings& settings) {
-        IBusPropList* menu = ibus_prop_list_new();
+    IBusPropList* newSettingsMenu(const IBusSettings& settings, bool english) {
+        IBusPropList* menu      = ibus_prop_list_new();
+        IBusProperty* inputMode = newMarkedItem(InputModeItem, _("Vietnamese"), !english);
+        ibus_property_set_symbol(inputMode, ibus_text_new_from_static_string(english ? "E" : "V"));
+        ibus_prop_list_append(menu, inputMode);
         ibus_prop_list_append(menu, newChoice("InputMethod", _("Input Method"), MenuInputMethods, settings.options.inputMethod));
         ibus_prop_list_append(menu, newToggle(DirectTyping, settings));
         ibus_prop_list_append(menu, newChoice("OutputCharset", _("Charset"), charsetNames(), settings.options.outputCharset));

@@ -51,6 +51,9 @@ namespace ngosen {
         const IBusSettings& settings() const {
             return settings_;
         }
+        const SettingsPaths& paths() const {
+            return paths_;
+        }
         // Writes one setting and returns what the file now says. The file monitor reloads it
         // between words, as for a change the settings window makes.
         bool saveSetting(const std::string& key, const std::string& value, IBusSettings& saved) const;
@@ -64,6 +67,9 @@ namespace ngosen {
         // Called between words only, as a field's engine is rebuilt after it.
         void reloadIfChanged();
         void noticeChange();
+        // The English marker changed under the engine, which reads it again between words.
+        void noticeEnglishChange();
+        bool takeEnglishChange();
         void onChange(std::function<void()> callback) {
             onChange_ = std::move(callback);
         }
@@ -75,12 +81,14 @@ namespace ngosen {
         SettingsPaths            paths_;
         IBusSettings             settings_;
         std::vector<KeymapEntry> keymap_;
-        uintptr_t                dictionary_  = 0;
-        uintptr_t                macroTable_  = 0;
-        unsigned                 generation_  = 0;
-        bool                     changed_     = false;
-        GFileMonitor*            monitor_     = nullptr;
-        GFileMonitor*            dataMonitor_ = nullptr;
+        uintptr_t                dictionary_     = 0;
+        uintptr_t                macroTable_     = 0;
+        unsigned                 generation_     = 0;
+        bool                     changed_        = false;
+        bool                     englishChanged_ = false;
+        GFileMonitor*            monitor_        = nullptr;
+        GFileMonitor*            dataMonitor_    = nullptr;
+        GFileMonitor*            stateMonitor_   = nullptr;
         Recorder                 recorder_;
         std::function<void()>    onChange_;
     };

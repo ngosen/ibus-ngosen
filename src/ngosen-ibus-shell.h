@@ -18,4 +18,12 @@ namespace ngosen {
     // answered, so a field types with the preedit rather than lose a deletion.
     bool shellDeliversKeys();
 
+    void setShellDeliversKeysForTest(bool delivers);
+
+    // The app GNOME Shell relays, named as the core knows it; empty when the Shell has not told.
+    const std::string& shellFocusedApp();
+
+    // XDG_SESSION_TYPE alone misses a daemon started by hand, which keeps only WAYLAND_DISPLAY.
+    bool isWaylandSession();
+
 } // namespace ngosen

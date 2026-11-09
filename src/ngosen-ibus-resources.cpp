@@ -48,17 +48,31 @@ namespace ngosen {
             return known;
         }
 
+        bool isEnglishMark(GFile* file) {
+            if (file == nullptr)
+                return false;
+            gchar*     name = g_file_get_basename(file);
+            const bool mark = g_strcmp0(name, "english") == 0;
+            g_free(name);
+            return mark;
+        }
+
         void onDirChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
             if (isSettingsFile(file) || isSettingsFile(other))
                 static_cast<IBusResources*>(resources)->noticeChange();
         }
 
-        GFileMonitor* watchDirectory(const std::string& path, IBusResources* resources) {
+        void onStateChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
+            if (isEnglishMark(file) || isEnglishMark(other))
+                static_cast<IBusResources*>(resources)->noticeEnglishChange();
+        }
+
+        GFileMonitor* watchDirectory(const std::string& path, GCallback onChanged, IBusResources* resources) {
             GFile*        dir     = g_file_new_for_path(path.c_str());
             GFileMonitor* monitor = g_file_monitor_directory(dir, G_FILE_MONITOR_WATCH_MOVES, nullptr, nullptr);
             g_object_unref(dir);
             if (monitor != nullptr)
-                g_signal_connect(monitor, "changed", G_CALLBACK(onDirChanged), resources);
+                g_signal_connect(monitor, "changed", onChanged, resources);
             return monitor;
         }
 
@@ -68,14 +82,17 @@ namespace ngosen {
         Init();
         prepareSettings(paths_);
         load();
-        monitor_ = watchDirectory(paths_.configDir, this);
+        monitor_ = watchDirectory(paths_.configDir, G_CALLBACK(onDirChanged), this);
         // GLib notices a folder created later only seconds after, missing a file written at once.
         g_mkdir_with_parents(paths_.dataDir.c_str(), 0700);
-        dataMonitor_ = watchDirectory(paths_.dataDir, this);
+        dataMonitor_ = watchDirectory(paths_.dataDir, G_CALLBACK(onDirChanged), this);
+        // The settings window restores the language by writing the marker.
+        g_mkdir_with_parents(paths_.stateDir.c_str(), 0700);
+        stateMonitor_ = watchDirectory(paths_.stateDir, G_CALLBACK(onStateChanged), this);
     }
 
     IBusResources::~IBusResources() {
-        for (GFileMonitor* monitor : {monitor_, dataMonitor_}) {
+        for (GFileMonitor* monitor : {monitor_, dataMonitor_, stateMonitor_}) {
             if (monitor != nullptr)
                 g_object_unref(monitor);
         }
@@ -87,6 +104,18 @@ namespace ngosen {
         changed_ = true;
         if (onChange_)
             onChange_();
+    }
+
+    void IBusResources::noticeEnglishChange() {
+        englishChanged_ = true;
+        if (onChange_)
+            onChange_();
+    }
+
+    bool IBusResources::takeEnglishChange() {
+        const bool changed = englishChanged_;
+        englishChanged_    = false;
+        return changed;
     }
 
     void IBusResources::reloadIfChanged() {
