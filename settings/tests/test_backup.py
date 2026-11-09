@@ -21,6 +21,7 @@ DEFAULTS = {
     "DirectTyping": "True",
     "ToggleKey": DEFAULT_TOGGLE,
     "ModeMenuKey": "grave",
+    "CycleModeKey": "",
 }
 
 
@@ -388,6 +389,17 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertFalse(os.path.exists(self.paths.english))
         backup.replace(snapshot)
         self.assertEqual(self.files(), before)
+
+    def test_cycle_key_list_from_fcitx5_is_restored(self):
+        _, notes = self.restore(fcitx5_backup(CycleModeKey={"0": "Control+grave", "1": "Alt+m"}))
+        self.assertEqual(notes, [])
+        self.assertEqual(self.settings()["CycleModeKey"], "Control+grave Alt+m")
+
+    def test_cycle_key_exports_as_fcitx5_key_list(self):
+        write_text(self.paths.settings, "CycleModeKey=Control+grave\n")
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        self.assertEqual(backup.load(target)["config"]["CycleModeKey"], {"0": "Control+grave"})
 
     def test_export_then_restore_gives_the_same_files(self):
         write_text(
