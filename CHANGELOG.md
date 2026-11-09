@@ -8,6 +8,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Biểu tượng bộ gõ và logo cửa sổ cài đặt giống bản fcitx5, bỏ chữ V gạch chân (#115).
+
 ### Sửa
 
 - Cửa sổ cài đặt hiện đủ giá trị đang chọn, không còn cắt "Ctrl+Shift" thành "C…" hay "Unicode" thành
