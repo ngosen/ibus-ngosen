@@ -191,6 +191,14 @@ namespace {
         settings.showModePreedit = false;
         check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off, MenuMode::Default}, "a hidden mode is left out");
         check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Swallow, "the key of a hidden mode picks nothing");
+        settings.modeOrder = "Off,Sen";
+        check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key skips the modes ModeOrder leaves out");
+        settings.modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        settings.shortcutDefault = settings.shortcutSen;
+        IBusLookupTable* table   = newModeMenuTable(modeMenuItems(settings), 0);
+        check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 2))).empty(), "an item whose key an earlier one took shows no key");
+        g_object_unref(g_object_ref_sink(table));
+        settings.shortcutDefault = defaultSettings().shortcutDefault;
         settings.showModeSen = settings.showModeOff = settings.showModeDefault = false;
         check(modeMenuItems(settings).empty(), "every mode can be hidden");
 

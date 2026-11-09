@@ -42,45 +42,59 @@ namespace ngosen {
             return false;
         }
 
+        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted) {
+            struct Known {
+                const char* name;
+                MenuItem    item;
+                bool        shown;
+            };
+            const auto  key     = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
+            const Known known[] = {
+                {"Sen", {MenuMode::Sen, _("Sen"), key(settings.shortcutSen)}, settings.showModeSen},
+                {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
+                {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
+                {"Default", {MenuMode::Default, _("Default Typing"), key(settings.shortcutDefault)}, settings.showModeDefault},
+            };
+            std::vector<const Known*> ordered;
+            const auto                add = [&ordered](const Known& entry) {
+                if (std::find(ordered.begin(), ordered.end(), &entry) == ordered.end())
+                    ordered.push_back(&entry);
+            };
+            std::istringstream names(settings.modeOrder);
+            for (std::string name; std::getline(names, name, ',');) {
+                for (const auto& entry : known) {
+                    if (trimIni(name) == entry.name)
+                        add(entry);
+                }
+            }
+            if (withUnlisted) {
+                for (const auto& entry : known)
+                    add(entry);
+            }
+            std::vector<MenuItem> items;
+            for (const Known* entry : ordered) {
+                if (entry->shown)
+                    items.push_back(entry->item);
+            }
+            return items;
+        }
+
     } // namespace
 
     std::vector<MenuItem> modeMenuItems(const IBusSettings& settings) {
-        struct Known {
-            const char* name;
-            MenuItem    item;
-            bool        shown;
-        };
-        const auto  key     = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
-        const Known known[] = {
-            {"Sen", {MenuMode::Sen, _("Sen"), key(settings.shortcutSen)}, settings.showModeSen},
-            {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
-            {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
-            {"Default", {MenuMode::Default, _("Default Typing"), key(settings.shortcutDefault)}, settings.showModeDefault},
-        };
-        std::vector<const Known*> ordered;
-        const auto                add = [&ordered](const Known& entry) {
-            if (std::find(ordered.begin(), ordered.end(), &entry) == ordered.end())
-                ordered.push_back(&entry);
-        };
-        std::istringstream names(settings.modeOrder);
-        for (std::string name; std::getline(names, name, ',');) {
-            for (const auto& entry : known) {
-                if (trimIni(name) == entry.name)
-                    add(entry);
-            }
-        }
-        for (const auto& entry : known)
-            add(entry);
-        std::vector<MenuItem> items;
-        for (const Known* entry : ordered) {
-            if (!entry->shown)
-                continue;
-            MenuItem item = entry->item;
-            if (std::any_of(items.begin(), items.end(), [&](const MenuItem& other) { return other.key == item.key; }))
-                item.key = IBUS_KEY_VoidSymbol;
-            items.push_back(item);
+        std::vector<MenuItem> items = shownModes(settings, true);
+        for (auto item = items.begin(); item != items.end(); ++item) {
+            if (std::any_of(items.begin(), item, [&](const MenuItem& other) { return other.key == item->key; }))
+                item->key = IBUS_KEY_VoidSymbol;
         }
         return items;
+    }
+
+    std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings) {
+        std::vector<MenuMode> modes;
+        for (const auto& item : shownModes(settings, false))
+            modes.push_back(item.mode);
+        return modes;
     }
 
     bool cyclesMode(const IBusSettings& settings, guint keyval, guint state) {
@@ -120,7 +134,8 @@ namespace ngosen {
         ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
         for (guint i = 0; i < items.size(); ++i) {
             ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(items[i].label.c_str()));
-            gchar* label = g_strdup_printf("%s.", ibus_keyval_name(items[i].key));
+            // A key an earlier item took shows no label, as in fcitx5.
+            gchar* label = items[i].key == IBUS_KEY_VoidSymbol ? g_strdup("") : g_strdup_printf("%s.", ibus_keyval_name(items[i].key));
             ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label));
             g_free(label);
         }

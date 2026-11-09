@@ -1825,14 +1825,17 @@ for _ in range(4):
     seen.append(app_mode("cycle"))
 check(
     seen == ["cycle=5", "cycle=0", "cycle=2", "cycle=5"],
-    "cycle: Sen, underline, Off, then Default (Sen) again",
+    "cycle: from the shared Sen to underline, Off, Sen and underline again",
     seen,
 )
 check(app.text == "", "cycle: the app sees neither the press nor the release", app.text)
 app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
 pump(300)
 app.type("vieetj ")
-check(app.text == "vieetj ", "cycle: it also works while Off, which types English", app.text)
+check(app.text == "vieetj ", "cycle: Off types English", app.text)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+check(app_mode("cycle") == "cycle=2", "cycle: the key still works while Off", app_mode("cycle"))
 app.close()
 set_setting("CycleModeKey", "")
 os.remove(app_modes_path)
@@ -2233,5 +2236,22 @@ if saved_logs:
         check("việt" in f.read(), "menu: the typing log holds the last words", saved_logs[0])
     modes = (os.stat(state_dir).st_mode & 0o777, os.stat(saved_logs[0]).st_mode & 0o777)
     check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
+app.close()
+
+# Last, since an engine that dies here fails every check after it. A restore may hide the items of
+# a menu that is open.
+app = menu_app("menu-shrinks")
+app.key(IBus.KEY_grave)
+pump(200)
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"):
+    set_setting(name, "False")
+app.key(IBus.KEY_Down)
+pump(300)
+app.type("vie65t ")  # the checks above left VNI on
+check(
+    app.menu is None and app.text.endswith("việt "),
+    "menu: hiding every mode while it is open closes it",
+    (app.menu, app.text),
+)
 app.close()
 finish()

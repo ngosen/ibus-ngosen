@@ -33,6 +33,9 @@ namespace ngosen {
     // The shown modes in ModeOrder, then the ones it leaves out; a key an earlier item has picks nothing.
     std::vector<MenuItem> modeMenuItems(const IBusSettings& settings);
 
+    // As in fcitx5 the cycle key goes through only the modes ModeOrder names.
+    std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings);
+
     bool                  cyclesMode(const IBusSettings& settings, guint keyval, guint state);
 
     // keymap is the custom keymap in use, if any.

@@ -360,8 +360,8 @@ namespace {
     // the app like a pick in the menu.
     void cycleMode(IBusEngine* engine, Session& session) {
         std::vector<ngosen::Mode> modes;
-        for (const auto& item : ngosen::modeMenuItems(resources().settings())) {
-            const ngosen::Mode mode = item.mode == ngosen::MenuMode::Default ? sharedVietnameseMode() : modeOfMenu(item.mode);
+        for (const ngosen::MenuMode item : ngosen::cycleMenuModes(resources().settings())) {
+            const ngosen::Mode mode = item == ngosen::MenuMode::Default ? sharedVietnameseMode() : modeOfMenu(item);
             if (std::find(modes.begin(), modes.end(), mode) == modes.end())
                 modes.push_back(mode);
         }
@@ -396,6 +396,12 @@ namespace {
 
     void applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
         const auto items = ngosen::modeMenuItems(resources().settings());
+        // A restore may hide items while the menu is open.
+        if (items.empty()) {
+            closeModeMenu(engine, session);
+            return;
+        }
+        session.menuCursor = std::min(session.menuCursor, static_cast<guint>(items.size() - 1));
         switch (key.kind) {
             case ngosen::MenuKey::Close: closeModeMenu(engine, session); return;
             case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); return;
