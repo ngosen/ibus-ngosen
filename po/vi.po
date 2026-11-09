@@ -933,3 +933,6 @@ msgstr "Hiển thị chế độ Tắt"
 
 msgid "Show Default Typing"
 msgstr "Hiển thị chế độ gõ mặc định"
+
+msgid "Show in the top bar menu"
+msgstr "Hiện trong menu thanh trên cùng"

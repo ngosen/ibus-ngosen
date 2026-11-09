@@ -58,6 +58,13 @@ namespace ngosen {
             return newItem(key, PROP_TYPE_MENU, label, false, items);
         }
 
+        // GNOME Shell keeps the items it was first given and updates them by key, so a hidden item
+        // stays in the list.
+        IBusProperty* shownIf(bool shown, IBusProperty* item) {
+            ibus_property_set_visible(item, shown);
+            return item;
+        }
+
         bool contains(const std::vector<std::string>& list, const std::string& value) {
             return std::find(list.begin(), list.end(), value) != list.end();
         }
@@ -69,18 +76,18 @@ namespace ngosen {
         IBusProperty* inputMode = newMarkedItem(InputModeItem, _("Vietnamese"), !english);
         ibus_property_set_symbol(inputMode, ibus_text_new_from_static_string(english ? "E" : "V"));
         ibus_prop_list_append(menu, inputMode);
-        ibus_prop_list_append(menu, newChoice("InputMethod", _("Input Method"), MenuInputMethods, settings.options.inputMethod));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuInputMethod, newChoice("InputMethod", _("Input Method"), MenuInputMethods, settings.options.inputMethod)));
         ibus_prop_list_append(menu, newToggle(DirectTyping, settings));
-        ibus_prop_list_append(menu, newChoice("OutputCharset", _("Charset"), charsetNames(), settings.options.outputCharset));
-        ibus_prop_list_append(menu, newToggle(SpellCheck, settings));
-        ibus_prop_list_append(menu, newToggle(Macro, settings));
-        ibus_prop_list_append(menu, newToggle(CapitalizeMacro, settings));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuCharset, newChoice("OutputCharset", _("Charset"), charsetNames(), settings.options.outputCharset)));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuSpellCheck, newToggle(SpellCheck, settings)));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuMacro, newToggle(Macro, settings)));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuCapitalizeMacro, newToggle(CapitalizeMacro, settings)));
         IBusPropList* capitalize = ibus_prop_list_new();
         ibus_prop_list_append(capitalize, newToggle(AfterPunctuation, settings));
         ibus_prop_list_append(capitalize, newToggle(StartOfText, settings));
-        ibus_prop_list_append(menu, newItem("AutoCapitalize", PROP_TYPE_MENU, _("Auto Capitalize"), false, capitalize));
-        ibus_prop_list_append(menu, newToggle(Restore, settings));
-        ibus_prop_list_append(menu, newToggle(Dictionary, settings));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuAutoCapitalize, newItem("AutoCapitalize", PROP_TYPE_MENU, _("Auto Capitalize"), false, capitalize)));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuAutoRestore, newToggle(Restore, settings)));
+        ibus_prop_list_append(menu, shownIf(settings.showMenuDictionary, newToggle(Dictionary, settings)));
         ibus_prop_list_append(menu, newItem(SaveTypingLogItem, PROP_TYPE_NORMAL, _("Save typing log")));
         ibus_prop_list_append(menu, newItem(SettingsWindowItem, PROP_TYPE_NORMAL, _("Settings")));
         return menu;

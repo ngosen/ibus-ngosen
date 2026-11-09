@@ -113,7 +113,7 @@ namespace {
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 37, "the file has every key");
+        check(parseIni(text).top.size() == 45, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -312,6 +312,16 @@ namespace {
               "the Vietnamese item is marked ✖ in English");
         check(g_strcmp0(ibus_text_get_text(ibus_property_get_symbol(englishItem)), "E") == 0, "the top bar symbol is E in English");
         g_object_unref(englishMenu);
+        IBusSettings hiding    = settings;
+        hiding.showMenuCharset = hiding.showMenuAutoCapitalize = false;
+        IBusPropList* hidden                                   = newSettingsMenu(hiding);
+        g_object_ref_sink(hidden);
+        check(!ibus_property_get_visible(findItem(hidden, "OutputCharset")) && !ibus_property_get_visible(findItem(hidden, "AutoCapitalize")) &&
+                  ibus_property_get_visible(findItem(hidden, "SpellCheck")),
+              "a hidden item stays in the menu, marked hidden, since GNOME Shell updates items only by key");
+        g_object_unref(hidden);
+        const IBusSettings read = readSettings(parseIni("ShowMenuMacro=False\n"));
+        check(!read.showMenuMacro && read.showMenuDictionary && !readSettings(parseIni(settingsText(read))).showMenuMacro, "ShowMenu settings are read and written");
 
         std::string key;
         std::string value;

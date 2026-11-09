@@ -55,6 +55,15 @@ namespace ngosen {
         bool        showModeOff     = true;
         bool        showModeDefault = true;
         std::string modeOrder       = "Sen,Preedit,Emoji,Off,Default";
+        // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
+        bool showMenuInputMethod     = true;
+        bool showMenuCharset         = true;
+        bool showMenuSpellCheck      = true;
+        bool showMenuMacro           = true;
+        bool showMenuCapitalizeMacro = true;
+        bool showMenuAutoCapitalize  = true;
+        bool showMenuAutoRestore     = true;
+        bool showMenuDictionary      = true;
         // Moves the app to the next mode in that order; off by default, as in fcitx5.
         std::vector<std::string> cycleModeKeys;
     };

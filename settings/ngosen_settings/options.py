@@ -35,6 +35,16 @@ MODE_ORDERS = [
     ("Off,Sen,Preedit,Emoji,Default", N_("OFF, Sen, Preedit, Default Typing")),
 ]
 SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeDefault"]
+SHOW_MENUS = [
+    "ShowMenuInputMethod",
+    "ShowMenuCharset",
+    "ShowMenuSpellCheck",
+    "ShowMenuMacro",
+    "ShowMenuCapitalizeMacro",
+    "ShowMenuAutoCapitalize",
+    "ShowMenuAutoRestore",
+    "ShowMenuDictionary",
+]
 # The keys that pick a mode in the menu, each one letter or digit.
 SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutDefault"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
@@ -64,6 +74,15 @@ LABELS = {
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
     "ShowModeDefault": N_("Show Default Typing"),
+    # Under a group title that says where they show, so each is named as in the menu.
+    "ShowMenuInputMethod": N_("Input Method"),
+    "ShowMenuCharset": N_("Charset"),
+    "ShowMenuSpellCheck": N_("Spell Check"),
+    "ShowMenuMacro": N_("Macro"),
+    "ShowMenuCapitalizeMacro": N_("Capitalize Macro"),
+    "ShowMenuAutoCapitalize": N_("Auto Capitalize"),
+    "ShowMenuAutoRestore": N_("Auto Restore Invalid Words"),
+    "ShowMenuDictionary": N_("Custom Dictionary"),
     "ShortcutSen": N_("Shortcut for Sen"),
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
@@ -200,6 +219,7 @@ TYPING_GROUPS = [
         ],
     ),
     (N_("Mode menu"), ["ModeOrder", *SHOW_MODES, *SHORTCUTS]),
+    (N_("Show in the top bar menu"), SHOW_MENUS),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 
