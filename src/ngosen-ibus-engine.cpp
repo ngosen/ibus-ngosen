@@ -682,10 +682,8 @@ namespace ngosen {
     }
 
     std::thread watchClicks(const std::atomic<bool>& stop) {
-        // On Wayland the X server sees clicks on X11 windows only, and a missed click would let a
-        // reset be ignored after the cursor moved.
-        if (isWaylandSession())
-            return {};
+        // On Wayland Xwayland still reports clicks on X11 windows, where XIM clients send no reset on a
+        // click, so the watcher runs there too, as in the fcitx5 edition.
         return std::thread([&stop] {
             clicksWatched.store(true, std::memory_order_release);
             watchX11PointerClicks(stop, [] {
