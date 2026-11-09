@@ -386,6 +386,9 @@ namespace ngosen {
     std::string SettingsPaths::appModesFile() const {
         return configDir + "/ngosen-app-rules.conf";
     }
+    std::string SettingsPaths::appSwitchesFile() const {
+        return configDir + "/ngosen-app-switch.conf";
+    }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
     }
@@ -519,10 +522,9 @@ namespace ngosen {
         std::string content;
         if (!imported) {
             const std::pair<std::string, std::string> copies[] = {
-                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
-                {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
-                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
-                {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
+                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},        {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
+                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},   {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))

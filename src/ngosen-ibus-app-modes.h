@@ -14,11 +14,12 @@
 
 namespace ngosen {
 
-    // The typing mode picked for one app in the mode menu. English stays shared by every app, as the
-    // toggle key switches it everywhere at once.
+    // The typing mode picked for one app in the mode menu; Off types English until the toggle key
+    // switches the app back.
     enum class AppMode {
         Sen,
-        Preedit
+        Preedit,
+        Off
     };
 
     using AppModeMap = std::map<std::string, AppMode>;
@@ -27,8 +28,8 @@ namespace ngosen {
     // no single app: GNOME Shell before the portal names the app, Qt and XIM clients of any app.
     std::string modeAppName(const std::string& program);
 
-    // The fcitx5 edition's ngosen-app-rules.conf format: "app=number", 2 for Sen and 5 for Preedit. The
-    // other numbers fcitx5 writes (Off, Emoji) have no per-app meaning here and are skipped.
+    // The fcitx5 edition's ngosen-app-rules.conf format: "app=number", 0 for Off, 2 for Sen and 5 for
+    // Preedit. Emoji (6) has no meaning here and is skipped.
     AppModeMap  parseAppModes(const std::string& text);
     std::string appModesText(const AppModeMap& modes);
 
@@ -48,6 +49,31 @@ namespace ngosen {
         FileWriter  write_;
         AppModeMap  modes_;
         // Unset until the file was read; a missing file reads as no modes.
+        std::optional<std::filesystem::file_time_type> mtime_;
+        bool                                           loaded_ = false;
+    };
+
+    // Whether the toggle key last left each app in Vietnamese (true) or English.
+    using AppSwitchMap = std::map<std::string, bool>;
+
+    // The fcitx5 edition's ngosen-app-switch.conf, an fcitx5 list: "[Switches/0]", "App=", "Vietnamese=".
+    AppSwitchMap parseAppSwitches(const std::string& text);
+    std::string  appSwitchesText(const AppSwitchMap& switches);
+
+    class AppSwitches {
+      public:
+        explicit AppSwitches(std::string path, FileWriter write = writeFileAtomically);
+
+        std::optional<bool> find(const std::string& app);
+        // nullopt forgets the app, so it follows its mode or the last switch again.
+        bool set(const std::string& app, std::optional<bool> vietnamese);
+
+      private:
+        void                                           reloadIfChanged();
+
+        std::string                                    path_;
+        FileWriter                                     write_;
+        AppSwitchMap                                   switches_;
         std::optional<std::filesystem::file_time_type> mtime_;
         bool                                           loaded_ = false;
     };

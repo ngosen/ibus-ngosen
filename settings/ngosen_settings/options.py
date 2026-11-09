@@ -47,7 +47,7 @@ LABELS = {
     "ModeMenuKey": N_("Mode Menu Hotkey"),
     "ShortcutSen": N_("Shortcut for Sen"),
     "ShortcutPreedit": N_("Shortcut for Preedit"),
-    "ShortcutOff": N_("Shortcut for English"),
+    "ShortcutOff": N_("Shortcut for OFF"),
     "ShortcutDefault": N_("Shortcut for Default Typing"),
     "DirectTyping": N_("Type with Sen where the app allows"),
     "OutputCharset": N_("Output Charset"),
@@ -82,7 +82,7 @@ HINTS = {
         "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
     ),
     "ModeMenuKey": N_(
-        "Opens a menu to pick Sen or underlined typing for the app in use, or English for every app. Press it twice to type the key itself; in English it types as usual."
+        "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
     ),
     "DirectTyping": N_(
         "Text goes straight into fields that report the text around the cursor, without an underline. Elsewhere words keep the underline."

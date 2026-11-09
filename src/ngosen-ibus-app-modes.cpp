@@ -16,10 +16,20 @@ namespace ngosen {
 
     namespace {
 
+        constexpr int OffNumber     = 0;
         constexpr int SenNumber     = 2;
         constexpr int PreeditNumber = 5;
 
-        bool          isNumber(const std::string& text) {
+        int           numberOfMode(AppMode mode) {
+            switch (mode) {
+                case AppMode::Sen: return SenNumber;
+                case AppMode::Preedit: return PreeditNumber;
+                case AppMode::Off: break;
+            }
+            return OffNumber;
+        }
+
+        bool isNumber(const std::string& text) {
             return !text.empty() && text.size() <= 2 && text.find_first_not_of("0123456789") == std::string::npos;
         }
 
@@ -32,6 +42,7 @@ namespace ngosen {
                 case 4:
                 case 8: return AppMode::Sen;
                 case PreeditNumber: return AppMode::Preedit;
+                case OffNumber: return AppMode::Off;
                 default: return std::nullopt;
             }
         }
@@ -81,9 +92,9 @@ namespace ngosen {
     }
 
     std::string appModesText(const AppModeMap& modes) {
-        std::string text = "# The typing mode picked for each app: 2 = Sen, 5 = Preedit\n";
+        std::string text = "# The typing mode picked for each app: 0 = Off, 2 = Sen, 5 = Preedit\n";
         for (const auto& [app, mode] : modes)
-            text += app + "=" + std::to_string(mode == AppMode::Sen ? SenNumber : PreeditNumber) + "\n";
+            text += app + "=" + std::to_string(numberOfMode(mode)) + "\n";
         return text;
     }
 
@@ -128,10 +139,81 @@ namespace ngosen {
         if (text.empty())
             text = appModesText({});
         if (mode)
-            text += app + "=" + std::to_string(*mode == AppMode::Sen ? SenNumber : PreeditNumber) + "\n";
+            text += app + "=" + std::to_string(numberOfMode(*mode)) + "\n";
         if (!write_(path_, text))
             return false;
         modes_ = parseAppModes(text);
+        // The write is ours; reading it back would change nothing.
+        std::error_code error;
+        if (const auto time = std::filesystem::last_write_time(path_, error); !error)
+            mtime_ = time;
+        return true;
+    }
+
+    AppSwitchMap parseAppSwitches(const std::string& text) {
+        AppSwitchMap  switches;
+        const IniFile ini = parseIni(text);
+        // fcitx5 stops at the first missing index.
+        for (size_t i = 0;; ++i) {
+            const auto section = ini.sections.find("Switches/" + std::to_string(i));
+            if (section == ini.sections.end())
+                break;
+            const auto        app        = section->second.find("App");
+            const auto        vietnamese = section->second.find("Vietnamese");
+            const std::string name       = app == section->second.end() ? std::string() : modeAppName(app->second);
+            if (!name.empty() && vietnamese != section->second.end() && (vietnamese->second == "True" || vietnamese->second == "False"))
+                switches[name] = vietnamese->second == "True";
+        }
+        return switches;
+    }
+
+    std::string appSwitchesText(const AppSwitchMap& switches) {
+        std::string text  = "[Switches]\n";
+        size_t      index = 0;
+        for (const auto& [app, vietnamese] : switches)
+            text += "[Switches/" + std::to_string(index++) + "]\nApp=" + escapeIniValue(app) + "\nVietnamese=" + (vietnamese ? "True" : "False") + "\n\n";
+        return text;
+    }
+
+    AppSwitches::AppSwitches(std::string path, FileWriter write) : path_(std::move(path)), write_(std::move(write)) {}
+
+    void AppSwitches::reloadIfChanged() {
+        std::error_code                                error;
+        const auto                                     time = std::filesystem::last_write_time(path_, error);
+        std::optional<std::filesystem::file_time_type> now;
+        if (!error)
+            now = time;
+        if (loaded_ && now == mtime_)
+            return;
+        loaded_ = true;
+        mtime_  = now;
+        std::string text;
+        switches_ = now && readFile(path_, text) ? parseAppSwitches(text) : AppSwitchMap{};
+    }
+
+    std::optional<bool> AppSwitches::find(const std::string& app) {
+        if (app.empty())
+            return std::nullopt;
+        reloadIfChanged();
+        const auto it = switches_.find(app);
+        return it == switches_.end() ? std::nullopt : std::optional<bool>(it->second);
+    }
+
+    bool AppSwitches::set(const std::string& app, std::optional<bool> vietnamese) {
+        if (app.empty())
+            return false;
+        reloadIfChanged();
+        AppSwitchMap changed = switches_;
+        if (vietnamese)
+            changed[app] = *vietnamese;
+        else
+            changed.erase(app);
+        // Every tap of the toggle key and every pick in the menu ends here; an unchanged list needs no write.
+        if (changed == switches_ && (mtime_ || changed.empty()))
+            return true;
+        if (!write_(path_, appSwitchesText(changed)))
+            return false;
+        switches_ = std::move(changed);
         // The write is ours; reading it back would change nothing.
         std::error_code error;
         if (const auto time = std::filesystem::last_write_time(path_, error); !error)
