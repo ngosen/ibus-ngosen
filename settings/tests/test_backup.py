@@ -394,6 +394,8 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(
             exported["meta"]["components"], ["config", "macros", "keymaps", "dictionary"]
         )
+        # The fcitx5 edition keeps its own per-app switches when it restores this.
+        self.assertEqual(exported["meta"]["edition"], "ibus")
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["VietnameseOn"], "True")
         # A list edited after the backup goes back to the packaged one.
