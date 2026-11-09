@@ -1041,3 +1041,11 @@ msgstr "Đã xoá {} và đặt im-config về mặc định. Hãy đăng xuất
 #: settings/ngosen_settings/system_check.py
 msgid "Set im-config back to its default. Log out and back in."
 msgstr "Đã đặt im-config về mặc định. Hãy đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/window.py
+msgid "Search settings"
+msgstr "Tìm cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "No settings found"
+msgstr "Không thấy cài đặt nào"
