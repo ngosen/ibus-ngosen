@@ -24,6 +24,8 @@ INFO = "info"
 
 ENGINE = "ngosen"
 US_LAYOUT = ("xkb", "us")
+# As the engine names it (SettingsPaths::duplicateLayoutMark), so it does not remove the source again.
+LAYOUT_MARK = ".us-source-removed"
 GNOME_SOURCES = "org.gnome.desktop.input-sources"
 FORWARD_KEYS = "forward-keys@ngosen.github.io"
 
@@ -410,6 +412,12 @@ def steps_left(found):
 
 
 def failed_text(finding):
+    if finding.action == ONLY_NGOSEN:
+        return (
+            _("Could not fix this.")
+            + " "
+            + _("Settings › Keyboard › Input Sources: remove “English (US)”.")
+        )
     if not finding.command:
         return finding.fix
     return _("Could not fix this.") + " " + finding.fix
@@ -422,10 +430,11 @@ def with_ngosen(sources):
     return list(sources) + [("ibus", ENGINE)]
 
 
-def run_fix(action, sources):
+def run_fix(action, sources, config_dir=None):
     """Runs a step's fix. Returns (done, undo), where undo puts things back or is None.
 
-    sources is an object with get() and set(list) for the GNOME input sources.
+    sources is an object with get() and set(list) for the GNOME input sources; config_dir is the
+    engine's settings folder, where removing English (US) is marked as done.
     """
     if action == ADD_SOURCE:
         before = sources.get()
@@ -435,6 +444,9 @@ def run_fix(action, sources):
     if action == ONLY_NGOSEN:
         before = sources.get()
         if before is None or US_LAYOUT not in before:
+            return False, None
+        # Also kept after an undo, so the engine does not remove the source the user brought back.
+        if config_dir and not _mark_layout_handled(config_dir):
             return False, None
         if not sources.set([s for s in before if s != US_LAYOUT]):
             return False, None
@@ -454,6 +466,15 @@ def _remove_ngosen(sources):
     # Only the added source goes, so changes made in GNOME Settings since then stay.
     current = sources.get()
     return current is not None and sources.set([s for s in current if s != ("ibus", ENGINE)])
+
+
+def _mark_layout_handled(config_dir):
+    try:
+        os.makedirs(config_dir, exist_ok=True)
+        with open(os.path.join(config_dir, LAYOUT_MARK), "a", encoding="utf-8"):
+            return True
+    except OSError:
+        return False
 
 
 def _add_back_layout(sources, index):
@@ -477,8 +498,9 @@ def _succeeds(cmd):
 class Fixes:
     """What the check page's fix buttons are doing; the page only draws it."""
 
-    def __init__(self, sources, env=None):
+    def __init__(self, sources, env=None, config_dir=None):
         self.sources = sources
+        self.config_dir = config_dir
         self.env = os.environ if env is None else env
         self.busy = set()
         self.failed = set()
@@ -497,7 +519,7 @@ class Fixes:
             if action == CLEAN_FCITX5:
                 ok, undo, self.removed = fcitx5_leftovers.clean(self.env)
             else:
-                ok, undo = run_fix(action, self.sources)
+                ok, undo = run_fix(action, self.sources, self.config_dir)
             if not ok:
                 self.failed.add(action)
                 continue

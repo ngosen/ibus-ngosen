@@ -113,6 +113,7 @@ class CheckPage:
         direct_typing=lambda: False,
         app_modes_file=None,
         toggle_key=lambda: False,
+        config_dir=None,
     ):
         """notify(text, undo) shows a toast; on_count(n) gets the number of steps left."""
         self.sources = sources
@@ -122,7 +123,7 @@ class CheckPage:
         self.ngosen_version = ngosen_version
         self.notify = notify
         self.on_count = on_count
-        self.fixes = system_check.Fixes(sources)
+        self.fixes = system_check.Fixes(sources, config_dir=config_dir)
         self.rows = []
         page = Adw.PreferencesPage(title=_("Check"), icon_name="emblem-system-symbolic")
         page.add(self._summary_group())
@@ -249,11 +250,12 @@ class CheckPage:
 
     def _fixed(self, done, undos):
         self.run()
-        wait = self.fixes.settle_again(done, self.findings)
+        wait = self.fixes.settle_again(done, self.found)
         if wait:
             GLib.timeout_add(wait, self._fixed, done, undos)
             return GLib.SOURCE_REMOVE
-        text, undo = self.fixes.finish(done, undos, self.findings)
+        # Every step with a button, notes included, so a note whose fix failed says so.
+        text, undo = self.fixes.finish(done, undos, self.found)
         self._show_steps()
         if text:
             self.notify(text, self._then_check(undo) if undo else None)

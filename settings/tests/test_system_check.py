@@ -363,10 +363,6 @@ class ReportTest(unittest.TestCase):
         self.assertEqual(query["template"], ["bug_report.yml"])
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
 US, FR, NGOSEN = ("xkb", "us"), ("xkb", "fr"), ("ibus", "ngosen")
 
 
@@ -400,6 +396,24 @@ class OnlyNgosenTest(unittest.TestCase):
         for sources in (FakeSources(None), FakeSources([NGOSEN])):
             self.assertEqual(sc.run_fix(sc.ONLY_NGOSEN, sources), (False, None))
 
+    def test_failed_fix_stays_on_its_note(self):
+        found = sc.steps(facts(duplicate_layout=True))
+        fixes = sc.Fixes(FakeSources([NGOSEN]))
+        done, undos, _settle = fixes.run([sc.ONLY_NGOSEN])
+        self.assertEqual(fixes.finish(done, undos, found), ("", None))
+        self.assertIn(sc.ONLY_NGOSEN, fixes.failed)
+        (step,) = [f for f in found if f.action == sc.ONLY_NGOSEN]
+        self.assertIn("English (US)", sc.failed_text(step))
+
+    def test_marks_the_source_handled_for_the_engine(self):
+        with tempfile.TemporaryDirectory() as home:
+            folder = os.path.join(home, "ngosen")
+            sources = FakeSources([US, NGOSEN])
+            _done, undo = sc.run_fix(sc.ONLY_NGOSEN, sources, folder)
+            self.assertTrue(undo())
+            self.assertTrue(os.path.exists(os.path.join(folder, sc.LAYOUT_MARK)))
+            self.assertEqual(sources.get(), [US, NGOSEN])
+
     def test_collect_needs_both_sources_and_a_toggle_key(self):
         cases = [([US, NGOSEN], True, True), ([US, NGOSEN], False, False), ([US], True, False)]
         for current, toggle_key, expected in cases:
@@ -412,3 +426,7 @@ class OnlyNgosenTest(unittest.TestCase):
             ):
                 got = sc.collect(FakeSources(current), env=READY, toggle_key=toggle_key)
             self.assertEqual(got.duplicate_layout, expected, (current, toggle_key))
+
+
+if __name__ == "__main__":
+    unittest.main()

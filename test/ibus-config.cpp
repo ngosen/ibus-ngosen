@@ -449,8 +449,10 @@ namespace {
                                          return true;
                                      }};
 
-        stored = {us, ngosen};
-        check(dropDuplicateLayoutOnce(pathsIn(root / "no-key"), false, store) && stored == Sources{us, ngosen}, "without a toggle key the US layout stays");
+        const SettingsPaths    noKey = pathsIn(root / "no-key");
+        stored                       = {us, ngosen};
+        check(dropDuplicateLayoutOnce(noKey, false, store) && stored == Sources{us, ngosen}, "without a toggle key the US layout stays");
+        check(dropDuplicateLayoutOnce(noKey, true, store) && stored == Sources{us, ngosen}, "a toggle key turned on later keeps the US layout");
 
         const SettingsPaths early = pathsIn(root / "early");
         stored                    = {us};

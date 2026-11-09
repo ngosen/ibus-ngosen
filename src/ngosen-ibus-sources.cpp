@@ -60,10 +60,6 @@ namespace ngosen {
             g_object_unref(settings);
             return ok;
         }
-
-        std::string duplicateLayoutMark(const SettingsPaths& paths) {
-            return paths.configDir + "/.us-source-removed";
-        }
     } // namespace
 
     std::vector<InputSource> withoutDuplicateLayout(const std::vector<InputSource>& sources) {
@@ -75,17 +71,20 @@ namespace ngosen {
     }
 
     bool dropDuplicateLayoutOnce(const SettingsPaths& paths, bool hasToggleKey, const InputSourceStore& store, const FileWriter& write) {
-        const std::string mark = duplicateLayoutMark(paths);
-        // Without a toggle key the US layout is the way to English.
-        if (!hasToggleKey || g_file_test(mark.c_str(), G_FILE_TEST_EXISTS))
+        const std::string mark = paths.duplicateLayoutMark();
+        if (g_file_test(mark.c_str(), G_FILE_TEST_EXISTS))
             return true;
         const auto sources = store.get();
         // Started from IBus Preferences or before the source was added: not yet the time.
         if (!sources || !has(*sources, Engine))
             return true;
-        // The mark goes first: a failed change leaves the source, never a second removal later.
+        // Decided once, on the first run as a source: a toggle key turned on later removes nothing.
+        // The mark goes first, so a failed change leaves the source rather than removing it later.
         if (!write(mark, ""))
             return false;
+        // Without a toggle key the US layout is the way to English.
+        if (!hasToggleKey)
+            return true;
         const auto kept = withoutDuplicateLayout(*sources);
         if (kept == *sources)
             return true;

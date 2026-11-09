@@ -27,8 +27,9 @@ namespace ngosen {
     // The US layout next to Ngó Sen only switches to the same keys, which the toggle key already does.
     std::vector<InputSource> withoutDuplicateLayout(const std::vector<InputSource>& sources);
 
-    // Removes that source the first time the engine runs as a GNOME input source with a toggle key, and
-    // never again, so a user who adds it back keeps it. Returns false when a write failed.
+    // Decides once, the first time the engine runs as a GNOME input source: with a toggle key that source
+    // goes, and it is never looked at again, so a user who adds it back keeps it. Returns false when a
+    // write failed.
     bool             dropDuplicateLayoutOnce(const SettingsPaths& paths, bool hasToggleKey, const InputSourceStore& store, const FileWriter& write = writeFileAtomically);
 
     InputSourceStore gnomeInputSources();
