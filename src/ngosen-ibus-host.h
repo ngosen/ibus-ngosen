@@ -95,8 +95,8 @@ namespace ngosen {
         bool throughShell() const;
         // A click that moves the cursor reaches the engine through the click watcher.
         bool seesCursorMoves() const;
-        // Typing straight in with forwarded keys, in a field that claims to report its text.
-        bool typesWithKeysBesideText() const;
+        // Typing straight in with forwarded keys, not through GNOME Shell.
+        bool typesWithKeys() const;
 
       private:
         struct CandidateList {
