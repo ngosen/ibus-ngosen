@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Check my machine page: each setup step, with a fix where the window can do it."""
+"""The Check page: each setup step, with a fix where the window can do it."""
 
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk
 
@@ -10,6 +10,7 @@ from .i18n import _
 
 ICONS = {
     system_check.OK: ("emblem-ok-symbolic", "success"),
+    system_check.INFO: ("dialog-information-symbolic", "accent"),
     system_check.WARN: ("dialog-warning-symbolic", "warning"),
     system_check.FAIL: ("dialog-error-symbolic", "error"),
 }
@@ -53,8 +54,19 @@ class GnomeSources:
                     accelerators += [custom_binding(path) for path in value.unpack()]
                 elif value.get_type_string() == "as":
                     accelerators += value.unpack()
-        options = self.settings.get_strv("xkb-options") if self.settings is not None else []
-        return accelerators, options
+        return accelerators, self._xkb_options()
+
+    def switch_keys(self):
+        """The shortcuts that switch input sources, and the xkb options that may switch layouts."""
+        schemas = Gio.SettingsSchemaSource.get_default()
+        schema = schemas.lookup(KEYBINDINGS[0], True) if schemas is not None else None
+        accelerators = []
+        if schema is not None and schema.has_key("switch-input-source"):
+            accelerators = Gio.Settings.new(KEYBINDINGS[0]).get_strv("switch-input-source")
+        return accelerators, self._xkb_options()
+
+    def _xkb_options(self):
+        return self.settings.get_strv("xkb-options") if self.settings is not None else []
 
     def set(self, sources):
         if self.settings is None:
@@ -92,16 +104,28 @@ def _copy(text):
 
 
 class CheckPage:
-    def __init__(self, sources, ngosen_version, notify, on_count, direct_typing=lambda: False):
+    def __init__(
+        self,
+        sources,
+        ngosen_version,
+        notify,
+        on_count,
+        direct_typing=lambda: False,
+        app_modes_file=None,
+        toggle_key=lambda: False,
+        config_dir=None,
+    ):
         """notify(text, undo) shows a toast; on_count(n) gets the number of steps left."""
         self.sources = sources
+        self.app_modes_file = app_modes_file
         self.direct_typing = direct_typing
+        self.toggle_key = toggle_key
         self.ngosen_version = ngosen_version
         self.notify = notify
         self.on_count = on_count
-        self.fixes = system_check.Fixes(sources)
+        self.fixes = system_check.Fixes(sources, config_dir=config_dir)
         self.rows = []
-        page = Adw.PreferencesPage(title=_("Check my machine"), icon_name="emblem-system-symbolic")
+        page = Adw.PreferencesPage(title=_("Check"), icon_name="emblem-system-symbolic")
         page.add(self._summary_group())
         self.steps = Adw.PreferencesGroup(title=_("Steps to type Vietnamese"))
         page.add(self.steps)
@@ -153,10 +177,14 @@ class CheckPage:
 
     def run(self):
         self.facts = system_check.collect(
-            self.sources, self.ngosen_version, direct_typing=self.direct_typing()
+            self.sources,
+            self.ngosen_version,
+            direct_typing=self.direct_typing(),
+            app_modes_file=self.app_modes_file,
+            toggle_key=self.toggle_key(),
         )
         self.found = system_check.steps(self.facts)
-        self.findings = [f for f in self.found if f.level != system_check.OK]
+        self.findings = system_check.steps_left(self.found)
         self._show_steps()
 
     def _show_steps(self):
@@ -177,9 +205,11 @@ class CheckPage:
         self.on_count(len(self.findings))
 
     def _row(self, finding):
-        # A step with a button needs no instructions unless the button fails.
-        subtitle = "" if finding.action else finding.fix
+        # A step with a button needs no instructions unless the button fails; a note says why it is there.
+        subtitle = finding.fix if finding.level == system_check.INFO or not finding.action else ""
         row = Adw.ActionRow(title=finding.title, subtitle=subtitle, use_markup=False)
+        # Some steps give a command to copy.
+        row.set_subtitle_selectable(not finding.action)
         icon, css = ICONS[finding.level]
         row.add_prefix(Gtk.Image(icon_name=icon, css_classes=[css]))
         row.level = finding.level
@@ -220,11 +250,12 @@ class CheckPage:
 
     def _fixed(self, done, undos):
         self.run()
-        wait = self.fixes.settle_again(done, self.findings)
+        wait = self.fixes.settle_again(done, self.found)
         if wait:
             GLib.timeout_add(wait, self._fixed, done, undos)
             return GLib.SOURCE_REMOVE
-        text, undo = self.fixes.finish(done, undos, self.findings)
+        # Every step with a button, notes included, so a note whose fix failed says so.
+        text, undo = self.fixes.finish(done, undos, self.found)
         self._show_steps()
         if text:
             self.notify(text, self._then_check(undo) if undo else None)

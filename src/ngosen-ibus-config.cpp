@@ -456,6 +456,10 @@ namespace ngosen {
         return configDir + "/.forward-keys-enabled";
     }
 
+    std::string SettingsPaths::duplicateLayoutMark() const {
+        return configDir + "/.us-source-removed";
+    }
+
     bool readFile(const std::string& path, std::string& content) {
         std::ifstream file(path, std::ios::binary);
         if (!file)

@@ -172,8 +172,9 @@ namespace ngosen {
         // no text and show the preedit well.
         if (direct_ && !throughShell() && !clicksWatched.load(std::memory_order_acquire))
             f.surroundingText = false;
-        // Address bars keep the preedit and terminals erase with DEL, whatever the Shell does with keys.
-        const bool shellKeys   = throughShell() && reportsText() && !f.url && !f.terminal;
+        // Terminals erase with DEL, whatever the Shell does with keys. Address bars forward BackSpace as in
+        // the fcitx5 edition, where the core checks for a selected completion first.
+        const bool shellKeys   = throughShell() && reportsText() && !f.terminal;
         const bool preeditOnly = (throughShell() && !shellKeys) || (direct_ && !f.surroundingText);
         f.sendsNoKeys          = preeditOnly;
         f.preeditFallback      = preeditOnly && f.preedit;

@@ -86,6 +86,9 @@ class FakeSources:
             "grp:alt_caps_toggle",
         ]
 
+    def switch_keys(self):
+        return ["<Super>space", "<Shift><Super>space"], ["grp:alt_caps_toggle"]
+
 
 class RequiredTest(unittest.TestCase):
     @unittest.skipUnless(REQUIRED, "not required here")
@@ -263,6 +266,17 @@ class WindowTest(unittest.TestCase):
         dialog = window.pages.show_switch_dialog(self.window, self.window._show)
         dialog.emit("response", "copy")
         self.assertEqual(self.window.toast.get_title(), "Command copied.")
+        self.assertNotIn("asks before", dialog.get_body())
+        self.assertFalse(dialog.has_response("backup"))
+
+    def test_switch_dialog_offers_a_backup_first(self):
+        asked = []
+        dialog = window.pages.show_switch_dialog(
+            self.window, self.window._show, lambda: asked.append(True)
+        )
+        self.assertTrue(dialog.has_response("backup"))
+        dialog.emit("response", "backup")
+        self.assertEqual(asked, [True])
 
     def test_dictionary_add_and_remove(self):
         page = self.window.dictionary
@@ -278,6 +292,17 @@ class WindowTest(unittest.TestCase):
         self.assertFalse(os.path.exists(self.store.dictionary_file))
         self.window.undo()
         self.assertEqual(read_text(self.store.dictionary_file), "việt\nnam\nngoãy\n")
+
+    def test_dictionary_says_when_it_has_no_words(self):
+        page = self.window.dictionary
+        self.assertEqual(page.list_group.get_description(), "2 words. Search to see them.")
+        page.search.set_text("zzz")
+        page._show()
+        self.assertEqual(page.list_group.get_description(), "No words found.")
+        page.search.set_text("")
+        self.window.save_words([])
+        page._show()
+        self.assertEqual(page.list_group.get_description(), "No words yet.")
 
     def test_dictionary_list_follows_the_switch(self):
         page = self.window.dictionary
@@ -421,11 +446,47 @@ class WindowTest(unittest.TestCase):
         self.assertTrue(capture.dialog.get_response_enabled("save"))
         self.assertIn("menu bar", capture.note.get_label())
 
+    def test_about_is_in_the_menu_not_a_tab(self):
+        tabs = self.window.stack.get_pages()
+        titles = [tabs.get_item(i).get_title() for i in range(tabs.get_n_items())]
+        self.assertEqual(titles[-1], "Check")
+        self.assertNotIn("About", titles)
+        self.assertIsNotNone(self.window.lookup_action("about"))
+        dialog = self.window.show_about("1.0.0")
+        self.assertEqual(dialog.get_version(), "1.0.0")
+        self.assertEqual(dialog.get_license_type(), window.Gtk.License.GPL_3_0)
+        for name, _url in (window.pages.FORK, window.pages.VMK):
+            self.assertIn(name, dialog.get_comments())
+        dialog.close()
+
+    def test_pages_are_listed_in_a_sidebar(self):
+        tabs = self.window.stack.get_pages()
+        titles = [tabs.get_item(i).get_title() for i in range(tabs.get_n_items())]
+        sidebar = self.window.sidebar
+        names = []
+        row = sidebar.get_row_at_index(0)
+        while row is not None:
+            names.append(row.get_child().get_last_child().get_prev_sibling().get_label())
+            row = sidebar.get_row_at_index(len(names))
+        self.assertEqual(names, titles)
+        sidebar.select_row(sidebar.get_row_at_index(len(titles) - 1))
+        self.assertIs(self.window.stack.get_visible_child(), self.window.check.page)
+        self.assertEqual(self.window.content.get_title(), "Check")
+        # Shown another way, the page still names itself and its row follows.
+        self.window.stack.set_visible_child(self.window.macros.page)
+        self.assertEqual(self.window.content.get_title(), titles[1])
+        self.assertEqual(sidebar.get_selected_row().get_index(), 1)
+        left = len(self.window.check.findings)
+        self.assertEqual(self.window.check_badge.get_label(), str(left))
+        self.assertEqual(self.window.check_badge.get_visible(), left > 0)
+
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check
         self.assertEqual(self.window.check_tab.get_badge_number(), len(check.findings))
         self.assertEqual(len(check.rows), len(check.found))
         self.assertIn("Ngó Sen", check.report_text())
+        rules = os.path.join(self.folder, "ngosen-app-rules.conf")
+        self.assertEqual(check.app_modes_file, rules)
 
     def test_check_page_reads_the_typing_mode(self):
         self.window.save("DirectTyping", "True")

@@ -9,13 +9,15 @@
   <summary xml:lang="vi">Gõ tiếng Việt bằng Telex hoặc VNI</summary>
   <description>
     <p>
-      A Vietnamese input method for IBus, the input method GNOME comes with. The word being typed is
-      underlined until it is done. Switch between English and Vietnamese with Super+Space, as with
-      any other GNOME input source.
+      A Vietnamese input method for IBus, the input method GNOME comes with. It types straight into
+      apps that report the text around the cursor and underlines the word being typed elsewhere; the
+      typing mode can be picked for each app. A tap of Ctrl+Shift switches between English and
+      Vietnamese.
     </p>
     <p xml:lang="vi">
-      Bộ gõ tiếng Việt cho IBus, bộ gõ có sẵn của GNOME. Chữ đang gõ được gạch chân cho tới khi gõ
-      xong. Đổi Anh/Việt bằng Super+Space như các nguồn nhập khác của GNOME.
+      Bộ gõ tiếng Việt cho IBus, bộ gõ có sẵn của GNOME. Chữ hiện thẳng vào app báo được chữ quanh
+      con trỏ, app khác thì gạch chân chữ đang gõ; mỗi app chọn được cách gõ riêng. Nhấp Ctrl+Shift để
+      đổi Anh/Việt.
     </p>
   </description>
   <launchable type="desktop-id">ibus-setup-ngosen.desktop</launchable>
