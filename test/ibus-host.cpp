@@ -78,6 +78,21 @@ namespace {
         check(!host.field().sendsNoKeys, "another client in preedit mode still forwards keys");
     }
 
+    // As in the fcitx5 edition, an address bar types straight in and the core guards its completion.
+    void testShellAddressBar() {
+        IBusEngine engine{};
+        engine.client_capabilities = IBUS_CAP_PREEDIT_TEXT | IBUS_CAP_SURROUNDING_TEXT;
+        IBusHost host(&engine);
+        host.setDirectTyping(true);
+        host.setClient("gnome-shell");
+        host.setReportedText("xin", 3, 3);
+        host.setContentType(IBUS_INPUT_PURPOSE_URL, IBUS_INPUT_HINT_NONE);
+        setShellDeliversKeysForTest(true);
+        check(host.field().url && !host.field().sendsNoKeys && host.field().surroundingText, "Sen in an address bar through GNOME Shell forwards keys");
+        setShellDeliversKeysForTest(false);
+        check(host.field().sendsNoKeys && host.field().preeditFallback, "an address bar through a GNOME Shell that drops keys keeps the preedit");
+    }
+
     bool samePage(const std::optional<CandidatePage>& page, int pageNumber, int cursor, bool hasPrev, bool hasNext) {
         return page && page->total == 10 && page->pageSize == 4 && page->page == pageNumber && page->cursor == cursor && page->hasPrev == hasPrev && page->hasNext == hasNext;
     }
@@ -140,6 +155,7 @@ int main() {
     testXTest();
     testXSend();
     testShellFields();
+    testShellAddressBar();
     testCandidates();
     testWaylandSession();
     if (failures == 0)
