@@ -9,7 +9,7 @@ ibus-ngosen (1.2.0-1) unstable; urgency=medium
     portal, so the core's rules for single apps apply.
   * Core ngosen-1.9.0-1.
 
- -- Nguyen Phi <nguyenphidt@gmail.com>  Sun, 09 Nov 2026 10:00:00 +0700
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Mon, 09 Nov 2026 10:00:00 +0700
 
 ibus-ngosen (1.1.4-1) unstable; urgency=medium
 
