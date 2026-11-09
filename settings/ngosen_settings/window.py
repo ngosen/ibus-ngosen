@@ -47,6 +47,7 @@ class Window(Adw.ApplicationWindow):
             self.notify,
             self._count,
             self._direct_typing,
+            backup.Paths(store).app_modes,
         )
 
         stack = Adw.ViewStack()

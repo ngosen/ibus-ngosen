@@ -10,6 +10,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Tab Kiểm tra báo đúng hơn: fcitx5 đang giữ bộ gõ thì nói thẳng thế thay vì bảo chạy IBus; extension sửa
+  lỗi GNOME 50.0–50.3 được kiểm cả khi chỉ vài app chọn Gõ Sen; nguồn nhập đang dùng không phải Ngó Sen thì nhắc
+  phím đổi nguồn mà không tính là bước phải sửa; app X11 đi qua fcitx5 được gọi đúng tên; kết quả chép ra ghi số
+  app chọn cách gõ riêng (#96).
 - Mục 1.2.0-1 trong lịch sử gói deb và rpm ghi đúng thứ Hai 09/11/2026; rpmbuild hết cảnh báo ngày sai, và
   bộ kiểm phiên bản trước khi phát hành giờ bắt lỗi thứ sai (#93).
 
