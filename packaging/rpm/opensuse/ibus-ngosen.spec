@@ -31,7 +31,9 @@ Requires:       libadwaita-1-0 >= 1.5
 
 %description
 Ngó Sen for GNOME types Vietnamese through IBus, the input method GNOME comes
-with. The word being typed is underlined until it is done.
+with. It types straight into apps that report the text around the cursor and
+underlines the word being typed elsewhere; the typing mode can be picked for
+each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 
 %prep
 %setup -q

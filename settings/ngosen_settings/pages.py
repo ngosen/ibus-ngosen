@@ -418,7 +418,8 @@ class DictionaryPage:
         needle = self.search.get_text().strip().casefold()
         if not needle:
             count = len(self.store.words)
-            self.list_group.set_description(_("{} words. Search to see them.").format(count))
+            text = _("{} words. Search to see them.").format(count) if count else _("No words yet.")
+            self.list_group.set_description(text)
             return
         found = [w for w in self.store.words if needle in w.casefold()]
         for word in found[: self.SHOWN]:
