@@ -142,8 +142,8 @@ msgid "Retype text typed before switching on"
 msgstr "Cứu chữ: gõ lại có dấu khi quên bật tiếng Việt"
 
 #: settings/ngosen_settings/options.py
-msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it. X11 sessions only."
-msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ. Chỉ chạy ở phiên X11."
+msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
+msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ."
 
 #: settings/ngosen_settings/options.py
 msgid "Change the tone of a typed word"
@@ -1109,8 +1109,8 @@ msgid "Cứu chữ"
 msgstr "Cứu chữ"
 
 #: settings/ngosen_settings/whats_new.py
-msgid "Forgot to switch Vietnamese on? Press the English/Vietnamese key and the word is fixed; Tab or Esc gives back what you typed. X11 sessions only for now."
-msgstr "Quên bật tiếng Việt? Bấm phím chuyển Anh/Việt là chữ được sửa; Tab hay Esc trả lại như đã gõ. Hiện chỉ chạy ở phiên X11."
+msgid "Forgot to switch Vietnamese on? Press the English/Vietnamese key and the word is fixed; Tab or Esc gives back what you typed."
+msgstr "Quên bật tiếng Việt, bấm phím chuyển Anh/Việt để cứu chữ; Tab hoặc Esc trả lại chữ cũ."
 
 #: settings/ngosen_settings/whats_new.py
 msgid "Cứu dấu"

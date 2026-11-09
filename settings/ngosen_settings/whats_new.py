@@ -57,7 +57,7 @@ FEATURES = [
         "title": N_("Cứu chữ"),
         "how": N_(
             "Forgot to switch Vietnamese on? Press the English/Vietnamese key and the word is "
-            "fixed; Tab or Esc gives back what you typed. X11 sessions only for now."
+            "fixed; Tab or Esc gives back what you typed."
         ),
         "example": "vieetj → việt",
         "target": ("setting", "RetypeAfterSwitch"),
