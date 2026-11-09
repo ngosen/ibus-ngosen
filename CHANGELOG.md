@@ -11,6 +11,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Thay đổi
 
 - Biểu tượng bộ gõ và logo cửa sổ cài đặt giống bản fcitx5, bỏ chữ V gạch chân (#115).
+- Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron (VS Code, Discord…), Chrome và terminal trên X11: Ngó Sen không
+  còn tự gạch chân ở những app này. App nào gõ sai thì bấm phím ` chọn Gạch chân cho riêng app đó. Tuỳ chọn trong cửa
+  sổ cài đặt đổi tên thành "Gõ Sen" (#116).
 
 ### Sửa
 
