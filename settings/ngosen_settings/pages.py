@@ -3,25 +3,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """The pages of the window. Each control saves as soon as it changes."""
 
-from gi.repository import Adw, GLib, Gtk, Pango
+from gi.repository import Adw, Gdk, GLib, Gtk, Pango
 
-from . import options
+from . import keymap, keys, options
 from .i18n import N_, _
+
+# The last toggle key choice, which asks for keys instead of saving.
+OTHER_KEYS = "\0other"
+# Alone, or with Shift, these move between the buttons of the dialog instead of being recorded.
+NAVIGATION = {"Tab", "ISO_Left_Tab", "Return", "KP_Enter", "Escape"}
 
 
 class SettingRows:
     """Builds a row for each setting and puts the saved values back into them."""
 
-    def __init__(self, store, names, on_change):
+    def __init__(self, store, names, on_change, taken_keys=set):
         self.store = store
         self.names = names  # Values the engine accepts for InputMethod and OutputCharset.
         self.on_change = on_change
+        self.taken_keys = taken_keys  # GNOME's shortcuts, which a toggle key may not use.
         self.loading = False
         self.rows = {}
         self.pairs = {}  # What each combo row lists, as (value, label).
 
     def build(self, key):
-        if options.is_switch(key):
+        if key in options.SHORTCUTS:
+            row = Adw.EntryRow()
+            row.connect("changed", lambda r: self._shortcut_changed(key, r))
+        elif options.is_switch(key):
             row = Adw.SwitchRow()
             row.connect(
                 "notify::active",
@@ -44,7 +53,10 @@ class SettingRows:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
         if current not in (value for value, _label in pairs):
-            pairs.append((current, current))
+            shown = keys.label(current) if key in ("ToggleKey", "ModeMenuKey") else current
+            pairs.append((current, shown))
+        if key == "ToggleKey":
+            pairs.append((OTHER_KEYS, _("Other keys…")))
         return pairs
 
     def _choice(self, key, row):
@@ -55,8 +67,29 @@ class SettingRows:
     def _changed(self, key, value):
         if key == "InputMethod":
             self._show_example()
-        if not self.loading and value is not None:
-            self.on_change(key, value)
+        if self.loading or value is None:
+            return
+        if value == OTHER_KEYS:
+            self.capture = KeyCapture(self.taken_keys(), self._save_toggle_key, self.refresh)
+            self.capture.present(self.rows[key].get_root())
+            return
+        self.on_change(key, value)
+
+    def _shortcut_changed(self, key, row):
+        value = row.get_text()
+        problem = options.shortcut_problem(key, value, self.store.values)
+        if problem and value:
+            row.add_css_class("error")
+        else:
+            row.remove_css_class("error")
+        row.set_tooltip_text(_(problem) if problem and value else None)
+        if not self.loading and not problem:
+            # The engine matches the key as typed without Shift.
+            self.on_change(key, value.lower())
+
+    def _save_toggle_key(self, value):
+        self.on_change("ToggleKey", value)
+        self.refresh()
 
     def _show_example(self):
         row = self.rows.get("InputMethod")
@@ -71,12 +104,117 @@ class SettingRows:
                 if isinstance(row, Adw.SwitchRow):
                     row.set_active(value == "True")
                     continue
+                if isinstance(row, Adw.EntryRow):
+                    row.set_text(value)
+                    continue
                 pairs = self.pairs[key] = self.choices(key)
                 row.set_model(Gtk.StringList.new([label for _value, label in pairs]))
                 row.set_selected([v for v, _label in pairs].index(value))
             self._show_example()
         finally:
             self.loading = False
+
+
+class KeyCapture:
+    """Asks for a toggle key: the keys held together when the last of them comes up."""
+
+    def __init__(self, taken, on_save, on_cancel):
+        self.taken = taken
+        self.on_save = on_save
+        self.on_cancel = on_cancel
+        # By key code, since a key can come up under another name (Alt as Meta, 1 as ! with Shift).
+        self.held = set()
+        self.pressed = {}
+        self.value = None
+        self.parent = None
+        self.watch = None
+        self.navigating = False
+        self.dialog = Adw.AlertDialog(
+            heading=_("Press the new keys"), body=_("Hold the keys together, then let go.")
+        )
+        self.shown = Gtk.Label()
+        self.shown.add_css_class("title-2")
+        self.note = Gtk.Label(wrap=True, justify=Gtk.Justification.CENTER)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        box.append(self.shown)
+        box.append(self.note)
+        self.dialog.set_extra_child(box)
+        self.dialog.add_response("cancel", _("Cancel"))
+        self.dialog.add_response("save", _("Save"))
+        self.dialog.set_response_appearance("save", Adw.ResponseAppearance.SUGGESTED)
+        self.dialog.set_response_enabled("save", False)
+        self.dialog.set_close_response("cancel")
+        self.dialog.connect("response", lambda _d, response: self._answer(response))
+        # Captures keys before the buttons do; Tab, Enter and Escape alone still reach them.
+        keyboard = Gtk.EventControllerKey(propagation_phase=Gtk.PropagationPhase.CAPTURE)
+        keyboard.connect(
+            "key-pressed", lambda _c, k, code, _s: self.press(Gdk.keyval_name(k), code)
+        )
+        keyboard.connect("key-released", lambda _c, _k, code, _s: self.release(code))
+        self.dialog.add_controller(keyboard)
+
+    def present(self, parent):
+        self.parent = parent
+        # A release that went to another window, after Alt+Tab, would keep a key held forever.
+        self.watch = parent.connect("notify::is-active", lambda *_: self.forget())
+        self.dialog.present(parent)
+
+    def forget(self):
+        self.held.clear()
+        self.pressed.clear()
+        self.navigating = False
+
+    def press(self, name, code):
+        if name is None:
+            return True
+        if name in NAVIGATION and all(self.pressed[c].startswith("Shift") for c in self.held):
+            # These keys move between the buttons; the round they were in records nothing.
+            self.navigating = bool(self.held)
+            return False
+        if not self.held:
+            self.pressed.clear()
+        self.held.add(code)
+        self.pressed.setdefault(code, name)
+        return True
+
+    def release(self, code):
+        if code not in self.held:
+            return
+        self.held.discard(code)
+        if self.held:
+            return
+        if self.navigating:
+            self.navigating = False
+            return
+        names = list(self.pressed.values())
+        chord = keys.from_pressed(names)
+        error, warning = keys.problem(chord, self.taken)
+        if not error and not _modifiers_first(names):
+            error = keys.MODIFIERS_FIRST
+        self.value = None if error else keys.value(chord)
+        self.shown.set_label(keys.label(keys.value(chord)) if chord else "")
+        # gettext answers the empty string with the catalog header.
+        self.note.set_label(_(error or warning) if error or warning else "")
+        if error:
+            self.note.add_css_class("error")
+        else:
+            self.note.remove_css_class("error")
+        self.dialog.set_response_enabled("save", self.value is not None)
+
+    def _answer(self, response):
+        if self.watch is not None:
+            self.parent.disconnect(self.watch)
+            self.watch = None
+        if response == "save" and self.value is not None:
+            self.on_save(self.value)
+        else:
+            self.on_cancel()
+
+
+def _modifiers_first(names):
+    """The engine matches a key with the modifiers held at its press, and Shift changes its name."""
+    others = [i for i, n in enumerate(names) if n not in keys.MODIFIER_KEYS]
+    return not others or all(i < others[0] for i, n in enumerate(names) if n in keys.MODIFIER_KEYS)
 
 
 def preferences_group(title=None, description=None):
@@ -90,9 +228,9 @@ def preferences_group(title=None, description=None):
 
 def typing_page(rows):
     page = Adw.PreferencesPage(title=_("Typing"), icon_name="input-keyboard-symbolic")
-    for title, keys in options.TYPING_GROUPS:
+    for title, names in options.TYPING_GROUPS:
         group = preferences_group(title)
-        for key in keys:
+        for key in names:
             group.add(rows.build(key))
         if title is None:
             try_it = Adw.EntryRow(title=_("Try it"))
@@ -309,13 +447,154 @@ class DictionaryPage:
         return row
 
 
+class KeymapPage:
+    """The custom keymap switch, its presets and the key list, saved on every change."""
+
+    def __init__(self, store, rows, on_list_change):
+        self.store = store
+        self.on_list_change = on_list_change
+        self.page = Adw.PreferencesPage(
+            title=_("Keymap"), icon_name="preferences-desktop-keyboard-symbolic"
+        )
+        group = preferences_group()
+        group.add(rows.build("EnableCustomKeymap"))
+        self.preset = Adw.ComboRow(title=_("Original Input Method:").rstrip(":"), use_markup=False)
+        self.preset.set_model(Gtk.StringList.new([_(name) for name, _keys in keymap.PRESETS]))
+        apply = Gtk.Button(label=_("Apply Preset"), valign=Gtk.Align.CENTER)
+        apply.connect("clicked", lambda _b: self.apply_preset())
+        self.preset.add_suffix(apply)
+        group.add(self.preset)
+        self.page.add(group)
+        self.page.add(self._editor())
+        self.page.add(self._list())
+
+    def _editor(self):
+        self.editor = preferences_group()
+        self.key_row = Adw.EntryRow(title=_("Key (Example: s)"))
+        self.key_row.add_css_class("typed")
+        self.add_button = Gtk.Button(label=_("Add"), valign=Gtk.Align.CENTER)
+        self.add_button.add_css_class("suggested-action")
+        self.add_button.connect("clicked", lambda _b: self._add())
+        self.key_row.add_suffix(self.add_button)
+        self.key_row.connect("changed", lambda _r: self._check())
+        self.key_row.connect("entry-activated", lambda _r: self._add())
+        self.editor.add(self.key_row)
+        self.action = Adw.ComboRow(title=_("Action"), use_markup=False)
+        self.action.set_model(Gtk.StringList.new([_(label) for _code, label in keymap.ACTIONS]))
+        self.action.connect("notify::selected", lambda _r, _p: self._check())
+        self.editor.add(self.action)
+        return self.editor
+
+    def _list(self):
+        group = preferences_group()
+        self.search = Gtk.SearchEntry(placeholder_text=_("Search keys..."))
+        self.search.connect("search-changed", lambda _s: self.list.invalidate_filter())
+        group.set_header_suffix(self.search)
+        self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.add_css_class("boxed-list")
+        self.list.set_placeholder(
+            Gtk.Label(label=_("No keys yet."), margin_top=12, margin_bottom=12)
+        )
+        self.list.set_filter_func(self._matches)
+        group.add(self.list)
+        return group
+
+    def _check(self):
+        key = self.key_row.get_text()
+        bad = bool(key) and not keymap.valid_key(key)
+        if bad:
+            self.key_row.add_css_class("error")
+        else:
+            self.key_row.remove_css_class("error")
+        self.key_row.set_tooltip_text(_("A key is one character, not a space.") if bad else None)
+        action = next((v for k, v in self.store.keymap if k == key), None) if key else None
+        # Adding a key that is already listed replaces its action instead of adding it twice.
+        self.editor.set_description(
+            _("{key} already does “{action}”; Update replaces it.").format(
+                key=GLib.markup_escape_text(key),
+                action=GLib.markup_escape_text(_(keymap.action_label(action))),
+            )
+            if action is not None
+            else None
+        )
+        self.add_button.set_label(_("Update") if action is not None else _("Add"))
+        chosen = self.action.get_selected() < len(keymap.ACTION_CODES)
+        self.add_button.set_sensitive(bool(key) and not bad and chosen)
+
+    def _add(self):
+        selected = self.action.get_selected()
+        if not self.add_button.get_sensitive() or selected >= len(keymap.ACTION_CODES):
+            return
+        key = self.key_row.get_text()
+        action = keymap.ACTION_CODES[selected]
+        entries = list(self.store.keymap)
+        index = next((i for i, (k, _v) in enumerate(entries) if k == key), None)
+        if index is None:
+            entries.append((key, action))
+        else:
+            entries[index] = (key, action)
+        if self.on_list_change(entries):
+            self.key_row.set_text("")
+            self.key_row.grab_focus()
+
+    def _remove(self, key):
+        self.on_list_change([(k, v) for k, v in self.store.keymap if k != key])
+
+    def _edit(self, key, action):
+        self.key_row.set_text(key)
+        self._drop_unknown_action()
+        if action in keymap.ACTION_CODES:
+            self.action.set_selected(keymap.ACTION_CODES.index(action))
+        else:
+            # ComboRow cannot show no choice; an action this window does not know is shown as
+            # is and must be replaced by a listed one before Update, so it is not lost unseen.
+            self.action.get_model().append(action)
+            self.action.set_selected(len(keymap.ACTION_CODES))
+        self.action.grab_focus()
+
+    def _drop_unknown_action(self):
+        actions = self.action.get_model()
+        if actions.get_n_items() > len(keymap.ACTION_CODES):
+            if self.action.get_selected() >= len(keymap.ACTION_CODES):
+                self.action.set_selected(0)
+            actions.remove(len(keymap.ACTION_CODES))
+
+    def apply_preset(self):
+        # The toast offers to undo, so replacing the list needs no confirmation.
+        self.on_list_change(list(keymap.PRESETS[self.preset.get_selected()][1]))
+
+    def _matches(self, row):
+        needle = self.search.get_text().casefold()
+        key = row.entry[0]
+        return not needle or needle in key.casefold() or needle in row.get_subtitle().casefold()
+
+    def refresh(self):
+        self.list.remove_all()
+        for key, action in self.store.keymap:
+            self.list.append(self._key_row(key, action))
+        self._drop_unknown_action()
+        self._check()
+
+    def _key_row(self, key, action):
+        row = Adw.ActionRow(use_markup=False, activatable=True)
+        row.set_title(key)
+        row.set_subtitle(_(keymap.action_label(action)))
+        row.entry = (key, action)
+        row.connect("activated", lambda _r: self._edit(key, action))
+        remove = Gtk.Button(
+            icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER, tooltip_text=_("Remove")
+        )
+        remove.add_css_class("flat")
+        remove.connect("clicked", lambda _b: self._remove(key))
+        row.add_suffix(remove)
+        return row
+
+
 FCITX5_ONLY = [
     N_("Sen in every app, with its fixes for each app"),
-    N_("Cứu chữ and Cứu dấu"),
-    N_("Its own English/Vietnamese key, tapped like UniKey's Ctrl+Shift"),
+    N_("Cứu dấu in every app"),
     N_("Vim mode for each app"),
-    N_("Two spaces to a period, -- to —"),
-    N_("The emoji picker and rules for each app"),
+    N_("The emoji picker, and turning Vietnamese off for one app"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
 # The installer asks before it removes this edition, so the window only hands the command over.

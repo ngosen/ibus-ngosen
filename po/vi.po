@@ -14,6 +14,70 @@ msgid "Input Method"
 msgstr "Kiểu gõ"
 
 #: settings/ngosen_settings/options.py
+msgid "Switch Between English and Vietnamese"
+msgstr "Phím chuyển Anh/Việt"
+
+#: settings/ngosen_settings/options.py
+msgid "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+msgstr "Nhấn cùng lúc rồi thả ra; thanh trên cùng hiện V hoặc E. Super+Space vẫn đổi nguồn nhập như cũ."
+
+#: settings/ngosen_settings/pages.py
+msgid "Other keys…"
+msgstr "Phím khác…"
+
+#: settings/ngosen_settings/pages.py
+msgid "Press the new keys"
+msgstr "Bấm phím mới"
+
+#: settings/ngosen_settings/pages.py
+msgid "Hold the keys together, then let go."
+msgstr "Giữ các phím cùng lúc rồi thả ra."
+
+#: settings/ngosen_settings/pages.py
+msgid "Cancel"
+msgstr "Huỷ"
+
+#: settings/ngosen_settings/pages.py
+msgid "Save"
+msgstr "Lưu"
+
+#: settings/ngosen_settings/keys.py
+msgid "Press at least two keys together."
+msgstr "Cần bấm ít nhất hai phím cùng lúc."
+
+#: settings/ngosen_settings/keys.py
+msgid "Shift with a key types a capital letter or a symbol."
+msgstr "Shift kèm một phím sẽ gõ ra chữ hoa hoặc ký hiệu."
+
+#: settings/ngosen_settings/keys.py
+msgid "GNOME already uses these keys."
+msgstr "GNOME đã dùng tổ hợp phím này."
+
+#: settings/ngosen_settings/keys.py
+msgid "Apps no longer get these keys: Ngó Sen takes them everywhere."
+msgstr "Các app sẽ không nhận tổ hợp này nữa: Ngó Sen dùng nó ở mọi nơi."
+
+#: settings/ngosen_settings/keys.py
+msgid "Hold Ctrl, Alt, Shift or Super first, then press the other key."
+msgstr "Giữ Ctrl, Alt, Shift hoặc Super trước, rồi mới bấm phím còn lại."
+
+#: settings/ngosen_settings/keys.py
+msgid "Firefox and some other apps open their menu bar when Alt is let go."
+msgstr "Firefox và vài app khác sẽ mở thanh menu khi thả phím Alt."
+
+#: src/ngosen-ibus-menu.cpp src/ngosen-ibus-engine.cpp
+msgid "Vietnamese"
+msgstr "Tiếng Việt"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "English"
+msgstr "Tiếng Anh"
+
+#: src/ngosen-ibus-mode-menu.cpp
+msgid "Default Typing"
+msgstr "Chế độ gõ mặc định"
+
+#: settings/ngosen_settings/options.py
 msgid "Output Charset"
 msgstr "Bảng mã"
 
@@ -54,6 +118,34 @@ msgid "Backspace Removes the Tone Mark"
 msgstr "Backspace xoá dấu thanh"
 
 #: settings/ngosen_settings/options.py
+msgid "Double Space to Period"
+msgstr "Hai dấu cách thành dấu chấm (thử nghiệm)"
+
+#: settings/ngosen_settings/options.py
+msgid "Double Hyphen to Em-Dash (--)"
+msgstr "Hai gạch nối thành gạch dài"
+
+#: settings/ngosen_settings/options.py
+msgid "ban and Space twice gives “ban. ”."
+msgstr "Gõ ban rồi hai dấu cách ra “ban. ”."
+
+#: settings/ngosen_settings/options.py
+msgid "a--b → a—b."
+msgstr "a--b → a—b."
+
+#: settings/ngosen_settings/options.py
+msgid "Retype text typed before switching on"
+msgstr "Cứu chữ: gõ lại có dấu khi quên bật tiếng Việt"
+
+#: settings/ngosen_settings/options.py
+msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
+msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ."
+
+#: settings/ngosen_settings/options.py
+msgid "Change the tone of a typed word"
+msgstr "Cứu dấu: sửa dấu chữ đã gõ"
+
+#: settings/ngosen_settings/options.py
 msgid "Type w to Produce ư"
 msgstr "Gõ w ra ư"
 
@@ -74,6 +166,14 @@ msgid "Enable Macro"
 msgstr "Bật gõ tắt"
 
 #: settings/ngosen_settings/options.py
+msgid "Macros while typing English"
+msgstr "Gõ tắt cả khi đang gõ tiếng Anh"
+
+#: settings/ngosen_settings/options.py
+msgid "With Enable Macro on, a macro such as ko → không expands even in English."
+msgstr "Khi đã bật gõ tắt, từ gõ tắt như ko → không vẫn ra cả khi đang gõ tiếng Anh."
+
+#: settings/ngosen_settings/options.py
 msgid "Capitalize Macro"
 msgstr "Gõ tắt chữ hoa"
 
@@ -90,8 +190,8 @@ msgid "Keep Unicode unless an old document or app needs another one, such as TCV
 msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã khác như TCVN3 (ABC)."
 
 #: settings/ngosen_settings/options.py
-msgid "The keys set in the full edition, used by the Custom input method."
-msgstr "Bảng phím đặt ở bản đầy đủ, dùng cho kiểu gõ Custom."
+msgid "The keys below, used when the input method is Custom."
+msgstr "Các phím bên dưới, dùng khi kiểu gõ là Custom."
 
 #: settings/ngosen_settings/options.py
 msgid "Words that are not Vietnamese get no tone marks."
@@ -124,6 +224,10 @@ msgstr "Gõ dấu ở cuối từ cũng được."
 #: settings/ngosen_settings/options.py
 msgid "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
 msgstr "Kể cả khi tắt mục này, phím z (Telex) hay 0 (VNI) vẫn xoá dấu thanh. Chữ không có dấu thanh thì Backspace xoá chữ như thường."
+
+#: settings/ngosen_settings/options.py
+msgid "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
+msgstr "Bấm chuột ngay sau chao (hay bôi đen chao ở app X11) rồi gõ f để ra chào. Chỉ khi bật Gõ Sen; Tab hay Esc trả lại phím vừa gõ."
 
 #: settings/ngosen_settings/options.py
 msgid "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
@@ -174,20 +278,12 @@ msgid "Sen in every app, with its fixes for each app"
 msgstr "Gõ Sen ở mọi app, kèm sửa lỗi riêng từng app"
 
 #: settings/ngosen_settings/pages.py
-msgid "Cứu chữ and Cứu dấu"
-msgstr "Cứu chữ, Cứu dấu"
+msgid "Cứu dấu in every app"
+msgstr "Cứu dấu ở mọi app"
 
 #: settings/ngosen_settings/pages.py
-msgid "Two spaces to a period, -- to —"
-msgstr "Hai dấu cách ra dấu chấm, -- ra —"
-
-#: settings/ngosen_settings/pages.py
-msgid "The emoji picker and rules for each app"
-msgstr "Bảng chọn emoji và luật theo app"
-
-#: settings/ngosen_settings/pages.py
-msgid "Its own English/Vietnamese key, tapped like UniKey's Ctrl+Shift"
-msgstr "Phím chuyển Anh/Việt riêng, nhấp Ctrl+Shift như UniKey"
+msgid "The emoji picker, and turning Vietnamese off for one app"
+msgstr "Bảng chọn emoji, và tắt tiếng Việt cho riêng một app"
 
 #: settings/ngosen_settings/pages.py
 msgid "Vim mode for each app"
@@ -370,8 +466,8 @@ msgid "Settings"
 msgstr "Cài đặt"
 
 #: settings/ngosen_settings/options.py
-msgid "Type with Sen where the app allows (experimental)"
-msgstr "Gõ Sen ở app cho phép (thử nghiệm)"
+msgid "Type with Sen where the app allows"
+msgstr "Gõ Sen ở app cho phép"
 
 #: settings/ngosen_settings/options.py
 msgid ""
@@ -401,3 +497,399 @@ msgstr "Không tìm thấy từ nào."
 
 msgid "Showing {} of {} words found."
 msgstr "Đang hiện {} trên {} từ tìm thấy."
+
+msgid "Check my machine"
+msgstr "Kiểm tra máy"
+
+msgid "Check again"
+msgstr "Kiểm tra lại"
+
+msgid "Fixing…"
+msgstr "Đang sửa…"
+
+msgid "The fix for GNOME {} is on"
+msgstr "Bản sửa cho GNOME {} đang bật"
+
+msgid "Sen keeps the underline: GNOME {} drops the keys Ngó Sen sends"
+msgstr "Gõ Sen phải gạch chân vì GNOME {} làm rơi phím Ngó Sen gửi"
+
+msgid "Log out and back in. If this stays, update Ngó Sen or update to GNOME 50.4."
+msgstr "Đăng xuất rồi đăng nhập lại. Nếu vẫn thấy dòng này, cập nhật Ngó Sen hoặc cập nhật lên GNOME 50.4."
+
+msgid "Turn on the fix: gnome-extensions enable {}. If keys still drop, log out and back in."
+msgstr "Bật bản sửa: gnome-extensions enable {}. Nếu vẫn mất phím thì đăng xuất rồi đăng nhập lại."
+
+msgid "Turn on"
+msgstr "Bật"
+
+msgid "Turned on the GNOME extension."
+msgstr "Đã bật extension GNOME."
+
+msgid "Ngó Sen cannot tell which app is in use"
+msgstr "Ngó Sen không biết đang gõ trong app nào"
+
+msgid "Install xdg-desktop-portal-gnome, then log out and back in; fixes for single apps and the typing mode picked for each app need it."
+msgstr "Cài xdg-desktop-portal-gnome rồi đăng xuất và đăng nhập lại; các bản sửa riêng cho từng app và cách gõ chọn riêng cho từng app cần nó."
+
+msgid "Steps to type Vietnamese"
+msgstr "Các bước để gõ tiếng Việt"
+
+msgid "Try typing here"
+msgstr "Test gõ ngay tại đây"
+
+msgid "In Telex, vieetj becomes việt."
+msgstr "Kiểu Telex: gõ vieetj sẽ ra việt."
+
+msgid "Type here to test"
+msgstr "Gõ vào đây để test"
+
+msgid "Send the result to Ngó Sen"
+msgstr "Gửi kết quả cho Ngó Sen"
+
+msgid "The result lists the steps above. Nothing is sent until you press a button below."
+msgstr "Kết quả liệt kê các bước ở trên. Chưa có gì được gửi đi cho tới khi bấm một nút bên dưới."
+
+msgid "Message on Facebook…"
+msgstr "Nhắn qua Facebook…"
+
+msgid "Report on GitHub…"
+msgstr "Báo lỗi trên GitHub…"
+
+msgid "Copy result"
+msgstr "Chép kết quả"
+
+msgid "Copied the result."
+msgstr "Đã chép kết quả."
+
+msgid "Copied the result. Paste it into the message and say what went wrong."
+msgstr "Đã chép kết quả. Dán vào tin nhắn rồi kể lỗi gặp phải."
+
+msgid "Fix all ({})"
+msgstr "Sửa cả {} việc"
+
+msgid "Copied: {}"
+msgstr "Đã chép: {}"
+
+msgid "This machine is ready"
+msgstr "Máy đã sẵn sàng"
+
+msgid "Try typing in any app."
+msgstr "Gõ để test trong app bất kỳ."
+
+msgid "Steps left to fix: {}"
+msgstr "Còn {} việc cần sửa"
+
+msgid "Use the button on a step, or fix them all at once. Ngó Sen only changes this account's settings."
+msgstr "Bấm nút ở từng bước, hoặc sửa hết một lần. Ngó Sen chỉ đổi cài đặt của tài khoản này."
+
+msgid "Use the button on the step. Ngó Sen only changes this account's settings."
+msgstr "Bấm nút ở bước đó. Ngó Sen chỉ đổi cài đặt của tài khoản này."
+
+msgid "Each step says what to do."
+msgstr "Mỗi bước ghi rõ việc cần làm."
+
+msgid "Could not fix this."
+msgstr "Không sửa được."
+
+msgid "IBus is not running"
+msgstr "IBus không chạy"
+
+msgid "Log out and back in, or run ibus start."
+msgstr "Đăng xuất rồi đăng nhập lại, hoặc chạy ibus start."
+
+msgid "IBus is running"
+msgstr "IBus đang chạy"
+
+msgid "IBus still runs Ngó Sen from before the update"
+msgstr "IBus vẫn chạy Ngó Sen version cũ, trước khi cập nhật"
+
+msgid "IBus started before Ngó Sen was installed"
+msgstr "IBus đã chạy từ trước khi cài Ngó Sen"
+
+msgid "Restart IBus, or log out and back in, to start the installed version."
+msgstr "Khởi động lại IBus, hoặc đăng xuất rồi đăng nhập lại, để chạy version vừa cài."
+
+msgid "Ngó Sen is in the input sources"
+msgstr "Ngó Sen đã có trong nguồn nhập"
+
+msgid "Ngó Sen is not in the input sources"
+msgstr "Ngó Sen chưa có trong nguồn nhập"
+
+msgid "Settings › Keyboard › Input Sources: add “Vietnamese (Ngó Sen)”."
+msgstr "Cài đặt › Bàn phím › Nguồn nhập: thêm “Tiếng Việt (Ngó Sen)”."
+
+msgid "GTK apps"
+msgstr "App GTK"
+
+msgid "Qt apps"
+msgstr "App Qt"
+
+msgid "{apps} use another input method ({value})"
+msgstr "{apps} gõ qua bộ gõ khác ({value})"
+
+msgid "Remove {} from the session environment."
+msgstr "Bỏ {} khỏi môi trường của phiên đăng nhập."
+
+msgid "Set {} in the session environment."
+msgstr "Đặt {} trong môi trường của phiên đăng nhập."
+
+msgid "GTK apps may pick fcitx5, which is not running"
+msgstr "App GTK có thể chọn nhầm fcitx5, mà fcitx5 không chạy"
+
+msgid "Set {} in the session environment, or remove fcitx5."
+msgstr "Đặt {} trong môi trường của phiên đăng nhập, hoặc gỡ fcitx5."
+
+msgid "Older X11 apps use IBus"
+msgstr "App X11 cũ gõ qua IBus"
+
+msgid "Older X11 apps (xterm, Alacritty) have no input method"
+msgstr "App X11 cũ (xterm, Alacritty) không có bộ gõ"
+
+msgid "fcitx5 is running next to IBus"
+msgstr "fcitx5 đang chạy song song với IBus"
+
+msgid "Two input methods compete for keys; stop fcitx5 from starting at login."
+msgstr "Hai bộ gõ tranh nhau phím; hãy tắt fcitx5 tự chạy khi đăng nhập."
+
+msgid "Start IBus"
+msgstr "Chạy IBus"
+
+msgid "Restart IBus"
+msgstr "Khởi động lại IBus"
+
+msgid "Add Ngó Sen"
+msgstr "Thêm Ngó Sen"
+
+msgid "Started IBus."
+msgstr "Đã chạy IBus."
+
+msgid "Restarted IBus."
+msgstr "Đã khởi động lại IBus."
+
+msgid "Added Ngó Sen to the input sources."
+msgstr "Đã thêm Ngó Sen vào nguồn nhập."
+
+msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
+msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"
+
+#: settings/ngosen_settings/window.py
+msgid "Menu"
+msgstr "Menu"
+
+#: settings/ngosen_settings/window.py
+msgid "Back _Up…"
+msgstr "Sao _lưu…"
+
+#: settings/ngosen_settings/window.py
+msgid "_Restore…"
+msgstr "_Khôi phục…"
+
+#: settings/ngosen_settings/window.py
+msgid "Back Up Settings"
+msgstr "Sao lưu cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "Restore Settings"
+msgstr "Khôi phục cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "Ngó Sen backup"
+msgstr "Bản sao lưu Ngó Sen"
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot back up: {}"
+msgstr "Không sao lưu được: {}"
+
+#: settings/ngosen_settings/window.py
+msgid "Backed up to {}."
+msgstr "Đã sao lưu vào {}."
+
+#: settings/ngosen_settings/window.py
+msgid "Restore {}?"
+msgstr "Khôi phục {}?"
+
+#: settings/ngosen_settings/window.py
+msgid "Restore"
+msgstr "Khôi phục"
+
+#: settings/ngosen_settings/window.py
+msgid "Restored from {}."
+msgstr "Đã khôi phục từ {}."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot restore: {}. Nothing was changed."
+msgstr "Không khôi phục được: {}. Chưa có gì thay đổi."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot read the settings: {}"
+msgstr "Không đọc được cài đặt: {}"
+
+#: settings/ngosen_settings/backup.py
+msgid "These files could not be put back: {}"
+msgstr "Không trả lại được các tệp này: {}"
+
+#: settings/ngosen_settings/backup.py
+msgid "No settings found in the file."
+msgstr "Tệp không có cài đặt nào."
+
+#: settings/ngosen_settings/backup.py
+msgid "The settings in the file are damaged."
+msgstr "Phần cài đặt trong tệp bị hỏng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The lists in the file are damaged."
+msgstr "Danh sách gõ tắt hoặc bảng phím trong tệp bị hỏng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The dictionary in the file is damaged."
+msgstr "Phần từ điển trong tệp bị hỏng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The file holds text that is not valid Unicode."
+msgstr "Tệp có chữ không phải Unicode hợp lệ."
+
+#: settings/ngosen_settings/backup.py
+msgid "These switch keys in the backup are left out: {}. {}"
+msgstr "Bỏ qua các phím chuyển Anh/Việt này trong bản sao lưu: {}. {}"
+
+#: settings/ngosen_settings/backup.py
+msgid "A switch key here needs Ctrl, Alt, Shift or Super with another key."
+msgstr "Ở bản này, phím chuyển cần Ctrl, Alt, Shift hoặc Super đi kèm một phím khác."
+
+#: settings/ngosen_settings/backup.py
+msgid "The current switch key stays."
+msgstr "Giữ phím chuyển Anh/Việt đang dùng."
+
+#: settings/ngosen_settings/backup.py
+msgid "The backup types in a mode this edition does not know ({}), so the current one stays."
+msgstr "Bản sao lưu gõ ở chế độ mà bản này không biết ({}), nên giữ chế độ đang dùng."
+
+#: settings/ngosen_settings/backup.py
+msgid "This edition has no emoji picker, so words are underlined instead."
+msgstr "Bản này không có bảng chọn emoji, nên chữ sẽ gõ có gạch chân."
+
+#: settings/ngosen_settings/backup.py
+msgid "The backup was made while typing English, so typing switches to English."
+msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
+
+#: settings/ngosen_settings/backup.py
+msgid "Rules that turn Vietnamese off or pick emoji for an app are kept but do nothing here."
+msgstr "Luật tắt tiếng Việt hay chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
+
+#: settings/ngosen_settings/window.py
+msgid "The settings changed after the restore, so nothing was undone."
+msgstr "Cài đặt đã đổi sau khi khôi phục, nên không hoàn tác gì."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot open the file dialog: {}"
+msgstr "Không mở được hộp chọn tệp: {}"
+
+#: settings/ngosen_settings/pages.py
+msgid "Keymap"
+msgstr "Keymap"
+
+#: settings/ngosen_settings/pages.py
+msgid "Original Input Method:"
+msgstr "Kiểu gõ gốc:"
+
+#: settings/ngosen_settings/pages.py
+msgid "Apply Preset"
+msgstr "Áp dụng cài đặt sẵn"
+
+#: settings/ngosen_settings/pages.py
+msgid "Key (Example: s)"
+msgstr "Phím (Ví dụ: s)"
+
+#: settings/ngosen_settings/pages.py
+msgid "Action"
+msgstr "Hành động"
+
+#: settings/ngosen_settings/pages.py
+msgid "Search keys..."
+msgstr "Tìm phím..."
+
+#: settings/ngosen_settings/pages.py
+msgid "No keys yet."
+msgstr "Chưa có phím nào."
+
+#: settings/ngosen_settings/pages.py
+msgid "A key is one character, not a space."
+msgstr "Phím là một ký tự, không phải dấu cách."
+
+#: settings/ngosen_settings/pages.py
+msgid "{key} already does “{action}”; Update replaces it."
+msgstr "{key} đang dùng cho “{action}”; bấm Cập nhật để thay."
+
+#: settings/ngosen_settings/keymap.py
+msgid "Remove the tone mark"
+msgstr "Xoá dấu thanh"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Sắc tone"
+msgstr "Dấu sắc"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Huyền tone"
+msgstr "Dấu huyền"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Hỏi tone"
+msgstr "Dấu hỏi"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Ngã tone"
+msgstr "Dấu ngã"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Nặng tone"
+msgstr "Dấu nặng"
+
+#: settings/ngosen_settings/keymap.py
+msgid "Microsoft layout"
+msgstr "Bố cục Microsoft"
+
+#: settings/ngosen_settings/keymap.py
+msgid "VNI on a French keyboard"
+msgstr "VNI bàn phím tiếng Pháp"
+
+msgid "Tab or Esc: put back the key"
+msgstr "Cứu dấu: Tab hoặc Esc để trả lại phím vừa gõ"
+
+msgid "Tab or Esc: put back what was typed"
+msgstr "Cứu chữ: Tab hoặc Esc để trả lại chữ đã gõ"
+
+msgid "Enter: retype in Vietnamese, Tab or Esc: keep"
+msgstr "Cứu chữ: Enter để đổi, Tab hoặc Esc để giữ nguyên"
+
+msgid "Sen"
+msgstr "Gõ Sen"
+
+msgid "Preedit"
+msgstr "Gạch chân"
+
+msgid "Mode Menu Hotkey"
+msgstr "Phím tắt menu chế độ gõ"
+
+msgid "Shortcut for Sen"
+msgstr "Phím tắt cho Gõ Sen"
+
+msgid "Shortcut for Preedit"
+msgstr "Phím tắt cho Gạch chân"
+
+msgid "Shortcut for English"
+msgstr "Phím tắt cho Tiếng Anh"
+
+msgid "Shortcut for Default Typing"
+msgstr "Phím tắt cho Mặc định"
+
+msgid "Opens a menu to pick Sen or underlined typing for the app in use, or English for every app. Press it twice to type the key itself; in English it types as usual."
+msgstr "Mở menu để chọn Gõ Sen hay gạch chân cho app đang dùng, hoặc tiếng Anh cho mọi app. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
+
+msgid "Mode menu"
+msgstr "Menu chế độ gõ"
+
+msgid "One letter or digit."
+msgstr "Một chữ cái hoặc chữ số."
+
+msgid "Another mode already uses this key."
+msgstr "Chế độ khác đã dùng phím này."

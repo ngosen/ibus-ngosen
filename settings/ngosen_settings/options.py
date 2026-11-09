@@ -10,6 +10,20 @@ POSITIONS = [
     ("Non-Start", N_("Non-Start")),
     ("Everywhere", N_("Everywhere")),
 ]
+# Stored as the fcitx5 edition stores key lists: both keys in either order, with either key.
+TOGGLE_KEYS = [
+    ("Control+Shift_L Control+Shift_R Shift+Control_L Shift+Control_R", "Ctrl+Shift"),
+    ("Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R", "Shift+Alt"),
+    ("", N_("Disabled")),
+]
+# The fcitx5 edition's default, and Shift+~ as ibus-unikey uses.
+MODE_MENU_KEYS = [
+    ("grave", "`"),
+    ("Shift+asciitilde", "Shift+~"),
+    ("", N_("Disabled")),
+]
+# The keys that pick a mode in the menu, each one letter or digit.
+SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutDefault"]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -29,7 +43,13 @@ DATE_FORMATS = [
 
 LABELS = {
     "InputMethod": N_("Input Method"),
-    "DirectTyping": N_("Type with Sen where the app allows (experimental)"),
+    "ToggleKey": N_("Switch Between English and Vietnamese"),
+    "ModeMenuKey": N_("Mode Menu Hotkey"),
+    "ShortcutSen": N_("Shortcut for Sen"),
+    "ShortcutPreedit": N_("Shortcut for Preedit"),
+    "ShortcutOff": N_("Shortcut for English"),
+    "ShortcutDefault": N_("Shortcut for Default Typing"),
+    "DirectTyping": N_("Type with Sen where the app allows"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
@@ -40,26 +60,37 @@ LABELS = {
     "ModernStyle": N_("Use oà, uý (Instead Of òa, úy)"),
     "FreeMarking": N_("Allow Type With More Freedom"),
     "BackspaceRemovesTone": N_("Backspace Removes the Tone Mark"),
+    "RetoneSelection": N_("Change the tone of a typed word"),
+    "RetypeAfterSwitch": N_("Retype text typed before switching on"),
     "W2U": N_("Type w to Produce ư"),
     "BracketTransform": N_("Type [ -> ơ, ] -> ư, { -> Ơ, } -> Ư"),
     "AutoCapitalizeAfterPunctuation": N_(
         "Auto capitalize after sentence-ending punctuation (. ! ? Enter)"
     ),
     "CapitalizeStartOfText": N_("Capitalize the first letter of the text or of a line"),
+    "DoubleSpaceToPeriod": N_("Double Space to Period"),
+    "DoubleHyphenToEmDash": N_("Double Hyphen to Em-Dash (--)"),
     "EnableMacro": N_("Enable Macro"),
     "CapitalizeMacro": N_("Capitalize Macro"),
+    "EnableMacroInOffMode": N_("Macros while typing English"),
     "TimeFormat": N_("Time Format ($TIME in macro)"),
     "DateFormat": N_("Date Format ($DATE in macro)"),
 }
 
 HINTS = {
+    "ToggleKey": N_(
+        "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+    ),
+    "ModeMenuKey": N_(
+        "Opens a menu to pick Sen or underlined typing for the app in use, or English for every app. Press it twice to type the key itself; in English it types as usual."
+    ),
     "DirectTyping": N_(
         "Text goes straight into fields that report the text around the cursor, without an underline. Elsewhere words keep the underline."
     ),
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
     ),
-    "EnableCustomKeymap": N_("The keys set in the full edition, used by the Custom input method."),
+    "EnableCustomKeymap": N_("The keys below, used when the input method is Custom."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
     "EnableDictionary": N_(
         "Check spelling against the list below. Off: the list that comes with Ngó Sen."
@@ -74,6 +105,12 @@ HINTS = {
     "BackspaceRemovesTone": N_(
         "z in Telex (0 in VNI) removes the tone mark even with this off. On a word without one, Backspace deletes as usual."
     ),
+    "RetoneSelection": N_(
+        "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
+    ),
+    "RetypeAfterSwitch": N_(
+        "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
+    ),
     "W2U": N_(
         "Non-Start: nhw → như, but w alone stays w. Everywhere: w alone gives ư too. uw always gives ư."
     ),
@@ -81,6 +118,11 @@ HINTS = {
     "AutoCapitalizeAfterPunctuation": N_("ban. tooi → ban. Tôi. The same after Enter."),
     "CapitalizeStartOfText": N_(
         "xin → Xin in an empty field or on a new line. Not in address bars or some apps; on GNOME 47 and later, Chrome and similar apps skip an empty field."
+    ),
+    "DoubleSpaceToPeriod": N_("ban and Space twice gives “ban. ”."),
+    "DoubleHyphenToEmDash": N_("a--b → a—b."),
+    "EnableMacroInOffMode": N_(
+        "With Enable Macro on, a macro such as ko → không expands even in English."
     ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
 }
@@ -96,7 +138,7 @@ TYPING_EXAMPLES = {
 
 # Pages and their groups, in the order they show.
 TYPING_GROUPS = [
-    (None, ["InputMethod", "DirectTyping", "OutputCharset", "EnableCustomKeymap"]),
+    (None, ["InputMethod", "ToggleKey", "ModeMenuKey", "DirectTyping", "OutputCharset"]),
     (
         N_("Tone marks"),
         [
@@ -107,15 +149,28 @@ TYPING_GROUPS = [
             "ModernStyle",
             "FreeMarking",
             "BackspaceRemovesTone",
+            "RetoneSelection",
             "W2U",
             "BracketTransform",
         ],
     ),
-    (N_("Quick typing"), ["AutoCapitalizeAfterPunctuation", "CapitalizeStartOfText"]),
+    (
+        N_("Quick typing"),
+        [
+            "RetypeAfterSwitch",
+            "AutoCapitalizeAfterPunctuation",
+            "CapitalizeStartOfText",
+            "DoubleSpaceToPeriod",
+            "DoubleHyphenToEmDash",
+        ],
+    ),
+    (N_("Mode menu"), SHORTCUTS),
 ]
-MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro"]
+MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 
 CHOICES = {
+    "ToggleKey": TOGGLE_KEYS,
+    "ModeMenuKey": MODE_MENU_KEYS,
     "W2U": POSITIONS,
     "BracketTransform": POSITIONS,
     "LockWordModifier": LOCK_KEYS,
@@ -125,7 +180,18 @@ CHOICES = {
 
 
 def is_switch(key):
-    return key not in CHOICES and key not in ("InputMethod", "OutputCharset")
+    return (
+        key not in CHOICES and key not in SHORTCUTS and key not in ("InputMethod", "OutputCharset")
+    )
+
+
+def shortcut_problem(key, value, values):
+    """Why value cannot pick the mode of key, given the saved values of the other shortcuts."""
+    if len(value) != 1 or not value.isascii() or not value.isalnum():
+        return N_("One letter or digit.")
+    if any(values.get(other, "").lower() == value.lower() for other in SHORTCUTS if other != key):
+        return N_("Another mode already uses this key.")
+    return None
 
 
 def valid_macro_key(key):

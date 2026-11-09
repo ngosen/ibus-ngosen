@@ -36,7 +36,7 @@ namespace ngosen {
             g_date_time_unref(now);
             const std::string text = std::string("# Ngó Sen for GNOME ") + NGOSEN_IBUS_VERSION +
                 " typing log. It holds what you typed just before saving; read it before sharing.\n# desktop=" + env("XDG_CURRENT_DESKTOP") +
-                " session=" + env("XDG_SESSION_TYPE") + "\n" + recorder.dump();
+                " session=" + env("XDG_SESSION_TYPE") + " wayland=" + env("WAYLAND_DISPLAY") + "\n" + recorder.dump();
             GError* error = nullptr;
             if (!g_file_set_contents_full(path.c_str(), text.data(), static_cast<gssize>(text.size()), G_FILE_SET_CONTENTS_CONSISTENT, 0600, &error)) {
                 NGOSEN_WARN("Cannot write " + path + ": " + error->message);

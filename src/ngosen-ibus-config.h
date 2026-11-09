@@ -21,10 +21,14 @@ namespace ngosen {
         std::map<std::string, std::map<std::string, std::string>> sections;
     };
 
-    IniFile                  parseIni(const std::string& text);
+    IniFile parseIni(const std::string& text);
+    // The spaces fcitx5 strips around a line.
+    std::string              trimIni(const std::string& text);
     std::string              escapeIniValue(const std::string& value);
 
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
+    // The values of [name], keyed 0, 1, …, as fcitx5 stores a key list.
+    std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name);
 
     // The names the Vietnamese engine knows, for the settings window to offer.
     const std::vector<std::string>& inputMethodNames();
@@ -35,7 +39,16 @@ namespace ngosen {
         bool    enableDictionary   = false;
         bool    enableCustomKeymap = false;
         // Straight into fields that can delete around the cursor, underlined elsewhere.
-        bool directTyping = false;
+        bool directTyping = true;
+        // Switches between English and Vietnamese; empty when the user turned the key off.
+        std::vector<std::string> toggleKeys;
+        // Opens the menu of typing modes; empty when the user turned it off.
+        std::vector<std::string> modeMenuKeys;
+        // The keys that pick each mode in that menu: one letter or digit.
+        std::string shortcutSen     = "1";
+        std::string shortcutPreedit = "q";
+        std::string shortcutOff     = "e";
+        std::string shortcutDefault = "r";
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.
@@ -52,14 +65,20 @@ namespace ngosen {
         std::string          dataDir;        // ~/.local/share/ngosen
         std::string          fcitxConfigDir; // ~/.config/fcitx5/conf
         std::string          fcitxDataDir;   // ~/.local/share/fcitx5/ngosen
+        std::string          stateDir;       // ~/.local/state/ngosen
 
         static SettingsPaths fromEnvironment();
         std::string          settingsFile() const;
         std::string          macroFile() const;
         std::string          keymapFile() const;
         std::string          dictionaryFile() const;
+        std::string          appModesFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
+        // Marks Sen as switched on once, so turning it off afterwards sticks.
+        std::string senDefaultMark() const;
+        // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
+        std::string englishMark() const;
         // Marks the forward-keys extension as enabled once, so turning it off is not undone.
         std::string extensionEnabledMark() const;
     };
@@ -69,6 +88,9 @@ namespace ngosen {
     bool writeFileAtomically(const std::string& path, const std::string& content);
 
     using FileWriter = std::function<bool(const std::string& path, const std::string& content)>;
+
+    bool readEnglishOn(const SettingsPaths& paths);
+    bool saveEnglishOn(const SettingsPaths& paths, bool on);
 
     // On the first run, copies the fcitx5 edition's settings, or writes the defaults when it has none.
     // Never overwrites a file. The import is marked done last, so a run stopped halfway is finished

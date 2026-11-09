@@ -6,9 +6,11 @@
 #include "ngosen-ibus-config.h"
 
 #include "bamboo-core.h"
+#include "ngosen-ibus-keys.h"
 #include "ngosen-log.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -21,15 +23,15 @@
 
 namespace ngosen {
 
-    namespace {
+    std::string trimIni(const std::string& text) {
+        const auto begin = text.find_first_not_of(" \t\r\f\v");
+        if (begin == std::string::npos)
+            return "";
+        const auto end = text.find_last_not_of(" \t\r\f\v");
+        return text.substr(begin, end - begin + 1);
+    }
 
-        std::string trim(const std::string& text) {
-            const auto begin = text.find_first_not_of(" \t\r\f\v");
-            if (begin == std::string::npos)
-                return "";
-            const auto end = text.find_last_not_of(" \t\r\f\v");
-            return text.substr(begin, end - begin + 1);
-        }
+    namespace {
 
         constexpr char EscapedChars[]  = "\\\"\n\f\r\t\v";
         constexpr char EscapeLetters[] = "\\\"nfrtv";
@@ -72,6 +74,57 @@ namespace ngosen {
             return std::find(list.begin(), list.end(), value) != list.end();
         }
 
+        // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
+        // in its own section, which is read when importing its settings.
+        const char* const        ToggleKeyName   = "ToggleKey";
+        const char* const        ModeMenuKeyName = "ModeMenuKey";
+
+        std::vector<std::string> splitWords(const std::string& text) {
+            std::istringstream       words(text);
+            std::vector<std::string> out;
+            for (std::string word; words >> word;)
+                out.push_back(word);
+            return out;
+        }
+
+        // A line of keys, or fcitx5's numbered list. A list with only keys the engine cannot use falls back
+        // to the default; an empty one turns the key off.
+        template <typename Parse>
+        std::vector<std::string> readKeys(const IniFile& ini, const char* name, const std::vector<std::string>& defaults, Parse parse) {
+            std::vector<std::string> keys;
+            if (const auto line = ini.top.find(name); line != ini.top.end())
+                keys = splitWords(line->second);
+            else if (ini.sections.count(name) != 0)
+                keys = iniKeyList(ini, name);
+            else
+                return defaults;
+            // fcitx5 writes a cleared key as an empty entry, which matches nothing.
+            keys.erase(std::remove(keys.begin(), keys.end(), std::string()), keys.end());
+            std::vector<std::string> usable;
+            for (const auto& key : keys) {
+                if (parse(key))
+                    usable.push_back(key);
+            }
+            return usable.empty() && !keys.empty() ? defaults : usable;
+        }
+
+        // fcitx5 allows a single key, which the IBus edition does not: a bare Shift would switch on every
+        // capital.
+        std::vector<std::string> readToggleKeys(const IniFile& ini) {
+            return readKeys(ini, ToggleKeyName, defaultToggleKeys(), parseToggleKey);
+        }
+
+        std::vector<std::string> readModeMenuKeys(const IniFile& ini) {
+            return readKeys(ini, ModeMenuKeyName, defaultModeMenuKeys(), parseMenuKey);
+        }
+
+        std::string joinWords(const std::vector<std::string>& words) {
+            std::string line;
+            for (const auto& word : words)
+                line += (line.empty() ? "" : " ") + word;
+            return line;
+        }
+
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
         const char* const LockWordKeyNames[] = {"Disabled", "Shift", "Ctrl", "Alt"};
 
@@ -89,6 +142,12 @@ namespace ngosen {
             void text(const char* key, std::string& out) const {
                 if (const auto* value = find(key))
                     out = *value;
+            }
+            // A key whose name is its own letter or digit, so the menu shows what to press.
+            void shortcut(const char* key, std::string& out) const {
+                // Lowercase, since the engine matches the key as typed without Shift.
+                if (const auto* value = find(key); value != nullptr && value->size() == 1 && std::isalnum(static_cast<unsigned char>((*value)[0])) != 0)
+                    out = std::string(1, static_cast<char>(std::tolower(static_cast<unsigned char>((*value)[0]))));
             }
             void choice(const char* key, std::string& out, const std::vector<std::string>& allowed) const {
                 if (const auto* value = find(key); value != nullptr && contains(allowed, *value))
@@ -136,7 +195,7 @@ namespace ngosen {
         std::istringstream                  lines(text);
         std::string                         line;
         while (std::getline(lines, line)) {
-            line = trim(line);
+            line = trimIni(line);
             if (line.empty() || line[0] == '#')
                 continue;
             if (line.front() == '[' && line.back() == ']') {
@@ -181,14 +240,21 @@ namespace ngosen {
         }
     }
 
+    std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name) {
+        std::vector<std::string> keys;
+        const auto               section = ini.sections.find(name);
+        if (section == ini.sections.end())
+            return keys;
+        // fcitx5 stops at the first missing index.
+        for (auto it = section->second.find("0"); it != section->second.end(); it = section->second.find(std::to_string(keys.size())))
+            keys.push_back(it->second);
+        return keys;
+    }
+
     IBusSettings defaultSettings() {
         IBusSettings settings;
-        auto&        o         = settings.options;
-        o.retypeAfterSwitch    = false;
-        o.retoneSelection      = false;
-        o.enableMacroInOffMode = false;
-        o.doubleSpaceToPeriod  = false;
-        o.doubleHyphenToEmDash = false;
+        settings.toggleKeys   = defaultToggleKeys();
+        settings.modeMenuKeys = defaultModeMenuKeys();
         return settings;
     }
 
@@ -206,18 +272,29 @@ namespace ngosen {
         read.boolean("AutoNonVnRestore", o.autoNonVnRestore);
         read.boolean("DdFreeStyle", o.ddFreeStyle);
         read.boolean("BackspaceRemovesTone", o.backspaceRemovesTone);
+        read.boolean("RetoneSelection", o.retoneSelection);
+        read.boolean("RetypeAfterSwitch", o.retypeAfterSwitch);
         read.boolean("EnableMacro", o.enableMacro);
         read.boolean("CapitalizeMacro", o.capitalizeMacro);
+        read.boolean("EnableMacroInOffMode", o.enableMacroInOffMode);
         int lockWordKey = static_cast<int>(o.lockWordKey);
         read.index("LockWordModifier", lockWordKey, LockWordKeyNames);
         o.lockWordKey = static_cast<LockWordKey>(lockWordKey);
         read.boolean("AutoCapitalizeAfterPunctuation", o.autoCapitalizeAfterPunctuation);
         read.boolean("CapitalizeStartOfText", o.capitalizeStartOfText);
+        read.boolean("DoubleSpaceToPeriod", o.doubleSpaceToPeriod);
+        read.boolean("DoubleHyphenToEmDash", o.doubleHyphenToEmDash);
         read.text("TimeFormat", o.timeFormat);
         read.text("DateFormat", o.dateFormat);
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
+        settings.toggleKeys   = readToggleKeys(ini);
+        settings.modeMenuKeys = readModeMenuKeys(ini);
+        read.shortcut("ShortcutSen", settings.shortcutSen);
+        read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
+        read.shortcut("ShortcutOff", settings.shortcutOff);
+        read.shortcut("ShortcutDefault", settings.shortcutDefault);
         return settings;
     }
 
@@ -235,16 +312,27 @@ namespace ngosen {
         line("AutoNonVnRestore", boolText(o.autoNonVnRestore));
         line("DdFreeStyle", boolText(o.ddFreeStyle));
         line("BackspaceRemovesTone", boolText(o.backspaceRemovesTone));
+        line("RetoneSelection", boolText(o.retoneSelection));
+        line("RetypeAfterSwitch", boolText(o.retypeAfterSwitch));
         line("EnableMacro", boolText(o.enableMacro));
         line("CapitalizeMacro", boolText(o.capitalizeMacro));
+        line("EnableMacroInOffMode", boolText(o.enableMacroInOffMode));
         line("LockWordModifier", LockWordKeyNames[static_cast<int>(o.lockWordKey)]);
         line("AutoCapitalizeAfterPunctuation", boolText(o.autoCapitalizeAfterPunctuation));
         line("CapitalizeStartOfText", boolText(o.capitalizeStartOfText));
+        line("DoubleSpaceToPeriod", boolText(o.doubleSpaceToPeriod));
+        line("DoubleHyphenToEmDash", boolText(o.doubleHyphenToEmDash));
         line("TimeFormat", o.timeFormat);
         line("DateFormat", o.dateFormat);
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
+        line(ToggleKeyName, joinWords(settings.toggleKeys));
+        line(ModeMenuKeyName, joinWords(settings.modeMenuKeys));
+        line("ShortcutSen", settings.shortcutSen);
+        line("ShortcutPreedit", settings.shortcutPreedit);
+        line("ShortcutOff", settings.shortcutOff);
+        line("ShortcutDefault", settings.shortcutDefault);
         return out.str();
     }
 
@@ -256,7 +344,7 @@ namespace ngosen {
         bool               top = true;
         bool               set = false;
         while (std::getline(lines, line)) {
-            const std::string trimmed = trim(line);
+            const std::string trimmed = trimIni(line);
             const auto        equal   = trimmed.find('=');
             if (!trimmed.empty() && trimmed.front() == '[' && trimmed.back() == ']') {
                 // A key after a section header would belong to that section.
@@ -279,7 +367,7 @@ namespace ngosen {
     SettingsPaths SettingsPaths::fromEnvironment() {
         const std::string config = g_get_user_config_dir();
         const std::string data   = g_get_user_data_dir();
-        return {config + "/ngosen", data + "/ngosen", config + "/fcitx5/conf", data + "/fcitx5/ngosen"};
+        return {config + "/ngosen", data + "/ngosen", config + "/fcitx5/conf", data + "/fcitx5/ngosen", std::string(g_get_user_state_dir()) + "/ngosen"};
     }
 
     std::string SettingsPaths::settingsFile() const {
@@ -294,8 +382,43 @@ namespace ngosen {
     std::string SettingsPaths::dictionaryFile() const {
         return dataDir + "/vietnamese.cm.dict";
     }
+    // The fcitx5 edition's name, so the two files look alike.
+    std::string SettingsPaths::appModesFile() const {
+        return configDir + "/ngosen-app-rules.conf";
+    }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
+    }
+
+    std::string SettingsPaths::senDefaultMark() const {
+        return configDir + "/.sen-default";
+    }
+
+    std::string SettingsPaths::englishMark() const {
+        return stateDir + "/english";
+    }
+
+    bool readEnglishOn(const SettingsPaths& paths) {
+        return fileExists(paths.englishMark());
+    }
+
+    bool saveEnglishOn(const SettingsPaths& paths, bool on) {
+        // The typing log shares the folder, which only the user may read. An empty marker needs no
+        // sync: losing it in a crash only starts the next session in Vietnamese.
+        if (on) {
+            const int fd = g_mkdir_with_parents(paths.stateDir.c_str(), 0700) == 0 ? ::open(paths.englishMark().c_str(), O_WRONLY | O_CREAT | O_CLOEXEC, 0600) : -1;
+            if (fd == -1) {
+                NGOSEN_WARN("Cannot write " + paths.englishMark() + ": " + std::strerror(errno));
+                return false;
+            }
+            ::close(fd);
+            return true;
+        }
+        std::error_code error;
+        std::filesystem::remove(paths.englishMark(), error);
+        if (error)
+            NGOSEN_WARN("Cannot remove " + paths.englishMark() + ": " + error.message());
+        return !error;
     }
 
     std::string SettingsPaths::extensionEnabledMark() const {
@@ -340,6 +463,57 @@ namespace ngosen {
         return true;
     }
 
+    namespace {
+        // Options this edition began to read after the first import, where fcitx5's choice still applies; a
+        // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
+        bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
+            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode"};
+            std::string              text;
+            if (!readFile(paths.settingsFile(), text))
+                return true;
+            const IniFile current = parseIni(text);
+            std::string   fcitx;
+            readFile(paths.fcitxConfigDir + "/ngosen.conf", fcitx);
+            const IniFile     wanted = parseIni(settingsText(readSettings(parseIni(fcitx))));
+            const std::string before = text;
+            for (const char* key : later) {
+                if (current.top.count(key) == 0)
+                    text = withSetting(text, key, wanted.top.at(key));
+            }
+            return text == before || write(paths.settingsFile(), text);
+        }
+
+        // Saving any setting writes every key, so DirectTyping=False in an unmarked file may be an untouched
+        // default rather than a choice; Sen is switched on once for it.
+        bool switchSenOnOnce(const SettingsPaths& paths, const FileWriter& write) {
+            std::string text;
+            if (fileExists(paths.senDefaultMark()) || !readFile(paths.settingsFile(), text))
+                return true;
+            // The mark goes first: a failed switch leaves the underline, never a second switch later.
+            if (!write(paths.senDefaultMark(), ""))
+                return false;
+            if (readSettings(parseIni(text)).directTyping)
+                return true;
+            NGOSEN_INFO("Turning Sen on, now the default");
+            return write(paths.settingsFile(), withSetting(text, "DirectTyping", "True"));
+        }
+
+        // fcitx5 keeps Sen or the underline in Mode; Off types with Sen while Vietnamese is on, and there is no
+        // emoji picker here, so it underlines.
+        void readFcitxMode(const IniFile& fcitx, IBusSettings& settings) {
+            const auto mode = fcitx.top.find("Mode");
+            if (mode == fcitx.top.end())
+                return;
+            std::string name = mode->second;
+            for (char& c : name)
+                c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            if (name == "preedit" || name == "emoji picker")
+                settings.directTyping = false;
+            else if (name == "sen" || name == "off")
+                settings.directTyping = true;
+        }
+    } // namespace
+
     bool prepareSettings(const SettingsPaths& paths, const FileWriter& write) {
         const bool  imported = fileExists(paths.importedMark());
         std::string content;
@@ -348,6 +522,7 @@ namespace ngosen {
                 {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
                 {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
                 {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))
@@ -358,11 +533,18 @@ namespace ngosen {
             IBusSettings settings = defaultSettings();
             if (!imported && readFile(paths.fcitxConfigDir + "/ngosen.conf", content)) {
                 NGOSEN_INFO("Importing the settings of the fcitx5 edition");
-                settings = readSettings(parseIni(content));
+                const IniFile fcitx = parseIni(content);
+                settings            = readSettings(fcitx);
+                readFcitxMode(fcitx, settings);
             }
-            if (!write(paths.settingsFile(), settingsText(settings)))
+            // A new file already holds the mode wanted, so it is never switched.
+            if (!write(paths.senDefaultMark(), "") || !write(paths.settingsFile(), settingsText(settings)))
                 return false;
+        } else if (!addLaterSettings(paths, write)) {
+            return false;
         }
+        if (!switchSenOnOnce(paths, write))
+            return false;
         return imported || write(paths.importedMark(), "");
     }
 
