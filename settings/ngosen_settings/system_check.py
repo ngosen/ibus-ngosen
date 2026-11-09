@@ -10,6 +10,7 @@ import subprocess
 from dataclasses import dataclass
 from urllib.parse import urlencode
 
+from . import keys
 from .i18n import _
 
 ISSUE_URL = "https://github.com/ngosen/ibus-ngosen/issues/new"
@@ -18,6 +19,8 @@ MESSENGER_URL = "https://m.me/61595753582618"
 IM_VARIABLES = ("GTK_IM_MODULE", "QT_IM_MODULE", "XMODIFIERS")
 
 OK, WARN, FAIL = "ok", "warn", "fail"
+# Worth knowing but nothing to fix, so it is not counted as a step left.
+INFO = "info"
 
 ENGINE = "ngosen"
 GNOME_SOURCES = "org.gnome.desktop.input-sources"
@@ -26,11 +29,23 @@ FORWARD_KEYS = "forward-keys@ngosen.github.io"
 START_IBUS, RESTART_IBUS, ADD_SOURCE = "start-ibus", "restart-ibus", "add-source"
 ENABLE_FORWARD_KEYS = "enable-forward-keys"
 
+SEN, PREEDIT = "sen", "preedit"
+# As the engine reads ngosen-app-rules.conf (src/ngosen-ibus-app-modes.cpp).
+APP_MODE_NUMBERS = {1: SEN, 2: SEN, 3: SEN, 4: SEN, 8: SEN, 5: PREEDIT}
+NOT_APPS = ("gnome-shell", "QIBusInputContext", "xim")
+INI_SPACE = " \t\r\f\v"
+
 
 @dataclass
 class Facts:
     env: dict
     ibus_running: bool = False
+    # fcitx5 wrote its pid into this session's IBus address file, so apps reach fcitx5.
+    fcitx_owns_session: bool = False
+    # The engine ibus engine names, empty when it could not tell.
+    current_engine: str = ""
+    # The keys GNOME switches input sources with, as the user reads them.
+    switch_keys: list = None
     # False when IBus started before Ngó Sen was installed, so it does not know the engine yet.
     engine_known: bool = True
     engine_replaced: bool = False
@@ -48,6 +63,9 @@ class Facts:
     # What gnome-extensions info says; empty when GNOME Shell does not know the extension.
     forward_keys_state: str = ""
     has_gnome_portal: bool = False
+    # Apps with a typing mode of their own, and how many of them picked Sen.
+    picked_apps: int = 0
+    sen_apps: int = 0
 
     @property
     def session(self):
@@ -75,6 +93,14 @@ class Finding:
 def steps(facts):
     """Every check that applies to this machine, passed or not, in the order to fix them."""
     if not facts.ibus_running:
+        if facts.fcitx_owns_session:
+            return [
+                Finding(
+                    FAIL,
+                    _("fcitx5 holds the input method"),
+                    _("Stop fcitx5 from starting at login, then log out and back in."),
+                )
+            ]
         return [
             Finding(
                 FAIL,
@@ -90,6 +116,7 @@ def steps(facts):
     elif not facts.engine_known:
         found.append(_restart_finding(_("IBus started before Ngó Sen was installed")))
     found += _source_findings(facts)
+    found += _engine_findings(facts)
     found += _variable_findings(facts)
     found += _shell_findings(facts)
     if facts.fcitx_running:
@@ -126,6 +153,21 @@ def _source_findings(facts):
             ADD_SOURCE,
         )
     ]
+
+
+def _engine_findings(facts):
+    # Typing English with another source is normal, so this only says how to switch back.
+    if facts.current_engine in ("", ENGINE) or facts.in_gnome_sources is False:
+        return []
+    # GNOME runs xkb:us::eng for every keyboard layout, so the name stays out of the title.
+    title = _("Ngó Sen is not the input source in use")
+    if not facts.gnome:
+        fix = _("Switch to Ngó Sen from the IBus menu.")
+    elif facts.switch_keys:
+        fix = _("Switch to Ngó Sen with {}.").format(_(" or ").join(facts.switch_keys))
+    else:
+        fix = _("Switch to Ngó Sen from the input source menu in the top bar.")
+    return [Finding(INFO, title, fix)]
 
 
 def _variable_findings(facts):
@@ -168,6 +210,14 @@ def _variable_findings(facts):
         )
     if facts.env.get("XMODIFIERS") == "@im=ibus":
         found.append(Finding(OK, _("Older X11 apps use IBus")))
+    elif facts.env.get("XMODIFIERS") == "@im=fcitx":
+        found.append(
+            Finding(
+                WARN,
+                _("Older X11 apps use fcitx5"),
+                _("Set {} in the session environment.").format("XMODIFIERS=@im=ibus"),
+            )
+        )
     else:
         found.append(
             Finding(
@@ -190,7 +240,7 @@ def _shell_findings(facts):
         return []
     found = []
     version = facts.gnome_shell_version
-    if facts.direct_typing and drops_forwarded_keys(version):
+    if (facts.direct_typing or facts.sen_apps) and drops_forwarded_keys(version):
         found.append(_forward_keys_finding(facts.forward_keys_state, version))
     # On Wayland only the portal tells which app has the focus.
     if facts.session == "wayland" and not facts.has_gnome_portal:
@@ -247,7 +297,7 @@ FIX_ORDER = (START_IBUS, ADD_SOURCE, ENABLE_FORWARD_KEYS, RESTART_IBUS)
 
 def summary(found, failed=()):
     """Heading and text above the steps; failed fixes have no button left."""
-    problems = [f for f in found if f.level != OK]
+    problems = steps_left(found)
     if not problems:
         return _("This machine is ready"), _("Try typing in any app.")
     title = _("Steps left to fix: {}").format(len(problems))
@@ -262,6 +312,10 @@ def summary(found, failed=()):
     else:
         text = _("Each step says what to do.")
     return title, text
+
+
+def steps_left(found):
+    return [f for f in found if f.level not in (OK, INFO)]
 
 
 def failed_text(finding):
@@ -377,19 +431,20 @@ class Fixes:
 
 def report(facts, findings):
     """Plain text for the bug report, which the user reviews before sending."""
-    marks = {OK: "OK", WARN: "!", FAIL: "X"}
+    marks = {OK: "OK", INFO: "i", WARN: "!", FAIL: "X"}
     desktop = ":".join(facts.desktops) or "?"
     lines = [
-        f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}",
+        f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}"
+        + (f", engine {facts.current_engine}" if facts.current_engine else ""),
         f"{facts.distro or '?'}, {desktop}, {facts.session or '?'}",
         " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES),
     ]
     if facts.gnome_shell_version:
         line = f"GNOME Shell {facts.gnome_shell_version}"
-        line += f", forward-keys: {facts.forward_keys_state or 'not installed'}"
+        line += f", forward-keys: {facts.forward_keys_state or 'not found'}"
         line += f", portal: {'installed' if facts.has_gnome_portal else 'not installed'}"
         mode = "Sen" if facts.direct_typing else "underlined"
-        lines.append(f"{line}, mode: {mode}")
+        lines.append(f"{line}, mode: {mode}, apps with their own mode: {facts.picked_apps}")
     lines.append("")
     lines += [f"[{marks[f.level]}] {f.title}" for f in findings] or ["[OK] no setup problem found"]
     return "\n".join(lines)
@@ -404,16 +459,24 @@ def issue_url(facts, text):
     return f"{ISSUE_URL}?{urlencode(query)}"
 
 
-def collect(sources, ngosen_version="", env=None, proc="/proc", direct_typing=False):
+def collect(
+    sources, ngosen_version="", env=None, proc="/proc", direct_typing=False, app_modes_file=None
+):
     env = dict(os.environ if env is None else env)
     facts = Facts(env={k: v for k, v in env.items() if k in IM_VARIABLES or k.startswith("XDG_")})
     facts.ngosen_version = ngosen_version
     facts.direct_typing = direct_typing
     facts.distro = _distro()
-    facts.ibus_running = ibus_owns_session(env, proc)
+    owner = session_owner(env, proc)
+    facts.ibus_running = owner == "ibus"
+    facts.fcitx_owns_session = owner == "fcitx5"
     if facts.ibus_running:
         facts.ibus_version = _output(["ibus", "version"]).strip().removeprefix("IBus ")
         facts.engine_known = engine_listed(_output(["ibus", "list-engine"]))
+        facts.current_engine = engine_in_use()
+    modes = app_modes(_read(app_modes_file)) if app_modes_file else {}
+    facts.picked_apps = len(modes)
+    facts.sen_apps = sum(1 for mode in modes.values() if mode == SEN)
     facts.engine_replaced = runs_replaced_engine(proc)
     facts.fcitx_running = bool(_pids_named("fcitx5", proc))
     facts.fcitx_gtk_module = bool(_fcitx_gtk_modules())
@@ -426,7 +489,70 @@ def collect(sources, ngosen_version="", env=None, proc="/proc", direct_typing=Fa
         facts.has_gnome_portal = has_gnome_portal(env)
         current = sources.get()
         facts.in_gnome_sources = None if current is None else ("ibus", ENGINE) in current
+        facts.switch_keys = switch_key_names(*sources.switch_keys())
     return facts
+
+
+def _read(path):
+    try:
+        # The engine splits lines at \n only.
+        with open(path, encoding="utf-8", errors="replace", newline="") as f:
+            return f.read()
+    except OSError:
+        return ""
+
+
+def app_modes(text):
+    """The typing mode each app picked, read as the engine reads ngosen-app-rules.conf."""
+    modes = {}
+    for line in text.split("\n"):
+        if not line or line[0] == "#":
+            continue
+        app, equals, number = line.partition("=")
+        number = number.strip(INI_SPACE) if equals else ""
+        if not (0 < len(number) <= 2 and all(c in "0123456789" for c in number)):
+            continue
+        app = mode_app_name(app.strip(INI_SPACE))
+        mode = APP_MODE_NUMBERS.get(int(number))
+        if mode and app:
+            modes[app] = mode
+    return modes
+
+
+def mode_app_name(program):
+    name = program
+    if len(name) > len(".desktop") and name.endswith(".desktop"):
+        name = name[: -len(".desktop")]
+    # As the core names an IBus client: "gtk3-im:firefox", and a snap's "firefox_firefox".
+    colon = name.find(":")
+    if colon != -1 and name[:colon].endswith("-im"):
+        name = name[colon + 1 :]
+    underscore = name.find("_")
+    if underscore != -1 and name[:underscore] == name[underscore + 1 :]:
+        name = name[:underscore]
+    return "" if name in NOT_APPS else name
+
+
+def engine_in_use():
+    """The engine ibus engine names, or empty when the command failed or printed something else."""
+    code, out = _run(["ibus", "engine"])
+    words = out.split()
+    if code != 0 or len(words) != 1 or not re.fullmatch(r"[\w:.@+-]+", words[0]):
+        return ""
+    return words[0]
+
+
+def switch_key_names(accelerators, xkb_options):
+    """GNOME's switch-input-source keys and xkb layout toggles, written as the user reads them."""
+    # XF86 keys are special keys most keyboards do not have.
+    chords = [keys.accelerator(a) for a in accelerators if "XF86" not in a]
+    chords += [keys.xkb_toggle(option) for option in xkb_options]
+    names = []
+    for chord in chords:
+        name = chord and keys.label(keys.value(chord))
+        if name and name not in names:
+            names.append(name)
+    return names
 
 
 def extension_state(text):
@@ -466,11 +592,17 @@ def _distro():
 
 
 def _output(cmd):
+    return _run(cmd)[1]
+
+
+def _run(cmd):
+    """(exit status, stdout); a command that could not run counts as failed."""
     env = {**os.environ, "LC_ALL": "C"}
     try:
-        return subprocess.run(cmd, capture_output=True, text=True, timeout=3, env=env).stdout
+        done = subprocess.run(cmd, capture_output=True, text=True, timeout=3, env=env)
     except (OSError, subprocess.SubprocessError):
-        return ""
+        return -1, ""
+    return done.returncode, done.stdout
 
 
 def _fcitx_gtk_modules():
@@ -521,10 +653,10 @@ def _ibus_address_name(env):
     return f"{host or 'unix'}-{rest.split('.')[0] or '0'}"
 
 
-def ibus_owns_session(env, proc="/proc", machine_id=None):
-    """Whether this session's IBus address file names a running ibus-daemon.
+def session_owner(env, proc="/proc", machine_id=None):
+    """Which of ibus or fcitx5 wrote its running pid into this session's IBus address file.
 
-    fcitx5 writes its own pid there when it takes the session; that does not count.
+    fcitx5 writes its own pid there when it takes the session. Empty when neither does.
     """
     path = env.get("IBUS_ADDRESS_FILE")
     if not path:
@@ -536,18 +668,19 @@ def ibus_owns_session(env, proc="/proc", machine_id=None):
             match = re.search(r"^IBUS_DAEMON_PID=(\d+)", f.read(), re.M)
     except FileNotFoundError:
         # IBus started with IBUS_ADDRESS or under another display name writes no file found here.
-        return bool(_pids_named("ibus-daemon", proc))
+        return "ibus" if _pids_named("ibus-daemon", proc) else ""
     except OSError:
-        return False
+        return ""
     if match is None:
-        return False
+        return ""
     try:
         with open(
             os.path.join(proc, match.group(1), "comm"), encoding="utf-8", errors="replace"
         ) as f:
-            return f.read().strip() == "ibus-daemon"
+            name = f.read().strip()
     except OSError:
-        return False
+        return ""
+    return {"ibus-daemon": "ibus", "fcitx5": "fcitx5"}.get(name, "")
 
 
 def runs_replaced_engine(proc="/proc"):
