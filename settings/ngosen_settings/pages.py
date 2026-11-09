@@ -14,6 +14,16 @@ OTHER_KEYS = "\0other"
 NAVIGATION = {"Tab", "ISO_Left_Tab", "Return", "KP_Enter", "Escape"}
 
 
+def _whole_value_factory():
+    """Shows the chosen value in full; libadwaita's label shrinks to "C…" beside a wrapped subtitle."""
+    factory = Gtk.SignalListItemFactory()
+    factory.connect("setup", lambda _f, item: item.set_child(Gtk.Label(xalign=1)))
+    factory.connect(
+        "bind", lambda _f, item: item.get_child().set_label(item.get_item().get_string())
+    )
+    return factory
+
+
 class SettingRows:
     """Builds a row for each setting and puts the saved values back into them."""
 
@@ -38,6 +48,9 @@ class SettingRows:
             )
         else:
             row = Adw.ComboRow()
+            # The default factory still draws the popup list, with its check marks.
+            row.set_list_factory(row.get_factory())
+            row.set_factory(_whole_value_factory())
             row.connect("notify::selected", lambda r, _p: self._changed(key, self._choice(key, r)))
         row.set_title(_(options.LABELS[key]))
         if key in options.HINTS:

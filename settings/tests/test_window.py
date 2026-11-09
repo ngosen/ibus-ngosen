@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import os
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -13,6 +14,7 @@ try:
     from ngosen_settings import window  # Picks the GTK and libadwaita versions first.
 
     Adw, GLib = window.Adw, window.GLib
+    from gi.repository import Pango
 except (ImportError, ValueError):
     window = None
 
@@ -601,6 +603,31 @@ class WindowTest(unittest.TestCase):
         with open(self.store.settings_file, "w", encoding="utf-8") as f:
             f.write("DirectTyping=False\n")
         self.assertFalse(self.window.check.direct_typing())
+
+    def test_chosen_value_is_never_cut(self):
+        # A wrapped subtitle can leave the value no room, so "Ctrl+Shift" showed as "C…".
+        self.window.save(
+            "ToggleKey", "Control+Shift_L Control+Shift_R Shift+Control_L Shift+Control_R"
+        )
+        self.window.rows.refresh()
+        self.window.present()
+        row = self.window.rows.rows["ToggleKey"]
+        context = GLib.MainContext.default()
+        shown = []
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            if not context.iteration(False):
+                time.sleep(0.01)
+            shown = [
+                label
+                for label in labels(row)
+                if label.get_text() == "Ctrl+Shift"
+                and label.get_ancestor(window.Gtk.Popover) is None
+            ]
+            if shown:
+                break
+        self.assertEqual(len(shown), 1, [label.get_text() for label in labels(row)])
+        self.assertEqual(shown[0].get_ellipsize(), Pango.EllipsizeMode.NONE)
 
     def tearDown(self):
         self.window.destroy()
