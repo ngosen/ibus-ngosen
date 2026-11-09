@@ -92,7 +92,7 @@ LABELS = {
     "ShortcutOff": N_("Shortcut for OFF"),
     "ShortcutDefault": N_("Shortcut for Default Typing"),
     "ShortcutVim": N_("Shortcut for Vim mode"),
-    "DirectTyping": N_("Type with Sen where the app allows"),
+    "DirectTyping": N_("Type with Sen"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
@@ -135,7 +135,7 @@ HINTS = {
         "With the mode menu open, press a mode's key to pick it for the app in use. Pick Default Typing to make the app follow the switch key again."
     ),
     "DirectTyping": N_(
-        "Text goes straight into fields that report the text around the cursor, without an underline. Elsewhere words keep the underline."
+        "Text goes straight into the field, without an underline, in every app not set on its own with the mode menu. Off: those apps underline the word being typed."
     ),
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
