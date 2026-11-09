@@ -40,6 +40,11 @@ if (NOT (IBUS_DAEMON AND DBUS_RUN_SESSION AND XVFB AND NGOSEN_HAVE_PYTHON_IBUS E
                         "install them or pass -DNGOSEN_IBUS_DAEMON_TESTS=OFF")
 endif()
 
+add_executable(ibus-announce-test ibus-announce.cpp)
+target_link_libraries(ibus-announce-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_announce COMMAND ${DBUS_RUN_SESSION} -- $<TARGET_FILE:ibus-announce-test>)
+set_tests_properties(ibus_announce PROPERTIES LABELS "unit;ibus" TIMEOUT 30)
+
 set(NGOSEN_IBUS_EXEC $<TARGET_FILE:ibus-engine-ngosen>)
 set(NGOSEN_IBUS_ICON "")
 set(component_dir ${CMAKE_CURRENT_BINARY_DIR}/component)

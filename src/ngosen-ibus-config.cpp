@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
@@ -77,9 +78,10 @@ namespace ngosen {
 
         // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
         // in its own section, which is read when importing its settings.
-        const char* const ToggleKeyName    = "ToggleKey";
-        const char* const ModeMenuKeyName  = "ModeMenuKey";
-        const char* const CycleModeKeyName = "CycleModeKey";
+        const char* const ToggleKeyName        = "ToggleKey";
+        const char* const ModeMenuKeyName      = "ModeMenuKey";
+        const char* const CycleModeKeyName     = "CycleModeKey";
+        const char* const AnnouncedVersionName = "AnnouncedVersion";
 
         // The items each menu shows, as fcitx5 names their switches.
         const std::pair<const char*, bool IBusSettings::*> ShownItems[] = {
@@ -574,8 +576,10 @@ namespace ngosen {
                 settings            = readSettings(fcitx);
                 readFcitxMode(fcitx, settings);
             }
-            // A new file already holds the mode wanted, so it is never switched.
-            if (!write(paths.senDefaultMark(), "") || !write(paths.settingsFile(), settingsText(settings)))
+            // A new file already holds the mode wanted, so it is never switched, and a new user has no
+            // release to catch up on.
+            const std::string text = withSetting(settingsText(settings), AnnouncedVersionName, featureRelease(NGOSEN_IBUS_VERSION));
+            if (!write(paths.senDefaultMark(), "") || !write(paths.settingsFile(), text))
                 return false;
         } else if (!addLaterSettings(paths, write)) {
             return false;
@@ -583,6 +587,33 @@ namespace ngosen {
         if (!switchSenOnOnce(paths, write))
             return false;
         return imported || write(paths.importedMark(), "");
+    }
+
+    namespace {
+        std::pair<int, int> releaseNumbers(const std::string& version) {
+            int major = 0;
+            int minor = 0;
+            std::sscanf(version.c_str(), "%d.%d", &major, &minor);
+            return {major, minor};
+        }
+    } // namespace
+
+    std::string featureRelease(const std::string& version) {
+        const auto [major, minor] = releaseNumbers(version);
+        return std::to_string(major) + "." + std::to_string(minor);
+    }
+
+    std::string releaseToAnnounce(const SettingsPaths& paths, const std::string& version, const FileWriter& write) {
+        std::string text;
+        if (!readFile(paths.settingsFile(), text))
+            return {};
+        const IniFile ini       = parseIni(text);
+        const auto    announced = ini.top.find(AnnouncedVersionName);
+        if (announced != ini.top.end() && releaseNumbers(announced->second) >= releaseNumbers(version))
+            return {};
+        const std::string release = featureRelease(version);
+        // Recorded first: a notice that could not be recorded would come back at every login.
+        return write(paths.settingsFile(), withSetting(text, AnnouncedVersionName, release)) ? release : std::string();
     }
 
 } // namespace ngosen

@@ -343,7 +343,12 @@ namespace {
 
     const char* const FcitxSwitches = "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n";
 
-    void              testImport(const fs::path& root) {
+    // A new file names the running release as announced already.
+    std::string newSettingsText() {
+        return withSetting(settingsText(defaultSettings()), "AnnouncedVersion", featureRelease(NGOSEN_IBUS_VERSION));
+    }
+
+    void testImport(const fs::path& root) {
         const SettingsPaths paths = pathsIn(root);
         write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
         write(paths.fcitxConfigDir + "/ngosen-macro-table.conf", FcitxMacros);
@@ -366,7 +371,7 @@ namespace {
 
         write(paths.fcitxConfigDir + "/ngosen.conf", FcitxSettings);
         fs::remove(paths.settingsFile());
-        check(prepareSettings(paths) && read(paths.settingsFile()) == settingsText(defaultSettings()), "a deleted ngosen.conf comes back as the defaults");
+        check(prepareSettings(paths) && read(paths.settingsFile()) == newSettingsText(), "a deleted ngosen.conf comes back as the defaults");
     }
 
     void testNoOverwrite(const fs::path& root) {
@@ -380,7 +385,32 @@ namespace {
     void testDefaults(const fs::path& root) {
         const SettingsPaths paths = pathsIn(root);
         check(prepareSettings(paths), "defaults written");
-        check(read(paths.settingsFile()) == settingsText(defaultSettings()), "nothing to import writes the defaults");
+        check(read(paths.settingsFile()) == newSettingsText(), "nothing to import writes the defaults");
+    }
+
+    void testAnnounce(const fs::path& root) {
+        check(featureRelease("1.2.1-1") == "1.2" && featureRelease("1.10.0") == "1.10", "a bug-fix release shares its feature release");
+
+        const SettingsPaths fresh = pathsIn(root / "fresh");
+        write(fresh.fcitxConfigDir + "/ngosen.conf", "AnnouncedVersion=1.9\n");
+        check(prepareSettings(fresh) && releaseToAnnounce(fresh, NGOSEN_IBUS_VERSION).empty(), "a new user has nothing to catch up on");
+        check(parseIni(read(fresh.settingsFile())).top.at("AnnouncedVersion") == featureRelease(NGOSEN_IBUS_VERSION), "the fcitx5 edition's release number is not imported");
+
+        const SettingsPaths old = pathsIn(root / "old");
+        write(old.importedMark(), "");
+        write(old.senDefaultMark(), "");
+        write(old.settingsFile(), "InputMethod=VNI\n");
+        check(prepareSettings(old) && releaseToAnnounce(old, "1.3.0") == "1.3", "an update from an older release is announced");
+        check(parseIni(read(old.settingsFile())).top.at("InputMethod") == "VNI", "the rest of the file is kept");
+        check(releaseToAnnounce(old, "1.3.0").empty() && releaseToAnnounce(old, "1.3.2").empty(), "announced once per feature release");
+        check(releaseToAnnounce(old, "1.10.0") == "1.10", "releases compare as numbers");
+        check(releaseToAnnounce(old, "1.4.0").empty(), "an older release does not announce again");
+        check(settingsText(readSettings(parseIni(read(old.settingsFile())))).find("AnnouncedVersion") == std::string::npos, "backups and the settings window leave it out");
+
+        const SettingsPaths broken = pathsIn(root / "broken");
+        write(broken.settingsFile(), "InputMethod=VNI\n");
+        check(releaseToAnnounce(broken, "1.3.0", [](const std::string&, const std::string&) { return false; }).empty(),
+              "nothing is announced when it cannot be recorded, so it is never repeated at each login");
     }
 
     // A settings file without an option added later: fcitx5's choice comes over once, else the default.
@@ -557,6 +587,7 @@ int main() {
     testImport(root / "import");
     testNoOverwrite(root / "keep");
     testDefaults(root / "defaults");
+    testAnnounce(root / "announce");
     testKilledHalfway(root / "killed");
     testLaterSettingsCarriedOver(root / "later");
     testSenDefault(root / "sen");
