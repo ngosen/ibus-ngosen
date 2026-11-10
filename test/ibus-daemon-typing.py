@@ -286,7 +286,8 @@ class App:
 
     def type(self, keys):
         for c in keys:
-            self.key(IBus.unicode_to_keyval(c))
+            # A keyboard sends a capital with Shift held.
+            self.key(IBus.unicode_to_keyval(c), IBus.ModifierType.SHIFT_MASK if c.isupper() else 0)
         pump(200)
 
     def tap_ctrl(self):
@@ -928,6 +929,13 @@ with open(log_path) as f:
 # Straight into a field that can delete around the cursor, underlined in one that cannot.
 shell.start("50.1", None)
 set_setting("DirectTyping", "True")
+
+# Shift only makes the capital, so the word after it keeps going.
+for kwargs in ({}, {"surrounding": False}):
+    app = App("capital", **kwargs)
+    app.type("Vieejt Nguowif Chaof ")
+    check(app.text == "Việt Người Chào ", f"direct, capital {kwargs}: the words", app.text)
+    app.close()
 
 
 def field_with_text(**kwargs):

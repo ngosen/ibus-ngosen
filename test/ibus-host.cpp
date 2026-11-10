@@ -146,6 +146,19 @@ namespace {
         unsetenv("XDG_SESSION_TYPE");
         unsetenv("WAYLAND_DISPLAY");
     }
+    // The core ends the word on a key with a modifier.
+    void testShiftForCharacters() {
+        const auto shortcut = [](guint sym, guint state) { return IBusKeyPress(sym, 0, state).hasModifier(); };
+        check(!shortcut(IBUS_KEY_V, IBUS_SHIFT_MASK), "Shift+V types a letter");
+        check(!shortcut(IBUS_KEY_exclam, IBUS_SHIFT_MASK), "Shift+1 types a character");
+        check(!shortcut(IBUS_KEY_KP_5, IBUS_SHIFT_MASK), "Shift on a keypad digit");
+        check(shortcut(IBUS_KEY_v, IBUS_CONTROL_MASK), "Ctrl+V is a shortcut");
+        check(shortcut(IBUS_KEY_V, IBUS_CONTROL_MASK | IBUS_SHIFT_MASK), "Ctrl+Shift+V is a shortcut");
+        check(shortcut(IBUS_KEY_Return, IBUS_SHIFT_MASK), "Shift+Enter is a shortcut");
+        check(shortcut(IBUS_KEY_space, IBUS_SHIFT_MASK), "Shift+Space is a shortcut");
+        check(shortcut(IBUS_KEY_Left, IBUS_SHIFT_MASK), "Shift+Left is a shortcut");
+    }
+
 } // namespace
 
 int main() {
@@ -158,6 +171,7 @@ int main() {
     testShellAddressBar();
     testCandidates();
     testWaylandSession();
+    testShiftForCharacters();
     if (failures == 0)
         std::cout << "all host checks passed\n";
     return failures == 0 ? EXIT_SUCCESS : EXIT_FAILURE;
