@@ -1162,6 +1162,14 @@ msgid "Typing wrong in some app? The Check page says why."
 msgstr "Gõ sai ở app nào đó? Trang Kiểm tra cho biết vì sao."
 
 #: settings/ngosen_settings/whats_new.py
+msgid ""
+"Steam types plain letters? Start it with LC_CTYPE=zh_CN.UTF-8 steam; its "
+"menus keep your language."
+msgstr ""
+"Steam không gõ được tiếng Việt? Mở Steam bằng lệnh LC_CTYPE=zh_CN.UTF-8 "
+"steam, giao diện vẫn giữ ngôn ngữ cũ."
+
+#: settings/ngosen_settings/whats_new.py
 msgid "“Save typing log” in the top bar menu records what you type, to attach to a bug report."
 msgstr "“Lưu nhật ký gõ” trên menu thanh trên cùng ghi lại những gì bạn gõ, để đính kèm khi báo lỗi."
 

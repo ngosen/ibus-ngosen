@@ -30,6 +30,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Mục Vim mode trong menu phím ` (phím `v`) như bản fcitx5: bật cho app đang dùng thì Ngó Sen theo phím lệnh của
   Vim ở chế độ normal, nhớ riêng cho từng app trong `ngosen-vim-apps.conf`, chép sang từ bản fcitx5 lúc chạy lần
   đầu. Ẩn mục hay đổi phím của nó trong nhóm "Menu chế độ gõ" của cửa sổ cài đặt (#121).
+- Mẹo Steam trong trang "Có gì mới & mẹo": Steam chỉ nhận bộ gõ khi chạy bằng `LC_CTYPE=zh_CN.UTF-8 steam`, giao
+  diện vẫn giữ ngôn ngữ cũ (#131).
 
 ### Thay đổi
 

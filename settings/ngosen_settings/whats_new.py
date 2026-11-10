@@ -129,6 +129,14 @@ TIPS = [
         "target": ("page", "check"),
     },
     {
+        # Steam passes keys to the input method only under a Chinese or Japanese LC_CTYPE.
+        "text": N_(
+            "Steam types plain letters? Start it with LC_CTYPE=zh_CN.UTF-8 steam; its menus keep "
+            "your language."
+        ),
+        "target": None,
+    },
+    {
         "text": N_(
             "“Save typing log” in the top bar menu records what you type, to attach to a bug "
             "report."
