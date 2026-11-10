@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn bị mất dấu và hiện nguyên phím đã gõ, như "Vieejt" thay vì
+  "Việt"; Gạch chân không bị lỗi này (#132).
+
 ## [1.2.2-1] — 10/11/2026
 
 Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron, Chrome và terminal trên X11; biểu tượng và logo giống bản fcitx5;
