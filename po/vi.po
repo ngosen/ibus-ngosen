@@ -1192,3 +1192,11 @@ msgstr "Vim mode: bật"
 #: src/ngosen-ibus-engine.cpp
 msgid "Vim mode: off"
 msgstr "Vim mode: tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "Type a word that starts with / as is"
+msgstr "Gõ thô sau dấu / đầu từ (lệnh, đường dẫn)"
+
+#: settings/ngosen_settings/options.py
+msgid "/cost and /usr/share stay as typed, at the start of a line or after a space, so chat commands and file paths work. và/hoặc and @tên still get tones."
+msgstr "/cost và /usr/share giữ nguyên như đã gõ khi ở đầu dòng hoặc sau dấu cách, để lệnh chat và đường dẫn file chạy đúng. và/hoặc và @tên vẫn có dấu."
