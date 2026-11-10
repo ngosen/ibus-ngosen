@@ -1318,6 +1318,18 @@ check(app.text == "xin chaof", "direct, retone off: the key after a clicked word
 app.close()
 set_setting("RetoneSelection", "True")
 
+# A word that starts with / is a chat command or a path, so it stays as typed unless turned off.
+app = App("slash")
+app.type("/cost ")
+check(app.text == "/cost ", "a word after / stays as typed", app.text)
+app.close()
+set_setting("RawWordAfterSlash", "False")
+app = App("slash-off")
+app.type("/cost ")
+check(app.text == "/cót ", "with RawWordAfterSlash off a word after / gets its tone", app.text)
+app.close()
+set_setting("RawWordAfterSlash", "True")
+
 # The lock screen turns extensions off too, so one enabled before is not enabled again.
 shell.set_extension(EXTENSION_INACTIVE)
 types_underlined("extension turned off")
