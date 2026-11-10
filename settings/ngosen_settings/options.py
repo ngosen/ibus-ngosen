@@ -89,7 +89,7 @@ LABELS = {
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
     "ShortcutVim": N_("Shortcut for Vim mode"),
-    "DirectTyping": N_("Type with Sen"),
+    "DirectTyping": N_("Mode"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
     "SpellCheck": N_("Enable Spell Check Using Dictionary"),
@@ -130,9 +130,6 @@ HINTS = {
     ),
     "ModeOrder": N_(
         "With the mode menu open, press a mode's key to pick it for the app in use. Pick the app's usual mode again to make it follow the global setting."
-    ),
-    "DirectTyping": N_(
-        "Text goes straight into the field, without an underline, in every app not set on its own with the mode menu. Off: those apps underline the word being typed."
     ),
     "OutputCharset": N_(
         "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
@@ -226,6 +223,17 @@ TYPING_GROUPS = [
     (N_("Language"), ["UiLanguage"]),
 ]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
+# The mode of apps not set on their own, shown as the fcitx5 edition shows its Mode: (saved value, label, hint).
+TYPING_MODES = [
+    ("True", N_("Sen"), N_("Text goes straight into the app as you type.")),
+    (
+        "False",
+        N_("Preedit"),
+        N_(
+            "The word is underlined until it is done. Use it in an app that Sen does not work with."
+        ),
+    ),
+]
 
 CHOICES = {
     "ToggleKey": TOGGLE_KEYS,

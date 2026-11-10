@@ -40,6 +40,8 @@ class SettingRows:
         if key in options.SHORTCUTS:
             row = Adw.EntryRow()
             row.connect("changed", lambda r: self._shortcut_changed(key, r))
+        elif key == "DirectTyping":
+            row = self._mode_row(key)
         elif options.is_switch(key):
             row = Adw.SwitchRow()
             row.connect(
@@ -57,6 +59,28 @@ class SettingRows:
             row.set_subtitle(_(options.HINTS[key]))
         self.rows[key] = row
         return row
+
+    def _mode_row(self, key):
+        """Linked buttons, as the fcitx5 edition shows its Mode, so the other choice is in view."""
+        row = Adw.ActionRow()
+        box = Gtk.Box(css_classes=["linked"], valign=Gtk.Align.CENTER)
+        first = None
+        self.mode_buttons = {}
+        for value, label, _hint in options.TYPING_MODES:
+            button = Gtk.ToggleButton(label=_(label), css_classes=["mode-button"])
+            button.set_group(first)
+            first = first or button
+            button.connect("toggled", self._mode_toggled, key, value)
+            box.append(button)
+            self.mode_buttons[value] = button
+        row.add_suffix(box)
+        return row
+
+    def _mode_toggled(self, button, key, value):
+        if button.get_active():
+            hints = {v: hint for v, _label, hint in options.TYPING_MODES}
+            self.rows[key].set_subtitle(_(hints[value]))
+            self._changed(key, value)
 
     def choices(self, key):
         """(value, label) pairs; a value saved by hand that is not in the list stays offered."""
@@ -130,6 +154,10 @@ class SettingRows:
                     continue
                 if isinstance(row, Adw.EntryRow):
                     row.set_text(value)
+                    continue
+                if key == "DirectTyping":
+                    # Anything but False types with Sen, as the engine reads it.
+                    self.mode_buttons["False" if value == "False" else "True"].set_active(True)
                     continue
                 pairs = self.pairs[key] = self.choices(key)
                 row.set_model(Gtk.StringList.new([label for _value, label in pairs]))
