@@ -40,6 +40,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   là thành việt. Bấm chuột sang chỗ khác trước khi chuyển thì chữ giữ nguyên (#117).
 - Menu phím ` bỏ mục "Chế độ gõ mặc định" như bản fcitx5: chọn lại chế độ app vẫn dùng là app đó lại theo cài đặt
   chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
+- Công tắc "Gõ Sen" trong cửa sổ cài đặt thành mục "Chế độ gõ" với hai nút Gõ Sen và Gạch chân như bản fcitx5, nhìn
+  là biết app chưa chọn riêng đang gõ kiểu nào (#127).
 
 ## [1.2.2-1] — 10/11/2026
 
