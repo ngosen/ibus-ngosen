@@ -129,10 +129,10 @@ TIPS = [
         "target": ("page", "check"),
     },
     {
-        # Steam passes keys to the input method only under a Chinese or Japanese LC_CTYPE.
+        # Steam passes no keys to the input method unless LC_CTYPE is a CJK one such as zh_CN.
         "text": N_(
-            "Steam types plain letters? Start it with LC_CTYPE=zh_CN.UTF-8 steam; its menus keep "
-            "your language."
+            "Steam types plain letters? Start it from a terminal with LC_CTYPE=zh_CN.UTF-8 steam; "
+            "its menus keep your language."
         ),
         "target": None,
     },
