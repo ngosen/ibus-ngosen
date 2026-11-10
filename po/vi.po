@@ -437,16 +437,17 @@ msgid "Settings"
 msgstr "Cài đặt"
 
 #: settings/ngosen_settings/options.py
-msgid "Type with Sen where the app allows"
-msgstr "Gõ Sen ở app cho phép"
+msgid "Type with Sen"
+msgstr "Gõ Sen"
 
 #: settings/ngosen_settings/options.py
 msgid ""
-"Text goes straight into fields that report the text around the cursor, "
-"without an underline. Elsewhere words keep the underline."
+"Text goes straight into the field, without an underline, in every app not "
+"set on its own with the mode menu. Off: those apps underline the word being "
+"typed."
 msgstr ""
-"Chữ hiện thẳng vào ô, không gạch chân, ở những ô báo được chữ quanh con trỏ. "
-"Chỗ khác vẫn gạch chân."
+"Chữ hiện thẳng vào ô, không gạch chân, ở mọi app chưa chọn riêng trong menu "
+"chế độ gõ. Tắt thì các app đó gạch chân chữ đang gõ."
 
 msgid "Dictionary"
 msgstr "Từ điển"
@@ -656,8 +657,8 @@ msgstr "Đã thêm Ngó Sen vào nguồn nhập."
 msgid "Removed English (US) from the input sources."
 msgstr "Đã bỏ Tiếng Anh (Mỹ) khỏi nguồn nhập."
 
-msgid "GTK apps keep the underline: GNOME Wayland does not need GTK_IM_MODULE"
-msgstr "App GTK vẫn gạch chân: GNOME Wayland không cần GTK_IM_MODULE"
+msgid "GTK apps bypass GNOME Shell: GNOME Wayland does not need GTK_IM_MODULE"
+msgstr "App GTK không đi qua GNOME Shell: GNOME Wayland không cần GTK_IM_MODULE"
 
 #: settings/ngosen_settings/window.py
 msgid "Menu"

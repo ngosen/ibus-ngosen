@@ -8,6 +8,24 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.2.2-1] — 10/11/2026
+
+Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron, Chrome và terminal trên X11; biểu tượng và logo giống bản fcitx5;
+cửa sổ cài đặt không còn cắt chữ. Dùng lõi Ngó Sen `ngosen-1.9.0-1`. Tải gói ở
+[release ibus-ngosen-1.2.2-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.2-1).
+
+### Thay đổi
+
+- Biểu tượng bộ gõ và logo cửa sổ cài đặt giống bản fcitx5, bỏ chữ V gạch chân (#115).
+- Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron (VS Code, Discord…), Chrome và terminal trên X11: Ngó Sen không
+  còn tự gạch chân ở những app này. App nào gõ sai thì bấm phím ` chọn Gạch chân cho riêng app đó. Tuỳ chọn trong cửa
+  sổ cài đặt đổi tên thành "Gõ Sen" (#116).
+
+### Sửa
+
+- Cửa sổ cài đặt hiện đủ giá trị đang chọn, không còn cắt "Ctrl+Shift" thành "C…" hay "Unicode" thành
+  "U…" ở một số cỡ cửa sổ (#114).
+
 ## [1.2.1-1] — 09/11/2026
 
 Trên GNOME chỉ còn một nguồn nhập: Ngó Sen tự bỏ "Tiếng Anh (Mỹ)" trùng một lần và luôn gõ trên bàn phím kiểu Mỹ.
