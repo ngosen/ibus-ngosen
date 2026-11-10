@@ -436,19 +436,21 @@ msgstr "Không lưu được nhật ký gõ vào "
 msgid "Settings"
 msgstr "Cài đặt"
 
-#: settings/ngosen_settings/options.py
 #: settings/ngosen_settings/whats_new.py
 msgid "Type with Sen"
 msgstr "Gõ Sen"
 
 #: settings/ngosen_settings/options.py
-msgid ""
-"Text goes straight into the field, without an underline, in every app not "
-"set on its own with the mode menu. Off: those apps underline the word being "
-"typed."
-msgstr ""
-"Chữ hiện thẳng vào ô, không gạch chân, ở mọi app chưa chọn riêng trong menu "
-"chế độ gõ. Tắt thì các app đó gạch chân chữ đang gõ."
+msgid "Mode"
+msgstr "Chế độ gõ"
+
+#: settings/ngosen_settings/options.py
+msgid "Text goes straight into the app as you type."
+msgstr "Chữ đi thẳng vào app ngay khi gõ."
+
+#: settings/ngosen_settings/options.py
+msgid "The word is underlined until it is done. Use it in an app that Sen does not work with."
+msgstr "Chữ đang gõ có gạch dưới cho tới khi gõ xong. Dùng khi app không tương thích với Gõ Sen."
 
 msgid "Dictionary"
 msgstr "Từ điển"

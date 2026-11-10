@@ -134,6 +134,22 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.settings()["SpellCheck"], "True")
         self.assertTrue(self.window.rows.rows["SpellCheck"].get_active())
 
+    def test_mode_buttons_save_sen_or_preedit(self):
+        buttons = self.window.rows.mode_buttons
+        row = self.window.rows.rows["DirectTyping"]
+        self.assertEqual([b.get_label() for b in buttons.values()], ["Sen", "Preedit"])
+        # No saved value types with Sen, as the engine does.
+        self.assertTrue(buttons["True"].get_active())
+        self.assertIn("straight", row.get_subtitle())
+        buttons["False"].set_active(True)
+        self.assertEqual(self.settings()["DirectTyping"], "False")
+        self.assertFalse(buttons["True"].get_active())
+        self.assertIn("underlined", row.get_subtitle())
+        self.window.undo()
+        self.assertNotIn("DirectTyping", self.settings())
+        self.window.refresh()
+        self.assertTrue(buttons["True"].get_active())
+
     def test_combo_saves_the_value_not_the_label(self):
         self.window.rows.rows["W2U"].set_selected(2)
         self.window.rows.rows["InputMethod"].set_selected(2)

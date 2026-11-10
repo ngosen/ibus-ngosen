@@ -8,6 +8,7 @@ from gi.repository import Gdk, Gtk
 # Some monospace fallbacks misplace stacked tone marks, so the system font is used as it is.
 CSS = """
 .typed text { font-size: 17px; }
+.mode-button:checked { background: @accent_bg_color; color: @accent_fg_color; }
 """
 
 

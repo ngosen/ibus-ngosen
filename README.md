@@ -13,7 +13,7 @@ Mặc định Ngó Sen dùng Gõ Sen ở mọi app như bản fcitx5: chữ hi�
 chọn Gõ Sen, Gạch chân hay Tắt để đổi riêng cho app đang dùng, Ngó Sen nhớ lựa chọn đó cho app ấy. Gặp app gõ sai
 thì chuyển app đó sang Gạch chân và báo cho Ngó Sen. Cửa sổ cài đặt cho đổi thứ tự hay ẩn bớt các chế độ trong menu,
 và đặt một phím chuyển thẳng app sang chế độ kế tiếp không cần mở menu. Muốn gạch chân ở mọi app chưa chọn riêng thì
-tắt tuỳ chọn "Gõ Sen" trong cửa sổ cài đặt. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới
+chọn Gạch chân ở mục "Chế độ gõ" trong cửa sổ cài đặt. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới
 app, nên gói kèm một extension sửa lỗi này: đăng nhập lại một lần là Ngó Sen tự bật extension, chưa chạy thì
 chữ vẫn gạch chân.
 
