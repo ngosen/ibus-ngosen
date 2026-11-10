@@ -375,8 +375,20 @@ namespace ngosen {
         return 0;
     }
 
+    // As fcitx5's normalized key: Shift that only picks the character (V, !) is no shortcut, so the
+    // core keeps the word going.
     bool IBusKeyPress::hasModifier() const {
-        return (state_ & SimpleModifiers) != 0;
+        guint      mods   = state_ & SimpleModifiers;
+        const bool letter = (appSym_ >= IBUS_KEY_a && appSym_ <= IBUS_KEY_z) || (appSym_ >= IBUS_KEY_A && appSym_ <= IBUS_KEY_Z);
+        const bool keypad = appSym_ >= IBUS_KEY_KP_0 && appSym_ <= IBUS_KEY_KP_9;
+        const bool text   = ibus_keyval_to_unicode(appSym_) != 0 && appSym_ != IBUS_KEY_space && appSym_ != IBUS_KEY_Return && appSym_ != IBUS_KEY_Tab;
+        if (letter) {
+            if (mods == IBUS_SHIFT_MASK)
+                mods = 0;
+        } else if (text || keypad) {
+            mods &= ~IBUS_SHIFT_MASK;
+        }
+        return mods != 0;
     }
 
     bool IBusKeyPress::isCursorMove() const {
