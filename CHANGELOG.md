@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.2.2-1] — 10/11/2026
+
+Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron, Chrome và terminal trên X11; biểu tượng và logo giống bản fcitx5;
+cửa sổ cài đặt không còn cắt chữ. Dùng lõi Ngó Sen `ngosen-1.9.0-1`. Tải gói ở
+[release ibus-ngosen-1.2.2-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.2-1).
+
 ### Thay đổi
 
 - Biểu tượng bộ gõ và logo cửa sổ cài đặt giống bản fcitx5, bỏ chữ V gạch chân (#115).
