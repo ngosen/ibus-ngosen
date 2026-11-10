@@ -33,6 +33,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Như bản fcitx5, một từ bắt đầu bằng / ở đầu dòng hay sau dấu cách được giữ nguyên như đã gõ, nên lệnh chat
   (/cost) và đường dẫn (/usr/share) không bị thêm dấu; và/hoặc, @tên vẫn có dấu. Tắt ở "Gõ thô sau dấu / đầu từ"
   trong nhóm "Gõ nhanh" của cửa sổ cài đặt (#129).
+- Mẹo Steam trong trang "Có gì mới & mẹo": Steam chỉ nhận bộ gõ khi chạy bằng `LC_CTYPE=zh_CN.UTF-8 steam`, giao
+  diện vẫn giữ ngôn ngữ cũ (#131).
 
 ### Thay đổi
 
