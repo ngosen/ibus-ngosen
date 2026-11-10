@@ -1,3 +1,15 @@
+ibus-ngosen (1.2.2-1) unstable; urgency=medium
+
+  * Sen types straight into every app, as the fcitx5 edition does,
+    Electron apps, Chrome and terminals on X11 included; the mode menu
+    picks the underline for one app. The option is now "Type with Sen".
+  * The input method icon and the settings window logo match the fcitx5
+    edition.
+  * The settings window shows the whole chosen value in every row.
+  * Core ngosen-1.9.0-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Tue, 10 Nov 2026 12:00:00 +0700
+
 ibus-ngosen (1.2.1-1) unstable; urgency=medium
 
   * On GNOME the engine removes the duplicate English (US) input source

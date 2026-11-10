@@ -38,12 +38,21 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   Sao lưu và khôi phục mang theo lựa chọn Anh/Việt của từng app, cùng tệp với bản fcitx5 (#94).
 - Cứu chữ chạy cả trên phiên Wayland như bản fcitx5, không chỉ X11: lỡ gõ vieetj lúc tiếng Anh rồi nhấp Ctrl+Shift
   là thành việt. Bấm chuột sang chỗ khác trước khi chuyển thì chữ giữ nguyên (#117).
+- Menu phím ` bỏ mục "Chế độ gõ mặc định" như bản fcitx5: chọn lại chế độ app vẫn dùng là app đó lại theo cài đặt
+  chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
+
+## [1.2.2-1] — 10/11/2026
+
+Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron, Chrome và terminal trên X11; biểu tượng và logo giống bản fcitx5;
+cửa sổ cài đặt không còn cắt chữ. Dùng lõi Ngó Sen `ngosen-1.9.0-1`. Tải gói ở
+[release ibus-ngosen-1.2.2-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.2-1).
+
+### Thay đổi
+
 - Biểu tượng bộ gõ và logo cửa sổ cài đặt giống bản fcitx5, bỏ chữ V gạch chân (#115).
 - Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron (VS Code, Discord…), Chrome và terminal trên X11: Ngó Sen không
   còn tự gạch chân ở những app này. App nào gõ sai thì bấm phím ` chọn Gạch chân cho riêng app đó. Tuỳ chọn trong cửa
   sổ cài đặt đổi tên thành "Gõ Sen" (#116).
-- Menu phím ` bỏ mục "Chế độ gõ mặc định" như bản fcitx5: chọn lại chế độ app vẫn dùng là app đó lại theo cài đặt
-  chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
 
 ### Sửa
 
