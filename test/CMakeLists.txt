@@ -55,10 +55,10 @@ add_test(NAME ibus_daemon_typing
          COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${Python3_EXECUTABLE} ${component_dir}
                  ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict ${CMAKE_CURRENT_SOURCE_DIR}/ibus-daemon-typing.py)
 set_tests_properties(ibus_daemon_typing PROPERTIES LABELS "integration;ibus" TIMEOUT 480
-                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;LC_ALL=en_US.UTF-8")
+                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;NGOSEN_IBUS_ENGLISH_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt;LC_ALL=en_US.UTF-8")
 
 add_test(NAME ibus_daemon_typing_no_clicks
          COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${Python3_EXECUTABLE} ${component_dir}
                  ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict ${CMAKE_CURRENT_SOURCE_DIR}/ibus-daemon-typing.py)
 set_tests_properties(ibus_daemon_typing_no_clicks PROPERTIES LABELS "integration;ibus" TIMEOUT 120
-                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;LC_ALL=en_US.UTF-8;NGOSEN_TEST_NO_X=1")
+                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;NGOSEN_IBUS_ENGLISH_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt;LC_ALL=en_US.UTF-8;NGOSEN_TEST_NO_X=1")

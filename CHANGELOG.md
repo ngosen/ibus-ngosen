@@ -51,6 +51,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   nay ra tiền, việc khi chốt chữ (ngosen/ngosen#696); chữ liền chữ số như "tôi2" giữ đúng dấu khi BackSpace, và
   BackSpace vào chữ đang hiện nguyên phím không còn làm rối chữ gõ tiếp (ngosen/ngosen#646, ngosen/ngosen#651,
   ngosen/ngosen#661) (#PR).
+- Như bản fcitx5, bản IBus nạp danh sách từ tiếng Anh thông dụng. Nhờ vậy tên riêng mở đầu bằng phụ âm ghép như
+  plông, drăng, Hrê, Brâu gõ được mà `draw` vẫn là draw (ngosen/ngosen#706), và BackSpace trong một từ tiếng Anh
+  đang hiện nguyên phím chỉ xoá một chữ như app thấy (#PR).
 
 ## [1.2.2-1] — 10/11/2026
 
