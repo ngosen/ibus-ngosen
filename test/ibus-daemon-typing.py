@@ -837,6 +837,16 @@ app.type("ko ")
 check(app.commits == ["không "], "macro: expands on space", app.commits)
 app.close()
 
+# The engine commits the word itself before Enter, which must leave it as Enter would.
+for typed, want in (("mootxj", "một"), ("ko", "không")):
+    app = App("enter-word")
+    app.type(typed)
+    app.key(IBus.KEY_Return)
+    pump(200)
+    check(app.text == want + "\n", f"enter: the word as Enter leaves it ({typed})", app.text)
+    check(app.passed == ["Return"], f"enter: the app gets the Enter ({typed})", app.passed)
+    app.close()
+
 # GNOME Shell fields take no forwarded keys in any mode, so the underlined words must not need them.
 app = App("gnome-shell")
 app.type("xin vieetj ")
