@@ -1046,6 +1046,12 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
     app.close()
 
+# The rules reject the pl of plông; the English list lets the dictionary name through.
+app = field_with_text()
+app.type("ploong draw ")
+check(app.text == "xin plông draw ", "English list: a name and an English word", app.text)
+app.close()
+
 app = App("gnome-shell", qt_through_shell=True)
 app.type("nam tieesng")
 app.key(IBus.KEY_BackSpace)

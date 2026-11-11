@@ -47,6 +47,14 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
 - Công tắc "Gõ Sen" trong cửa sổ cài đặt thành mục "Chế độ gõ" với hai nút Gõ Sen và Gạch chân như bản fcitx5, nhìn
   là biết app chưa chọn riêng đang gõ kiểu nào (#127).
+- Dùng lõi Ngó Sen mới hơn `ngosen-1.9.2-1` (nhánh next): gõ Telex quên mũ ở vần luôn có mũ như `tienf`, `viecj`
+  nay ra tiền, việc khi chốt chữ (ngosen/ngosen#696); chữ liền chữ số như "tôi2" giữ đúng dấu khi BackSpace, và
+  BackSpace vào chữ đang hiện nguyên phím không còn làm rối chữ gõ tiếp (ngosen/ngosen#646, ngosen/ngosen#651,
+  ngosen/ngosen#661); từ điển có thêm âm tiết của tên xã, phường và dân tộc như Đakrông, Mnông, kmăl
+  (ngosen/ngosen#708) (#135).
+- Như bản fcitx5, bản IBus nạp danh sách từ tiếng Anh thông dụng. Nhờ vậy tên riêng mở đầu bằng phụ âm ghép như
+  plông, drăng, Hrê, Brâu gõ được mà `draw` vẫn là draw (ngosen/ngosen#706), và BackSpace trong một từ tiếng Anh
+  đang hiện nguyên phím chỉ xoá một chữ như app thấy (#135).
 
 ## [1.2.2-1] — 10/11/2026
 

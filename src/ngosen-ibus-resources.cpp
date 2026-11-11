@@ -83,6 +83,12 @@ namespace ngosen {
         Init();
         prepareSettings(paths_);
         load();
+        // The list changes only with the package, so a settings reload keeps it.
+        const std::string englishPath = bundledEnglishWordsFile();
+        const int         fd          = ::open(englishPath.c_str(), O_RDONLY | O_CLOEXEC);
+        englishWords_                 = fd != -1 ? NewWordList(static_cast<uintptr_t>(fd)) : 0;
+        if (englishWords_ == 0)
+            NGOSEN_WARN("No English word list at " + englishPath);
         dropDuplicateLayoutOnce(paths_, !settings().toggleKeys.empty(), gnomeInputSources());
         monitor_ = watchDirectory(paths_.configDir, G_CALLBACK(onDirChanged), this);
         // GLib notices a folder created later only seconds after, missing a file written at once.
@@ -100,6 +106,7 @@ namespace ngosen {
         }
         DeleteObject(macroTable_);
         DeleteObject(dictionary_);
+        DeleteObject(englishWords_);
     }
 
     void IBusResources::noticeChange() {
@@ -161,6 +168,11 @@ namespace ngosen {
         // Lets the tests run the engine from the build tree.
         const char* override = std::getenv("NGOSEN_IBUS_DICTIONARY");
         return override != nullptr ? override : NGOSEN_IBUS_DICTIONARY;
+    }
+
+    std::string bundledEnglishWordsFile() {
+        const char* override = std::getenv("NGOSEN_IBUS_ENGLISH_WORDS");
+        return override != nullptr ? override : NGOSEN_IBUS_ENGLISH_WORDS;
     }
 
     // The user's dictionary only with the custom dictionary on, as the fcitx5 edition does. The
