@@ -1676,8 +1676,8 @@ app.close()
 
 
 # The mode menu: its key ends the word, then a key picks Sen, underline or Off for the app.
-def menu_app(name):
-    app = App(name)
+def menu_app(name, hints=0):
+    app = App(name, hints=hints)
     # Without this capability IBus draws the menu in its own panel instead of telling the app.
     app.ic.set_capabilities(
         IBus.Capabilite.FOCUS
@@ -2120,6 +2120,14 @@ check(app.text == "việt", "retype: every word takes marks, so it is retyped at
 app.key(IBus.KEY_Tab)
 pump(300)
 check(app.text == "vieetj", "retype: Tab puts back what was typed", app.text)
+app.close()
+
+# A private window marks its fields private: kept out of logs, but still a field the user types words in.
+app = menu_app("retype-private", IBus.InputHints.PRIVATE)
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: a private field is retyped too", app.text)
 app.close()
 
 # A word Telex leaves alone may be English on purpose, so the change is only offered.
