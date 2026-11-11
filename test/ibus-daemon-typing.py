@@ -3,6 +3,7 @@
 # the engine asks for it. Run by run-with-daemon.sh.
 import ctypes
 import glob
+import itertools
 import os
 import re
 import sys
@@ -989,17 +990,18 @@ def deletes_with_keys(what):
 
 # The Shell drops a forwarded Enter here, so the engine commits the underlined word before the Enter.
 def enters_underlined(what):
-    for typed, want in (("mootxj", "một"), ("ko", "không")):
+    for (typed, want), (keyval, name) in itertools.product(
+        (("mootxj", "một"), ("ko", "không")),
+        ((IBus.KEY_Return, "Return"), (IBus.KEY_KP_Enter, "KP_Enter")),
+    ):
         app = field_with_text()
         app.type(typed)
         underlined = list(app.preedits)
-        app.key(IBus.KEY_Return)
+        app.key(keyval)
         pump(200)
         check(underlined != [], f"{what}: {typed} underlined", underlined)
-        check(app.text == f"xin {want}\n", f"{what}: {typed} and Enter", app.text)
-        check(
-            app.passed[-1:] == ["Return"], f"{what}: the app gets the Enter ({typed})", app.passed
-        )
+        check(app.text == f"xin {want}\n", f"{what}: {typed} and {name}", app.text)
+        check(app.passed[-1:] == [name], f"{what}: the app gets {name} ({typed})", app.passed)
         app.close()
 
 
