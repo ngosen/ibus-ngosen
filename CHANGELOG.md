@@ -8,6 +8,24 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.2.3-1] — 11/11/2026
+
+Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn mất dấu; bấm Enter sau chữ đang gạch chân đổi dấu và bung gõ
+tắt như dấu cách. Dùng lõi Ngó Sen `ngosen-1.9.3-1`. Tải gói ở
+[release ibus-ngosen-1.2.3-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.3-1).
+
+### Sửa
+
+- Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn bị mất dấu và hiện nguyên phím đã gõ, như "Vieejt" thay vì
+  "Việt"; Gạch chân không bị lỗi này (#132).
+- Bấm Enter ngay sau chữ đang gạch chân nay ra đúng chữ như bấm dấu cách: đổi dấu sau phụ âm cuối (`mootxj` ra "một")
+  và bung gõ tắt, thay vì giữ nguyên phím đã gõ (#133).
+- Dùng lõi Ngó Sen `ngosen-1.9.3-1`: gõ từ không phải tiếng Việt liền chữ số như "Sose2026" rồi BackSpace lùi vào phần
+  đã gõ nay giữ đúng chữ, không còn rối chữ hay mất dấu (ngosen/ngosen#643, ngosen/ngosen#646, ngosen/ngosen#661);
+  BackSpace khi từ đang hiện nguyên phím gõ chuyển phần còn lại thành tiếng Việt, như "thuwcx", BackSpace rồi "j" ra
+  "thực" (ngosen/ngosen#651; danh sách từ tiếng Anh của bản fcitx5 chưa có ở bản này); chữ Telex sai chính tả như `moot`, `tienr` giữ nguyên phím đã gõ (ngosen/ngosen#693); thêm vài sửa
+  cho trang web trên Chrome như Messenger và bảng tính Lark (ngosen/ngosen#663, ngosen/ngosen#681, ngosen/ngosen#686).
+
 ## [1.2.2-1] — 10/11/2026
 
 Gõ Sen ở mọi app như bản fcitx5, kể cả app Electron, Chrome và terminal trên X11; biểu tượng và logo giống bản fcitx5;
