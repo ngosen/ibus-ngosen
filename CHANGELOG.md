@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.2.3-1] — 11/11/2026
+
+Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn mất dấu; bấm Enter sau chữ đang gạch chân đổi dấu và bung gõ
+tắt như dấu cách. Dùng lõi Ngó Sen `ngosen-1.9.3-1`. Tải gói ở
+[release ibus-ngosen-1.2.3-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.2.3-1).
+
 ### Sửa
 
 - Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn bị mất dấu và hiện nguyên phím đã gõ, như "Vieejt" thay vì
