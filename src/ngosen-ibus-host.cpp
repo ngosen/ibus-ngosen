@@ -179,7 +179,7 @@ namespace ngosen {
         if (!direct_ && keysDropped && (f.terminal || f.url || !reported_.isValid()))
             f.surroundingText = false;
         f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
-        // Firefox marks every field of a private window; that keeps the text out of logs, not out of typing.
+        // Chrome marks every field of an incognito window; that keeps the text out of logs, not out of typing.
         f.sensitive = (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }

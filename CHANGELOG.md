@@ -10,7 +10,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
-- Trong cửa sổ ẩn danh của Firefox, Cứu chữ, Cứu dấu và tự viết hoa đầu dòng chạy như ở cửa sổ thường; chữ gõ trong
+- Trong cửa sổ ẩn danh của Chrome, Cứu chữ, Cứu dấu và tự viết hoa đầu dòng chạy như ở cửa sổ thường; chữ gõ trong
   đó vẫn không ghi vào nhật ký gõ, như bản fcitx5 (#138).
 
 ## [1.2.3-1] — 11/11/2026
