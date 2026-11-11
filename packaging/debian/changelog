@@ -1,3 +1,13 @@
+ibus-ngosen (1.2.3-1) unstable; urgency=medium
+
+  * Words that start with a capital typed with Shift keep their marks
+    in Sen.
+  * Enter after an underlined word retones it and expands its macro, as
+    a space does.
+  * Core ngosen-1.9.3-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Wed, 11 Nov 2026 20:00:00 +0700
+
 ibus-ngosen (1.2.2-1) unstable; urgency=medium
 
   * Sen types straight into every app, as the fcitx5 edition does,
