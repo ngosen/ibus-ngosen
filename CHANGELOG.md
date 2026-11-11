@@ -14,6 +14,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   "Việt"; Gạch chân không bị lỗi này (#132).
 - Bấm Enter ngay sau chữ đang gạch chân nay ra đúng chữ như bấm dấu cách: đổi dấu sau phụ âm cuối (`mootxj` ra "một")
   và bung gõ tắt, thay vì giữ nguyên phím đã gõ (#133).
+- Dùng lõi Ngó Sen `ngosen-1.9.3-1`: gõ từ không phải tiếng Việt liền chữ số như "Sose2026" rồi BackSpace lùi vào phần
+  đã gõ nay giữ đúng chữ, không còn rối chữ hay mất dấu (ngosen/ngosen#643, ngosen/ngosen#646, ngosen/ngosen#651,
+  ngosen/ngosen#661); chữ Telex sai chính tả như `moot`, `tienr` giữ nguyên phím đã gõ (ngosen/ngosen#693); thêm vài sửa
+  cho trang web trên Chrome như Messenger và bảng tính Lark (ngosen/ngosen#663, ngosen/ngosen#681, ngosen/ngosen#686).
 
 ## [1.2.2-1] — 10/11/2026
 
