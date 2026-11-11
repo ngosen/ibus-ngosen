@@ -44,7 +44,7 @@ namespace ngosen {
             purpose_ = purpose;
             hints_   = hints;
         }
-        // Not a field marked private: Firefox marks every field of a private window that way.
+        // Not a field marked private: Chrome marks every field of an incognito window that way.
         bool takesPassword() const {
             return purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
         }
