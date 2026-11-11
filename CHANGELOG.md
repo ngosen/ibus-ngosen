@@ -12,6 +12,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn bị mất dấu và hiện nguyên phím đã gõ, như "Vieejt" thay vì
   "Việt"; Gạch chân không bị lỗi này (#132).
+- Bấm Enter ngay sau chữ đang gạch chân nay ra đúng chữ như bấm dấu cách: đổi dấu sau phụ âm cuối (`mootxj` ra "một")
+  và bung gõ tắt, thay vì giữ nguyên phím đã gõ (#133).
 
 ## [1.2.2-1] — 10/11/2026
 
