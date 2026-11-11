@@ -178,7 +178,9 @@ namespace ngosen {
         // terminal or an address bar's selected completion would go wrong.
         if (!direct_ && keysDropped && (f.terminal || f.url || !reported_.isValid()))
             f.surroundingText = false;
-        f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
+        // Firefox marks every field of a private window; that keeps the text out of logs, not out of typing.
+        f.sensitive = (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 
