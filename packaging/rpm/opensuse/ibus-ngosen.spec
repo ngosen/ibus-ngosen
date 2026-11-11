@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.2.2
+Version:        1.2.3
 Release:        1
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -65,6 +65,10 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Wed Nov 11 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.3-1
+- Words that start with a capital typed with Shift keep their marks in Sen; Enter after an
+  underlined word retones it and expands its macro, as a space does; core ngosen-1.9.3-1.
+
 * Tue Nov 10 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.2.2-1
 - Sen types straight into every app, as the fcitx5 edition does, Electron apps, Chrome and
   terminals on X11 included; the mode menu picks the underline for one app. The option is now
