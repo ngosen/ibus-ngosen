@@ -838,13 +838,18 @@ check(app.commits == ["không "], "macro: expands on space", app.commits)
 app.close()
 
 # The engine commits the word itself before Enter, which must leave it as Enter would.
-for typed, want in (("mootxj", "một"), ("ko", "không")):
+for typed, want, enter in (
+    ("mootxj", "một", IBus.KEY_Return),
+    ("ko", "không", IBus.KEY_Return),
+    ("mootxj", "một", IBus.KEY_KP_Enter),
+):
+    name = IBus.keyval_name(enter)
     app = App("enter-word")
     app.type(typed)
-    app.key(IBus.KEY_Return)
+    app.key(enter)
     pump(200)
-    check(app.text == want + "\n", f"enter: the word as Enter leaves it ({typed})", app.text)
-    check(app.passed == ["Return"], f"enter: the app gets the Enter ({typed})", app.passed)
+    check(app.text == want + "\n", f"enter: the word as {name} leaves it ({typed})", app.text)
+    check(app.passed == [name], f"enter: the app gets the {name} ({typed})", app.passed)
     app.close()
 
 # GNOME Shell fields take no forwarded keys in any mode, so the underlined words must not need them.
@@ -982,12 +987,30 @@ def deletes_with_keys(what):
     app.close()
 
 
+# The Shell drops a forwarded Enter here, so the engine commits the underlined word before the Enter.
+def enters_underlined(what):
+    for typed, want in (("mootxj", "một"), ("ko", "không")):
+        app = field_with_text()
+        app.type(typed)
+        underlined = list(app.preedits)
+        app.key(IBus.KEY_Return)
+        pump(200)
+        check(underlined != [], f"{what}: {typed} underlined", underlined)
+        check(app.text == f"xin {want}\n", f"{what}: {typed} and Enter", app.text)
+        check(
+            app.passed[-1:] == ["Return"], f"{what}: the app gets the Enter ({typed})", app.passed
+        )
+        app.close()
+
+
 types_underlined("extension not installed yet")
+enters_underlined("extension not installed yet")
 check(shell.enable_calls == 0, "extension not installed yet: nothing to enable", shell.enable_calls)
 
 for version in ("50.0", "50.3"):
     shell.start(version, None)
     types_underlined(f"GNOME {version} without the extension")
+    enters_underlined(f"GNOME {version} without the extension")
 
 shell.start("51.0", EXTENSION_INACTIVE)
 check(shell.enable_calls == 0, "GNOME 51: the extension is left alone", shell.enable_calls)
