@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Trong cửa sổ ẩn danh của Chrome, Cứu chữ, Cứu dấu và tự viết hoa đầu dòng chạy như ở cửa sổ thường; chữ gõ trong
+  đó vẫn không ghi vào nhật ký gõ, như bản fcitx5 (#138).
+
 ## [1.2.3-1] — 11/11/2026
 
 Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn mất dấu; bấm Enter sau chữ đang gạch chân đổi dấu và bung gõ
