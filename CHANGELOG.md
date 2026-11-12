@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.3.0-1] — 12/11/2026
+
+Ctrl+Shift và mục Tắt chỉ đổi Anh/Việt cho app đang dùng, như bản fcitx5. Vim mode cho từng app trong menu `, từ bắt
+đầu bằng `/` giữ nguyên như gõ, gõ Telex quên mũ hoặc móc vẫn ra đúng chữ. Menu ` sắp xếp được theo ý mình, cửa sổ
+cài đặt có ô tìm và trang "Có gì mới & mẹo", Cứu chữ chạy cả trên Wayland. Dùng lõi Ngó Sen `ngosen-1.10.0-1`. Tải
+gói ở [release ibus-ngosen-1.3.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.3.0-1).
+
 ### Thêm
 
 - Đổi thứ tự hay ẩn bớt Gõ Sen, Gạch chân và Tắt trong menu phím `, và đặt phím chuyển nhanh (như Ctrl+`) đưa
@@ -47,7 +54,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
 - Công tắc "Gõ Sen" trong cửa sổ cài đặt thành mục "Chế độ gõ" với hai nút Gõ Sen và Gạch chân như bản fcitx5, nhìn
   là biết app chưa chọn riêng đang gõ kiểu nào (#127).
-- Dùng lõi Ngó Sen mới hơn `ngosen-1.9.3-1` (nhánh next): gõ Telex quên mũ ở vần luôn có mũ như `tienf`, `viecj`
+- Dùng lõi Ngó Sen `ngosen-1.10.0-1`: gõ Telex quên mũ ở vần luôn có mũ như `tienf`, `viecj`
   nay ra tiền, việc khi chốt chữ (ngosen/ngosen#696); từ điển có thêm âm tiết của tên xã, phường và dân tộc như Đakrông, Mnông, kmăl
   (ngosen/ngosen#708) (#135).
 - Như bản fcitx5, bản IBus nạp danh sách từ tiếng Anh thông dụng. Nhờ vậy tên riêng mở đầu bằng phụ âm ghép như
@@ -58,6 +65,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - Trong cửa sổ ẩn danh của Chrome, Cứu chữ, Cứu dấu và tự viết hoa đầu dòng chạy như ở cửa sổ thường; chữ gõ trong
   đó vẫn không ghi vào nhật ký gõ, như bản fcitx5 (#138).
+- Theo lõi `ngosen-1.10.0-1`: gõ thừa chữ `d` sau chữ có `đ` rồi bấm BackSpace không còn mất nét của `đ`
+  (ngosen/ngosen#712); từ bắt đầu bằng / không còn bị thêm dấu sau BackSpace trong ô trống, khi app reset sau mỗi
+  phím, trong ô soạn thảo của Firefox hay lần gõ đầu sau khi mở lại trình duyệt (ngosen/ngosen#716, ngosen/ngosen#718,
+  ngosen/ngosen#719, ngosen/ngosen#721).
 
 ## [1.2.3-1] — 11/11/2026
 
