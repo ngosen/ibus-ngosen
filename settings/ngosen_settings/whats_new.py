@@ -17,6 +17,47 @@ from .i18n import N_, _
 FEATURES = [
     {
         "version": "1.3",
+        "title": N_("Vim mode"),
+        "how": N_(
+            "Turn on Vim mode for an app from the ` menu: Vim commands after Esc go through as "
+            "typed, and the first word after entering insert mode gets its marks. For nvim, "
+            "Claude Code and the Vim plugins of Obsidian and JetBrains IDEs."
+        ),
+        "example": "",
+        "target": ("setting", "ShortcutVim"),
+    },
+    {
+        "version": "1.3",
+        "title": N_("Commands and paths"),
+        "how": N_(
+            "A word that starts with / at the start of a line or after a space stays as typed, "
+            "for chat commands and paths in a terminal."
+        ),
+        "example": "/cost, cd /usr/share",
+        "target": ("setting", "RawWordAfterSlash"),
+    },
+    {
+        "version": "1.3",
+        "title": N_("Forgotten circumflex or horn"),
+        "how": N_(
+            "In Telex, a word typed without its circumflex or horn still comes out right where "
+            "the vowel always takes one."
+        ),
+        "example": "tienf → tiền, Nguyenx → Nguyễn",
+        "target": None,
+    },
+    {
+        "version": "1.3",
+        "title": N_("More place and people names"),
+        "how": N_(
+            "Names such as plông, Mnông and Đakrông now type instead of turning back into the "
+            "keys you typed."
+        ),
+        "example": "ddakroong → đakrông",
+        "target": None,
+    },
+    {
+        "version": "1.3",
         "title": N_("English/Vietnamese per app"),
         "how": N_(
             "Ctrl+Shift and OFF in the ` menu now apply to the app in use only; an app you never "
