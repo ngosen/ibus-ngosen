@@ -1,19 +1,21 @@
 # Ngó Sen cho GNOME
 
 Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Nhấp Ctrl+Shift để đổi
-Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Cửa sổ cài đặt cho đổi sang Shift+Alt, hoặc tắt phím này nếu
+Anh/Việt như UniKey; thanh trên cùng hiện V hoặc E. Như bản fcitx5, mỗi app nhớ Anh hay Việt của riêng nó, app chưa
+đổi lần nào thì theo lần đổi gần nhất. Cửa sổ cài đặt cho đổi sang Shift+Alt, hoặc tắt phím này nếu
 không cần. Super+Space vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME. Lỡ gõ chữ lúc đang tiếng Anh thì
-chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (vieetj → việt), Tab hoặc Esc trả lại; hiện Cứu chữ chỉ
-chạy trên phiên X11.
+chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (vieetj → việt), Tab hoặc Esc trả lại.
 
 Bản này hướng đến sự đơn giản và ổn định, dùng những gì GNOME có sẵn. Trên GNOME, cài xong là gõ được ngay,
 không phải thiết lập gì thêm. Tính năng nào cần lách giới hạn của GNOME/IBus thì không có.
 
 Mặc định Ngó Sen dùng Gõ Sen ở mọi app như bản fcitx5: chữ hiện thẳng vào ô, không gạch chân. Bấm phím ` rồi
-chọn Gõ Sen hay Gạch chân để đổi riêng cho app đang dùng, Ngó Sen nhớ lựa chọn đó cho app ấy. Gặp app gõ sai thì
-chuyển app đó sang Gạch chân và báo cho Ngó Sen. Muốn gạch chân ở mọi app chưa chọn riêng thì tắt tuỳ chọn "Gõ Sen"
-trong cửa sổ cài đặt. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới app, nên gói kèm một
-extension sửa lỗi này: đăng nhập lại một lần là Ngó Sen tự bật extension, chưa chạy thì chữ vẫn gạch chân.
+chọn Gõ Sen, Gạch chân hay Tắt để đổi riêng cho app đang dùng, Ngó Sen nhớ lựa chọn đó cho app ấy. Gặp app gõ sai
+thì chuyển app đó sang Gạch chân và báo cho Ngó Sen. Cửa sổ cài đặt cho đổi thứ tự hay ẩn bớt các chế độ trong menu,
+và đặt một phím chuyển thẳng app sang chế độ kế tiếp không cần mở menu. Muốn gạch chân ở mọi app chưa chọn riêng thì
+chọn Gạch chân ở mục "Chế độ gõ" trong cửa sổ cài đặt. GNOME 50.0–50.3 (như Ubuntu 26.04) làm mất phím Ngó Sen gửi tới
+app, nên gói kèm một extension sửa lỗi này: đăng nhập lại một lần là Ngó Sen tự bật extension, chưa chạy thì
+chữ vẫn gạch chân.
 
 Nếu cần Cứu dấu ở mọi app, chế độ riêng theo từng app như Vim mode hay chèn emoji, dùng
 [Ngó Sen đầy đủ cho fcitx5](https://github.com/ngosen/ngosen).

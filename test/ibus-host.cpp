@@ -93,6 +93,22 @@ namespace {
         check(host.field().sendsNoKeys && host.field().preeditFallback, "an address bar through a GNOME Shell that drops keys keeps the preedit");
     }
 
+    // Retyping after a switch replaces text before the cursor, so it needs to know when a click moved it.
+    void testCursorMoves() {
+        IBusEngine engine{};
+        engine.client_capabilities = IBUS_CAP_PREEDIT_TEXT | IBUS_CAP_SURROUNDING_TEXT;
+        IBusHost host(&engine);
+        host.setClient("gnome-shell");
+        check(host.seesCursorMoves(), "apps GNOME Shell relays reset on a click");
+        host.setDirectTyping(true);
+        check(host.seesCursorMoves(), "and so do they when typing straight in");
+        host.setClient("xim");
+        check(!host.seesCursorMoves(), "an XIM client never resets on a click");
+        clicksWatched.store(true);
+        check(host.seesCursorMoves(), "clicks the engine watches itself count for every app");
+        clicksWatched.store(false);
+    }
+
     bool samePage(const std::optional<CandidatePage>& page, int pageNumber, int cursor, bool hasPrev, bool hasNext) {
         return page && page->total == 10 && page->pageSize == 4 && page->page == pageNumber && page->cursor == cursor && page->hasPrev == hasPrev && page->hasNext == hasNext;
     }
@@ -169,6 +185,7 @@ int main() {
     testXSend();
     testShellFields();
     testShellAddressBar();
+    testCursorMoves();
     testCandidates();
     testWaylandSession();
     testShiftForCharacters();

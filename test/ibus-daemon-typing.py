@@ -1089,6 +1089,12 @@ for app_commits, who in ((False, "daemon commits"), (True, "app commits")):
     check(app.text.endswith("viee đ\n"), f"direct ({who}): Enter after the word", app.text)
     app.close()
 
+# The rules reject the pl of plông; the English list lets the dictionary name through.
+app = field_with_text()
+app.type("ploong draw ")
+check(app.text == "xin plông draw ", "English list: a name and an English word", app.text)
+app.close()
+
 app = App("gnome-shell", qt_through_shell=True)
 app.type("nam tieesng")
 app.key(IBus.KEY_BackSpace)
@@ -1361,6 +1367,18 @@ check(app.text == "xin chaof", "direct, retone off: the key after a clicked word
 app.close()
 set_setting("RetoneSelection", "True")
 
+# A word that starts with / is a chat command or a path, so it stays as typed unless turned off.
+app = App("slash")
+app.type("/cost ")
+check(app.text == "/cost ", "a word after / stays as typed", app.text)
+app.close()
+set_setting("RawWordAfterSlash", "False")
+app = App("slash-off")
+app.type("/cost ")
+check(app.text == "/cót ", "with RawWordAfterSlash off a word after / gets its tone", app.text)
+app.close()
+set_setting("RawWordAfterSlash", "True")
+
 # The lock screen turns extensions off too, so one enabled before is not enabled again.
 shell.set_extension(EXTENSION_INACTIVE)
 types_underlined("extension turned off")
@@ -1416,21 +1434,35 @@ def prop_states(props):
     return found
 
 
+def hidden_items(props):
+    found = set()
+    i = 0
+    while props is not None and (prop := props.get(i)) is not None:
+        if not prop.get_visible():
+            found.add(prop.get_key())
+        found |= hidden_items(prop.get_sub_props())
+        i += 1
+    return found
+
+
 # GNOME Shell takes the whole menu once after the engine is chosen, then only single updates.
 class GnomeMenu:
     def __init__(self):
         self.states = None
         self.labels = {}
+        self.hidden = set()
 
     def register(self, props):
         if self.states is None and props.get(0) is not None:
             self.states = prop_states(props)
             self.labels = labels(props)
+            self.hidden = hidden_items(props)
 
     def update(self, prop):
         if self.states is not None and prop.get_key() in self.states:
             self.states[prop.get_key()] = prop.get_state()
             self.labels[prop.get_key()] = prop.get_label().get_text()
+            (self.hidden.discard if prop.get_visible() else self.hidden.add)(prop.get_key())
 
     def checked(self):
         return {
@@ -1643,9 +1675,9 @@ check(app.text == "việt ", "toggle: there and back before the first word", app
 app.close()
 
 
-# The mode menu: its key ends the word, then a key picks Sen or underline for the app, or English for every app.
-def menu_app(name):
-    app = App(name)
+# The mode menu: its key ends the word, then a key picks Sen, underline or Off for the app.
+def menu_app(name, hints=0):
+    app = App(name, hints=hints)
     # Without this capability IBus draws the menu in its own panel instead of telling the app.
     app.ic.set_capabilities(
         IBus.Capabilite.FOCUS
@@ -1692,8 +1724,8 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen", "Gạch chân", "Tiếng Anh", "Chế độ gõ mặc định"],
-    "menu: ` shows the four items",
+    items == ["Gõ Sen", "Gạch chân", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes and Vim mode",
     items,
 )
 app.key(IBus.KEY_q)
@@ -1727,13 +1759,13 @@ check(
     app.preedits,
 )
 app.key(IBus.KEY_grave)
-app.key(IBus.KEY_r)
-pump(500)
-check(app_mode("menu") == "", "menu: r forgets the pick for this app", app_mode("menu"))
-app.key(IBus.KEY_grave)
 app.key(IBus.KEY_1)
 pump(500)
-check(app_mode("menu") == "menu=2", "menu: 1 keeps Sen for this app", app_mode("menu"))
+check(
+    app_mode("menu") == "",
+    "menu: 1 picks the shared mode, Sen, and forgets the pick for this app",
+    app_mode("menu"),
+)
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_grave)
 pump(200)
@@ -1749,10 +1781,26 @@ check(
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_e)
 pump(500)
-check(os.path.exists(english_mark), "menu: e switches to English", english_mark)
+check(
+    app_mode("menu") == "menu=0" and not os.path.exists(english_mark),
+    "menu: e turns Vietnamese off for this app only",
+    (app_mode("menu"), os.path.exists(english_mark)),
+)
 app.type(" vieetj`")
-check(app.text == "việt việt nam` vieetj`", "menu: in English ` types itself", app.text)
+check(app.text == "việt việt nam` vieetj`", "menu: while Off ` types itself", app.text)
+other = menu_app("menu-other")
+other.type("vieetj ")
+check(other.text == "việt ", "menu: Off in one app leaves another in Vietnamese", other.text)
+other.close()
+app.ic.focus_in()
+pump(300)
 tap_ctrl_shift(app)
+app.type("vieetj ")
+check(
+    app.text.endswith("`việt ") and app_mode("menu") == "menu=0",
+    "menu: the toggle key types Vietnamese again in an app set to Off",
+    (app.text, app_mode("menu")),
+)
 app.close()
 
 # Qt and XIM clients of any app share one name, so a pick there changes the mode every app follows.
@@ -1825,13 +1873,235 @@ panel.cursor_down()
 pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
+# As in fcitx5 the cursor starts on the mode the app types in.
 check(
     app_mode("menu-arrow") == "menu-arrow=5",
-    "menu: the panel's arrow moves from Sen to the underline",
+    "menu: the panel's arrow moves from the shared Sen to the underline",
+    app_mode("menu-arrow"),
+)
+app.key(IBus.KEY_grave)
+pump(200)
+panel.cursor_down()
+pump(200)
+app.key(IBus.KEY_Return)
+pump(500)
+check(
+    app_mode("menu-arrow") == "menu-arrow=0",
+    "menu: with the underline picked the arrow moves from it to Off",
     app_mode("menu-arrow"),
 )
 app.close()
 # Later checks reuse app names and expect the shared mode.
+os.remove(app_modes_path)
+
+set_setting("ShowModePreedit", "False")
+set_setting("ModeOrder", "Off,Sen,Emoji,Preedit")
+app = menu_app("menu-order")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    app.menu == ["Tắt", "Gõ Sen", "Vim mode: tắt"],
+    "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
+    app.menu,
+)
+app.key(IBus.KEY_q)
+pump(300)
+check(
+    app.menu is not None and app_mode("menu-order") == "",
+    "menu: q picks nothing while hidden",
+    app.menu,
+)
+app.key(IBus.KEY_Escape)
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
+    set_setting(name, "False")
+app.key(IBus.KEY_grave)
+pump(200)
+check(app.menu is None and app.text == "`", "menu: with every mode hidden ` types itself", app.text)
+app.close()
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
+    set_setting(name, "True")
+set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Vim")
+
+# Vim mode is switched for the app in use and kept in the file the fcitx5 edition uses.
+vim_apps_path = os.path.join(config_dir, "ngosen-vim-apps.conf")
+
+
+def vim_apps():
+    if not os.path.exists(vim_apps_path):
+        return []
+    with open(vim_apps_path) as f:
+        return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+app = menu_app("menu-vim")
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_v)
+pump(300)
+check(
+    app.menu is None and vim_apps() == ["menu-vim"],
+    "menu: v switches Vim mode on for this app",
+    vim_apps(),
+)
+app.key(IBus.KEY_grave)
+pump(200)
+check((app.menu or [""])[-1] == "Vim mode: bật", "menu: the Vim item says it is on", app.menu)
+app.key(IBus.KEY_v)
+pump(300)
+check(
+    vim_apps() == [] and app_mode("menu-vim") == "",
+    "menu: v again switches it off, the app's mode untouched",
+    vim_apps(),
+)
+app.close()
+# GNOME Shell relays many apps under its own name; Vim mode then stays with the field in focus.
+app = menu_app("gnome-shell")
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_v)
+pump(300)
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    (app.menu or [""])[-1] == "Vim mode: bật" and vim_apps() == [],
+    "menu: an app without a name keeps Vim mode for its field, not in the file",
+    (app.menu, vim_apps()),
+)
+app.key(IBus.KEY_Escape)
+app.close()
+app = menu_app("gnome-shell")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    (app.menu or [""])[-1] == "Vim mode: tắt",
+    "menu: the next field without a name starts without Vim mode",
+    app.menu,
+)
+app.key(IBus.KEY_Escape)
+app.close()
+
+# As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
+set_setting("CycleModeKey", "Control+m")
+app = menu_app("cycle")
+seen = []
+for _ in range(4):
+    app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+    pump(300)
+    seen.append(app_mode("cycle"))
+check(
+    seen == ["cycle=5", "cycle=0", "", "cycle=5"],
+    "cycle: from the shared Sen to underline, Off, back to the shared Sen and underline again",
+    seen,
+)
+check(app.text == "", "cycle: the app sees neither the press nor the release", app.text)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(app.text == "vieetj ", "cycle: Off types English", app.text)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(
+    app_mode("cycle") == "" and app.text == "vieetj việt ",
+    "cycle: the key still works while Off and brings back the shared Sen",
+    (app_mode("cycle"), app.text),
+)
+app.close()
+# With English everywhere, the shared mode would leave the app in English, so Sen is kept for it.
+app = menu_app("cycle-english")
+tap_ctrl_shift(app)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(
+    os.path.exists(english_mark)
+    and app_mode("cycle-english") == "cycle-english=2"
+    and app.text == "việt ",
+    "cycle: from Off to Sen while English is on everywhere keeps Sen for the app",
+    (os.path.exists(english_mark), app_mode("cycle-english"), app.text),
+)
+app.close()
+app = menu_app("cycle-vietnamese")
+tap_ctrl_shift(app)
+app.close()
+os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
+set_setting("CycleModeKey", "")
+os.remove(app_modes_path)
+
+# As in fcitx5 each app keeps the language the toggle key last chose in it; an app never switched
+# follows the last switch.
+app_switches_path = os.path.join(config_dir, "ngosen-app-switch.conf")
+
+
+def app_switch(name):
+    if not os.path.exists(app_switches_path):
+        return None
+    with open(app_switches_path) as f:
+        text = f.read()
+    marker = "App=" + name + "\n"
+    if marker not in text:
+        return None
+    return text.split(marker, 1)[1].split("\n", 1)[0]
+
+
+first = App("switch-first")
+tap_ctrl_shift(first)
+first.type("vieetj ")
+check(
+    first.text == "vieetj " and app_switch("switch-first") == "Vietnamese=False",
+    "switch: the toggle key keeps English for the app",
+    (first.text, app_switch("switch-first")),
+)
+second = App("switch-second")
+second.type("vieetj ")
+check(
+    second.text == "vieetj ", "switch: an app never switched follows the last switch", second.text
+)
+tap_ctrl_shift(second)
+second.type("vieetj ")
+check(
+    second.text.endswith(" việt ") and app_switch("switch-second") == "Vietnamese=True",
+    "switch: the toggle key in another app keeps Vietnamese there",
+    (second.text, app_switch("switch-second")),
+)
+second.close()
+first.ic.focus_in()
+pump(300)
+first.type("vieetj ")
+check(first.text == "vieetj vieetj ", "switch: the first app stays in English", first.text)
+third = App("switch-third")
+third.type("vieetj ")
+check(third.text == "việt ", "switch: a new app follows the last switch again", third.text)
+third.close()
+first.ic.focus_in()
+pump(300)
+# In English ` types itself, so the menu opens only once the app is back in Vietnamese.
+tap_ctrl_shift(first)
+first.key(IBus.KEY_grave)
+first.key(IBus.KEY_1)
+pump(500)
+check(
+    app_switch("switch-first") is None and app_mode("switch-first") == "",
+    "switch: picking the shared mode in the menu forgets the app's switch and pick",
+    (app_switch("switch-first"), app_mode("switch-first")),
+)
+first.type("vieetj ")
+check(first.text.endswith(" việt "), "switch: the picked mode types Vietnamese", first.text)
+# A switch written elsewhere, such as by a restore, counts before the next key is typed.
+write_file(app_switches_path, "[Switches]\n[Switches/0]\nApp=switch-first\nVietnamese=False\n\n")
+os.utime(app_switches_path, (time.time() + 5, time.time() + 5))
+tap_ctrl_shift(first)
+check(
+    app_switch("switch-first") == "Vietnamese=True",
+    "switch: the toggle key reads the app's language before it switches",
+    app_switch("switch-first"),
+)
+first.close()
+# Later checks start in Vietnamese whatever this one did.
+if os.path.exists(english_mark):
+    os.remove(english_mark)
+if os.path.exists(app_switches_path):
+    os.remove(app_switches_path)
 os.remove(app_modes_path)
 
 
@@ -1850,6 +2120,14 @@ check(app.text == "việt", "retype: every word takes marks, so it is retyped at
 app.key(IBus.KEY_Tab)
 pump(300)
 check(app.text == "vieetj", "retype: Tab puts back what was typed", app.text)
+app.close()
+
+# A private window marks its fields private: kept out of logs, but still a field the user types words in.
+app = menu_app("retype-private", IBus.InputHints.PRIVATE)
+typed_in_english(app, "vieetj")
+tap_ctrl_shift(app)
+pump(300)
+check(app.text == "việt", "retype: a private field is retyped too", app.text)
 app.close()
 
 # A word Telex leaves alone may be English on purpose, so the change is only offered.
@@ -2097,6 +2375,26 @@ check(
 )
 set_setting("EnableMacro", "True")
 pump(500)
+set_setting("ShowMenuSpellCheck", "False")
+pump(1000)
+check("SpellCheck" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
+set_setting("ShowMenuSpellCheck", "True")
+pump(1000)
+check("SpellCheck" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
+set_setting("UiLanguage", "English")
+pump(1000)
+check(
+    (gnome.labels.get("SpellCheck") or "").endswith(" Spell Check"),
+    "menu: an English interface reaches GNOME at once",
+    gnome.labels.get("SpellCheck"),
+)
+set_setting("UiLanguage", "Vietnamese")
+pump(1000)
+check(
+    (gnome.labels.get("SpellCheck") or "").endswith(" Kiểm tra chính tả"),
+    "menu: and Vietnamese again",
+    gnome.labels.get("SpellCheck"),
+)
 updates.clear()
 tap_ctrl_shift(app)
 check(updates == ["InputMode"], "menu: the toggle key resends only its own item", updates)
@@ -2131,7 +2429,9 @@ check(
 app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
 pump(500)
 check(symbols[-1:] == ["V"], "menu: a click with a stale state still flips", symbols)
-# A restore in the settings window writes the marker while a field has focus.
+# A restore in the settings window writes the switches of each app, then the marker, while a field
+# has focus.
+write_file(app_switches_path, "[Switches]\n")
 write_file(english_mark, "")
 check(symbols[-1:] == ["E"], "menu: a marker written elsewhere switches to English", symbols)
 before = len(app.commits)
@@ -2152,5 +2452,22 @@ if saved_logs:
         check("việt" in f.read(), "menu: the typing log holds the last words", saved_logs[0])
     modes = (os.stat(state_dir).st_mode & 0o777, os.stat(saved_logs[0]).st_mode & 0o777)
     check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
+app.close()
+
+# Last, since an engine that dies here fails every check after it. A restore may hide the items of
+# a menu that is open.
+app = menu_app("menu-shrinks")
+app.key(IBus.KEY_grave)
+pump(200)
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
+    set_setting(name, "False")
+app.key(IBus.KEY_Down)
+pump(300)
+app.type("vie65t ")  # the checks above left VNI on
+check(
+    app.menu is None and app.text.endswith("việt "),
+    "menu: hiding every mode while it is open closes it",
+    (app.menu, app.text),
+)
 app.close()
 finish()

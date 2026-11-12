@@ -8,6 +8,68 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.3.0-1] — 12/11/2026
+
+Ctrl+Shift và mục Tắt chỉ đổi Anh/Việt cho app đang dùng, như bản fcitx5. Vim mode cho từng app trong menu `, từ bắt
+đầu bằng `/` giữ nguyên như gõ, gõ Telex quên mũ hoặc móc vẫn ra đúng chữ. Menu ` sắp xếp được theo ý mình, cửa sổ
+cài đặt có ô tìm và trang "Có gì mới & mẹo", Cứu chữ chạy cả trên Wayland. Dùng lõi Ngó Sen `ngosen-1.10.0-1`. Tải
+gói ở [release ibus-ngosen-1.3.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.3.0-1).
+
+### Thêm
+
+- Đổi thứ tự hay ẩn bớt Gõ Sen, Gạch chân và Tắt trong menu phím `, và đặt phím chuyển nhanh (như Ctrl+`) đưa
+  app đang dùng sang chế độ kế tiếp rồi nhớ cho app đó, như bản fcitx5. Menu mở ra trỏ sẵn vào chế độ app đang gõ
+  (#100).
+- Ẩn bớt mục trong menu trên thanh trên cùng (Kiểu gõ, Bảng mã, Kiểm tra chính tả, Gõ tắt, Tự viết hoa…) ở nhóm
+  "Hiện trong menu thanh trên cùng" của cửa sổ cài đặt, như bản fcitx5 ẩn mục trong menu khay (#101).
+- Chọn giao diện tiếng Anh ở "Ngôn ngữ giao diện" trong cửa sổ cài đặt như bản fcitx5: menu trên thanh trên cùng, menu
+  phím ` và thông báo đổi ngay, cửa sổ cài đặt đổi ở lần mở sau (#104).
+- Ô "Tìm cài đặt" trên thanh bên của cửa sổ cài đặt như bản fcitx5: gõ không dấu cũng tìm được, Enter hay bấm vào
+  kết quả thì mở đúng mục đó; Ctrl+F đưa về ô tìm (#111).
+- Trang "Có gì mới & mẹo" trong cửa sổ cài đặt như bản fcitx5: tính năng mới của từng bản và mẹo gõ, mỗi mục có
+  nút mở thẳng tới cài đặt liên quan; đầu trang Gõ hiện một mẹo ngẫu nhiên. Nhãn nút không còn bị gãy thành
+  nhiều dòng như lỗi vừa sửa ở bản fcitx5 (#112, #118).
+- Sau khi cập nhật lên bản có tính năng mới, Ngó Sen báo một lần "Ngó Sen có gì mới?" như bản fcitx5, nút "Xem"
+  mở thẳng trang "Có gì mới & mẹo"; cài mới thì không báo (#113).
+- Như bản fcitx5, khi terminal hỏi password ẩn chữ (sudo, passwd…) Ngó Sen tự ngừng gõ tiếng Việt: phím đi
+  nguyên vẹn, không ghi vào nhật ký gõ; xong tự bật lại. Gõ `vim` hay `nvim` ở terminal rồi Enter thì Ngó Sen
+  cho lệnh Vim đi qua nguyên vẹn, từ đầu tiên gõ trong file có dấu ngay; thoát bằng `:q`, `:wq`, `ZZ` (#120).
+- Mục Vim mode trong menu phím ` (phím `v`) như bản fcitx5: bật cho app đang dùng thì Ngó Sen theo phím lệnh của
+  Vim ở chế độ normal, nhớ riêng cho từng app trong `ngosen-vim-apps.conf`, chép sang từ bản fcitx5 lúc chạy lần
+  đầu. Ẩn mục hay đổi phím của nó trong nhóm "Menu chế độ gõ" của cửa sổ cài đặt (#121).
+- Như bản fcitx5, một từ bắt đầu bằng / ở đầu dòng hay sau dấu cách được giữ nguyên như đã gõ, nên lệnh chat
+  (/cost) và đường dẫn (/usr/share) không bị thêm dấu; và/hoặc, @tên vẫn có dấu. Tắt ở "Gõ thô sau dấu / đầu từ"
+  trong nhóm "Gõ nhanh" của cửa sổ cài đặt (#129).
+- Mẹo Steam trong trang "Có gì mới & mẹo": Steam chỉ nhận bộ gõ khi chạy bằng `LC_CTYPE=zh_CN.UTF-8 steam`, giao
+  diện vẫn giữ ngôn ngữ cũ (#131).
+
+### Thay đổi
+
+- Ctrl+Shift đổi Anh/Việt riêng cho app đang dùng như bản fcitx5: mỗi app nhớ lựa chọn của nó, app chưa đổi lần
+  nào thì theo lần đổi gần nhất. Mục "Tiếng Anh" trong menu phím ` thành "Tắt" và cũng chỉ tắt cho app đang dùng.
+  Sao lưu và khôi phục mang theo lựa chọn Anh/Việt của từng app, cùng tệp với bản fcitx5 (#94).
+- Cứu chữ chạy cả trên phiên Wayland như bản fcitx5, không chỉ X11: lỡ gõ vieetj lúc tiếng Anh rồi nhấp Ctrl+Shift
+  là thành việt. Bấm chuột sang chỗ khác trước khi chuyển thì chữ giữ nguyên (#117).
+- Menu phím ` bỏ mục "Chế độ gõ mặc định" như bản fcitx5: chọn lại chế độ app vẫn dùng là app đó lại theo cài đặt
+  chung, chọn chế độ khác thì nhớ riêng cho app. Phím chuyển nhanh cũng bỏ bước này (#122).
+- Công tắc "Gõ Sen" trong cửa sổ cài đặt thành mục "Chế độ gõ" với hai nút Gõ Sen và Gạch chân như bản fcitx5, nhìn
+  là biết app chưa chọn riêng đang gõ kiểu nào (#127).
+- Dùng lõi Ngó Sen `ngosen-1.10.0-1`: gõ Telex quên mũ ở vần luôn có mũ như `tienf`, `viecj`
+  nay ra tiền, việc khi chốt chữ (ngosen/ngosen#696); từ điển có thêm âm tiết của tên xã, phường và dân tộc như Đakrông, Mnông, kmăl
+  (ngosen/ngosen#708) (#135).
+- Như bản fcitx5, bản IBus nạp danh sách từ tiếng Anh thông dụng. Nhờ vậy tên riêng mở đầu bằng phụ âm ghép như
+  plông, drăng, Hrê, Brâu gõ được mà `draw` vẫn là draw (ngosen/ngosen#706), và BackSpace trong một từ tiếng Anh
+  đang hiện nguyên phím chỉ xoá một chữ như app thấy (#135).
+
+### Sửa
+
+- Trong cửa sổ ẩn danh của Chrome, Cứu chữ, Cứu dấu và tự viết hoa đầu dòng chạy như ở cửa sổ thường; chữ gõ trong
+  đó vẫn không ghi vào nhật ký gõ, như bản fcitx5 (#138).
+- Theo lõi `ngosen-1.10.0-1`: gõ thừa chữ `d` sau chữ có `đ` rồi bấm BackSpace không còn mất nét của `đ`
+  (ngosen/ngosen#712); từ bắt đầu bằng / không còn bị thêm dấu sau BackSpace trong ô trống, khi app reset sau mỗi
+  phím, trong ô soạn thảo của Firefox hay lần gõ đầu sau khi mở lại trình duyệt (ngosen/ngosen#716, ngosen/ngosen#718,
+  ngosen/ngosen#719, ngosen/ngosen#721).
+
 ## [1.2.3-1] — 11/11/2026
 
 Ở Gõ Sen, từ bắt đầu bằng chữ hoa gõ bằng Shift không còn mất dấu; bấm Enter sau chữ đang gạch chân đổi dấu và bung gõ

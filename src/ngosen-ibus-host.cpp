@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-host.h"
+#include "ngosen-ibus-i18n.h"
 
 #include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
@@ -12,7 +13,6 @@
 #include "ngosen-xtest.h"
 
 #include <algorithm>
-#include <libintl.h>
 
 namespace ngosen {
 
@@ -141,9 +141,10 @@ namespace ngosen {
         return direct_ && client_ == "gnome-shell";
     }
 
-    // Not every app resets on a click (XIM clients never do), and IBus text comes too late to check.
+    // Apps GNOME Shell relays reset on a click that moves the cursor; XIM clients never do, and IBus
+    // text comes too late to check, so elsewhere only clicks the engine watches itself count.
     bool IBusHost::seesCursorMoves() const {
-        return clicksWatched.load(std::memory_order_acquire);
+        return client_ == "gnome-shell" || clicksWatched.load(std::memory_order_acquire);
     }
 
     bool IBusHost::typesWithKeys() const {
@@ -178,7 +179,9 @@ namespace ngosen {
         // terminal or an address bar's selected completion would go wrong.
         if (!direct_ && keysDropped && (f.terminal || f.url || !reported_.isValid()))
             f.surroundingText = false;
-        f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN || (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
+        // Chrome marks every field of an incognito window; that keeps the text out of logs, not out of typing.
+        f.sensitive = (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
         return f;
     }
 
@@ -329,7 +332,7 @@ namespace ngosen {
     }
 
     std::string IBusHost::translate(const char* text) const {
-        return dgettext("ibus-ngosen", text);
+        return uiText(text);
     }
 
     std::unique_ptr<Timer> IBusHost::startTimer(uint64_t deadlineUs, uint64_t /*accuracyUs*/, std::function<bool(Timer&)> onTime) {

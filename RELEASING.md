@@ -21,7 +21,9 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
    (`misc/check-core-tag.sh` must pass) and set the version in `CMakeLists.txt`,
    `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` and `packaging/rpm/opensuse/ibus-ngosen.spec`
    (each with a `%changelog` entry) and `packaging/arch/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must
-   pass; the release workflow runs it on the tag.
+   pass; the release workflow runs it on the tag. For a feature release (a new X.Y), update `FEATURES` in
+   `settings/ngosen_settings/whats_new.py` and the notice text in `src/ngosen-ibus-announce.cpp`, which
+   updated users see once, with their Vietnamese in `po/vi.po`.
 2. Run the full check in a real GNOME session from the release branch (see "Testing in a real GNOME
    session" in [AGENTS.md](AGENTS.md)) and list the results in the release PR.
 3. `CHANGELOG.md`: turn `## [Chưa phát hành]` into `## [X.Y.Z-N] — DD/MM/YYYY` with a one-line summary,

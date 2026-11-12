@@ -73,9 +73,9 @@ msgstr "Tiếng Việt"
 msgid "English"
 msgstr "Tiếng Anh"
 
-#: src/ngosen-ibus-mode-menu.cpp
-msgid "Default Typing"
-msgstr "Chế độ gõ mặc định"
+#: src/ngosen-ibus-mode-menu.cpp src/ngosen-ibus-engine.cpp
+msgid "OFF"
+msgstr "Tắt"
 
 #: settings/ngosen_settings/options.py
 msgid "Output Charset"
@@ -138,8 +138,8 @@ msgid "Retype text typed before switching on"
 msgstr "Cứu chữ: gõ lại có dấu khi quên bật tiếng Việt"
 
 #: settings/ngosen_settings/options.py
-msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it. X11 sessions only."
-msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ. Chỉ chạy ở phiên X11."
+msgid "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
+msgstr "Lỡ gõ vieetj lúc tiếng Anh? Chuyển sang tiếng Việt là thành việt; Tab hoặc Esc trả lại. Chữ có thể cố ý gõ tiếng Anh thì Enter để gõ lại, Tab hoặc Esc để giữ."
 
 #: settings/ngosen_settings/options.py
 msgid "Change the tone of a typed word"
@@ -436,18 +436,53 @@ msgstr "Không lưu được nhật ký gõ vào "
 msgid "Settings"
 msgstr "Cài đặt"
 
-#: settings/ngosen_settings/options.py
+#: settings/ngosen_settings/whats_new.py
+msgid "Vim mode"
+msgstr "Vim mode"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Turn on Vim mode for an app from the ` menu: Vim commands after Esc go through as typed, and the first word after entering insert mode gets its marks. For nvim, Claude Code and the Vim plugins of Obsidian and JetBrains IDEs."
+msgstr "Bật Vim mode cho từng app trong menu `: sau Esc, lệnh Vim đi qua nguyên vẹn, và từ đầu tiên gõ sau khi vào insert mode có dấu ngay. Dùng cho nvim, Claude Code và plugin Vim của Obsidian, JetBrains IDE."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Commands and paths"
+msgstr "Lệnh và đường dẫn"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "A word that starts with / at the start of a line or after a space stays as typed, for chat commands and paths in a terminal."
+msgstr "Từ bắt đầu bằng / ở đầu dòng hoặc ngay sau dấu cách được giữ nguyên như gõ, để gõ lệnh chat và đường dẫn trong terminal."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Forgotten circumflex or horn"
+msgstr "Quên mũ hoặc móc"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "In Telex, a word typed without its circumflex or horn still comes out right where the vowel always takes one."
+msgstr "Gõ Telex quên mũ hoặc móc ở những vần luôn có chúng vẫn ra chữ đúng."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "More place and people names"
+msgstr "Thêm tên địa danh và dân tộc"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Names such as plông, Mnông and Đakrông now type instead of turning back into the keys you typed."
+msgstr "Các tên như plông, Mnông, Đakrông nay gõ ra đúng chữ, không còn bị trả về phím đã gõ."
+
+#: settings/ngosen_settings/whats_new.py
 msgid "Type with Sen"
 msgstr "Gõ Sen"
 
 #: settings/ngosen_settings/options.py
-msgid ""
-"Text goes straight into the field, without an underline, in every app not "
-"set on its own with the mode menu. Off: those apps underline the word being "
-"typed."
-msgstr ""
-"Chữ hiện thẳng vào ô, không gạch chân, ở mọi app chưa chọn riêng trong menu "
-"chế độ gõ. Tắt thì các app đó gạch chân chữ đang gõ."
+msgid "Mode"
+msgstr "Chế độ gõ"
+
+#: settings/ngosen_settings/options.py
+msgid "Text goes straight into the app as you type."
+msgstr "Chữ đi thẳng vào app ngay khi gõ."
+
+#: settings/ngosen_settings/options.py
+msgid "The word is underlined until it is done. Use it in an app that Sen does not work with."
+msgstr "Chữ đang gõ có gạch dưới cho tới khi gõ xong. Dùng khi app không tương thích với Gõ Sen."
 
 msgid "Dictionary"
 msgstr "Từ điển"
@@ -761,8 +796,8 @@ msgid "The backup was made while typing English, so typing switches to English."
 msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
 
 #: settings/ngosen_settings/backup.py
-msgid "Rules that turn Vietnamese off or pick emoji for an app are kept but do nothing here."
-msgstr "Luật tắt tiếng Việt hay chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
+msgid "Rules that pick emoji for an app are kept but do nothing here."
+msgstr "Luật chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
 
 #: settings/ngosen_settings/window.py
 msgid "The settings changed after the restore, so nothing was undone."
@@ -864,14 +899,14 @@ msgstr "Phím tắt cho Gõ Sen"
 msgid "Shortcut for Preedit"
 msgstr "Phím tắt cho Gạch chân"
 
-msgid "Shortcut for English"
-msgstr "Phím tắt cho Tiếng Anh"
+msgid "Shortcut for OFF"
+msgstr "Phím tắt cho Tắt"
 
-msgid "Shortcut for Default Typing"
-msgstr "Phím tắt cho Mặc định"
+msgid "Shortcut for Vim mode"
+msgstr "Phím tắt cho Vim mode"
 
-msgid "Opens a menu to pick Sen or underlined typing for the app in use, or English for every app. Press it twice to type the key itself; in English it types as usual."
-msgstr "Mở menu để chọn Gõ Sen hay gạch chân cho app đang dùng, hoặc tiếng Anh cho mọi app. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
+msgid "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
+msgstr "Mở menu để chọn Gõ Sen, gạch chân hay Tắt cho app đang dùng. Bấm hai lần để gõ ra chính phím đó; lúc gõ tiếng Anh phím gõ như thường."
 
 msgid "Mode menu"
 msgstr "Menu chế độ gõ"
@@ -881,6 +916,51 @@ msgstr "Một chữ cái hoặc chữ số."
 
 msgid "Another mode already uses this key."
 msgstr "Chế độ khác đã dùng phím này."
+
+msgid "Cycle Mode Hotkey"
+msgstr "Phím tắt chuyển nhanh chế độ"
+
+msgid "Moves the app in use to the next mode in the list below, and remembers it for that app."
+msgstr "Chuyển app đang dùng sang chế độ kế tiếp trong danh sách bên dưới và nhớ cho app đó."
+
+msgid "Mode Order"
+msgstr "Thứ tự chế độ"
+
+msgid "With the mode menu open, press a mode's key to pick it for the app in use. Pick the app's usual mode again to make it follow the global setting."
+msgstr "Khi menu chế độ đang mở, bấm phím của một chế độ để chọn cho app đang dùng. Chọn lại chế độ app vẫn dùng để app đó lại theo cài đặt chung."
+
+msgid "Sen, Preedit, OFF"
+msgstr "Gõ Sen, Gạch chân, Tắt"
+
+msgid "Preedit, Sen, OFF"
+msgstr "Gạch chân, Gõ Sen, Tắt"
+
+msgid "OFF, Sen, Preedit"
+msgstr "Tắt, Gõ Sen, Gạch chân"
+
+msgid "Show Sen"
+msgstr "Hiển thị chế độ Gõ Sen"
+
+msgid "Show Preedit"
+msgstr "Hiển thị chế độ Gạch chân"
+
+msgid "Show OFF"
+msgstr "Hiển thị chế độ Tắt"
+
+msgid "Show Vim mode"
+msgstr "Hiển thị Vim mode"
+
+msgid "Show in the top bar menu"
+msgstr "Hiện trong menu thanh trên cùng"
+
+msgid "Interface Language"
+msgstr "Ngôn ngữ giao diện"
+
+msgid "The top bar menu changes at once, this window the next time it opens."
+msgstr "Menu thanh trên cùng đổi ngay, cửa sổ này đổi ở lần mở sau."
+
+msgid "Language"
+msgstr "Ngôn ngữ"
 
 #: settings/ngosen_settings/system_check.py
 msgid "fcitx5 holds the input method"
@@ -990,3 +1070,165 @@ msgstr "Đã xoá {} và đặt im-config về mặc định. Hãy đăng xuất
 #: settings/ngosen_settings/system_check.py
 msgid "Set im-config back to its default. Log out and back in."
 msgstr "Đã đặt im-config về mặc định. Hãy đăng xuất rồi đăng nhập lại."
+
+#: settings/ngosen_settings/window.py
+msgid "Search settings"
+msgstr "Tìm cài đặt"
+
+#: settings/ngosen_settings/window.py
+msgid "No settings found"
+msgstr "Không thấy cài đặt nào"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "What's new & tips"
+msgstr "Có gì mới & mẹo"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "New in {}"
+msgstr "Version {} có gì mới"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Tips"
+msgstr "Mẹo hay"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Open setting"
+msgstr "Mở cài đặt"
+
+#: settings/ngosen_settings/whats_new.py
+#, python-brace-format
+msgid "Open the {} page"
+msgstr "Mở trang {}"
+
+#: settings/ngosen_settings/pages.py
+#, python-brace-format
+msgid "Tip: {}"
+msgstr "Mẹo: {}"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "English/Vietnamese per app"
+msgstr "Anh/Việt riêng từng app"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Ctrl+Shift and OFF in the ` menu now apply to the app in use only; an app you never switched follows your last switch."
+msgstr "Ctrl+Shift và mục Tắt trong menu ` giờ chỉ đổi cho app đang dùng; app chưa đổi lần nào thì theo lần đổi gần nhất."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Your own mode menu"
+msgstr "Menu chế độ theo ý bạn"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Reorder or hide the modes of the ` menu, and set a key that moves the app in use to the next mode."
+msgstr "Đổi thứ tự hay ẩn bớt chế độ trong menu `, và đặt một phím đưa app đang dùng sang chế độ kế tiếp."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Type in the field above the page list to find a setting; Ctrl+F gets there."
+msgstr "Gõ vào ô phía trên danh sách trang để tìm một cài đặt; Ctrl+F đưa tới ô đó."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Text goes straight into the field instead of an underlined word. Press ` to pick the underline for one app."
+msgstr "Chữ vào thẳng ô đang gõ thay vì hiện gạch chân. Bấm ` để chọn gạch chân cho riêng một app."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Cứu chữ"
+msgstr "Cứu chữ"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Forgot to switch Vietnamese on? Press the English/Vietnamese key and the word is fixed; Tab or Esc gives back what you typed."
+msgstr "Quên bật tiếng Việt, bấm phím chuyển Anh/Việt để cứu chữ; Tab hoặc Esc trả lại chữ cũ."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Cứu dấu"
+msgstr "Cứu dấu"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Click right after a word and type a tone key to change its tone mark; Tab or Esc gives it back."
+msgstr "Bấm chuột ngay sau một chữ rồi gõ phím dấu để đổi dấu chữ đó; Tab hay Esc trả lại như cũ."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "The Check page"
+msgstr "Trang Kiểm tra"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Shows what keeps Vietnamese typing from working on this machine, with a button to fix each item."
+msgstr "Cho biết điều gì khiến máy này gõ tiếng Việt chưa được, kèm nút sửa từng mục."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Press ` to pick Sen, Preedit or OFF for the app in use."
+msgstr "Bấm ` để chọn Gõ Sen, Gạch chân hay Tắt cho app đang dùng."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Tap Ctrl alone to keep the word as typed: tunx, Ctrl, Space keeps tũn."
+msgstr "Nhấp thả Ctrl để chốt chữ như đã gõ: tunx, Ctrl, Space giữ tũn."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "A macro ko → không also types Không when you type Ko."
+msgstr "Gõ tắt ko → không thì gõ Ko ra Không."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "] types ư and [ types ơ, so ch]a gives chưa. Off by default."
+msgstr "] ra ư, [ ra ơ, nên ch]a ra chưa. Mặc định tắt."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Space twice types a period. Off by default."
+msgstr "Bấm Space hai lần ra dấu chấm. Mặc định tắt."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "-- types an em dash (—). Off by default."
+msgstr "-- ra gạch dài (—). Mặc định tắt."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "A capital letter after . ! ? and Enter. Off by default; the top bar menu's Auto Capitalize pauses it."
+msgstr "Viết hoa sau . ! ? và Enter. Mặc định tắt; mục Tự viết hoa trên menu thanh trên cùng tạm dừng nó."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "hoà or hòa? Pick with “Use oà, uý (Instead Of òa, úy)”."
+msgstr "hoà hay hòa? Chọn ở ô “Bỏ dấu kiểu mới (oà, uý)”."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "$DATE and $TIME in a macro type today's date and time: hn → Hôm nay $DATE."
+msgstr "$DATE và $TIME trong gõ tắt ra ngày giờ hôm nay: hn → Hôm nay $DATE."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Typing wrong in some app? The Check page says why."
+msgstr "Gõ sai ở app nào đó? Trang Kiểm tra cho biết vì sao."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Steam types plain letters? Start it from a terminal with LC_CTYPE=zh_CN.UTF-8 steam; its menus keep your language."
+msgstr "Steam không gõ được tiếng Việt? Mở Steam từ terminal bằng lệnh LC_CTYPE=zh_CN.UTF-8 steam, giao diện vẫn giữ ngôn ngữ cũ."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "“Save typing log” in the top bar menu records what you type, to attach to a bug report."
+msgstr "“Lưu nhật ký gõ” trên menu thanh trên cùng ghi lại những gì bạn gõ, để đính kèm khi báo lỗi."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "“Back Up…” and “Restore…” in the window menu keep your settings, macros and dictionary."
+msgstr "“Sao lưu…” và “Khôi phục…” trong menu của cửa sổ giữ cài đặt, gõ tắt và từ điển."
+
+#: src/ngosen-ibus-announce.cpp
+msgid "Show"
+msgstr "Xem"
+
+#: src/ngosen-ibus-announce.cpp
+msgid "What's new in Ngó Sen?"
+msgstr "Ngó Sen có gì mới?"
+
+#: src/ngosen-ibus-announce.cpp
+msgid "Version 1.3: Ctrl+Shift and OFF switch the app in use only, Vim mode for each app, and words starting with / typed as is. See What's new for more."
+msgstr "Version 1.3: Ctrl+Shift và mục Tắt chỉ đổi cho app đang dùng, Vim mode cho từng app, và từ bắt đầu bằng / giữ nguyên. Xem thêm ở trang Có gì mới."
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Vim mode: on"
+msgstr "Vim mode: bật"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Vim mode: off"
+msgstr "Vim mode: tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "Type a word that starts with / as is"
+msgstr "Gõ thô sau dấu / đầu từ (lệnh, đường dẫn)"
+
+#: settings/ngosen_settings/options.py
+msgid "/cost and /usr/share stay as typed, at the start of a line or after a space, so chat commands and file paths work. và/hoặc and @tên still get tones."
+msgstr "/cost và /usr/share giữ nguyên như đã gõ khi ở đầu dòng hoặc sau dấu cách, để lệnh chat và đường dẫn file chạy đúng. và/hoặc và @tên vẫn có dấu."
