@@ -4,11 +4,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-typing-log.h"
+#include "ngosen-ibus-i18n.h"
 
 #include "ngosen-log.h"
 
 #include <gio/gio.h>
-#include <glib/gi18n-lib.h>
 #include <glib/gstdio.h>
 
 namespace ngosen {

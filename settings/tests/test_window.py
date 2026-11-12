@@ -5,6 +5,7 @@ import os
 import tempfile
 import time
 import unittest
+from unittest import mock
 
 from ngosen_settings import ini, keymap
 from ngosen_settings.store import Store, read_text, write_text
@@ -25,7 +26,9 @@ class Vietnamese:
         # A real catalog answers the empty string with its header.
         if not text:
             return "Project-Id-Version: ibus-ngosen"
-        return {"Everywhere": "Mọi nơi", "Non-Start": "Trong từ"}.get(text, text)
+        return {"Everywhere": "Mọi nơi", "Non-Start": "Trong từ", "English": "Tiếng Anh"}.get(
+            text, text
+        )
 
 
 class FakeEngine:
@@ -48,13 +51,21 @@ class FakeEngine:
             "ShortcutSen": "1",
             "ShortcutPreedit": "q",
             "ShortcutOff": "e",
-            "ShortcutDefault": "r",
+            "UiLanguage": "Vietnamese",
         }
 
 
 CAN_RUN = bool(window and os.environ.get("DISPLAY"))
 # CI sets this, so a missing package fails the run instead of skipping these tests.
 REQUIRED = os.environ.get("NGOSEN_WINDOW_TESTS") == "required"
+
+
+def descendants(widget):
+    child = widget.get_first_child()
+    while child is not None:
+        yield child
+        yield from descendants(child)
+        child = child.get_next_sibling()
 
 
 def labels(widget):
@@ -123,6 +134,22 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.settings()["SpellCheck"], "True")
         self.assertTrue(self.window.rows.rows["SpellCheck"].get_active())
 
+    def test_mode_buttons_save_sen_or_preedit(self):
+        buttons = self.window.rows.mode_buttons
+        row = self.window.rows.rows["DirectTyping"]
+        self.assertEqual([b.get_label() for b in buttons.values()], ["Sen", "Preedit"])
+        # No saved value types with Sen, as the engine does.
+        self.assertTrue(buttons["True"].get_active())
+        self.assertIn("straight", row.get_subtitle())
+        buttons["False"].set_active(True)
+        self.assertEqual(self.settings()["DirectTyping"], "False")
+        self.assertFalse(buttons["True"].get_active())
+        self.assertIn("underlined", row.get_subtitle())
+        self.window.undo()
+        self.assertNotIn("DirectTyping", self.settings())
+        self.window.refresh()
+        self.assertTrue(buttons["True"].get_active())
+
     def test_combo_saves_the_value_not_the_label(self):
         self.window.rows.rows["W2U"].set_selected(2)
         self.window.rows.rows["InputMethod"].set_selected(2)
@@ -134,6 +161,31 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(row.get_model().get_string(row.get_selected()), "`")
         row.set_selected(1)
         self.assertEqual(self.settings()["ModeMenuKey"], "Shift+asciitilde")
+
+    def test_mode_order_saved_without_vim_is_its_preset(self):
+        engine = FakeEngine(self.folder)
+        saved = engine.settings()
+        saved["ModeOrder"] = "Off,Sen,Preedit,Emoji"
+        engine.settings = lambda: saved
+        store = Store(engine, self.folder)
+        win = window.Window(
+            None,
+            store,
+            {"InputMethod": ["Telex"], "OutputCharset": ["Unicode"]},
+            "1.0.0",
+            FakeSources(),
+        )
+        model = win.rows.rows["ModeOrder"].get_model()
+        self.assertEqual(model.get_n_items(), 3)
+        self.assertEqual(
+            model.get_string(win.rows.rows["ModeOrder"].get_selected()), "OFF, Sen, Preedit"
+        )
+
+    def test_languages_are_named_in_their_own_language(self):
+        model = self.window.rows.rows["UiLanguage"].get_model()
+        self.assertEqual(
+            [model.get_string(i) for i in range(model.get_n_items())], ["Tiếng Việt", "English"]
+        )
 
     def test_mode_menu_shortcut_must_be_free(self):
         row = self.window.rows.rows["ShortcutOff"]
@@ -472,6 +524,103 @@ class WindowTest(unittest.TestCase):
         left = len(self.window.check.findings)
         self.assertEqual(self.window.check_badge.get_label(), str(left))
         self.assertEqual(self.window.check_badge.get_visible(), left > 0)
+
+    def search(self, text):
+        self.window.search_entry.set_text(text)
+        self.window._on_search(self.window.search_entry)
+        results, i = [], 0
+        while (row := self.window.results.get_row_at_index(i)) is not None:
+            results.append(row)
+            i += 1
+        return results
+
+    def test_a_found_setting_opens_on_its_page_with_the_focus(self):
+        spell = self.window.rows.rows["SpellCheck"]
+        results = self.search("spell check dictionary")
+        self.assertEqual([r.found[0] for r in results if hasattr(r, "found")], [spell])
+        self.assertEqual(self.window.side_stack.get_visible_child_name(), "results")
+        self.window.stack.set_visible_child(self.window.check.page)
+        self.window.search_entry.emit("activate")
+        self.assertIs(
+            self.window.stack.get_visible_child(), spell.get_ancestor(Adw.PreferencesPage)
+        )
+        self.assertIs(self.window.get_focus(), spell)
+        self.assertEqual(self.window.side_stack.get_visible_child_name(), "pages")
+        self.assertEqual(self.window.search_entry.get_text(), "")
+
+    def test_search_ignores_tone_marks_and_case(self):
+        self.assertEqual(window.search.fold("Chính TẢ Đúng"), "chinh ta dung")
+        self.assertTrue(any(hasattr(r, "found") for r in self.search("SPELL")))
+
+    def test_enter_right_after_typing_opens_what_was_typed(self):
+        self.search("macro")
+        self.window.search_entry.set_text("spell check dictionary")
+        self.window.search_entry.emit("activate")
+        self.assertIs(self.window.get_focus(), self.window.rows.rows["SpellCheck"])
+
+    def test_the_users_own_entries_are_not_settings(self):
+        # A macro row's title is its abbreviation.
+        self.window.macros.key_row.set_text("zqx")
+        self.window.macros.value_row.set_text("khô gà")
+        self.window.macros._add()
+        (result,) = self.search("zqx")
+        self.assertFalse(hasattr(result, "found"))
+        self.assertEqual(result.get_child().get_label(), "No settings found")
+
+    def test_find_shows_the_sidebar_of_a_narrow_window(self):
+        self.window.split.set_collapsed(True)
+        self.window.split.set_show_content(True)
+        self.window.focus_search()
+        self.assertFalse(self.window.split.get_show_content())
+        self.assertIs(
+            self.window.get_focus().get_ancestor(window.Gtk.SearchEntry), self.window.search_entry
+        )
+
+    def test_every_whats_new_button_leads_somewhere(self):
+        targets = [f["target"] for f in window.whats_new.FEATURES + window.whats_new.TIPS]
+        for kind, name in filter(None, targets):
+            if kind == "setting":
+                self.assertTrue(self.window.open_setting(name), name)
+                self.assertIs(self.window.get_focus(), self.window.rows.rows[name])
+            else:
+                self.window.show_page(name)
+                self.assertIs(self.window.stack.get_visible_child(), self.window.named_pages[name])
+
+    def test_the_tip_opens_the_tips(self):
+        self.window.typing.tip_row.emit("activated")
+        self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
+        self.assertIs(self.window.get_focus(), self.window.whats_new.tip_rows[0])
+
+    def test_button_labels_never_break(self):
+        page = self.window.whats_new.page
+        buttons = [w for w in descendants(page) if isinstance(w, window.Gtk.Button)]
+        self.assertTrue(any("{}" not in b.get_child().get_label() for b in buttons))
+        for button in buttons:
+            label = button.get_child()
+            self.assertTrue(
+                not label.get_wrap() or label.get_width_chars() >= len(label.get_label()),
+                label.get_label(),
+            )
+
+    def test_page_from_the_command_line(self):
+        self.assertEqual(window.requested_page(["x", "--page", "whats-new"]), "whats-new")
+        self.assertIsNone(window.requested_page(["x", "--page"]))
+        self.assertIsNone(window.requested_page(["x"]))
+        self.window.show_page("whats-new")
+        self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
+        self.window.show_page("no-such-page")
+        self.assertIs(self.window.stack.get_visible_child(), self.window.whats_new.page)
+
+    def test_whats_new_and_tips_are_not_settings(self):
+        self.assertFalse([r for r in self.search("per app") if hasattr(r, "found")])
+        # The tip above the typing settings is picked at random; a short one is short enough to match.
+        short = {"text": "Space twice types a period.", "target": None}
+        with mock.patch.object(window.whats_new, "random_tip", return_value=short):
+            self.window.destroy()
+            self.window = window.Window(
+                None, self.store, self.window.rows.names, "1.0.0", FakeSources()
+            )
+        self.assertFalse([r for r in self.search("space twice") if hasattr(r, "found")])
 
     def test_check_page_counts_the_steps_left(self):
         check = self.window.check

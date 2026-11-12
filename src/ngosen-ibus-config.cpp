@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <fcntl.h>
@@ -20,6 +21,7 @@
 #include <glib.h>
 #include <sstream>
 #include <unistd.h>
+#include <utility>
 
 namespace ngosen {
 
@@ -76,8 +78,26 @@ namespace ngosen {
 
         // One line, so a key appended to the end of the file stays a top-level key. fcitx5 keeps a list
         // in its own section, which is read when importing its settings.
-        const char* const        ToggleKeyName   = "ToggleKey";
-        const char* const        ModeMenuKeyName = "ModeMenuKey";
+        const char* const ToggleKeyName        = "ToggleKey";
+        const char* const ModeMenuKeyName      = "ModeMenuKey";
+        const char* const CycleModeKeyName     = "CycleModeKey";
+        const char* const AnnouncedVersionName = "AnnouncedVersion";
+
+        // The items each menu shows, as fcitx5 names their switches.
+        const std::pair<const char*, bool IBusSettings::*> ShownItems[] = {
+            {"ShowModeSen", &IBusSettings::showModeSen},
+            {"ShowModePreedit", &IBusSettings::showModePreedit},
+            {"ShowModeOff", &IBusSettings::showModeOff},
+            {"ShowModeVim", &IBusSettings::showModeVim},
+            {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
+            {"ShowMenuCharset", &IBusSettings::showMenuCharset},
+            {"ShowMenuSpellCheck", &IBusSettings::showMenuSpellCheck},
+            {"ShowMenuMacro", &IBusSettings::showMenuMacro},
+            {"ShowMenuCapitalizeMacro", &IBusSettings::showMenuCapitalizeMacro},
+            {"ShowMenuAutoCapitalize", &IBusSettings::showMenuAutoCapitalize},
+            {"ShowMenuAutoRestore", &IBusSettings::showMenuAutoRestore},
+            {"ShowMenuDictionary", &IBusSettings::showMenuDictionary},
+        };
 
         std::vector<std::string> splitWords(const std::string& text) {
             std::istringstream       words(text);
@@ -123,6 +143,17 @@ namespace ngosen {
             for (const auto& word : words)
                 line += (line.empty() ? "" : " ") + word;
             return line;
+        }
+
+        // Default Typing is no longer a mode, but configs that name it must still load.
+        std::string withoutDefaultTyping(const std::string& order) {
+            std::string        kept;
+            std::istringstream names(order);
+            for (std::string name; std::getline(names, name, ',');) {
+                if (trimIni(name) != "Default")
+                    kept += (kept.empty() ? "" : ",") + name;
+            }
+            return kept;
         }
 
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
@@ -273,6 +304,7 @@ namespace ngosen {
         read.boolean("DdFreeStyle", o.ddFreeStyle);
         read.boolean("BackspaceRemovesTone", o.backspaceRemovesTone);
         read.boolean("RetoneSelection", o.retoneSelection);
+        read.boolean("RawWordAfterSlash", o.rawWordAfterSlash);
         read.boolean("RetypeAfterSwitch", o.retypeAfterSwitch);
         read.boolean("EnableMacro", o.enableMacro);
         read.boolean("CapitalizeMacro", o.capitalizeMacro);
@@ -294,7 +326,13 @@ namespace ngosen {
         read.shortcut("ShortcutSen", settings.shortcutSen);
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
-        read.shortcut("ShortcutDefault", settings.shortcutDefault);
+        read.shortcut("ShortcutVim", settings.shortcutVim);
+        for (const auto& [key, shown] : ShownItems)
+            read.boolean(key, settings.*shown);
+        read.text("ModeOrder", settings.modeOrder);
+        settings.modeOrder = withoutDefaultTyping(settings.modeOrder);
+        read.text("UiLanguage", settings.uiLanguage);
+        settings.cycleModeKeys = readKeys(ini, CycleModeKeyName, {}, parseMenuKey);
         return settings;
     }
 
@@ -313,6 +351,7 @@ namespace ngosen {
         line("DdFreeStyle", boolText(o.ddFreeStyle));
         line("BackspaceRemovesTone", boolText(o.backspaceRemovesTone));
         line("RetoneSelection", boolText(o.retoneSelection));
+        line("RawWordAfterSlash", boolText(o.rawWordAfterSlash));
         line("RetypeAfterSwitch", boolText(o.retypeAfterSwitch));
         line("EnableMacro", boolText(o.enableMacro));
         line("CapitalizeMacro", boolText(o.capitalizeMacro));
@@ -332,7 +371,12 @@ namespace ngosen {
         line("ShortcutSen", settings.shortcutSen);
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
-        line("ShortcutDefault", settings.shortcutDefault);
+        line("ShortcutVim", settings.shortcutVim);
+        for (const auto& [key, shown] : ShownItems)
+            line(key, boolText(settings.*shown));
+        line("ModeOrder", settings.modeOrder);
+        line("UiLanguage", settings.uiLanguage);
+        line(CycleModeKeyName, joinWords(settings.cycleModeKeys));
         return out.str();
     }
 
@@ -385,6 +429,12 @@ namespace ngosen {
     // The fcitx5 edition's name, so the two files look alike.
     std::string SettingsPaths::appModesFile() const {
         return configDir + "/ngosen-app-rules.conf";
+    }
+    std::string SettingsPaths::appSwitchesFile() const {
+        return configDir + "/ngosen-app-switch.conf";
+    }
+    std::string SettingsPaths::vimAppsFile() const {
+        return configDir + "/ngosen-vim-apps.conf";
     }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
@@ -471,8 +521,11 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            static const char* const later[] = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode"};
-            std::string              text;
+            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",
+                                              "UiLanguage",        CycleModeKeyName,      "ShortcutVim",          "RawWordAfterSlash"};
+            for (const auto& item : ShownItems)
+                later.push_back(item.first);
+            std::string text;
             if (!readFile(paths.settingsFile(), text))
                 return true;
             const IniFile current = parseIni(text);
@@ -523,10 +576,9 @@ namespace ngosen {
         std::string content;
         if (!imported) {
             const std::pair<std::string, std::string> copies[] = {
-                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
-                {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
-                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
-                {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
+                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},        {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
+                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},   {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()}, {paths.fcitxConfigDir + "/ngosen-vim-apps.conf", paths.vimAppsFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))
@@ -541,8 +593,10 @@ namespace ngosen {
                 settings            = readSettings(fcitx);
                 readFcitxMode(fcitx, settings);
             }
-            // A new file already holds the mode wanted, so it is never switched.
-            if (!write(paths.senDefaultMark(), "") || !write(paths.settingsFile(), settingsText(settings)))
+            // A new file already holds the mode wanted, so it is never switched, and a new user has no
+            // release to catch up on.
+            const std::string text = withSetting(settingsText(settings), AnnouncedVersionName, featureRelease(NGOSEN_IBUS_VERSION));
+            if (!write(paths.senDefaultMark(), "") || !write(paths.settingsFile(), text))
                 return false;
         } else if (!addLaterSettings(paths, write)) {
             return false;
@@ -550,6 +604,33 @@ namespace ngosen {
         if (!switchSenOnOnce(paths, write))
             return false;
         return imported || write(paths.importedMark(), "");
+    }
+
+    namespace {
+        std::pair<int, int> releaseNumbers(const std::string& version) {
+            int major = 0;
+            int minor = 0;
+            std::sscanf(version.c_str(), "%d.%d", &major, &minor);
+            return {major, minor};
+        }
+    } // namespace
+
+    std::string featureRelease(const std::string& version) {
+        const auto [major, minor] = releaseNumbers(version);
+        return std::to_string(major) + "." + std::to_string(minor);
+    }
+
+    std::string releaseToAnnounce(const SettingsPaths& paths, const std::string& version, const FileWriter& write) {
+        std::string text;
+        if (!readFile(paths.settingsFile(), text))
+            return {};
+        const IniFile ini       = parseIni(text);
+        const auto    announced = ini.top.find(AnnouncedVersionName);
+        if (announced != ini.top.end() && releaseNumbers(announced->second) >= releaseNumbers(version))
+            return {};
+        const std::string release = featureRelease(version);
+        // Recorded first: a notice that could not be recorded would come back at every login.
+        return write(paths.settingsFile(), withSetting(text, AnnouncedVersionName, release)) ? release : std::string();
     }
 
 } // namespace ngosen

@@ -1,3 +1,17 @@
+ibus-ngosen (1.3.0-1) unstable; urgency=medium
+
+  * Ctrl+Shift and OFF switch English and Vietnamese for the app in use
+    only, as in the fcitx5 edition.
+  * Vim mode for each app in the mode menu; words starting with / stay as
+    typed; Telex words with a forgotten circumflex or horn come out right.
+  * The mode menu can be reordered and trimmed, with a key for the next
+    mode; settings can be searched and have a What's new page.
+  * Retype works on Wayland; Chrome incognito fields keep retype and
+    retone.
+  * Core ngosen-1.10.0-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Thu, 12 Nov 2026 18:00:00 +0700
+
 ibus-ngosen (1.2.3-1) unstable; urgency=medium
 
   * Words that start with a capital typed with Shift keep their marks

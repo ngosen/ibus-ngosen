@@ -14,7 +14,18 @@ gi.require_version("PangoCairo", "1.0")
 
 from gi.repository import Adw, Gio, GLib, Gtk  # noqa: E402,F401
 
-from . import backup, brand, check_page, i18n, ini, keys, options, pages  # noqa: E402
+from . import (  # noqa: E402
+    backup,
+    brand,
+    check_page,
+    i18n,
+    ini,
+    keys,
+    options,
+    pages,
+    search,
+    whats_new,
+)
 from .i18n import _  # noqa: E402
 from .store import Engine, Store, read_text  # noqa: E402
 
@@ -54,18 +65,27 @@ class Window(Adw.ApplicationWindow):
         )
 
         self.stack = stack = Adw.ViewStack()
-        typing = pages.typing_page(self.rows)
+        self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
-        for page in (
-            typing,
-            self.macros.page,
-            self.dictionary.page,
-            self.keymap.page,
-            self.check.page,
-        ):
+        self.whats_new = whats_new.WhatsNewPage(
+            self.open_setting,
+            self.show_page,
+            {"macros": self.macros.page.get_title(), "check": self.check.page.get_title()},
+        )
+        self.named_pages = {
+            "typing": typing,
+            "macros": self.macros.page,
+            "dictionary": self.dictionary.page,
+            "keymap": self.keymap.page,
+            "whats-new": self.whats_new.page,
+            "check": self.check.page,
+        }
+        for page in self.named_pages.values():
             tab = stack.add_titled_with_icon(page, None, page.get_title(), page.get_icon_name())
             if page is self.check.page:
                 self.check_tab = tab
+        # The check page lists findings, not settings.
+        self.search_pages = [typing, self.macros.page, self.dictionary.page, self.keymap.page]
         # Header tabs cut the longer Vietnamese page names; a sidebar has room for them.
         self.split = Adw.NavigationSplitView(
             sidebar=self._sidebar_page(version), content=self._content_page()
@@ -89,11 +109,94 @@ class Window(Adw.ApplicationWindow):
         self.sidebar.connect("row-selected", self._page_selected)
         # Clicking the row already shown still opens it when the split view is collapsed.
         self.sidebar.connect("row-activated", lambda _l, _r: self.split.set_show_content(True))
+        self.results = Gtk.ListBox(css_classes=["navigation-sidebar"])
+        self.results.connect("row-activated", lambda _l, row: self.open_result(row))
+        self.side_stack = Gtk.Stack()
+        self.side_stack.add_named(Gtk.ScrolledWindow(child=self.sidebar), "pages")
+        self.side_stack.add_named(Gtk.ScrolledWindow(child=self.results), "results")
+        self.search_entry = Gtk.SearchEntry(
+            placeholder_text=_("Search settings"), margin_start=8, margin_end=8, margin_bottom=6
+        )
+        self.search_entry.connect("search-changed", self._on_search)
+        self.search_entry.connect("activate", self._open_first_result)
+        find = Gtk.ShortcutController(scope=Gtk.ShortcutScope.MANAGED)
+        find.add_shortcut(
+            Gtk.Shortcut(
+                trigger=Gtk.ShortcutTrigger.parse_string("<Control>f"),
+                action=Gtk.CallbackAction.new(lambda *_a: self.focus_search()),
+            )
+        )
+        self.add_controller(find)
         header = Adw.HeaderBar()
         header.pack_end(self._menu(version))
-        view = Adw.ToolbarView(content=Gtk.ScrolledWindow(child=self.sidebar))
+        view = Adw.ToolbarView(content=self.side_stack)
         view.add_top_bar(header)
+        view.add_top_bar(self.search_entry)
         return Adw.NavigationPage(title="Ngó Sen", child=view)
+
+    def _on_search(self, entry):
+        self.results.remove_all()
+        text = entry.get_text()
+        self.side_stack.set_visible_child_name("results" if text.strip() else "pages")
+        if not text.strip():
+            return
+        for title, row, page in search.find(self.search_pages, text):
+            result = Gtk.ListBoxRow()
+            box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, margin_top=4, margin_bottom=4)
+            box.append(Gtk.Label(label=title, xalign=0, wrap=True))
+            where = self.stack.get_page(page).get_title()
+            box.append(Gtk.Label(label=where, xalign=0, css_classes=["dim-label"]))
+            result.set_child(box)
+            result.found = (row, page)
+            self.results.append(result)
+        if self.results.get_row_at_index(0) is None:
+            empty = Gtk.ListBoxRow(activatable=False, selectable=False)
+            empty.set_child(Gtk.Label(label=_("No settings found"), css_classes=["dim-label"]))
+            self.results.append(empty)
+
+    def focus_search(self):
+        # A narrow window shows the page alone, so the search field has to be brought back.
+        self.split.set_show_content(False)
+        self.search_entry.grab_focus()
+        return True
+
+    def _open_first_result(self, entry):
+        # Results follow typing after a short delay; Enter must not open the previous query's.
+        self._on_search(entry)
+        first = self.results.get_row_at_index(0)
+        if first is not None and hasattr(first, "found"):
+            self.open_result(first)
+
+    def open_result(self, result):
+        """Shows the page holding a found row and puts the focus on it."""
+        if not hasattr(result, "found"):
+            return
+        row, page = result.found
+        self.search_entry.set_text("")
+        self.side_stack.set_visible_child_name("pages")
+        self._show_row(page, row)
+
+    def _show_row(self, page, row):
+        self.stack.set_visible_child(page)
+        self.split.set_show_content(True)
+        search.focus_when_laid_out(row)
+
+    def open_setting(self, key):
+        row = self.rows.rows.get(key)
+        if row is None:
+            return False
+        self._show_row(row.get_ancestor(Adw.PreferencesPage), row)
+        return True
+
+    def show_page(self, name):
+        """Shows the named page; a name this window does not have is ignored."""
+        if name in self.named_pages:
+            self.stack.set_visible_child(self.named_pages[name])
+            self.split.set_show_content(True)
+
+    def show_tips(self):
+        # Scrolling follows the focus, so focusing the first tip brings the list into view.
+        self._show_row(self.whats_new.page, self.whats_new.tip_rows[0])
 
     def _sidebar_row(self, tab):
         box = Gtk.Box(spacing=12, margin_top=6, margin_bottom=6, margin_start=6, margin_end=6)
@@ -352,21 +455,39 @@ def load(engine):
         return None, None, str(error)
 
 
+def requested_page(argv):
+    """The NAME of --page NAME, as the fcitx5 settings take it."""
+    if "--page" in argv[:-1]:
+        return argv[argv.index("--page") + 1]
+    return None
+
+
 def main(engine_path, localedir, version):
     i18n.setup(localedir)
-    app = Adw.Application(application_id=APP_ID)
+    # A second launch hands its arguments to the open window, which then shows the page asked for.
+    app = Adw.Application(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE)
 
     def activate(app):
-        if app.get_active_window() is not None:
-            app.get_active_window().present()
-            return
-        brand.install_css()
-        engine = Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path))
-        store, names, error = load(engine)
-        window = (
-            error_window(app, error) if error else Window(app, store, names, version, engine=engine)
-        )
+        window = app.get_active_window()
+        if window is None:
+            brand.install_css()
+            engine = Engine(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path))
+            store, names, error = load(engine)
+            window = (
+                error_window(app, error)
+                if error
+                else Window(app, store, names, version, engine=engine)
+            )
         window.present()
+        return window
+
+    def command_line(app, command_line):
+        window = activate(app)
+        page = requested_page(command_line.get_arguments())
+        if page is not None and isinstance(window, Window):
+            window.show_page(page)
+        return 0
 
     app.connect("activate", activate)
-    return app.run(sys.argv[:1])
+    app.connect("command-line", command_line)
+    return app.run(sys.argv)

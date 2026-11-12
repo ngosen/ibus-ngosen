@@ -4,8 +4,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-engine.h"
+#include "ngosen-ibus-i18n.h"
 
 #include "ngosen-globals.h"
+#include "ngosen-ibus-announce.h"
 #include "ngosen-ibus-app-modes.h"
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-keys.h"
@@ -18,7 +20,6 @@
 #include "ngosen-pointer.h"
 #include "ngosen-state.h"
 
-#include <glib/gi18n-lib.h>
 #include <algorithm>
 #include <atomic>
 #include <memory>
@@ -32,12 +33,22 @@ namespace {
         return instance;
     }
 
-    // What the toggle key last chose, shared by every field as in the fcitx5 edition.
+    // What the toggle key last chose anywhere; apps it never switched follow it, as in the fcitx5 edition.
     bool              englishOn = false;
 
     ngosen::AppModes& appModes() {
         static ngosen::AppModes modes(resources().paths().appModesFile());
         return modes;
+    }
+
+    ngosen::AppSwitches& appSwitches() {
+        static ngosen::AppSwitches switches(resources().paths().appSwitchesFile());
+        return switches;
+    }
+
+    ngosen::VimApps& vimApps() {
+        static ngosen::VimApps apps(resources().paths().vimAppsFile());
+        return apps;
     }
 
     std::string currentApp(const ngosen::IBusHost& host) {
@@ -46,19 +57,40 @@ namespace {
 
     // In Preedit every word goes into the preedit; in Sen the core picks for each word whether it goes
     // straight into the field or into the preedit.
-    ngosen::Mode sharedMode() {
-        if (englishOn)
-            return ngosen::Mode::Off;
+    ngosen::Mode sharedVietnameseMode() {
         return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
     }
 
-    // The mode picked for the app, else the shared one.
+    // As in the fcitx5 edition: the toggle key's last choice in the app decides the language, else the
+    // mode picked for it, else the last switch anywhere. A mode picked for the app then wins over the
+    // shared one.
     ngosen::Mode typingMode(const ngosen::IBusHost& host) {
-        if (englishOn)
+        const std::string app        = currentApp(host);
+        const auto        mode       = appModes().find(app);
+        const bool        vietnamese = appSwitches().find(app).value_or(mode ? *mode != ngosen::AppMode::Off : !englishOn);
+        if (!vietnamese)
             return ngosen::Mode::Off;
-        if (const auto mode = appModes().find(currentApp(host)))
-            return *mode == ngosen::AppMode::Sen ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
-        return sharedMode();
+        if (mode == ngosen::AppMode::Sen)
+            return ngosen::Mode::Sen;
+        if (mode == ngosen::AppMode::Preedit)
+            return ngosen::Mode::Preedit;
+        return sharedVietnameseMode();
+    }
+
+    ngosen::MenuMode menuModeOf(ngosen::Mode mode) {
+        return mode == ngosen::Mode::Off ? ngosen::MenuMode::Off : mode == ngosen::Mode::Sen ? ngosen::MenuMode::Sen : ngosen::MenuMode::Preedit;
+    }
+
+    ngosen::Mode modeOfMenu(ngosen::MenuMode mode) {
+        return mode == ngosen::MenuMode::Off ? ngosen::Mode::Off : mode == ngosen::MenuMode::Sen ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
+    }
+
+    bool typesEnglish() {
+        return realMode == ngosen::Mode::Off;
+    }
+
+    const char* modeName(ngosen::Mode mode) {
+        return mode == ngosen::Mode::Off ? "Off" : mode == ngosen::Mode::Sen ? "Sen" : "Preedit";
     }
 
     const std::vector<ngosen::KeyChord>& toggleChords() {
@@ -113,29 +145,36 @@ namespace {
         ToggleTap                            tap;
         bool                                 showsNotice = false;
         bool                                 menuOpen    = false;
-        guint                                menuCursor  = 0;
+        // Vim mode for the field in focus when its app has no name to keep it under, as fcitx5 keeps it for the field.
+        bool  vimHere    = false;
+        guint menuCursor = 0;
         // The key whose release the app must not see, as it never saw the press.
         guint menuKeyDown = 0;
 
-        // The word ends in the mode it was typed in, and the core drops what it held for it.
-        void setLanguage(bool english) {
+        // The word ends in the mode it was typed in, and the core drops what it held for it. True when
+        // the language changed, which the panel has to show.
+        bool applyMode() {
+            const bool wasEnglish = typesEnglish();
             state->commitBuffer();
             state->resetAfterAppCommit(false);
-            englishOn = english;
             applyTypingMode(*host);
             // Still the same field, so as in fcitx5 Sen keeps what it learned of it and the keys for Cứu chữ.
             if (realMode == ngosen::Mode::Sen)
                 state->activate(ngosen::Mode::Sen, false);
+            return typesEnglish() != wasEnglish;
         }
 
         // GNOME's portal may name the app only after focus-in, so the mode follows the app between words.
-        void followApp() {
+        // True when the language changed.
+        bool followApp() {
             if (host->hasPreedit() || state->holdsWord() || typingMode(*host) == realMode)
-                return;
+                return false;
+            const bool wasEnglish = typesEnglish();
             applyTypingMode(*host);
-            NGOSEN_INFO(std::string("Typing mode for the app: ") + (realMode == ngosen::Mode::Sen ? "Sen" : "Preedit"));
+            NGOSEN_INFO(std::string("Typing mode for the app: ") + modeName(realMode));
             if (realMode == ngosen::Mode::Sen)
                 state->activate(ngosen::Mode::Sen, false);
+            return typesEnglish() != wasEnglish;
         }
 
         // Only between words: a new engine would drop the word being typed, underlined or already in
@@ -147,8 +186,8 @@ namespace {
             // The toggle key writes the marker too; reading it back then changes nothing.
             if (resources().takeEnglishChange()) {
                 if (const bool english = ngosen::readEnglishOn(resources().paths()); english != englishOn) {
-                    setLanguage(english);
-                    languageChanged = true;
+                    englishOn       = english;
+                    languageChanged = applyMode();
                 }
             }
             resources().reloadIfChanged();
@@ -182,7 +221,7 @@ namespace {
 
     void showLanguage(IBusEngine* engine) {
         if (Session* session = sessionOf(engine))
-            session->host->showNotice(englishOn ? _("English") : _("Vietnamese"));
+            session->host->showNotice(typesEnglish() ? _("English") : _("Vietnamese"));
     }
 
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
@@ -198,15 +237,21 @@ namespace {
 
     void toggleLanguage(IBusEngine* engine, Session& session) {
         closeModeMenu(engine, session);
-        session.setLanguage(!englishOn);
+        // Read again: the portal or a restore may have changed the app's language since the last key.
+        const bool        vietnamese = typingMode(*session.host) == ngosen::Mode::Off;
+        const std::string app        = currentApp(*session.host);
+        if (!app.empty() && !appSwitches().set(app, vietnamese))
+            NGOSEN_WARN("Cannot save the language for " + app);
+        englishOn = !vietnamese;
         ngosen::saveEnglishOn(resources().paths(), englishOn);
-        NGOSEN_INFO(std::string("Toggle key: ") + (englishOn ? "English" : "Vietnamese"));
+        session.applyMode();
+        NGOSEN_INFO(std::string("Toggle key: ") + (typesEnglish() ? "English" : "Vietnamese"));
         showLanguageItem(engine);
         showLanguage(engine);
         session.showsNotice = true;
         // A click moving the cursor must be seen, or the offer would replace text somewhere else. An
         // address bar may select its completion after the typed text, which the deletion would take first.
-        if (!englishOn && session.host->seesCursorMoves() && !session.host->field().url)
+        if (!typesEnglish() && session.host->seesCursorMoves() && !session.host->field().url)
             session.state->offerRetype();
     }
 
@@ -262,8 +307,17 @@ namespace {
         return false;
     }
 
+    bool vimModeHere(const Session& session) {
+        const std::string app = currentApp(*session.host);
+        return app.empty() ? session.vimHere : vimApps().has(app);
+    }
+
+    std::vector<ngosen::MenuItem> menuItems(const Session& session) {
+        return ngosen::modeMenuItems(resources().settings(), vimModeHere(session));
+    }
+
     void showModeMenu(IBusEngine* engine, const Session& session) {
-        ibus_engine_update_lookup_table(engine, ngosen::newModeMenuTable(ngosen::modeMenuItems(resources().settings()), session.menuCursor), TRUE);
+        ibus_engine_update_lookup_table(engine, ngosen::newModeMenuTable(menuItems(session), session.menuCursor), TRUE);
     }
 
     void openModeMenu(IBusEngine* engine, Session& session) {
@@ -271,25 +325,40 @@ namespace {
         session.state->commitBuffer();
         session.state->resetAfterAppCommit(false);
         session.menuOpen   = true;
-        session.menuCursor = realMode == ngosen::Mode::Sen ? 0 : 1;
+        session.menuCursor = 0;
+        // As in fcitx5 the cursor starts on the mode the app types in.
+        const auto items   = menuItems(session);
+        const auto current = menuModeOf(realMode);
+        for (guint i = 0; i < items.size(); ++i) {
+            if (items[i].mode == current)
+                session.menuCursor = i;
+        }
         session.host->setMenuOpen(true);
         showModeMenu(engine, session);
     }
 
-    // As in the fcitx5 edition, a mode picked in the menu is kept for the app in use. An app without a
-    // name of its own changes the shared mode, which every app without a pick follows.
-    void keepMode(Session& session, ngosen::MenuMode mode) {
-        const std::string app = currentApp(*session.host);
+    // As in fcitx5, a pick is kept for the app unless it is the mode the app gets anyway; Off and picks made
+    // while English is on everywhere are always kept, or the app would follow the shared language instead.
+    // An app without a name of its own changes the shared mode and language instead.
+    void keepMode(ngosen::IBusHost& host, ngosen::MenuMode mode) {
+        const std::string app = currentApp(host);
         if (!app.empty()) {
             std::optional<ngosen::AppMode> kept;
-            if (mode != ngosen::MenuMode::Default)
+            if (mode == ngosen::MenuMode::Off)
+                kept = ngosen::AppMode::Off;
+            else if (englishOn || modeOfMenu(mode) != sharedVietnameseMode())
                 kept = mode == ngosen::MenuMode::Sen ? ngosen::AppMode::Sen : ngosen::AppMode::Preedit;
             if (!appModes().set(app, kept))
                 NGOSEN_WARN("Cannot save the typing mode for " + app);
-            session.followApp();
+            if (!appSwitches().set(app, std::nullopt))
+                NGOSEN_WARN("Cannot save the language for " + app);
             return;
         }
-        if (mode == ngosen::MenuMode::Default)
+        if (const bool english = mode == ngosen::MenuMode::Off; english != englishOn) {
+            englishOn = english;
+            ngosen::saveEnglishOn(resources().paths(), englishOn);
+        }
+        if (mode == ngosen::MenuMode::Off)
             return;
         const bool           direct = mode == ngosen::MenuMode::Sen;
         ngosen::IBusSettings saved;
@@ -298,31 +367,70 @@ namespace {
             resources().noticeChange();
     }
 
-    void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
-        closeModeMenu(engine, session);
-        const bool english = item.mode == ngosen::MenuMode::English;
-        if (english != englishOn) {
-            session.setLanguage(english);
-            ngosen::saveEnglishOn(resources().paths(), englishOn);
+    const char* modeLabel(ngosen::Mode mode) {
+        return mode == ngosen::Mode::Off ? _("OFF") : mode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
+    }
+
+    // As in fcitx5: the next mode the menu shows, kept for the app like a pick in the menu.
+    void cycleMode(IBusEngine* engine, Session& session) {
+        std::vector<ngosen::Mode> modes;
+        for (const ngosen::MenuMode item : ngosen::cycleMenuModes(resources().settings()))
+            modes.push_back(modeOfMenu(item));
+        if (modes.empty())
+            return;
+        const auto         it   = std::find(modes.begin(), modes.end(), typingMode(*session.host));
+        const ngosen::Mode next = it == modes.end() || it + 1 == modes.end() ? modes.front() : *(it + 1);
+        keepMode(*session.host, menuModeOf(next));
+        if (session.applyMode())
             showLanguageItem(engine);
+        NGOSEN_INFO(std::string("Cycle mode key: ") + modeName(realMode));
+        session.host->showNotice(modeLabel(realMode));
+        session.showsNotice = true;
+    }
+
+    void switchVimMode(IBusEngine* engine, Session& session) {
+        closeModeMenu(engine, session);
+        const bool        on  = !vimModeHere(session);
+        const std::string app = currentApp(*session.host);
+        if (app.empty())
+            session.vimHere = on;
+        else if (!vimApps().set(app, on))
+            NGOSEN_WARN("Cannot save Vim mode for " + app);
+        session.state->setVimKeys(on);
+        const char* label = on ? _("Vim mode: on") : _("Vim mode: off");
+        NGOSEN_INFO(std::string("Mode menu: ") + label);
+        session.host->showNotice(label);
+        session.showsNotice = true;
+    }
+
+    void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
+        if (item.mode == ngosen::MenuMode::Vim) {
+            switchVimMode(engine, session);
+            return;
         }
-        if (!english)
-            keepMode(session, item.mode);
+        closeModeMenu(engine, session);
+        keepMode(*session.host, item.mode);
+        if (session.applyMode())
+            showLanguageItem(engine);
         NGOSEN_INFO("Mode menu: " + item.label);
-        // Default names no mode, and in an app without a name of its own it changes nothing.
-        const char* shown = realMode == ngosen::Mode::Off ? _("English") : realMode == ngosen::Mode::Sen ? _("Sen") : _("Preedit");
-        session.host->showNotice(item.mode == ngosen::MenuMode::Default ? shown : item.label);
+        session.host->showNotice(item.label);
         session.showsNotice = true;
     }
 
     void moveMenuCursor(IBusEngine* engine, Session& session, int step) {
-        const auto count   = static_cast<int>(ngosen::modeMenuItems(resources().settings()).size());
+        const auto count   = static_cast<int>(menuItems(session).size());
         session.menuCursor = static_cast<guint>((static_cast<int>(session.menuCursor) + step + count) % count);
         showModeMenu(engine, session);
     }
 
     void applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
-        const auto items = ngosen::modeMenuItems(resources().settings());
+        const auto items = menuItems(session);
+        // A restore may hide items while the menu is open.
+        if (items.empty()) {
+            closeModeMenu(engine, session);
+            return;
+        }
+        session.menuCursor = std::min(session.menuCursor, static_cast<guint>(items.size() - 1));
         switch (key.kind) {
             case ngosen::MenuKey::Close: closeModeMenu(engine, session); return;
             case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); return;
@@ -359,10 +467,12 @@ namespace {
             return false;
         if (session.menuOpen) {
             applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval);
+        } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
+            cycleMode(engine, session);
         } else {
-            // In English the key types as usual, as in the fcitx5 edition.
+            // In English the key types as usual, as in the fcitx5 edition, and so it does with every mode hidden.
             const auto keymap = resources().settings().options.inputMethod == "Custom" ? resources().customKeymap() : std::vector<ngosen::KeymapEntry>{};
-            if (englishOn || !ngosen::opensModeMenu(resources().settings(), keymap, keyval, state))
+            if (typesEnglish() || !ngosen::opensModeMenu(resources().settings(), keymap, keyval, state) || ngosen::modeMenuItems(resources().settings()).empty())
                 return false;
             openModeMenu(engine, session);
         }
@@ -381,8 +491,8 @@ namespace {
             return FALSE;
         if (session->applyNewSettings())
             showLanguageItem(engine);
-        if ((state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
-            session->followApp();
+        if ((state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier() && session->followApp())
+            showLanguageItem(engine);
         // Shown until the next key typed, not the release of the toggle key itself.
         if (session->showsNotice && (state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier()) {
             session->host->hideNotice();
@@ -395,6 +505,11 @@ namespace {
         }
         if (handleToggleKey(engine, *session, keyval, state))
             return TRUE;
+        // A terminal password prompt gets the keys as typed, and they stay out of the typing log.
+        if (session->state->passesHiddenInput()) {
+            closeModeMenu(engine, *session);
+            return FALSE;
+        }
         if (handleModeMenu(engine, *session, keyval, keycode, state))
             return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
@@ -404,6 +519,8 @@ namespace {
         // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
         else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
             session->state->commitBuffer();
+        // The portal may name the app after focus-in, so its Vim mode is looked up at each key.
+        session->state->setVimKeys(vimModeHere(*session));
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -428,22 +545,33 @@ namespace {
         for (guint i = 0; IBusProperty* item = ibus_prop_list_get(items, i); ++i) {
             states += ibus_property_get_key(item);
             states += ibus_property_get_state(item) == PROP_STATE_CHECKED ? "+" : "-";
+            // Hiding an item changes no state, and must still reach the panel.
+            states += ibus_property_get_visible(item) ? "" : "~";
             states += itemStates(ibus_property_get_sub_props(item));
         }
         return states;
     }
 
-    // What the panel was last told, the same for every engine since the settings are shared.
+    // What the panel was last told, the same for every engine since the settings are shared. A new
+    // interface language changes only labels, so it counts as a change too.
     std::string shownStates;
+
+    std::string menuStates(IBusPropList* menu) {
+        return (ngosen::uiEnglish() ? "en:" : "vi:") + itemStates(menu);
+    }
+
+    void useUiLanguage(const ngosen::IBusSettings& settings) {
+        ngosen::setUiEnglish(settings.uiLanguage == "English");
+    }
 
     // clicked: the panel already flipped the item itself, so its state goes out even when unchanged.
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked) {
-        IBusPropList* menu = ngosen::newSettingsMenu(settings, englishOn);
+        IBusPropList* menu = ngosen::newSettingsMenu(settings, typesEnglish());
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
         // GNOME Shell takes the whole menu only once after the engine is chosen, then single items.
         // It rebuilds the menu on each item, so resending them on every focus change stalls it (#28).
-        std::string states = itemStates(menu);
+        std::string states = menuStates(menu);
         if (clicked || states != shownStates) {
             updateItems(engine, menu);
             shownStates = std::move(states);
@@ -454,14 +582,14 @@ namespace {
     // Only the language item changed; the whole menu would stall GNOME Shell for a second, and the
     // keys typed meanwhile reach the core in one burst.
     void showLanguageItem(IBusEngine* engine) {
-        IBusPropList* menu = ngosen::newSettingsMenu(resources().settings(), englishOn);
+        IBusPropList* menu = ngosen::newSettingsMenu(resources().settings(), typesEnglish());
         g_object_ref_sink(menu);
         ibus_engine_register_properties(engine, menu);
         for (guint i = 0; IBusProperty* item = ibus_prop_list_get(menu, i); ++i) {
             if (g_strcmp0(ibus_property_get_key(item), ngosen::InputModeItem) == 0)
                 ibus_engine_update_property(engine, item);
         }
-        shownStates = itemStates(menu);
+        shownStates = menuStates(menu);
         g_object_unref(menu);
     }
 
@@ -475,13 +603,18 @@ namespace {
             session->applyNewSettings();
         // The file, not settings(): in the middle of a word the reload waits, and the menu would
         // take back a click.
-        showMenu(focusedEngine, resources().savedSettings());
+        const ngosen::IBusSettings saved = resources().savedSettings();
+        useUiLanguage(saved);
+        showMenu(focusedEngine, saved);
     }
 
     void focusIn(IBusEngine* engine) {
         static bool watching = false;
         if (!watching) {
             resources().onChange(showNewSettings);
+            useUiLanguage(resources().savedSettings());
+            // After the language, which the notice is written in.
+            ngosen::announceRelease(ngosen::releaseToAnnounce(resources().paths(), NGOSEN_IBUS_VERSION));
             watching = true;
         }
         focusedEngine = engine;
@@ -534,7 +667,8 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->tap = {};
+        session->tap     = {};
+        session->vimHere = false;
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();
@@ -609,7 +743,7 @@ namespace {
             session->host->clickCandidate(index);
             return;
         }
-        const auto items = ngosen::modeMenuItems(resources().settings());
+        const auto items = menuItems(*session);
         if (index < items.size())
             pickMode(engine, *session, items[index]);
     }
@@ -676,7 +810,7 @@ namespace ngosen {
 
     void addEngine(IBusFactory* factory) {
         englishOn = readEnglishOn(resources().paths());
-        realMode  = sharedMode();
+        realMode  = englishOn ? ngosen::Mode::Off : sharedVietnameseMode();
         ibus_factory_add_engine(factory, "ngosen", ngosen_engine_get_type());
         g_signal_connect(factory, "create-engine", G_CALLBACK(createEngine), nullptr);
     }

@@ -2,10 +2,12 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(IBus REQUIRED IMPORTED_TARGET ibus-1.0>=1.5.27)
 
 add_library(ngosen_ibus STATIC
+    ngosen-ibus-announce.cpp
     ngosen-ibus-app-modes.cpp
     ngosen-ibus-config.cpp
     ngosen-ibus-engine.cpp
     ngosen-ibus-host.cpp
+    ngosen-ibus-i18n.cpp
     ngosen-ibus-keys.cpp
     ngosen-ibus-menu.cpp
     ngosen-ibus-mode-menu.cpp
@@ -18,6 +20,7 @@ add_library(ngosen_ibus STATIC
 target_include_directories(ngosen_ibus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(ngosen_ibus PUBLIC GETTEXT_PACKAGE="ibus-ngosen" NGOSEN_IBUS_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(ngosen_ibus PRIVATE NGOSEN_IBUS_DICTIONARY="${NGOSEN_IBUS_DATADIR}/vietnamese.cm.dict"
+                                               NGOSEN_IBUS_ENGLISH_WORDS="${NGOSEN_IBUS_DATADIR}/english-common.txt"
                                                NGOSEN_SETUP_EXEC="${NGOSEN_SETUP_EXEC}")
 # The core calls the shell's log (ngosen-log.h), so the log comes after the core on the link line.
 add_library(ngosen_ibus_log STATIC ngosen-ibus-log.cpp)

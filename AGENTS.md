@@ -16,8 +16,9 @@ with an underlined preedit where a field cannot take that. That path handles how
 deletions on and keeps the core's click check. The mode menu keeps Sen or the underline per app, and a
 setting turns Sen off for every app without a pick. On Wayland the engine learns the name of the app GNOME Shell relays from GNOME's portal,
 as fcitx5 does, so the core's rules for single apps run here too; such rules still go into the core. A
-tap of Ctrl+Shift switches between Vietnamese and English inside the engine, for every app at once;
-Super+Space still switches GNOME's input sources.
+tap of Ctrl+Shift switches between Vietnamese and English inside the engine; as in fcitx5 each app
+keeps its own choice, and an app never switched follows the last switch. Super+Space still switches
+GNOME's input sources.
 
 ## Code
 

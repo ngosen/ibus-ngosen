@@ -40,6 +40,8 @@ class SettingRows:
         if key in options.SHORTCUTS:
             row = Adw.EntryRow()
             row.connect("changed", lambda r: self._shortcut_changed(key, r))
+        elif key == "DirectTyping":
+            row = self._mode_row(key)
         elif options.is_switch(key):
             row = Adw.SwitchRow()
             row.connect(
@@ -58,15 +60,48 @@ class SettingRows:
         self.rows[key] = row
         return row
 
+    def _mode_row(self, key):
+        """Linked buttons, as the fcitx5 edition shows its Mode, so the other choice is in view."""
+        row = Adw.ActionRow()
+        box = Gtk.Box(css_classes=["linked"], valign=Gtk.Align.CENTER)
+        first = None
+        self.mode_buttons = {}
+        for value, label, _hint in options.TYPING_MODES:
+            button = Gtk.ToggleButton(label=_(label), css_classes=["mode-button"])
+            button.set_group(first)
+            first = first or button
+            button.connect("toggled", self._mode_toggled, key, value)
+            box.append(button)
+            self.mode_buttons[value] = button
+        row.add_suffix(box)
+        return row
+
+    def _mode_toggled(self, button, key, value):
+        if button.get_active():
+            hints = {v: hint for v, _label, hint in options.TYPING_MODES}
+            self.rows[key].set_subtitle(_(hints[value]))
+            self._changed(key, value)
+
     def choices(self, key):
         """(value, label) pairs; a value saved by hand that is not in the list stays offered."""
         if key in options.CHOICES:
-            pairs = [(value, _(label)) for value, label in options.CHOICES[key]]
+            # Each language keeps its own name, as in fcitx5.
+            translate = (lambda label: label) if key == "UiLanguage" else _
+            pairs = [(value, translate(label)) for value, label in options.CHOICES[key]]
         else:
             pairs = [(value, value) for value in self.names[key]]
         current = self.store.values.get(key, "")
+        if key == "ModeOrder" and "Vim" not in current.split(","):
+            # The menu puts Vim mode last when the order leaves it out, so such an order is its preset.
+            pairs = [
+                (current if value == current + ",Vim" else value, label) for value, label in pairs
+            ]
         if current not in (value for value, _label in pairs):
-            shown = keys.label(current) if key in ("ToggleKey", "ModeMenuKey") else current
+            shown = (
+                keys.label(current)
+                if key in ("ToggleKey", "ModeMenuKey", "CycleModeKey")
+                else current
+            )
             pairs.append((current, shown))
         if key == "ToggleKey":
             pairs.append((OTHER_KEYS, _("Other keys…")))
@@ -119,6 +154,10 @@ class SettingRows:
                     continue
                 if isinstance(row, Adw.EntryRow):
                     row.set_text(value)
+                    continue
+                if key == "DirectTyping":
+                    # Anything but False types with Sen, as the engine reads it.
+                    self.mode_buttons["False" if value == "False" else "True"].set_active(True)
                     continue
                 pairs = self.pairs[key] = self.choices(key)
                 row.set_model(Gtk.StringList.new([label for _value, label in pairs]))
@@ -239,8 +278,21 @@ def preferences_group(title=None, description=None):
     return group
 
 
-def typing_page(rows):
+def typing_page(rows, tip=None, on_tip=None):
+    """tip, if given, shows above the settings; on_tip() runs when it is clicked."""
     page = Adw.PreferencesPage(title=_("Typing"), icon_name="input-keyboard-symbolic")
+    if tip is not None:
+        row = Adw.ActionRow(
+            title=_("Tip: {}").format(_(tip["text"])), use_markup=False, activatable=True
+        )
+        row.add_suffix(Gtk.Image(icon_name="go-next-symbolic"))
+        if on_tip is not None:
+            row.connect("activated", lambda _r: on_tip())
+        page.tip_row = row
+        group = preferences_group()
+        group.searchable = False  # A tip is not a setting.
+        group.add(row)
+        page.add(group)
     for title, names in options.TYPING_GROUPS:
         group = preferences_group(title)
         for key in names:
@@ -288,7 +340,9 @@ class MacroPage:
         self.search = Gtk.SearchEntry(placeholder_text=_("Search macros..."))
         self.search.connect("search-changed", lambda _s: self.list.invalidate_filter())
         group.set_header_suffix(self.search)
+        # The user's own entries are not settings to find.
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.searchable = False
         self.list.add_css_class("boxed-list")
         self.list.set_placeholder(
             Gtk.Label(label=_("No macros yet."), margin_top=12, margin_bottom=12)
@@ -395,6 +449,7 @@ class DictionaryPage:
         self.search.connect("search-changed", lambda _s: self._show())
         self.list_group.set_header_suffix(self.search)
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.searchable = False
         self.list.add_css_class("boxed-list")
         self.list_group.add(self.list)
         return self.list_group
@@ -505,6 +560,7 @@ class KeymapPage:
         self.search.connect("search-changed", lambda _s: self.list.invalidate_filter())
         group.set_header_suffix(self.search)
         self.list = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE)
+        self.list.searchable = False
         self.list.add_css_class("boxed-list")
         self.list.set_placeholder(
             Gtk.Label(label=_("No keys yet."), margin_top=12, margin_bottom=12)
