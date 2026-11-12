@@ -24,7 +24,7 @@ FEATURES = [
             "Claude Code and the Vim plugins of Obsidian and JetBrains IDEs."
         ),
         "example": "",
-        "target": ("setting", "ShortcutVim"),
+        "target": ("setting", "ShowModeVim"),
     },
     {
         "version": "1.3",
