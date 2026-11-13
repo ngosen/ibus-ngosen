@@ -81,6 +81,8 @@ class Facts:
     # Apps with a typing mode of their own, and how many of them picked Sen.
     picked_apps: int = 0
     sen_apps: int = 0
+    # The input method's process could not be read, so the variables are this window's.
+    env_from_window: bool = False
 
     @property
     def session(self):
@@ -631,7 +633,8 @@ def report(facts, findings):
         f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}"
         + (f", engine {facts.current_engine}" if facts.current_engine else ""),
         f"{facts.distro or '?'}, {desktop}, {facts.session or '?'}",
-        " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES),
+        " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES)
+        + (" (settings window)" if facts.env_from_window else " (input method)"),
     ]
     if facts.gnome_shell_version:
         line = f"GNOME Shell {facts.gnome_shell_version}"
@@ -663,7 +666,10 @@ def collect(
     toggle_key=False,
 ):
     env = dict(os.environ if env is None else env)
-    facts = Facts(env={k: v for k, v in env.items() if k in IM_VARIABLES or k.startswith("XDG_")})
+    facts = Facts(env={k: v for k, v in env.items() if k.startswith("XDG_")})
+    session = session_environ(env, proc)
+    facts.env.update({k: v for k, v in (session or env).items() if k in IM_VARIABLES})
+    facts.env_from_window = not session
     facts.ngosen_version = ngosen_version
     facts.direct_typing = direct_typing
     facts.distro = _distro()
@@ -861,11 +867,8 @@ def _ibus_address_name(env):
     return f"{host or 'unix'}-{rest.split('.')[0] or '0'}"
 
 
-def session_owner(env, proc="/proc", machine_id=None):
-    """Which of ibus or fcitx5 wrote its running pid into this session's IBus address file.
-
-    fcitx5 writes its own pid there when it takes the session. Empty when neither does.
-    """
+def _address_pid(env, machine_id=None):
+    """The pid in this session's IBus address file; None when there is no such file."""
     path = env.get("IBUS_ADDRESS_FILE")
     if not path:
         config_home = env.get("XDG_CONFIG_HOME") or os.path.join(env.get("HOME", ""), ".config")
@@ -875,20 +878,51 @@ def session_owner(env, proc="/proc", machine_id=None):
         with open(path, encoding="utf-8", errors="replace") as f:
             match = re.search(r"^IBUS_DAEMON_PID=(\d+)", f.read(), re.M)
     except FileNotFoundError:
-        # IBus started with IBUS_ADDRESS or under another display name writes no file found here.
-        return "ibus" if _pids_named("ibus-daemon", proc) else ""
+        return None
     except OSError:
         return ""
-    if match is None:
+    return match.group(1) if match else ""
+
+
+def session_owner(env, proc="/proc", machine_id=None):
+    """Which of ibus or fcitx5 wrote its running pid into this session's IBus address file.
+
+    fcitx5 writes its own pid there when it takes the session. Empty when neither does.
+    """
+    pid = _address_pid(env, machine_id)
+    if pid is None:
+        # IBus started with IBUS_ADDRESS or under another display name writes no file found here.
+        return "ibus" if _pids_named("ibus-daemon", proc) else ""
+    return _owner_of(pid, proc)
+
+
+def _owner_of(pid, proc):
+    if not pid:
         return ""
     try:
-        with open(
-            os.path.join(proc, match.group(1), "comm"), encoding="utf-8", errors="replace"
-        ) as f:
+        with open(os.path.join(proc, pid, "comm"), encoding="utf-8", errors="replace") as f:
             name = f.read().strip()
     except OSError:
         return ""
     return {"ibus-daemon": "ibus", "fcitx5": "fcitx5"}.get(name, "")
+
+
+def session_environ(env, proc="/proc", machine_id=None):
+    """The environment the input method of this session started with; empty when it cannot be read.
+
+    The desktop starts it at login like the apps; the settings window may come from a terminal.
+    """
+    pid = _address_pid(env, machine_id)
+    # A stale address file can name a pid another program now has.
+    if not _owner_of(pid, proc):
+        return {}
+    try:
+        with open(os.path.join(proc, pid, "environ"), "rb") as f:
+            data = f.read()
+    except OSError:
+        return {}
+    pairs = (item.decode("utf-8", "replace").partition("=") for item in data.split(b"\0") if item)
+    return {name: value for name, _sep, value in pairs if name}
 
 
 def runs_replaced_engine(proc="/proc"):

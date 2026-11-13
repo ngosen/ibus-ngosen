@@ -481,6 +481,37 @@ class OnlyNgosenTest(unittest.TestCase):
                 got = sc.collect(FakeSources([US], ["xkb:us::eng"]), env=env)
             self.assertEqual(got.in_ibus_engines, expected, (env, owner, running))
 
+    def test_collect_reads_the_variables_of_the_session(self):
+        proc = tempfile.mkdtemp()
+        os.makedirs(os.path.join(proc, "20"))
+        with open(os.path.join(proc, "20", "environ"), "wb") as f:
+            f.write(b"GTK_IM_MODULE=fcitx\0XMODIFIERS=@im=ibus\0HOME=/home/u\0")
+        with open(os.path.join(proc, "20", "comm"), "w", encoding="utf-8") as f:
+            f.write("ibus-daemon\n")
+        address = os.path.join(proc, "address")
+        with open(address, "w", encoding="utf-8") as f:
+            f.write("IBUS_DAEMON_PID=20\n")
+        # Started from a terminal that set its own variables.
+        window = {**READY, "IBUS_ADDRESS_FILE": address, "QT_IM_MODULE": "xim"}
+        with (
+            mock.patch.object(sc, "session_owner", return_value=""),
+            mock.patch.object(sc, "_output", return_value=""),
+            mock.patch.object(sc, "_pids_named", return_value=[]),
+            mock.patch.object(sc, "_fcitx_gtk_modules", return_value=[]),
+            mock.patch.object(sc.fcitx5_leftovers, "find", return_value=None),
+        ):
+            got = sc.collect(FakeSources([NGOSEN]), env=window, proc=proc)
+            self.assertEqual(got.env.get("GTK_IM_MODULE"), "fcitx")
+            self.assertNotIn("QT_IM_MODULE", got.env)
+            self.assertEqual(got.env.get("XDG_CURRENT_DESKTOP"), READY["XDG_CURRENT_DESKTOP"])
+            self.assertIn("(input method)", sc.report(got, []))
+            # A stale address file whose pid another program now has.
+            with open(os.path.join(proc, "20", "comm"), "w", encoding="utf-8") as f:
+                f.write("some-app\n")
+            got = sc.collect(FakeSources([NGOSEN]), env=window, proc=proc)
+            self.assertEqual(got.env.get("QT_IM_MODULE"), "xim")
+            self.assertIn("(settings window)", sc.report(got, []))
+
     def test_collect_needs_both_sources_and_a_toggle_key(self):
         cases = [([US, NGOSEN], True, True), ([US, NGOSEN], False, False), ([US], True, False)]
         for current, toggle_key, expected in cases:

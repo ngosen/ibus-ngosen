@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Tab Kiểm tra đọc biến bộ gõ (`GTK_IM_MODULE`, `QT_IM_MODULE`, `XMODIFIERS`) từ bộ gõ desktop đã chạy lúc đăng nhập,
+  không còn đọc của cửa sổ cài đặt: mở cửa sổ từ terminal có biến khác không còn làm tab báo sai (#143).
 - Tab Kiểm tra trên Xfce, Cinnamon, KDE Plasma và các desktop khác GNOME không còn báo "Máy đã sẵn sàng" khi Ngó Sen
   chưa có trong danh sách bộ gõ của IBus: tab báo thiếu và có nút "Thêm Ngó Sen". Trên KDE Plasma Wayland, khi IBus
   không chạy, tab chỉ tới Bàn phím ảo thay cho lệnh `ibus start` (#144).
