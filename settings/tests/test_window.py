@@ -80,11 +80,19 @@ def labels(widget):
 class FakeSources:
     """GNOME input sources kept in memory, so no test changes the desktop it runs on."""
 
-    def __init__(self, sources=None):
+    def __init__(self, sources=None, engines=None):
         self.sources = sources
+        self.engines = engines
 
     def get(self):
         return self.sources
+
+    def ibus_engines(self):
+        return self.engines
+
+    def set_ibus_engines(self, engines):
+        self.engines = list(engines)
+        return True
 
     def set(self, sources):
         self.sources = list(sources)

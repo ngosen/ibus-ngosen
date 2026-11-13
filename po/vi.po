@@ -635,6 +635,21 @@ msgstr "Cài đặt › Bàn phím › Nguồn nhập: thêm “Tiếng Việt (
 msgid "Settings › Keyboard › Input Sources: remove “English (US)”."
 msgstr "Cài đặt › Bàn phím › Nguồn nhập: bỏ “Tiếng Anh (Mỹ)”."
 
+msgid "Ngó Sen is in the IBus input methods"
+msgstr "Ngó Sen đã có trong danh sách bộ gõ của IBus"
+
+msgid "Ngó Sen is not in the IBus input methods"
+msgstr "Ngó Sen chưa có trong danh sách bộ gõ của IBus"
+
+msgid "IBus Preferences (ibus-setup) › Input Method: add “Vietnamese (Ngó Sen)”."
+msgstr "IBus Preferences (ibus-setup) › Input Method: thêm “Tiếng Việt (Ngó Sen)”."
+
+msgid "Added Ngó Sen to the IBus input methods."
+msgstr "Đã thêm Ngó Sen vào danh sách bộ gõ của IBus."
+
+msgid "System Settings › Keyboard › Virtual Keyboard: pick “IBus Wayland”, then log out and back in."
+msgstr "Thiết lập hệ thống › Bàn phím › Bàn phím ảo: chọn “IBus Wayland”, rồi đăng xuất và đăng nhập lại."
+
 msgid "GTK apps"
 msgstr "App GTK"
 
