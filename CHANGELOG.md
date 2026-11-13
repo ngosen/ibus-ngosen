@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Tab Kiểm tra đọc biến bộ gõ (`GTK_IM_MODULE`, `QT_IM_MODULE`, `XMODIFIERS`) từ bộ gõ desktop đã chạy lúc đăng nhập,
+  không còn đọc của cửa sổ cài đặt: mở cửa sổ từ terminal có biến khác không còn làm tab báo sai (#143).
+
 ## [1.3.0-1] — 12/11/2026
 
 Ctrl+Shift và mục Tắt chỉ đổi Anh/Việt cho app đang dùng, như bản fcitx5. Vim mode cho từng app trong menu `, từ bắt
