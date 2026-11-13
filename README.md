@@ -50,11 +50,13 @@ khác không bị đụng tới. Nếu lúc đó phím Ctrl+Shift đang tắt th
 phím lại sau này. Mục "Kiểm tra" trong cửa sổ cài đặt có nút "Chỉ dùng Ngó Sen" để bỏ nó sau. Ngó Sen
 luôn gõ trên bàn phím kiểu Mỹ, kể cả khi đang ở tiếng Anh bằng Ctrl+Shift.
 
-Trên desktop khác GNOME như Cinnamon, Xfce:
+Trên desktop khác GNOME như Cinnamon, Xfce, KDE Plasma:
 
-1. Chạy `im-config -n ibus` nếu máy có `im-config`.
-2. Mở IBus Preferences bằng `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)". Cinnamon giữ phím Super cho menu nên Super+Space
-   không tới được IBus; đặt phím chuyển khác như Ctrl+Space ở tab General.
+1. Chạy `im-config -n ibus` nếu máy có `im-config`. Trên KDE Plasma Wayland, vào Thiết lập hệ thống › Bàn phím ›
+   Bàn phím ảo, chọn "IBus Wayland".
+2. Mở IBus Preferences bằng `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)", hoặc bấm "Thêm Ngó Sen" ở mục "Kiểm tra" trong
+   cửa sổ cài đặt. Cinnamon giữ phím Super cho menu nên Super+Space không tới được IBus; đặt phím chuyển khác như
+   Ctrl+Space ở tab General.
 3. Đăng xuất rồi đăng nhập lại.
 
 Trên Fedora, có thể cài từ kho COPR, để `dnf upgrade` tự lên version mới. Sau đó thêm nguồn nhập như trên:

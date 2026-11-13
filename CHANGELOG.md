@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Tab Kiểm tra trên Xfce, Cinnamon, KDE Plasma và các desktop khác GNOME không còn báo "Máy đã sẵn sàng" khi Ngó Sen
+  chưa có trong danh sách bộ gõ của IBus: tab báo thiếu và có nút "Thêm Ngó Sen". Trên KDE Plasma Wayland, khi IBus
+  không chạy, tab chỉ tới Bàn phím ảo thay cho lệnh `ibus start` (#144).
+
 ## [1.3.0-1] — 12/11/2026
 
 Ctrl+Shift và mục Tắt chỉ đổi Anh/Việt cho app đang dùng, như bản fcitx5. Vim mode cho từng app trong menu `, từ bắt
