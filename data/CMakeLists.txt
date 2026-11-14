@@ -12,6 +12,8 @@ install(FILES ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict
               ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/LICENSE.vietnamese.cm.dict
               ${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt
               ${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt.license
+              ${PROJECT_SOURCE_DIR}/ngosen/data/keep-words.txt
+              ${PROJECT_SOURCE_DIR}/ngosen/data/keep-words.txt.license
         DESTINATION ${CMAKE_INSTALL_DATADIR}/ibus-ngosen)
 # systemd reads environment.d from /usr/lib on every distro, whatever the libdir.
 install(FILES 60-ibus-ngosen.conf DESTINATION lib/environment.d)

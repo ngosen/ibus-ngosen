@@ -1095,6 +1095,14 @@ app.type("ploong draw ")
 check(app.text == "xin plông draw ", "English list: a name and an English word", app.text)
 app.close()
 
+# The keep list lets a stray key keep the word before it; Space then trims, splits or reads g as ng.
+app = field_with_text()
+app.type("dduowjcd coongty nhuwg ")
+check(app.text == "xin được công ty nhưng ", "keep list: Space fixes a word with a stray key", app.text)
+app.key(IBus.KEY_BackSpace)
+check(app.text == "xin được công ty nhưg", "keep list: Backspace brings back what was typed", app.text)
+app.close()
+
 app = App("gnome-shell", qt_through_shell=True)
 app.type("nam tieesng")
 app.key(IBus.KEY_BackSpace)
