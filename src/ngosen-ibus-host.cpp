@@ -194,6 +194,11 @@ namespace ngosen {
         return std::nullopt;
     }
 
+    // Converting selected text is a fcitx5 shortcut; the IBus edition has none.
+    std::string IBusHost::primarySelection() const {
+        return {};
+    }
+
     void IBusHost::showPreedit(const std::string& text, bool /*underline*/) {
         preedit_ = text;
     }

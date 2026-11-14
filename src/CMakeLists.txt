@@ -21,6 +21,7 @@ target_include_directories(ngosen_ibus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(ngosen_ibus PUBLIC GETTEXT_PACKAGE="ibus-ngosen" NGOSEN_IBUS_VERSION="${PROJECT_VERSION}")
 target_compile_definitions(ngosen_ibus PRIVATE NGOSEN_IBUS_DICTIONARY="${NGOSEN_IBUS_DATADIR}/vietnamese.cm.dict"
                                                NGOSEN_IBUS_ENGLISH_WORDS="${NGOSEN_IBUS_DATADIR}/english-common.txt"
+                                               NGOSEN_IBUS_KEEP_WORDS="${NGOSEN_IBUS_DATADIR}/keep-words.txt"
                                                NGOSEN_SETUP_EXEC="${NGOSEN_SETUP_EXEC}")
 # The core calls the shell's log (ngosen-log.h), so the log comes after the core on the link line.
 add_library(ngosen_ibus_log STATIC ngosen-ibus-log.cpp)

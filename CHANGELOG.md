@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Bản IBus nhận thay đổi từ lõi: gõ thừa phím sau từ tiếng Việt vẫn giữ chữ, như Telex `dduowjcd` ra `đượcd`;
+  bấm Space thì bỏ phím thừa (`được`), tách `côngty` thành `công ty` hoặc hiểu `g` là `ng` (`nhưg` thành `nhưng`).
+  Bấm Backspace ngay sau đó khôi phục những gì đã gõ; từ thường viết liền như `lênin` vẫn giữ nguyên
+  (ngosen/ngosen#756, ngosen/ngosen#757, ngosen/ngosen#760) (#145).
+
 ### Sửa
 
 - Tab Kiểm tra đọc biến bộ gõ (`GTK_IM_MODULE`, `QT_IM_MODULE`, `XMODIFIERS`) từ bộ gõ desktop đã chạy lúc đăng nhập,

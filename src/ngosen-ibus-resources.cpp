@@ -77,18 +77,24 @@ namespace ngosen {
             return monitor;
         }
 
+        // Without the list the core types as it did before the list existed.
+        uintptr_t openWordList(const std::string& path) {
+            const int       fd   = ::open(path.c_str(), O_RDONLY | O_CLOEXEC);
+            const uintptr_t list = fd != -1 ? NewWordList(static_cast<uintptr_t>(fd)) : 0;
+            if (list == 0)
+                NGOSEN_WARN("No word list at " + path);
+            return list;
+        }
+
     } // namespace
 
     IBusResources::IBusResources(SettingsPaths paths) : paths_(std::move(paths)) {
         Init();
         prepareSettings(paths_);
         load();
-        // The list changes only with the package, so a settings reload keeps it.
-        const std::string englishPath = bundledEnglishWordsFile();
-        const int         fd          = ::open(englishPath.c_str(), O_RDONLY | O_CLOEXEC);
-        englishWords_                 = fd != -1 ? NewWordList(static_cast<uintptr_t>(fd)) : 0;
-        if (englishWords_ == 0)
-            NGOSEN_WARN("No English word list at " + englishPath);
+        // The lists change only with the package, so a settings reload keeps them.
+        englishWords_ = openWordList(bundledEnglishWordsFile());
+        keepWords_    = openWordList(bundledKeepWordsFile());
         dropDuplicateLayoutOnce(paths_, !settings().toggleKeys.empty(), gnomeInputSources());
         monitor_ = watchDirectory(paths_.configDir, G_CALLBACK(onDirChanged), this);
         // GLib notices a folder created later only seconds after, missing a file written at once.
@@ -107,6 +113,7 @@ namespace ngosen {
         DeleteObject(macroTable_);
         DeleteObject(dictionary_);
         DeleteObject(englishWords_);
+        DeleteObject(keepWords_);
     }
 
     void IBusResources::noticeChange() {
@@ -173,6 +180,11 @@ namespace ngosen {
     std::string bundledEnglishWordsFile() {
         const char* override = std::getenv("NGOSEN_IBUS_ENGLISH_WORDS");
         return override != nullptr ? override : NGOSEN_IBUS_ENGLISH_WORDS;
+    }
+
+    std::string bundledKeepWordsFile() {
+        const char* override = std::getenv("NGOSEN_IBUS_KEEP_WORDS");
+        return override != nullptr ? override : NGOSEN_IBUS_KEEP_WORDS;
     }
 
     // The user's dictionary only with the custom dictionary on, as the fcitx5 edition does. The
