@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.4.0-1] — 15/11/2026
+
+Gõ thừa phím sau từ tiếng Việt không còn làm mất dấu: nhấn Space thì bỏ phím thừa, tách `côngty` thành `công ty` hoặc
+đổi `nhưg` thành `nhưng`. Nhận các bản sửa của lõi cho Firefox, bảng tính web trên Chrome và app bận trên GNOME; tab
+Kiểm tra báo đúng hơn trên desktop khác GNOME. Dùng lõi Ngó Sen `ngosen-1.11.1-1`. Tải gói ở
+[release ibus-ngosen-1.4.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.4.0-1).
+
 ### Thay đổi
 
 - Bản IBus nhận thay đổi từ lõi: gõ thừa phím sau từ tiếng Việt vẫn giữ chữ, như Telex `dduowjcd` ra `đượcd`;

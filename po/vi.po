@@ -437,6 +437,22 @@ msgid "Settings"
 msgstr "Cài đặt"
 
 #: settings/ngosen_settings/whats_new.py
+msgid "Extra keys after a word"
+msgstr "Gõ thừa phím sau từ"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "A key that does not fit the word no longer undoes its marks. Space then drops the extra keys, or splits them off when they make a word; BackSpace right after brings back what you typed."
+msgstr "Phím không ghép được vào từ không còn làm mất dấu. Nhấn Space thì phím thừa được bỏ đi, hoặc tách thành từ riêng nếu chúng là một từ; nhấn BackSpace ngay sau đó khôi phục đúng những gì đã gõ."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "g for ng"
+msgstr "g thay cho ng"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "After a word that already has its marks, a final g becomes ng when you press Space."
+msgstr "Sau phần từ đã có dấu, g ở cuối thành ng khi nhấn Space."
+
+#: settings/ngosen_settings/whats_new.py
 msgid "Vim mode"
 msgstr "Vim mode"
 
@@ -1229,8 +1245,8 @@ msgid "What's new in Ngó Sen?"
 msgstr "Ngó Sen có gì mới?"
 
 #: src/ngosen-ibus-announce.cpp
-msgid "Version 1.3: Ctrl+Shift and OFF switch the app in use only, Vim mode for each app, and words starting with / typed as is. See What's new for more."
-msgstr "Version 1.3: Ctrl+Shift và mục Tắt chỉ đổi cho app đang dùng, Vim mode cho từng app, và từ bắt đầu bằng / giữ nguyên. Xem thêm ở trang Có gì mới."
+msgid "Version 1.4: extra keys after a word no longer undo its marks, and Space drops them or splits off a word. See What's new for more."
+msgstr "Version 1.4: gõ thừa phím sau từ không còn làm mất dấu, nhấn Space thì bỏ phím thừa hoặc tách thành từ riêng. Xem thêm ở trang Có gì mới."
 
 #: src/ngosen-ibus-engine.cpp
 msgid "Vim mode: on"
