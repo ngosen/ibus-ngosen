@@ -28,11 +28,9 @@ Kiểm tra báo đúng hơn trên desktop khác GNOME. Dùng lõi Ngó Sen `ngos
 
 - Bản IBus nhận các bản sửa của lõi cho GNOME: Firefox không còn xoá mất, đảo hay giữ nguyên chữ khi gõ nhanh kèm
   BackSpace, ngay sau Alt+Tab hoặc trên trang bận (ngosen/ngosen#739, ngosen/ngosen#741, ngosen/ngosen#743,
-  ngosen/ngosen#745, ngosen/ngosen#747, ngosen/ngosen#759, ngosen/ngosen#761); bảng tính web Univer và Luckysheet
-  trên Chrome không còn sót dấu thanh hay giữ nguyên phím Telex khi chuyển cell (ngosen/ngosen#732,
-  ngosen/ngosen#782); app như ô chat Antigravity không còn mất chữ khi máy bận (ngosen/ngosen#767,
+  ngosen/ngosen#745, ngosen/ngosen#747); bảng tính web Univer trên Chrome không còn sót dấu thanh khi chuyển cell
+  (ngosen/ngosen#732); app như ô chat Antigravity ít mất chữ hơn khi máy bận (ngosen/ngosen#767,
   ngosen/ngosen#773) (#146).
-
 - Tab Kiểm tra đọc biến bộ gõ (`GTK_IM_MODULE`, `QT_IM_MODULE`, `XMODIFIERS`) từ bộ gõ desktop đã chạy lúc đăng nhập,
   không còn đọc của cửa sổ cài đặt: mở cửa sổ từ terminal có biến khác không còn làm tab báo sai (#143).
 - Tab Kiểm tra trên Xfce, Cinnamon, KDE Plasma và các desktop khác GNOME không còn báo "Máy đã sẵn sàng" khi Ngó Sen
