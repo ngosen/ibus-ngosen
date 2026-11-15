@@ -22,7 +22,7 @@ Kiểm tra báo đúng hơn trên desktop khác GNOME. Dùng lõi Ngó Sen `ngos
   Bấm Backspace ngay sau đó khôi phục những gì đã gõ; từ thường viết liền như `lênin` vẫn giữ nguyên
   (ngosen/ngosen#756, ngosen/ngosen#757, ngosen/ngosen#760) (#145).
 - Bấm Space sau từ kéo dài khi chat giữ nguyên chữ đang hiện, như `ừaaa`, `khônggg` (ngosen/ngosen#768); gõ dấu
-  thanh sau phụ âm cuối ở từ có trong từ điển, như `peks` rồi Space, ra `pék` (ngosen/ngosen#753) (#PR).
+  thanh sau phụ âm cuối ở từ có trong từ điển, như `peks` rồi Space, ra `pék` (ngosen/ngosen#753) (#146).
 
 ### Sửa
 
@@ -31,7 +31,7 @@ Kiểm tra báo đúng hơn trên desktop khác GNOME. Dùng lõi Ngó Sen `ngos
   ngosen/ngosen#745, ngosen/ngosen#747, ngosen/ngosen#759, ngosen/ngosen#761); bảng tính web Univer và Luckysheet
   trên Chrome không còn sót dấu thanh hay giữ nguyên phím Telex khi chuyển cell (ngosen/ngosen#732,
   ngosen/ngosen#782); app như ô chat Antigravity không còn mất chữ khi máy bận (ngosen/ngosen#767,
-  ngosen/ngosen#773) (#PR).
+  ngosen/ngosen#773) (#146).
 
 - Tab Kiểm tra đọc biến bộ gõ (`GTK_IM_MODULE`, `QT_IM_MODULE`, `XMODIFIERS`) từ bộ gõ desktop đã chạy lúc đăng nhập,
   không còn đọc của cửa sổ cài đặt: mở cửa sổ từ terminal có biến khác không còn làm tab báo sai (#143).
