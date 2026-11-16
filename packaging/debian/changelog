@@ -15,7 +15,7 @@ ibus-ngosen (1.4.0-1) unstable; urgency=medium
     50.0-50.3 a dropped Backspace no longer lets the next one reach Firefox.
   * Core ngosen-1.11.2-1.
 
- -- Nguyen Phi <nguyenphidt@gmail.com>  Sun, 15 Nov 2026 18:00:00 +0700
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Mon, 16 Nov 2026 16:00:00 +0700
 
 ibus-ngosen (1.3.0-1) unstable; urgency=medium
 
