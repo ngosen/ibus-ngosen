@@ -8,6 +8,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+- Trên KDE Plasma và các màn hình dùng khay IBus, biểu tượng khay hiện V hoặc E theo tiếng đang gõ (đăng nhập lại sau
+  khi cập nhật). Dấu tích và biểu tượng mục Kiểm tra trong cửa sổ cài đặt không còn hiện thành ảnh vỡ trên Ubuntu
+  26.04, Debian 13, Fedora 44 và Arch (#147).
+
 ## [1.3.0-1] — 12/11/2026
 
 Ctrl+Shift và mục Tắt chỉ đổi Anh/Việt cho app đang dùng, như bản fcitx5. Vim mode cho từng app trong menu `, từ bắt
