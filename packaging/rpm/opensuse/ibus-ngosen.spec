@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.3.0
+Version:        1.4.0
 Release:        1
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -65,6 +65,14 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Mon Nov 16 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.4.0-1
+- Extra keys after a Vietnamese word no longer undo its marks; Space drops them, splits off
+  a word or reads g as ng; Space keeps stretched words; core fixes for Firefox, web sheets
+  and busy apps on GNOME; the Check tab reads the session's input method and the IBus
+  engine list outside GNOME; words such as rose show as typed and the lock key swaps them;
+  Backspace while a slow GNOME app reports keeps the marks; the IBus tray shows V or E and
+  the menu's language item switches the app typed in last; core ngosen-1.11.2-1.
+
 * Thu Nov 12 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.3.0-1
 - Ctrl+Shift and OFF switch English and Vietnamese for the app in use only; Vim mode for each
   app; words starting with / stay as typed; Telex words with a forgotten circumflex or horn

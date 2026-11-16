@@ -16,6 +16,26 @@ from .i18n import N_, _
 # Newest release first. A release with no entry gets no section.
 FEATURES = [
     {
+        "version": "1.4",
+        "title": N_("Extra keys after a word"),
+        "how": N_(
+            "A key that does not fit the word no longer undoes its marks. Space then drops the "
+            "extra keys, or splits them off when they make a word; BackSpace right after brings "
+            "back what you typed."
+        ),
+        "example": "dduowjcd → được, coongty → công ty",
+        "target": None,
+    },
+    {
+        "version": "1.4",
+        "title": N_("g for ng"),
+        "how": N_(
+            "After a word that already has its marks, a final g becomes ng when you press Space."
+        ),
+        "example": "nhuwg → nhưng, khoog → không",
+        "target": None,
+    },
+    {
         "version": "1.3",
         "title": N_("Vim mode"),
         "how": N_(
