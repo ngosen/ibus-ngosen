@@ -27,6 +27,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   26.04, Debian 13, Fedora 44 và Arch (#147).
 - Bấm "Tiếng Việt" trong menu thanh trên cùng của GNOME hoặc menu khay IBus (KDE Plasma…) đổi đúng tiếng của app vừa
   gõ, và menu hiện đúng tiếng của app đó. Trên KDE không còn cửa sổ "Tiếng Anh/Tiếng Việt" lạc giữa màn hình (#148).
+- Sau khi bấm "Thêm Ngó Sen" ở tab Kiểm tra, tab nhắc đăng xuất rồi đăng nhập lại nếu menu IBus chưa có Ngó Sen: khay
+  IBus trên KDE Plasma chỉ đọc danh sách bộ gõ lúc khởi động (#150).
 
 ## [1.3.0-1] — 12/11/2026
 

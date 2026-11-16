@@ -411,7 +411,10 @@ def fixed_message(action, removed=()):
         START_IBUS: _("Started IBus."),
         RESTART_IBUS: _("Restarted IBus."),
         ADD_SOURCE: _("Added Ngó Sen to the input sources."),
-        ADD_ENGINE: _("Added Ngó Sen to the IBus input methods."),
+        # The IBus tray reads its list only when it starts.
+        ADD_ENGINE: _(
+            "Added Ngó Sen to the IBus input methods. If it is not in the IBus menu yet, log out and back in."
+        ),
         ONLY_NGOSEN: _("Removed English (US) from the input sources."),
         ENABLE_FORWARD_KEYS: _("Turned on the GNOME extension."),
     }[action]

@@ -644,8 +644,10 @@ msgstr "Ngó Sen chưa có trong danh sách bộ gõ của IBus"
 msgid "IBus Preferences (ibus-setup) › Input Method: add “Vietnamese (Ngó Sen)”."
 msgstr "IBus Preferences (ibus-setup) › Input Method: thêm “Tiếng Việt (Ngó Sen)”."
 
-msgid "Added Ngó Sen to the IBus input methods."
-msgstr "Đã thêm Ngó Sen vào danh sách bộ gõ của IBus."
+msgid ""
+"Added Ngó Sen to the IBus input methods. If it is not in the IBus menu yet, log out and back in."
+msgstr ""
+"Đã thêm Ngó Sen vào danh sách bộ gõ của IBus. Nếu menu IBus chưa có Ngó Sen, đăng xuất rồi đăng nhập lại."
 
 msgid "System Settings › Keyboard › Virtual Keyboard: pick “IBus Wayland”, then log out and back in."
 msgstr "Thiết lập hệ thống › Bàn phím › Bàn phím ảo: chọn “IBus Wayland”, rồi đăng xuất và đăng nhập lại."
