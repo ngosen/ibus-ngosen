@@ -33,6 +33,19 @@ class GnomeSources:
         schemas = Gio.SettingsSchemaSource.get_default()
         has_schema = schemas is not None and schemas.lookup(system_check.GNOME_SOURCES, True)
         self.settings = Gio.Settings.new(system_check.GNOME_SOURCES) if has_schema else None
+        has_ibus = schemas is not None and schemas.lookup(system_check.IBUS_GENERAL, True)
+        self.ibus = Gio.Settings.new(system_check.IBUS_GENERAL) if has_ibus else None
+
+    def ibus_engines(self):
+        """IBus's own list of input methods, which it uses where GNOME Shell does not set one."""
+        return self.ibus.get_strv("preload-engines") if self.ibus is not None else None
+
+    def set_ibus_engines(self, engines):
+        if self.ibus is None:
+            return False
+        ok = self.ibus.set_strv("preload-engines", engines)
+        Gio.Settings.sync()
+        return ok
 
     def get(self):
         if self.settings is None:

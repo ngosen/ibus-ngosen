@@ -8,11 +8,52 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.4.0-1] — 16/11/2026
+
+Gõ thừa phím sau từ tiếng Việt không còn làm mất dấu: nhấn Space thì bỏ phím thừa, tách `côngty` thành `công ty` hoặc
+đổi `nhưg` thành `nhưng`. Nhận các bản sửa của lõi cho Firefox, bảng tính web trên Chrome và app bận trên GNOME; tab
+Kiểm tra báo đúng hơn trên desktop khác GNOME. Chữ không phải tiếng Việt như `rose` hiện đúng phím đã gõ, và nhấn
+Backspace trong lúc chờ app báo chữ không còn làm mất dấu. Khay IBus hiện V hoặc E, và mục "Tiếng Việt" trong
+menu đổi đúng app vừa gõ. Dùng lõi Ngó Sen `ngosen-1.11.2-1`. Tải gói ở
+[release ibus-ngosen-1.4.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.4.0-1).
+
+### Thay đổi
+
+- Bản IBus nhận thay đổi từ lõi: gõ thừa phím sau từ tiếng Việt vẫn giữ chữ, như Telex `dduowjcd` ra `đượcd`;
+  bấm Space thì bỏ phím thừa (`được`), tách `côngty` thành `công ty` hoặc hiểu `g` là `ng` (`nhưg` thành `nhưng`).
+  Bấm Backspace ngay sau đó khôi phục những gì đã gõ; từ thường viết liền như `lênin` vẫn giữ nguyên
+  (ngosen/ngosen#756, ngosen/ngosen#757, ngosen/ngosen#760) (#145).
+- Bấm Space sau từ kéo dài khi chat giữ nguyên chữ đang hiện, như `ừaaa`, `khônggg` (ngosen/ngosen#768); gõ dấu
+  thanh sau phụ âm cuối ở từ có trong từ điển, như `peks` rồi Space, ra `pék` (ngosen/ngosen#753) (#146).
+- Chữ không phải tiếng Việt mà vẫn đúng luật đánh vần, như `rose`, `case`, `Sose`, hiện đúng phím đã gõ ngay khi
+  không còn từ nào trong từ điển bắt đầu như vậy, thay vì `roé`, `caé`, `Soé`; BackSpace sau chữ như vậy chỉ xoá
+  phím cuối. Muốn giữ dấu cho chữ như `tunx` thì nhấn Ctrl, nhấn tiếp thì đổi qua lại giữa phím đã gõ và chữ có
+  dấu (ngosen/ngosen#764) (#146).
+
+### Sửa
+
+- Bản IBus nhận các bản sửa của lõi cho GNOME: Firefox không còn xoá mất, đảo hay giữ nguyên chữ khi gõ nhanh kèm
+  BackSpace, ngay sau Alt+Tab hoặc trên trang bận (ngosen/ngosen#739, ngosen/ngosen#741, ngosen/ngosen#743,
+  ngosen/ngosen#745, ngosen/ngosen#747); bảng tính web Univer trên Chrome không còn sót dấu thanh khi chuyển cell
+  (ngosen/ngosen#732); app như ô chat Antigravity ít mất chữ hơn khi máy bận (ngosen/ngosen#767,
+  ngosen/ngosen#773) (#146).
+- Bản IBus nhận các bản sửa của lõi cho app báo chữ chậm trên GNOME: nhấn Backspace trong lúc chờ không còn làm
+  mất dấu (`thuwcx`, Backspace, `j` ra `thực`) hay đặt dấu nhầm sang từ trước (ngosen/ngosen#785,
+  ngosen/ngosen#787); ô chat Lark không còn ra `Viĩnh` khi gõ `Vinxh` (ngosen/ngosen#790); trên GNOME
+  50.0–50.3, phím Backspace gõ sau khi GNOME làm mất Backspace của Ngó Sen không còn tới thẳng Firefox
+  (ngosen/ngosen#789) (#146).
+- Tab Kiểm tra đọc biến bộ gõ (`GTK_IM_MODULE`, `QT_IM_MODULE`, `XMODIFIERS`) từ bộ gõ desktop đã chạy lúc đăng nhập,
+  không còn đọc của cửa sổ cài đặt: mở cửa sổ từ terminal có biến khác không còn làm tab báo sai (#143).
+- Tab Kiểm tra trên Xfce, Cinnamon, KDE Plasma và các desktop khác GNOME không còn báo "Máy đã sẵn sàng" khi Ngó Sen
+  chưa có trong danh sách bộ gõ của IBus: tab báo thiếu và có nút "Thêm Ngó Sen". Trên KDE Plasma Wayland, khi IBus
+  không chạy, tab chỉ tới Bàn phím ảo thay cho lệnh `ibus start` (#144).
 - Trên KDE Plasma và các màn hình dùng khay IBus, biểu tượng khay hiện V hoặc E theo tiếng đang gõ (đăng nhập lại sau
   khi cập nhật). Dấu tích và biểu tượng mục Kiểm tra trong cửa sổ cài đặt không còn hiện thành ảnh vỡ trên Ubuntu
   26.04, Debian 13, Fedora 44 và Arch (#147).
 - Bấm "Tiếng Việt" trong menu thanh trên cùng của GNOME hoặc menu khay IBus (KDE Plasma…) đổi đúng tiếng của app vừa
   gõ, và menu hiện đúng tiếng của app đó. Trên KDE không còn cửa sổ "Tiếng Anh/Tiếng Việt" lạc giữa màn hình (#148).
+- Sau khi bấm "Thêm Ngó Sen" ở tab Kiểm tra, tab nhắc đăng xuất rồi đăng nhập lại nếu menu IBus chưa có Ngó Sen: khay
+  IBus trên KDE Plasma chỉ đọc danh sách bộ gõ lúc khởi động (#150).
 
 ## [1.3.0-1] — 12/11/2026
 

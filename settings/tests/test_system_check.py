@@ -63,6 +63,31 @@ class StepsTest(unittest.TestCase):
         found = sc.steps(facts({"XDG_SESSION_TYPE": "x11"}, in_gnome_sources=None))
         self.assertNotIn(sc.ADD_SOURCE, [f.action for f in found])
 
+    def test_kde_wayland_starts_ibus_from_the_virtual_keyboard(self):
+        kde = {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_TYPE": "wayland"}
+        first = sc.steps(facts(kde, ibus_running=False, in_gnome_sources=None))[0]
+        self.assertIn("Virtual Keyboard", first.fix)
+        self.assertEqual(first.action, "")
+        x11 = {**kde, "XDG_SESSION_TYPE": "x11"}
+        self.assertEqual(sc.steps(facts(x11, ibus_running=False))[0].action, sc.START_IBUS)
+
+    def test_missing_ibus_engine_fails_outside_gnome(self):
+        xfce = {"XDG_CURRENT_DESKTOP": "XFCE", "XDG_SESSION_TYPE": "x11", "XMODIFIERS": "@im=ibus"}
+        found = sc.steps(facts(xfce, in_gnome_sources=None, in_ibus_engines=False))
+        self.assertEqual(titles(found, sc.FAIL), ["Ngó Sen is not in the IBus input methods"])
+        self.assertIn(sc.ADD_ENGINE, [f.action for f in found])
+        # Ngó Sen is not in the IBus menu yet, so the step does not tell to pick it there.
+        missing = facts(
+            xfce, in_gnome_sources=None, in_ibus_engines=False, current_engine="xkb:us::eng"
+        )
+        self.assertEqual(titles(sc.steps(missing), sc.INFO), [])
+        listed = facts(xfce, in_gnome_sources=None, in_ibus_engines=True)
+        self.assertIn("Ngó Sen is in the IBus input methods", titles(sc.steps(listed), sc.OK))
+        self.assertNotEqual(
+            sc.summary(sc.steps(facts(xfce, in_gnome_sources=None, in_ibus_engines=False)))[0],
+            "This machine is ready",
+        )
+
     def test_another_module_in_the_variables_fails(self):
         found = sc.steps(facts({**READY, "GTK_IM_MODULE": "fcitx", "QT_IM_MODULE": "ibus"}))
         failed = [f for f in found if f.level == sc.FAIL]
@@ -125,6 +150,28 @@ class FixesTest(unittest.TestCase):
         _message, undo = fixes.finish(done, undos, [])
         self.assertTrue(undo())
         self.assertEqual(sources.get(), [("xkb", "us"), ("xkb", "fr")])
+
+    def test_add_engine_appends_and_undoes(self):
+        sources = FakeSources(None, ["xkb:us::eng"])
+        fixes = sc.Fixes(sources)
+        done, undos, _settle = fixes.run([sc.ADD_ENGINE])
+        self.assertEqual(done, [sc.ADD_ENGINE])
+        self.assertEqual(sources.ibus_engines(), ["xkb:us::eng", "ngosen"])
+        message, undo = fixes.finish(done, undos, [])
+        # The IBus tray reads its list only when it starts, so it says how to see the new entry.
+        self.assertEqual(
+            message,
+            "Added Ngó Sen to the IBus input methods. If it is not in the IBus menu yet, "
+            "log out and back in.",
+        )
+        sources.set_ibus_engines(sources.ibus_engines() + ["Unikey"])
+        self.assertTrue(undo())
+        self.assertEqual(sources.ibus_engines(), ["xkb:us::eng", "Unikey"])
+        self.assertEqual(sc.Fixes(FakeSources(None, None)).run([sc.ADD_ENGINE])[0], [])
+        # Added in IBus Preferences after the check: nothing to undo.
+        listed = FakeSources(None, ["xkb:us::eng", "ngosen"])
+        done, undos, _settle = sc.Fixes(listed).run([sc.ADD_ENGINE])
+        self.assertEqual((done, undos), ([sc.ADD_ENGINE], {}))
 
     def test_restart_that_left_ibus_stopped_failed(self):
         fixes = sc.Fixes(FakeSources([]))
@@ -413,6 +460,62 @@ class OnlyNgosenTest(unittest.TestCase):
             self.assertTrue(undo())
             self.assertTrue(os.path.exists(os.path.join(folder, sc.LAYOUT_MARK)))
             self.assertEqual(sources.get(), [US, NGOSEN])
+
+    def test_collect_reads_the_ibus_engines_outside_gnome(self):
+        xfce = {"XDG_CURRENT_DESKTOP": "XFCE", "XDG_SESSION_TYPE": "x11"}
+        cinnamon = {"XDG_CURRENT_DESKTOP": "X-Cinnamon", "XDG_SESSION_TYPE": "x11"}
+        # Cinnamon 6.6 runs IBus without its panel and keeps the list itself.
+        cases = [
+            (xfce, "ibus", ["ibus-ui-gtk3"], False),
+            (xfce, "", ["ibus-ui-gtk3"], None),
+            (READY, "ibus", ["ibus-ui-gtk3"], None),
+            (cinnamon, "ibus", [], None),
+        ]
+        for env, owner, running, expected in cases:
+            with (
+                mock.patch.object(sc, "session_owner", return_value=owner),
+                mock.patch.object(sc, "_output", return_value=""),
+                mock.patch.object(
+                    sc,
+                    "_pids_named",
+                    side_effect=lambda name, proc="/proc", r=running: [name] if name in r else [],
+                ),
+                mock.patch.object(sc, "_fcitx_gtk_modules", return_value=[]),
+                mock.patch.object(sc.fcitx5_leftovers, "find", return_value=None),
+            ):
+                got = sc.collect(FakeSources([US], ["xkb:us::eng"]), env=env)
+            self.assertEqual(got.in_ibus_engines, expected, (env, owner, running))
+
+    def test_collect_reads_the_variables_of_the_session(self):
+        proc = tempfile.mkdtemp()
+        os.makedirs(os.path.join(proc, "20"))
+        with open(os.path.join(proc, "20", "environ"), "wb") as f:
+            f.write(b"GTK_IM_MODULE=fcitx\0XMODIFIERS=@im=ibus\0HOME=/home/u\0")
+        with open(os.path.join(proc, "20", "comm"), "w", encoding="utf-8") as f:
+            f.write("ibus-daemon\n")
+        address = os.path.join(proc, "address")
+        with open(address, "w", encoding="utf-8") as f:
+            f.write("IBUS_DAEMON_PID=20\n")
+        # Started from a terminal that set its own variables.
+        window = {**READY, "IBUS_ADDRESS_FILE": address, "QT_IM_MODULE": "xim"}
+        with (
+            mock.patch.object(sc, "session_owner", return_value=""),
+            mock.patch.object(sc, "_output", return_value=""),
+            mock.patch.object(sc, "_pids_named", return_value=[]),
+            mock.patch.object(sc, "_fcitx_gtk_modules", return_value=[]),
+            mock.patch.object(sc.fcitx5_leftovers, "find", return_value=None),
+        ):
+            got = sc.collect(FakeSources([NGOSEN]), env=window, proc=proc)
+            self.assertEqual(got.env.get("GTK_IM_MODULE"), "fcitx")
+            self.assertNotIn("QT_IM_MODULE", got.env)
+            self.assertEqual(got.env.get("XDG_CURRENT_DESKTOP"), READY["XDG_CURRENT_DESKTOP"])
+            self.assertIn("(input method)", sc.report(got, []))
+            # A stale address file whose pid another program now has.
+            with open(os.path.join(proc, "20", "comm"), "w", encoding="utf-8") as f:
+                f.write("some-app\n")
+            got = sc.collect(FakeSources([NGOSEN]), env=window, proc=proc)
+            self.assertEqual(got.env.get("QT_IM_MODULE"), "xim")
+            self.assertIn("(settings window)", sc.report(got, []))
 
     def test_collect_needs_both_sources_and_a_toggle_key(self):
         cases = [([US, NGOSEN], True, True), ([US, NGOSEN], False, False), ([US], True, False)]
