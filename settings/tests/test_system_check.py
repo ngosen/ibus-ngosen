@@ -158,7 +158,12 @@ class FixesTest(unittest.TestCase):
         self.assertEqual(done, [sc.ADD_ENGINE])
         self.assertEqual(sources.ibus_engines(), ["xkb:us::eng", "ngosen"])
         message, undo = fixes.finish(done, undos, [])
-        self.assertEqual(message, "Added Ngó Sen to the IBus input methods.")
+        # The IBus tray reads its list only when it starts, so it says how to see the new entry.
+        self.assertEqual(
+            message,
+            "Added Ngó Sen to the IBus input methods. If it is not in the IBus menu yet, "
+            "log out and back in.",
+        )
         sources.set_ibus_engines(sources.ibus_engines() + ["Unikey"])
         self.assertTrue(undo())
         self.assertEqual(sources.ibus_engines(), ["xkb:us::eng", "Unikey"])
