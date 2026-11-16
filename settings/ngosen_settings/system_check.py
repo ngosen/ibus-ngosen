@@ -27,12 +27,14 @@ US_LAYOUT = ("xkb", "us")
 # As the engine names it (SettingsPaths::duplicateLayoutMark), so it does not remove the source again.
 LAYOUT_MARK = ".us-source-removed"
 GNOME_SOURCES = "org.gnome.desktop.input-sources"
+IBUS_GENERAL = "org.freedesktop.ibus.general"
 FORWARD_KEYS = "forward-keys@ngosen.github.io"
 
 START_IBUS, RESTART_IBUS, ADD_SOURCE = "start-ibus", "restart-ibus", "add-source"
 ENABLE_FORWARD_KEYS = "enable-forward-keys"
 CLEAN_FCITX5 = "clean-fcitx5"
 ONLY_NGOSEN = "only-ngosen"
+ADD_ENGINE = "add-engine"
 # Fixes that delete the user's files or settings run only from their own button, never from "Fix all".
 MANUAL_ONLY = {CLEAN_FCITX5, ONLY_NGOSEN}
 
@@ -58,6 +60,8 @@ class Facts:
     engine_replaced: bool = False
     # None outside GNOME, where IBus keeps its own list.
     in_gnome_sources: bool = None
+    # That list; None where the desktop keeps the list, or IBus is not running or not installed.
+    in_ibus_engines: bool = None
     # English (US) is a GNOME input source next to Ngó Sen, whose toggle key already switches to it.
     duplicate_layout: bool = False
     fcitx_running: bool = False
@@ -77,6 +81,8 @@ class Facts:
     # Apps with a typing mode of their own, and how many of them picked Sen.
     picked_apps: int = 0
     sen_apps: int = 0
+    # The input method's process could not be read, so the variables are this window's.
+    env_from_window: bool = False
 
     @property
     def session(self):
@@ -110,6 +116,16 @@ def steps(facts):
                 FAIL,
                 _("fcitx5 holds the input method"),
                 _("Stop fcitx5 from starting at login, then log out and back in."),
+            )
+        elif "KDE" in facts.desktops and facts.session == "wayland":
+            # KWin starts the input method there; one started by hand gets no text from Wayland apps.
+            first = Finding(
+                FAIL,
+                _("IBus is not running"),
+                _(
+                    "System Settings › Keyboard › Virtual Keyboard: pick “IBus Wayland”, "
+                    "then log out and back in."
+                ),
             )
         else:
             first = Finding(
@@ -210,7 +226,7 @@ def _restart_finding(title):
 
 def _source_findings(facts):
     if facts.in_gnome_sources is None:
-        return []
+        return _ibus_engine_findings(facts)
     if facts.in_gnome_sources:
         found = [Finding(OK, _("Ngó Sen is in the input sources"))]
         if facts.duplicate_layout:
@@ -235,9 +251,28 @@ def _source_findings(facts):
     ]
 
 
+def _ibus_engine_findings(facts):
+    if facts.in_ibus_engines is None:
+        return []
+    if facts.in_ibus_engines:
+        return [Finding(OK, _("Ngó Sen is in the IBus input methods"))]
+    return [
+        Finding(
+            FAIL,
+            _("Ngó Sen is not in the IBus input methods"),
+            _("IBus Preferences (ibus-setup) › Input Method: add “Vietnamese (Ngó Sen)”."),
+            ADD_ENGINE,
+        )
+    ]
+
+
 def _engine_findings(facts):
     # Typing English with another source is normal, so this only says how to switch back.
-    if facts.current_engine in ("", ENGINE) or facts.in_gnome_sources is False:
+    if (
+        facts.current_engine in ("", ENGINE)
+        or facts.in_gnome_sources is False
+        or facts.in_ibus_engines is False
+    ):
         return []
     # GNOME runs xkb:us::eng for every keyboard layout, so the name stays out of the title.
     title = _("Ngó Sen is not the input source in use")
@@ -354,6 +389,7 @@ def fix_label(action):
         START_IBUS: _("Start IBus"),
         RESTART_IBUS: _("Restart IBus"),
         ADD_SOURCE: _("Add Ngó Sen"),
+        ADD_ENGINE: _("Add Ngó Sen"),
         ENABLE_FORWARD_KEYS: _("Turn on"),
         CLEAN_FCITX5: _("Remove"),
         ONLY_NGOSEN: _("Use only Ngó Sen"),
@@ -375,6 +411,10 @@ def fixed_message(action, removed=()):
         START_IBUS: _("Started IBus."),
         RESTART_IBUS: _("Restarted IBus."),
         ADD_SOURCE: _("Added Ngó Sen to the input sources."),
+        # The IBus tray reads its list only when it starts.
+        ADD_ENGINE: _(
+            "Added Ngó Sen to the IBus input methods. If it is not in the IBus menu yet, log out and back in."
+        ),
         ONLY_NGOSEN: _("Removed English (US) from the input sources."),
         ENABLE_FORWARD_KEYS: _("Turned on the GNOME extension."),
     }[action]
@@ -385,7 +425,15 @@ SETTLE_MS = {START_IBUS: 1500, RESTART_IBUS: 1500, ENABLE_FORWARD_KEYS: 500}
 # A slow machine may need longer; check again this often before calling the fix failed.
 RETRY_MS, RETRIES = 500, 8
 # Restarting last, so it also picks up the input source just added.
-FIX_ORDER = (CLEAN_FCITX5, START_IBUS, ADD_SOURCE, ONLY_NGOSEN, ENABLE_FORWARD_KEYS, RESTART_IBUS)
+FIX_ORDER = (
+    CLEAN_FCITX5,
+    START_IBUS,
+    ADD_SOURCE,
+    ADD_ENGINE,
+    ONLY_NGOSEN,
+    ENABLE_FORWARD_KEYS,
+    RESTART_IBUS,
+)
 
 
 def summary(found, failed=frozenset()):
@@ -441,6 +489,16 @@ def run_fix(action, sources, config_dir=None):
         if before is None or not sources.set(with_ngosen(before)):
             return False, None
         return True, lambda: _remove_ngosen(sources)
+    if action == ADD_ENGINE:
+        before = sources.ibus_engines()
+        if before is None:
+            return False, None
+        # Added elsewhere since the check, so undoing must not take it away.
+        if ENGINE in before:
+            return True, None
+        if not sources.set_ibus_engines(before + [ENGINE]):
+            return False, None
+        return True, lambda: _remove_engine(sources)
     if action == ONLY_NGOSEN:
         before = sources.get()
         if before is None or US_LAYOUT not in before:
@@ -466,6 +524,11 @@ def _remove_ngosen(sources):
     # Only the added source goes, so changes made in GNOME Settings since then stay.
     current = sources.get()
     return current is not None and sources.set([s for s in current if s != ("ibus", ENGINE)])
+
+
+def _remove_engine(sources):
+    current = sources.ibus_engines()
+    return current is not None and sources.set_ibus_engines([e for e in current if e != ENGINE])
 
 
 def _mark_layout_handled(config_dir):
@@ -573,7 +636,8 @@ def report(facts, findings):
         f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}"
         + (f", engine {facts.current_engine}" if facts.current_engine else ""),
         f"{facts.distro or '?'}, {desktop}, {facts.session or '?'}",
-        " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES),
+        " ".join(f"{v}={facts.env.get(v) or '(unset)'}" for v in IM_VARIABLES)
+        + (" (settings window)" if facts.env_from_window else " (input method)"),
     ]
     if facts.gnome_shell_version:
         line = f"GNOME Shell {facts.gnome_shell_version}"
@@ -605,7 +669,10 @@ def collect(
     toggle_key=False,
 ):
     env = dict(os.environ if env is None else env)
-    facts = Facts(env={k: v for k, v in env.items() if k in IM_VARIABLES or k.startswith("XDG_")})
+    facts = Facts(env={k: v for k, v in env.items() if k.startswith("XDG_")})
+    session = session_environ(env, proc)
+    facts.env.update({k: v for k, v in (session or env).items() if k in IM_VARIABLES})
+    facts.env_from_window = not session
     facts.ngosen_version = ngosen_version
     facts.direct_typing = direct_typing
     facts.distro = _distro()
@@ -635,6 +702,10 @@ def collect(
             toggle_key and facts.in_gnome_sources and US_LAYOUT in current
         )
         facts.switch_keys = switch_key_names(*sources.switch_keys())
+    # IBus's own panel runs only where IBus keeps the list; Cinnamon 6.6 keeps its own, as GNOME does.
+    elif facts.ibus_running and _pids_named("ibus-ui-gtk3", proc):
+        engines = sources.ibus_engines()
+        facts.in_ibus_engines = None if engines is None else ENGINE in engines
     facts.leftovers = fcitx5_leftovers.find(env)
     return facts
 
@@ -799,11 +870,8 @@ def _ibus_address_name(env):
     return f"{host or 'unix'}-{rest.split('.')[0] or '0'}"
 
 
-def session_owner(env, proc="/proc", machine_id=None):
-    """Which of ibus or fcitx5 wrote its running pid into this session's IBus address file.
-
-    fcitx5 writes its own pid there when it takes the session. Empty when neither does.
-    """
+def _address_pid(env, machine_id=None):
+    """The pid in this session's IBus address file; None when there is no such file."""
     path = env.get("IBUS_ADDRESS_FILE")
     if not path:
         config_home = env.get("XDG_CONFIG_HOME") or os.path.join(env.get("HOME", ""), ".config")
@@ -813,20 +881,51 @@ def session_owner(env, proc="/proc", machine_id=None):
         with open(path, encoding="utf-8", errors="replace") as f:
             match = re.search(r"^IBUS_DAEMON_PID=(\d+)", f.read(), re.M)
     except FileNotFoundError:
-        # IBus started with IBUS_ADDRESS or under another display name writes no file found here.
-        return "ibus" if _pids_named("ibus-daemon", proc) else ""
+        return None
     except OSError:
         return ""
-    if match is None:
+    return match.group(1) if match else ""
+
+
+def session_owner(env, proc="/proc", machine_id=None):
+    """Which of ibus or fcitx5 wrote its running pid into this session's IBus address file.
+
+    fcitx5 writes its own pid there when it takes the session. Empty when neither does.
+    """
+    pid = _address_pid(env, machine_id)
+    if pid is None:
+        # IBus started with IBUS_ADDRESS or under another display name writes no file found here.
+        return "ibus" if _pids_named("ibus-daemon", proc) else ""
+    return _owner_of(pid, proc)
+
+
+def _owner_of(pid, proc):
+    if not pid:
         return ""
     try:
-        with open(
-            os.path.join(proc, match.group(1), "comm"), encoding="utf-8", errors="replace"
-        ) as f:
+        with open(os.path.join(proc, pid, "comm"), encoding="utf-8", errors="replace") as f:
             name = f.read().strip()
     except OSError:
         return ""
     return {"ibus-daemon": "ibus", "fcitx5": "fcitx5"}.get(name, "")
+
+
+def session_environ(env, proc="/proc", machine_id=None):
+    """The environment the input method of this session started with; empty when it cannot be read.
+
+    The desktop starts it at login like the apps; the settings window may come from a terminal.
+    """
+    pid = _address_pid(env, machine_id)
+    # A stale address file can name a pid another program now has.
+    if not _owner_of(pid, proc):
+        return {}
+    try:
+        with open(os.path.join(proc, pid, "environ"), "rb") as f:
+            data = f.read()
+    except OSError:
+        return {}
+    pairs = (item.decode("utf-8", "replace").partition("=") for item in data.split(b"\0") if item)
+    return {name: value for name, _sep, value in pairs if name}
 
 
 def runs_replaced_engine(proc="/proc"):

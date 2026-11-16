@@ -9,7 +9,7 @@ from . import system_check
 from .i18n import _
 
 ICONS = {
-    system_check.OK: ("emblem-ok-symbolic", "success"),
+    system_check.OK: ("object-select-symbolic", "success"),
     system_check.INFO: ("dialog-information-symbolic", "accent"),
     system_check.WARN: ("dialog-warning-symbolic", "warning"),
     system_check.FAIL: ("dialog-error-symbolic", "error"),
@@ -33,6 +33,19 @@ class GnomeSources:
         schemas = Gio.SettingsSchemaSource.get_default()
         has_schema = schemas is not None and schemas.lookup(system_check.GNOME_SOURCES, True)
         self.settings = Gio.Settings.new(system_check.GNOME_SOURCES) if has_schema else None
+        has_ibus = schemas is not None and schemas.lookup(system_check.IBUS_GENERAL, True)
+        self.ibus = Gio.Settings.new(system_check.IBUS_GENERAL) if has_ibus else None
+
+    def ibus_engines(self):
+        """IBus's own list of input methods, which it uses where GNOME Shell does not set one."""
+        return self.ibus.get_strv("preload-engines") if self.ibus is not None else None
+
+    def set_ibus_engines(self, engines):
+        if self.ibus is None:
+            return False
+        ok = self.ibus.set_strv("preload-engines", engines)
+        Gio.Settings.sync()
+        return ok
 
     def get(self):
         if self.settings is None:
@@ -125,7 +138,7 @@ class CheckPage:
         self.on_count = on_count
         self.fixes = system_check.Fixes(sources, config_dir=config_dir)
         self.rows = []
-        page = Adw.PreferencesPage(title=_("Check"), icon_name="emblem-system-symbolic")
+        page = Adw.PreferencesPage(title=_("Check"), icon_name="preferences-system-symbolic")
         page.add(self._summary_group())
         self.steps = Adw.PreferencesGroup(title=_("Steps to type Vietnamese"))
         page.add(self.steps)

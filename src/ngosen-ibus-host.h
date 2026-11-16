@@ -21,6 +21,13 @@ namespace ngosen {
     // Set while the X server reports mouse clicks to the engine, so a reset is not all that tells one.
     extern std::atomic<bool> clicksWatched;
 
+    // The client name IBus gives its own context, which has the focus while no field does, such as
+    // while the tray or top bar menu is open.
+    constexpr const char* FakeClient = "fake";
+
+    // The program a client types for: GNOME Shell relays every app under its own name.
+    std::string programOf(const std::string& client);
+
     // The field as the IBus engine sees it. IBus tells the engine about the field piece by piece;
     // the engine passes each piece on.
     class IBusHost final : public Host {
@@ -39,6 +46,12 @@ namespace ngosen {
         }
         void setClient(std::string client) {
             client_ = std::move(client);
+        }
+        const std::string& client() const {
+            return client_;
+        }
+        bool inFakeContext() const {
+            return client_ == FakeClient;
         }
         void setContentType(guint purpose, guint hints) {
             purpose_ = purpose;
@@ -63,6 +76,7 @@ namespace ngosen {
         Field                        field() const override;
         bool                         hasFocus() const override;
         std::optional<std::string>   takeSelection() override;
+        std::string                  primarySelection() const override;
 
         void                         showPreedit(const std::string& text, bool underline) override;
         void                         clearPreedit() override;

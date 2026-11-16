@@ -18,8 +18,8 @@ namespace ngosen {
         const char* const Interface = "org.freedesktop.Notifications";
 
         // Names the release, so it changes with each feature release.
-        const char* const NoticeText = "Version 1.3: Ctrl+Shift and OFF switch the app in use only, Vim mode for each app, and words "
-                                       "starting with / typed as is. See What's new for more.";
+        const char* const NoticeText = "Version 1.4: extra keys after a word no longer undo its marks, and Space drops them or splits off "
+                                       "a word. See What's new for more.";
 
         struct Notice {
             GDBusConnection*      bus     = nullptr;

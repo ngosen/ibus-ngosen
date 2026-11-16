@@ -1,3 +1,24 @@
+ibus-ngosen (1.4.0-1) unstable; urgency=medium
+
+  * Extra keys after a Vietnamese word no longer undo its marks; Space
+    drops them, splits off a word or reads a final g as ng.
+  * Space keeps a stretched word as shown; a tone after a final consonant
+    lands on the vowel for dictionary words.
+  * Core fixes for GNOME: Firefox typing fast with BackSpace or right after
+    Alt+Tab, web sheets on Chrome, and busy apps.
+  * The Check tab reads the session's input method variables and checks
+    the IBus engine list outside GNOME.
+  * Words no dictionary word starts with, such as rose, show as typed, and
+    the lock key swaps such a word between its keys and its marks.
+  * Backspace while a slow GNOME app reports keeps the word and its marks,
+    a deletion the Lark chat applies only in part is redone, and on GNOME
+    50.0-50.3 a dropped Backspace no longer lets the next one reach Firefox.
+  * The IBus tray shows V or E, the Check page icons draw, and the menu's
+    language item switches the app typed in last.
+  * Core ngosen-1.11.2-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Mon, 16 Nov 2026 16:00:00 +0700
+
 ibus-ngosen (1.3.0-1) unstable; urgency=medium
 
   * Ctrl+Shift and OFF switch English and Vietnamese for the app in use

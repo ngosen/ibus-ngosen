@@ -157,12 +157,16 @@ namespace ngosen {
         return client_ == "gnome-shell" && (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0 && shellDeliversKeys();
     }
 
+    std::string programOf(const std::string& client) {
+        return client == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client;
+    }
+
     Field IBusHost::field() const {
         Field f;
         // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
         f.frontend = "ibus";
         // The Shell names every app it relays after itself, so the rules for one app need its own name.
-        f.program = client_ == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client_;
+        f.program = programOf(client_);
         if (f.program != client_)
             f.reportedProgram = client_;
         f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
@@ -192,6 +196,11 @@ namespace ngosen {
     // IBus gives an engine no access to the X11 selection.
     std::optional<std::string> IBusHost::takeSelection() {
         return std::nullopt;
+    }
+
+    // Converting selected text is a fcitx5 shortcut; the IBus edition has none.
+    std::string IBusHost::primarySelection() const {
+        return {};
     }
 
     void IBusHost::showPreedit(const std::string& text, bool /*underline*/) {

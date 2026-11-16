@@ -18,6 +18,12 @@ target_link_libraries(ibus-program-name-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_program_name COMMAND ibus-program-name-test)
 set_tests_properties(ibus_program_name PROPERTIES LABELS "unit;ibus")
 
+add_executable(ibus-component-test ibus-component.cpp)
+target_link_libraries(ibus-component-test PRIVATE ngosen_ibus)
+target_compile_definitions(ibus-component-test PRIVATE NGOSEN_COMPONENT_XML_IN="${PROJECT_SOURCE_DIR}/data/ngosen.xml.in")
+add_test(NAME ibus_component COMMAND ibus-component-test)
+set_tests_properties(ibus_component PROPERTIES LABELS "unit;ibus")
+
 add_test(NAME install_environment COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install-environment.sh ${PROJECT_BINARY_DIR})
 set_tests_properties(install_environment PROPERTIES LABELS "unit")
 
@@ -55,10 +61,10 @@ add_test(NAME ibus_daemon_typing
          COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${Python3_EXECUTABLE} ${component_dir}
                  ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict ${CMAKE_CURRENT_SOURCE_DIR}/ibus-daemon-typing.py)
 set_tests_properties(ibus_daemon_typing PROPERTIES LABELS "integration;ibus" TIMEOUT 480
-                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;NGOSEN_IBUS_ENGLISH_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt;LC_ALL=en_US.UTF-8")
+                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;NGOSEN_IBUS_ENGLISH_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt;NGOSEN_IBUS_KEEP_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/keep-words.txt;LC_ALL=en_US.UTF-8")
 
 add_test(NAME ibus_daemon_typing_no_clicks
          COMMAND ${DBUS_RUN_SESSION} -- sh ${CMAKE_CURRENT_SOURCE_DIR}/run-with-daemon.sh ${Python3_EXECUTABLE} ${component_dir}
                  ${PROJECT_SOURCE_DIR}/ngosen/data/dictionaries/vietnamese.cm.dict ${CMAKE_CURRENT_SOURCE_DIR}/ibus-daemon-typing.py)
 set_tests_properties(ibus_daemon_typing_no_clicks PROPERTIES LABELS "integration;ibus" TIMEOUT 120
-                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;NGOSEN_IBUS_ENGLISH_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt;LC_ALL=en_US.UTF-8;NGOSEN_TEST_NO_X=1")
+                     ENVIRONMENT "NGOSEN_IBUS_LOCALEDIR=${PROJECT_BINARY_DIR}/po/locale;NGOSEN_IBUS_ENGLISH_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/english-common.txt;NGOSEN_IBUS_KEEP_WORDS=${PROJECT_SOURCE_DIR}/ngosen/data/keep-words.txt;LC_ALL=en_US.UTF-8;NGOSEN_TEST_NO_X=1")
