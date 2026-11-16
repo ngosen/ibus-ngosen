@@ -8,7 +8,12 @@ ibus-ngosen (1.4.0-1) unstable; urgency=medium
     Alt+Tab, web sheets on Chrome, and busy apps.
   * The Check tab reads the session's input method variables and checks
     the IBus engine list outside GNOME.
-  * Core ngosen-1.11.1-1.
+  * Words no dictionary word starts with, such as rose, show as typed, and
+    the lock key swaps such a word between its keys and its marks.
+  * Backspace while a slow GNOME app reports keeps the word and its marks,
+    a deletion the Lark chat applies only in part is redone, and on GNOME
+    50.0-50.3 a dropped Backspace no longer lets the next one reach Firefox.
+  * Core ngosen-1.11.2-1.
 
  -- Nguyen Phi <nguyenphidt@gmail.com>  Sun, 15 Nov 2026 18:00:00 +0700
 

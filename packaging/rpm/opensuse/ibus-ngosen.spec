@@ -69,7 +69,8 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 - Extra keys after a Vietnamese word no longer undo its marks; Space drops them, splits off
   a word or reads g as ng; Space keeps stretched words; core fixes for Firefox, web sheets
   and busy apps on GNOME; the Check tab reads the session's input method and the IBus
-  engine list outside GNOME; core ngosen-1.11.1-1.
+  engine list outside GNOME; words such as rose show as typed and the lock key swaps them;
+  Backspace while a slow GNOME app reports keeps the marks; core ngosen-1.11.2-1.
 
 * Thu Nov 12 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.3.0-1
 - Ctrl+Shift and OFF switch English and Vietnamese for the app in use only; Vim mode for each
