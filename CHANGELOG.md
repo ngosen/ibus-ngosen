@@ -8,6 +8,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+- Bấm "Tiếng Việt" trong menu thanh trên cùng của GNOME hoặc menu khay IBus (KDE Plasma…) đổi đúng tiếng của app vừa
+  gõ, và menu hiện đúng tiếng của app đó. Trên KDE không còn cửa sổ "Tiếng Anh/Tiếng Việt" lạc giữa màn hình (#148).
+
 ## [1.3.0-1] — 12/11/2026
 
 Ctrl+Shift và mục Tắt chỉ đổi Anh/Việt cho app đang dùng, như bản fcitx5. Vim mode cho từng app trong menu `, từ bắt
