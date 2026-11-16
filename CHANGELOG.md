@@ -8,6 +8,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+- Trên KDE Plasma và các màn hình dùng khay IBus, biểu tượng khay hiện V hoặc E theo tiếng đang gõ (đăng nhập lại sau
+  khi cập nhật). Dấu tích và biểu tượng mục Kiểm tra trong cửa sổ cài đặt không còn hiện thành ảnh vỡ trên Ubuntu
+  26.04, Debian 13, Fedora 44 và Arch (#147).
 - Bấm "Tiếng Việt" trong menu thanh trên cùng của GNOME hoặc menu khay IBus (KDE Plasma…) đổi đúng tiếng của app vừa
   gõ, và menu hiện đúng tiếng của app đó. Trên KDE không còn cửa sổ "Tiếng Anh/Tiếng Việt" lạc giữa màn hình (#148).
 

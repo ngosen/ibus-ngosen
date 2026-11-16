@@ -18,6 +18,12 @@ target_link_libraries(ibus-program-name-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_program_name COMMAND ibus-program-name-test)
 set_tests_properties(ibus_program_name PROPERTIES LABELS "unit;ibus")
 
+add_executable(ibus-component-test ibus-component.cpp)
+target_link_libraries(ibus-component-test PRIVATE ngosen_ibus)
+target_compile_definitions(ibus-component-test PRIVATE NGOSEN_COMPONENT_XML_IN="${PROJECT_SOURCE_DIR}/data/ngosen.xml.in")
+add_test(NAME ibus_component COMMAND ibus-component-test)
+set_tests_properties(ibus_component PROPERTIES LABELS "unit;ibus")
+
 add_test(NAME install_environment COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/install-environment.sh ${PROJECT_BINARY_DIR})
 set_tests_properties(install_environment PROPERTIES LABELS "unit")
 
