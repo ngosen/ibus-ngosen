@@ -5,8 +5,8 @@ import os
 import re
 import unittest
 
-# Symbolic icons found in the Adwaita theme of Ubuntu 24.04 (46) and 26.04, Debian 13 (48), Fedora 44 (50) and
-# Arch (51). Adwaita drops icons between releases, and a missing one shows as a broken image.
+# Adwaita drops icons between releases and a missing one shows as a broken image, so only names that every
+# supported system's Adwaita has.
 ADWAITA_EVERYWHERE = {
     "accessories-dictionary-symbolic",
     "dialog-error-symbolic",
