@@ -20,6 +20,8 @@
       <longname>Ngó Sen</longname>
       <description>Vietnamese input method</description>
       <symbol>vi</symbol>
+      <!-- ibus-ui-gtk3 draws the tray icon from this item, so it shows V or E. -->
+      <icon_prop_key>InputMode</icon_prop_key>
       <setup>@NGOSEN_SETUP_EXEC@</setup>
       <rank>0</rank>
     </engine>
