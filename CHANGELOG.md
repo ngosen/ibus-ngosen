@@ -22,6 +22,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Tab Kiểm tra trên Xfce, Cinnamon, KDE Plasma và các desktop khác GNOME không còn báo "Máy đã sẵn sàng" khi Ngó Sen
   chưa có trong danh sách bộ gõ của IBus: tab báo thiếu và có nút "Thêm Ngó Sen". Trên KDE Plasma Wayland, khi IBus
   không chạy, tab chỉ tới Bàn phím ảo thay cho lệnh `ibus start` (#144).
+- Sau khi bấm "Thêm Ngó Sen" ở tab Kiểm tra, tab nhắc đăng xuất rồi đăng nhập lại nếu menu IBus chưa có Ngó Sen: khay
+  IBus trên KDE Plasma chỉ đọc danh sách bộ gõ lúc khởi động (#150).
 
 ## [1.3.0-1] — 12/11/2026
 
