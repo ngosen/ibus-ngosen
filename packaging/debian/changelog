@@ -13,6 +13,8 @@ ibus-ngosen (1.4.0-1) unstable; urgency=medium
   * Backspace while a slow GNOME app reports keeps the word and its marks,
     a deletion the Lark chat applies only in part is redone, and on GNOME
     50.0-50.3 a dropped Backspace no longer lets the next one reach Firefox.
+  * The IBus tray shows V or E, the Check page icons draw, and the menu's
+    language item switches the app typed in last.
   * Core ngosen-1.11.2-1.
 
  -- Nguyen Phi <nguyenphidt@gmail.com>  Mon, 16 Nov 2026 16:00:00 +0700
