@@ -468,6 +468,50 @@ def check(ok, what, got):
         print(f"FAIL {what}: {got!r}")
 
 
+# The IBus panel of desktops other than GNOME (ibus-ui-gtk3): while no field has the focus, IBus
+# focuses its context named "fake" and sends the engine's menu and notices here.
+class TrayPanel(IBus.PanelService):
+    def __init__(self):
+        super().__init__(connection=bus.get_connection(), object_path=IBus.PATH_PANEL)
+        self.symbols = []
+        self.notices = []
+        self.tables = 0
+
+    def do_register_properties(self, props):
+        i = 0
+        while props.get(i) is not None:
+            self.do_update_property(props.get(i))
+            i += 1
+
+    def do_update_property(self, prop):
+        if prop.get_key() == "InputMode":
+            self.symbols.append(prop.get_symbol().get_text())
+
+    def do_update_auxiliary_text(self, text, visible):
+        if visible and text.get_text():
+            self.notices.append(text.get_text())
+
+    def do_update_lookup_table(self, _table, visible):
+        if visible:
+            self.tables += 1
+
+    def start(self):
+        bus.request_name(IBus.SERVICE_PANEL, 0)
+        pump(300)
+
+    def stop(self):
+        bus.release_name(IBus.SERVICE_PANEL)
+        pump(300)
+
+
+def logs_after(action, line):
+    start = os.path.getsize(log_path)
+    action()
+    with open(log_path, "rb") as f:
+        f.seek(start)
+        return line.encode() in f.read()
+
+
 def finish():
     check(
         glib_warnings == [], "GLib warnings", glib_warnings[:3] + [f"{len(glib_warnings)} in all"]
@@ -483,6 +527,21 @@ settings_path = os.path.join(config_dir, "ngosen.conf")
 
 
 # As the settings window saves: a temporary file renamed over the old one.
+english_mark_path = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen", "english")
+
+
+def app_switch_of(name):
+    path = os.path.join(config_dir, "ngosen-app-switch.conf")
+    if not os.path.exists(path):
+        return None
+    with open(path) as f:
+        text = f.read()
+    marker = "App=" + name + "\n"
+    if marker not in text:
+        return None
+    return text.split(marker, 1)[1].split("\n", 1)[0]
+
+
 def write_file(path, text):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path + ".tmp", "w") as f:
@@ -761,6 +820,47 @@ if no_x:
     check(any("\x7f" in c for c in app.commits), "portal, Shell restarted: no name", app.commits)
     app = terminal_commits("Alacritty.desktop")
     check(not any("\x7f" in c for c in app.commits), "portal, Shell restarted: named", app.commits)
+    # A click in the top bar menu reaches the engine through the fake context, about the app the
+    # portal names then: an app closed since it had the focus keeps its own choice.
+    tray = TrayPanel()
+    tray.start()
+    portal.focus("org.gnome.TextEditor.desktop")
+    app = App("gnome-shell")
+    tap_ctrl_shift(app)
+    check(
+        app_switch_of("org.gnome.TextEditor") == "Vietnamese=False",
+        "tray, GNOME: Ctrl+Shift keeps English for the editor",
+        app_switch_of("org.gnome.TextEditor"),
+    )
+    check(
+        logs_after(lambda: app.ic.focus_out() or pump(300), "Focus in: fake"),
+        "tray, GNOME: the menu is shown in the fake context",
+        log_path,
+    )
+    check(
+        tray.symbols[-1:] == ["E"], "tray, GNOME: the menu shows the editor's English", tray.symbols
+    )
+    portal.focus()
+    tray.notices, tray.tables = [], 0
+    tray.property_activate("InputMode", IBus.PropState.UNCHECKED)
+    pump(500)
+    check(
+        app_switch_of("org.gnome.TextEditor") == "Vietnamese=False"
+        and app_switch_of("fake") is None
+        and not os.path.exists(english_mark_path),
+        "tray, GNOME: with the editor closed a click changes only the shared language",
+        (
+            app_switch_of("org.gnome.TextEditor"),
+            app_switch_of("fake"),
+            os.path.exists(english_mark_path),
+        ),
+    )
+    check(
+        tray.notices == [] and tray.tables == 0,
+        "tray, GNOME: no notice without a field",
+        (tray.notices, tray.tables),
+    )
+    tray.stop()
     portal.stop()
     shell.stop()
     finish()
@@ -1849,6 +1949,72 @@ check(app.text == "à " and app.menu is None, "menu: VIQR keeps ` for its tone",
 app.close()
 set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
+
+# The tray menu of ibus-ui-gtk3 is shown while the fake context has the focus. It shows and switches
+# the language of the field typed in last, which may differ from the language a new app follows.
+for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
+    if os.path.exists(path):
+        os.remove(path)
+tray = TrayPanel()
+tray.start()
+first = App("tray-first")
+tap_ctrl_shift(first)
+first.ic.focus_out()
+second = App("tray-second")
+tap_ctrl_shift(second)
+second.ic.focus_out()
+first.ic.focus_in()
+pump(300)
+check(
+    logs_after(lambda: first.ic.focus_out() or pump(300), "Focus in: fake"),
+    "tray: the menu is shown in the fake context",
+    log_path,
+)
+check(
+    tray.symbols[-1:] == ["E"],
+    "tray: the menu shows the English of the field typed in last",
+    tray.symbols,
+)
+# Fields without a panel of their own send their notices here too.
+tray.notices, tray.tables = [], 0
+flips = []
+for _ in range(3):
+    tray.property_activate("InputMode", IBus.PropState.CHECKED)
+    pump(500)
+    flips.append(tray.symbols[-1])
+check(flips == ["V", "E", "V"], "tray: each click flips the language at once", flips)
+check(
+    tray.notices == [] and tray.tables == 0,
+    "tray: no notice or offer without a field",
+    (tray.notices, tray.tables),
+)
+first.ic.focus_in()
+pump(300)
+first.type("vieejt ")
+check(
+    first.commits[-1:] == ["việt "], "tray: the field typed in last types Vietnamese", first.commits
+)
+check(
+    app_switch_of("tray-first") == "Vietnamese=True" and app_switch_of("fake") is None,
+    "tray: the click is saved for that app",
+    (app_switch_of("tray-first"), app_switch_of("fake")),
+)
+first.close()
+# Qt and XIM clients have no name of their own, so there the click changes only the shared language.
+anonymous = App("QIBusInputContext")
+anonymous.ic.focus_out()
+pump(300)
+tray.property_activate("InputMode", IBus.PropState.CHECKED)
+pump(500)
+check(
+    app_switch_of("fake") is None and os.path.exists(english_mark),
+    "tray: after a field with no name the click changes the shared language",
+    (app_switch_of("fake"), os.path.exists(english_mark)),
+)
+tray.stop()
+for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
+    if os.path.exists(path):
+        os.remove(path)
 
 # The panel's clicks and arrows reach the menu, as GNOME Shell sends them.
 panel = IBus.PanelService.new(bus.get_connection())
