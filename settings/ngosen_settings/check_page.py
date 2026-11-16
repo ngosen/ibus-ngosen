@@ -9,7 +9,7 @@ from . import system_check
 from .i18n import _
 
 ICONS = {
-    system_check.OK: ("emblem-ok-symbolic", "success"),
+    system_check.OK: ("object-select-symbolic", "success"),
     system_check.INFO: ("dialog-information-symbolic", "accent"),
     system_check.WARN: ("dialog-warning-symbolic", "warning"),
     system_check.FAIL: ("dialog-error-symbolic", "error"),
@@ -138,7 +138,7 @@ class CheckPage:
         self.on_count = on_count
         self.fixes = system_check.Fixes(sources, config_dir=config_dir)
         self.rows = []
-        page = Adw.PreferencesPage(title=_("Check"), icon_name="emblem-system-symbolic")
+        page = Adw.PreferencesPage(title=_("Check"), icon_name="preferences-system-symbolic")
         page.add(self._summary_group())
         self.steps = Adw.PreferencesGroup(title=_("Steps to type Vietnamese"))
         page.add(self.steps)
