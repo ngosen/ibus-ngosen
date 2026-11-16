@@ -22,6 +22,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Tab Kiểm tra trên Xfce, Cinnamon, KDE Plasma và các desktop khác GNOME không còn báo "Máy đã sẵn sàng" khi Ngó Sen
   chưa có trong danh sách bộ gõ của IBus: tab báo thiếu và có nút "Thêm Ngó Sen". Trên KDE Plasma Wayland, khi IBus
   không chạy, tab chỉ tới Bàn phím ảo thay cho lệnh `ibus start` (#144).
+- Trên KDE Plasma và các màn hình dùng khay IBus, biểu tượng khay hiện V hoặc E theo tiếng đang gõ (đăng nhập lại sau
+  khi cập nhật). Dấu tích và biểu tượng mục Kiểm tra trong cửa sổ cài đặt không còn hiện thành ảnh vỡ trên Ubuntu
+  26.04, Debian 13, Fedora 44 và Arch (#147).
+- Bấm "Tiếng Việt" trong menu thanh trên cùng của GNOME hoặc menu khay IBus (KDE Plasma…) đổi đúng tiếng của app vừa
+  gõ, và menu hiện đúng tiếng của app đó. Trên KDE không còn cửa sổ "Tiếng Anh/Tiếng Việt" lạc giữa màn hình (#148).
 - Sau khi bấm "Thêm Ngó Sen" ở tab Kiểm tra, tab nhắc đăng xuất rồi đăng nhập lại nếu menu IBus chưa có Ngó Sen: khay
   IBus trên KDE Plasma chỉ đọc danh sách bộ gõ lúc khởi động (#150).
 

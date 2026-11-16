@@ -51,7 +51,15 @@ namespace {
         return apps;
     }
 
+    // The client of the field typed in last. With use-global-engine on, the default, one engine serves
+    // every field, so this is all that is left of it once the focus is in the fake context.
+    std::string lastClient;
+
+    // In the fake context the menu is about the field typed in last. For GNOME Shell the portal names
+    // the app focused now, so an app closed since then keeps its own choice.
     std::string currentApp(const ngosen::IBusHost& host) {
+        if (host.inFakeContext())
+            return ngosen::modeAppName(ngosen::programOf(lastClient));
         return ngosen::modeAppName(host.field().program);
     }
 
@@ -247,6 +255,9 @@ namespace {
         session.applyMode();
         NGOSEN_INFO(std::string("Toggle key: ") + (typesEnglish() ? "English" : "Vietnamese"));
         showLanguageItem(engine);
+        // With no field the panel shows a notice as a window of its own, and there is nothing to retype.
+        if (session.host->inFakeContext())
+            return;
         showLanguage(engine);
         session.showsNotice = true;
         // A click moving the cursor must be seen, or the offer would replace text somewhere else. An
@@ -680,9 +691,12 @@ namespace {
     }
 
     void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
+        const std::string name = client != nullptr ? client : "";
+        if (name != ngosen::FakeClient)
+            lastClient = name;
         if (Session* session = sessionOf(engine))
-            session->host->setClient(client != nullptr ? client : "");
-        NGOSEN_INFO(std::string("Focus in: ") + (client != nullptr ? client : ""));
+            session->host->setClient(name);
+        NGOSEN_INFO("Focus in: " + name);
         focusIn(engine);
     }
 
