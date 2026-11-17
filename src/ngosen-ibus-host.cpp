@@ -253,17 +253,21 @@ namespace ngosen {
     }
 
     void IBusHost::showAuxiliary() {
-        const std::string& text = status_.empty() ? notice_ : status_;
+        const std::string& text = menuOpen_ ? menuTitle_ : status_.empty() ? notice_ : status_;
         ibus_engine_update_auxiliary_text(engine_, ibus_text_new_from_string(text.c_str()), !text.empty());
     }
 
-    void IBusHost::setMenuOpen(bool open) {
-        menuOpen_ = open;
+    void IBusHost::setMenuOpen(bool open, const std::string& title) {
+        menuOpen_  = open;
+        menuTitle_ = open ? title : std::string();
         // The menu takes the table; candidates still shown go out again on the next refresh.
         if (open) {
             tableShown_ = false;
             tableDirty_ = true;
+            // A notice from before the menu would come back when it closes, out of date.
+            notice_.clear();
         }
+        showAuxiliary();
     }
 
     void IBusHost::showNotice(const std::string& text) {
