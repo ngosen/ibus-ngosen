@@ -449,25 +449,26 @@ namespace {
         showModeMenu(engine, session);
     }
 
-    void applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
+    // False when the key goes on to type.
+    bool applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
         const auto items = menuItems(session);
         // A restore may hide items while the menu is open.
-        if (items.empty()) {
+        if (items.empty() || key.kind == ngosen::MenuKey::Pass) {
             closeModeMenu(engine, session);
-            return;
+            return false;
         }
         session.menuCursor = std::min(session.menuCursor, static_cast<guint>(items.size() - 1));
         switch (key.kind) {
-            case ngosen::MenuKey::Close: closeModeMenu(engine, session); return;
-            case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); return;
-            case ngosen::MenuKey::Down: moveMenuCursor(engine, session, 1); return;
-            case ngosen::MenuKey::PickCursor: pickMode(engine, session, items[session.menuCursor]); return;
+            case ngosen::MenuKey::Close: closeModeMenu(engine, session); break;
+            case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); break;
+            case ngosen::MenuKey::Down: moveMenuCursor(engine, session, 1); break;
+            case ngosen::MenuKey::PickCursor: pickMode(engine, session, items[session.menuCursor]); break;
             case ngosen::MenuKey::Pick:
                 for (const auto& item : items) {
                     if (item.mode == key.mode)
                         pickMode(engine, session, item);
                 }
-                return;
+                break;
             case ngosen::MenuKey::TypeMenuKey: {
                 closeModeMenu(engine, session);
                 gchar text[8] = {};
@@ -475,10 +476,11 @@ namespace {
                     g_unichar_to_utf8(c, text);
                     session.host->commitText(text);
                 }
-                return;
+                break;
             }
-            case ngosen::MenuKey::Swallow: return;
+            case ngosen::MenuKey::Pass: break;
         }
+        return true;
     }
 
     // True when the app must not see this key.
@@ -492,7 +494,8 @@ namespace {
         if (ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
             return false;
         if (session.menuOpen) {
-            applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval);
+            if (!applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval))
+                return false;
         } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
             cycleMode(engine, session);
         } else {
