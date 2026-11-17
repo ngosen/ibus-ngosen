@@ -116,14 +116,14 @@ namespace {
     int  writes = 0;
 
     void testVimFile(const fs::path& root) {
-        check(parseVimApps("# comment\nkitty\n\norg.gnome.Ptyxis\n") == VimAppSet{"kitty", "org.gnome.Ptyxis"}, "one app per line, comments and blank lines skipped");
-        check(parseVimApps("kitty.desktop\ngtk3-im:code \r\ngnome-shell\n") == VimAppSet{"kitty", "code"}, "names are read as the other app files read them");
-        check(parseVimApps(vimAppsText({"kitty"})) == VimAppSet{"kitty"}, "Vim apps round trip");
+        check(parseAppList("# comment\nkitty\n\norg.gnome.Ptyxis\n") == AppNameSet{"kitty", "org.gnome.Ptyxis"}, "one app per line, comments and blank lines skipped");
+        check(parseAppList("kitty.desktop\ngtk3-im:code \r\ngnome-shell\n") == AppNameSet{"kitty", "code"}, "names are read as the other app files read them");
+        check(parseAppList(appListText(VimAppsHeader, {"kitty"})) == AppNameSet{"kitty"}, "Vim apps round trip");
         const std::string path = (root / "ngosen-vim-apps.conf").string();
-        VimApps           apps(path);
+        AppList           apps(path, VimAppsHeader);
         check(!apps.has("kitty"), "no file, no Vim mode");
         check(apps.set("kitty", true) && apps.has("kitty") && !apps.has("code"), "Vim mode is kept for one app");
-        check(VimApps(path).has("kitty"), "Vim mode is kept after a restart");
+        check(AppList(path, VimAppsHeader).has("kitty"), "Vim mode is kept after a restart");
         check(apps.set("kitty", false) && !apps.has("kitty"), "Vim mode can be switched off");
         check(!apps.set("", true) && !apps.has(""), "an app without a name keeps nothing");
 
@@ -132,14 +132,14 @@ namespace {
         check(apps.has("kitty"), "a name fcitx5 saved with .desktop applies, without a restart");
         check(apps.set("kitty", false) && !apps.has("kitty"), "switching it off forgets the name fcitx5 saved");
 
-        VimApps counting(path, [&](const std::string& to, const std::string& text) {
+        AppList counting(path, VimAppsHeader, [&](const std::string& to, const std::string& text) {
             ++writes;
             return writeFileAtomically(to, text);
         });
         writes = 0;
         check(counting.set("code", false) && writes == 0, "switching off an app without Vim mode writes nothing");
 
-        VimApps failing(path, [](const std::string&, const std::string&) { return false; });
+        AppList failing(path, VimAppsHeader, [](const std::string&, const std::string&) { return false; });
         check(!failing.set("code", true) && !failing.has("code"), "a failed write changes nothing");
     }
 

@@ -47,8 +47,8 @@ namespace {
         return switches;
     }
 
-    ngosen::VimApps& vimApps() {
-        static ngosen::VimApps apps(resources().paths().vimAppsFile());
+    ngosen::AppList& vimApps() {
+        static ngosen::AppList apps(resources().paths().vimAppsFile(), ngosen::VimAppsHeader);
         return apps;
     }
 
