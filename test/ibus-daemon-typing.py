@@ -1951,6 +1951,19 @@ check(
 )
 app.close()
 
+# A key no item takes closes the menu and is typed as usual, so a stray ` costs nothing.
+app = menu_app("menu-other-key")
+app.key(IBus.KEY_grave)
+pump(200)
+app.type("dda")
+pump(200)
+check(
+    app.menu is None and app.text == "đa",
+    "menu: a key no item takes closes it and types",
+    (app.menu, app.text),
+)
+app.close()
+
 # Qt and XIM clients of any app share one name, so a pick there changes the mode every app follows.
 app = menu_app("QIBusInputContext")
 app.key(IBus.KEY_grave)
@@ -2076,16 +2089,19 @@ check(
 app.key(IBus.KEY_q)
 pump(300)
 check(
-    app.menu is not None and app_mode("menu-order") == "",
-    "menu: q picks nothing while hidden",
-    app.menu,
+    app.menu is None and app.text == "q" and app_mode("menu-order") == "",
+    "menu: q of a hidden mode closes it and types q",
+    (app.menu, app.text),
 )
-app.key(IBus.KEY_Escape)
+# Settings apply between words, so the word q ends first.
+app.type(" ")
 for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "False")
 app.key(IBus.KEY_grave)
 pump(200)
-check(app.menu is None and app.text == "`", "menu: with every mode hidden ` types itself", app.text)
+check(
+    app.menu is None and app.text == "q `", "menu: with every mode hidden ` types itself", app.text
+)
 app.close()
 for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "True")
