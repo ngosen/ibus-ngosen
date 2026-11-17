@@ -1971,6 +1971,23 @@ check(
 )
 app.close()
 
+# On Plasma, ibus-ui-gtk3 relays every Wayland app under one name, as GNOME Shell does.
+app = menu_app("wayland")
+app.key(IBus.KEY_grave)
+pump(200)
+check(app.title == "Chế độ gõ", "menu: the title names no app for a client of every Wayland app", app.title)
+app.key(IBus.KEY_q)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=False" and app_mode("wayland") == "",
+    "menu: there q turns Sen off for every app instead of keeping it for one name",
+    (setting("DirectTyping"), app_mode("wayland")),
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_1)
+pump(500)
+app.close()
+
 set_setting("ModeMenuKey", "Shift+asciitilde")
 app = menu_app("menu-tilde")
 app.key(IBus.KEY_grave)

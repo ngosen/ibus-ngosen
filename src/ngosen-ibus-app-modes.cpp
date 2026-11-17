@@ -66,7 +66,7 @@ namespace ngosen {
         const size_t underscore = name.find('_');
         if (underscore != std::string::npos && name.compare(0, underscore, name, underscore + 1) == 0)
             name.erase(underscore);
-        if (name == "gnome-shell" || name == "QIBusInputContext" || name == "xim")
+        if (name == "gnome-shell" || name == "QIBusInputContext" || name == "xim" || name == "wayland")
             return {};
         return name;
     }
