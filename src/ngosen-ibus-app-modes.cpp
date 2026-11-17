@@ -221,8 +221,8 @@ namespace ngosen {
         return true;
     }
 
-    VimAppSet parseVimApps(const std::string& text) {
-        VimAppSet          apps;
+    AppNameSet parseAppList(const std::string& text) {
+        AppNameSet         apps;
         std::istringstream lines(text);
         for (std::string line; std::getline(lines, line);) {
             // Named as the other app files name them, so a name fcitx5 saved as GNOME reports it matches.
@@ -233,16 +233,16 @@ namespace ngosen {
         return apps;
     }
 
-    std::string vimAppsText(const VimAppSet& apps) {
-        std::string text = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line\n";
+    std::string appListText(const std::string& header, const AppNameSet& apps) {
+        std::string text = header + "\n";
         for (const auto& app : apps)
             text += app + "\n";
         return text;
     }
 
-    VimApps::VimApps(std::string path, FileWriter write) : path_(std::move(path)), write_(std::move(write)) {}
+    AppList::AppList(std::string path, std::string header, FileWriter write) : path_(std::move(path)), header_(std::move(header)), write_(std::move(write)) {}
 
-    void VimApps::reloadIfChanged() {
+    void AppList::reloadIfChanged() {
         std::error_code                                error;
         const auto                                     time = std::filesystem::last_write_time(path_, error);
         std::optional<std::filesystem::file_time_type> now;
@@ -253,28 +253,28 @@ namespace ngosen {
         loaded_ = true;
         mtime_  = now;
         std::string text;
-        apps_ = now && readFile(path_, text) ? parseVimApps(text) : VimAppSet{};
+        apps_ = now && readFile(path_, text) ? parseAppList(text) : AppNameSet{};
     }
 
-    bool VimApps::has(const std::string& app) {
+    bool AppList::has(const std::string& app) {
         if (app.empty())
             return false;
         reloadIfChanged();
         return apps_.count(app) > 0;
     }
 
-    bool VimApps::set(const std::string& app, bool on) {
+    bool AppList::set(const std::string& app, bool on) {
         if (app.empty())
             return false;
         reloadIfChanged();
-        VimAppSet changed = apps_;
+        AppNameSet changed = apps_;
         if (on)
             changed.insert(app);
         else
             changed.erase(app);
         if (changed == apps_ && (mtime_ || changed.empty()))
             return true;
-        if (!write_(path_, vimAppsText(changed)))
+        if (!write_(path_, appListText(header_, changed)))
             return false;
         apps_ = std::move(changed);
         std::error_code error;
