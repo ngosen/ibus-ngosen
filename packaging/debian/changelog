@@ -1,3 +1,12 @@
+ibus-ngosen (1.4.1-1) unstable; urgency=medium
+
+  * Two Backspaces pressed back to back right after Firefox opens on GNOME
+    no longer lose one.
+  * Three settings labels drop "(experimental)", as in the fcitx5 edition.
+  * Core ngosen-1.12.1-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Tue, 17 Nov 2026 12:00:00 +0700
+
 ibus-ngosen (1.4.0-1) unstable; urgency=medium
 
   * Extra keys after a Vietnamese word no longer undo its marks; Space

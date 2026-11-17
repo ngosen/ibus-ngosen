@@ -8,6 +8,22 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.4.1-1] — 17/11/2026
+
+Trên GNOME, gõ nhanh ngay sau khi mở Firefox, nhấn Backspace hai lần liền không còn mất một lần. Dùng lõi Ngó Sen
+`ngosen-1.12.1-1`. Tải gói ở
+[release ibus-ngosen-1.4.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.4.1-1).
+
+### Thay đổi
+
+- Bỏ nhãn "(thử nghiệm)" sau ba tuỳ chọn "Tự viết hoa đầu câu", "Hai dấu cách thành dấu chấm" và "Tự viết hoa chữ
+  đầu văn bản và đầu dòng" trong cửa sổ cài đặt, như bản fcitx5; mặc định giữ nguyên (ngosen/ngosen#796) (#155).
+
+### Sửa
+
+- Bản IBus nhận bản sửa của lõi: trên GNOME, gõ nhanh ngay sau khi mở Firefox, nhấn Backspace hai lần liền không còn
+  mất một lần (`nam tieesng`, xoá `ng` rồi gõ lại ra `nam tiiếng`) (ngosen/ngosen#815) (#155).
+
 ## [1.4.0-1] — 16/11/2026
 
 Gõ thừa phím sau từ tiếng Việt không còn làm mất dấu: nhấn Space thì bỏ phím thừa, tách `côngty` thành `công ty` hoặc
