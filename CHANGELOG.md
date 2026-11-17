@@ -12,6 +12,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - Menu ` ghi đang đổi chế độ gõ cho app nào, như "Chế độ gõ cho Firefox", và đánh dấu ✓ cạnh chế độ app đang dùng,
   nên vẫn thấy chế độ hiện tại khi dùng phím mũi tên đi qua các mục (#154).
+- Lỡ bấm ` thì cứ gõ tiếp: phím không thuộc menu đóng menu và gõ ra như thường, thay vì bị nuốt tới khi bấm Esc (#156).
 
 ### Sửa
 
