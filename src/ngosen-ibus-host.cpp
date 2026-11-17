@@ -186,6 +186,8 @@ namespace ngosen {
         f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
         // Chrome marks every field of an incognito window; that keeps the text out of logs, not out of typing.
         f.sensitive = (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        // Every IBus panel draws the lookup table next to the cursor; the fake context has no cursor to draw at.
+        f.drawsCandidates = !inFakeContext();
         return f;
     }
 

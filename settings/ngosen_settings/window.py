@@ -67,6 +67,7 @@ class Window(Adw.ApplicationWindow):
         self.stack = stack = Adw.ViewStack()
         self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
+        self.emoji = pages.emoji_page(self.rows)
         self.whats_new = whats_new.WhatsNewPage(
             self.open_setting,
             self.show_page,
@@ -74,6 +75,7 @@ class Window(Adw.ApplicationWindow):
         )
         self.named_pages = {
             "typing": typing,
+            "emoji": self.emoji,
             "macros": self.macros.page,
             "dictionary": self.dictionary.page,
             "keymap": self.keymap.page,
@@ -85,7 +87,13 @@ class Window(Adw.ApplicationWindow):
             if page is self.check.page:
                 self.check_tab = tab
         # The check page lists findings, not settings.
-        self.search_pages = [typing, self.macros.page, self.dictionary.page, self.keymap.page]
+        self.search_pages = [
+            typing,
+            self.emoji,
+            self.macros.page,
+            self.dictionary.page,
+            self.keymap.page,
+        ]
         # Header tabs cut the longer Vietnamese page names; a sidebar has room for them.
         self.split = Adw.NavigationSplitView(
             sidebar=self._sidebar_page(version), content=self._content_page()

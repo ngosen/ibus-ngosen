@@ -35,7 +35,7 @@ MODE_ORDERS = [
 ]
 # Named in their own language, as in fcitx5.
 UI_LANGUAGES = [("Vietnamese", "Tiếng Việt"), ("English", "English")]
-SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"]
+SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeEmoji", "ShowModeOff", "ShowModeVim"]
 SHOW_MENUS = [
     "ShowMenuInputMethod",
     "ShowMenuCharset",
@@ -47,7 +47,12 @@ SHOW_MENUS = [
     "ShowMenuDictionary",
 ]
 # The keys that pick a mode in the menu, each one letter or digit.
-SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutVim"]
+SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutEmoji", "ShortcutOff", "ShortcutVim"]
+# Stored by their English labels, as fcitx5 stores the enum.
+EMOJI_PLACEMENTS = [
+    ("After the word", N_("After the word")),
+    ("Instead of the word", N_("Instead of the word")),
+]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -75,6 +80,7 @@ LABELS = {
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
     "ShowModeVim": N_("Show Vim mode"),
+    "ShowModeEmoji": N_("Show emoji suggestions"),
     "UiLanguage": N_("Interface Language"),
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
@@ -89,6 +95,10 @@ LABELS = {
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
     "ShortcutVim": N_("Shortcut for Vim mode"),
+    "ShortcutEmoji": N_("Shortcut for emoji suggestions"),
+    "EmojiSuggestions": N_("Suggest emoji while typing"),
+    "EmojiPlacement": N_("Put a picked emoji"),
+    "YahooEmoticons": N_("Yahoo Messenger emoticons"),
     "DirectTyping": N_("Mode"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
@@ -173,6 +183,15 @@ HINTS = {
         "With Enable Macro on, a macro such as ko → không expands even in English."
     ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
+    "EmojiSuggestions": N_(
+        "cười shows Tab: 😂 … next to the cursor. Tab numbers them: 1–5 picks one, Tab, Space or Enter the first, Esc keeps the word. haha and :) are replaced. Only where the hint is known to show."
+    ),
+    "YahooEmoticons": N_(
+        "=)) and :x offer 🤣 and 😍, like on Yahoo Messenger; Tab swaps the code for the emoji."
+    ),
+    "EmojiPlacement": N_(
+        "After the word: cười 😂. Instead of the word: 😂. haha and :) are always replaced."
+    ),
 }
 
 # What a word looks like while typing it, shown under the input method.
@@ -227,6 +246,8 @@ TYPING_GROUPS = [
     (N_("Show in the top bar menu"), SHOW_MENUS),
     (N_("Language"), ["UiLanguage"]),
 ]
+# The Emoji page, as in fcitx5.
+EMOJI_SETTINGS = ["EmojiSuggestions", "EmojiPlacement", "YahooEmoticons"]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 # The mode of apps not set on their own, shown as the fcitx5 edition shows its Mode: (saved value, label, hint).
 TYPING_MODES = [
@@ -251,6 +272,7 @@ CHOICES = {
     "LockWordModifier": LOCK_KEYS,
     "TimeFormat": TIME_FORMATS,
     "DateFormat": DATE_FORMATS,
+    "EmojiPlacement": EMOJI_PLACEMENTS,
 }
 
 

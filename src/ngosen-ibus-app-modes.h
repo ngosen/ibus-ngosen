@@ -83,7 +83,8 @@ namespace ngosen {
     // The fcitx5 edition's app lists, such as ngosen-vim-apps.conf: one app per line, # for comments.
     using AppNameSet = std::set<std::string>;
     // The first lines fcitx5 writes, so the files look the same from either edition.
-    constexpr const char* VimAppsHeader = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line";
+    constexpr const char* VimAppsHeader      = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line";
+    constexpr const char* EmojiOffAppsHeader = "# Apps where Ngó Sen offers no emoji, one per line";
     AppNameSet            parseAppList(const std::string& text);
     std::string           appListText(const std::string& header, const AppNameSet& apps);
 

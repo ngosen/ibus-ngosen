@@ -89,6 +89,7 @@ namespace ngosen {
             {"ShowModePreedit", &IBusSettings::showModePreedit},
             {"ShowModeOff", &IBusSettings::showModeOff},
             {"ShowModeVim", &IBusSettings::showModeVim},
+            {"ShowModeEmoji", &IBusSettings::showModeEmoji},
             {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
             {"ShowMenuCharset", &IBusSettings::showMenuCharset},
             {"ShowMenuSpellCheck", &IBusSettings::showMenuSpellCheck},
@@ -158,6 +159,8 @@ namespace ngosen {
 
         const char* const ModeNames[]        = {"Disabled", "Non-Start", "Everywhere"};
         const char* const LockWordKeyNames[] = {"Disabled", "Shift", "Ctrl", "Alt"};
+        // fcitx5 stores the enum by its English label.
+        const char* const EmojiPlacementNames[] = {"After the word", "Instead of the word"};
 
         struct Reader {
             const std::map<std::string, std::string>& values;
@@ -271,6 +274,21 @@ namespace ngosen {
         }
     }
 
+    std::vector<EmojiWordEdit> emojiWordEdits(const IniFile& ini) {
+        std::vector<EmojiWordEdit> edits;
+        for (size_t i = 0;; ++i) {
+            const auto it = ini.sections.find("Words/" + std::to_string(i));
+            if (it == ini.sections.end())
+                return edits;
+            const auto value = [&](const char* key) {
+                const auto found = it->second.find(key);
+                return found != it->second.end() ? found->second : std::string();
+            };
+            if (!value("Keyword").empty() && !value("Emoji").empty())
+                edits.push_back({value("Keyword"), value("Emoji"), value("On") != "False"});
+        }
+    }
+
     std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name) {
         std::vector<std::string> keys;
         const auto               section = ini.sections.find(name);
@@ -318,6 +336,11 @@ namespace ngosen {
         read.boolean("DoubleHyphenToEmDash", o.doubleHyphenToEmDash);
         read.text("TimeFormat", o.timeFormat);
         read.text("DateFormat", o.dateFormat);
+        read.boolean("EmojiSuggestions", o.emojiSuggestions);
+        read.boolean("YahooEmoticons", o.yahooEmoticons);
+        int placement = o.emojiReplacesWord ? 1 : 0;
+        read.index("EmojiPlacement", placement, EmojiPlacementNames);
+        o.emojiReplacesWord = placement == 1;
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
@@ -327,6 +350,7 @@ namespace ngosen {
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
         read.shortcut("ShortcutVim", settings.shortcutVim);
+        read.shortcut("ShortcutEmoji", settings.shortcutEmoji);
         for (const auto& [key, shown] : ShownItems)
             read.boolean(key, settings.*shown);
         read.text("ModeOrder", settings.modeOrder);
@@ -363,6 +387,9 @@ namespace ngosen {
         line("DoubleHyphenToEmDash", boolText(o.doubleHyphenToEmDash));
         line("TimeFormat", o.timeFormat);
         line("DateFormat", o.dateFormat);
+        line("EmojiSuggestions", boolText(o.emojiSuggestions));
+        line("YahooEmoticons", boolText(o.yahooEmoticons));
+        line("EmojiPlacement", EmojiPlacementNames[o.emojiReplacesWord ? 1 : 0]);
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
@@ -372,6 +399,7 @@ namespace ngosen {
         line("ShortcutPreedit", settings.shortcutPreedit);
         line("ShortcutOff", settings.shortcutOff);
         line("ShortcutVim", settings.shortcutVim);
+        line("ShortcutEmoji", settings.shortcutEmoji);
         for (const auto& [key, shown] : ShownItems)
             line(key, boolText(settings.*shown));
         line("ModeOrder", settings.modeOrder);
@@ -435,6 +463,12 @@ namespace ngosen {
     }
     std::string SettingsPaths::vimAppsFile() const {
         return configDir + "/ngosen-vim-apps.conf";
+    }
+    std::string SettingsPaths::emojiWordsFile() const {
+        return configDir + "/ngosen-emoji-words.conf";
+    }
+    std::string SettingsPaths::emojiOffAppsFile() const {
+        return configDir + "/ngosen-emoji-off-apps.conf";
     }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
@@ -522,7 +556,8 @@ namespace ngosen {
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
             std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",
-                                              "UiLanguage",        CycleModeKeyName,      "ShortcutVim",          "RawWordAfterSlash"};
+                                              "UiLanguage",        CycleModeKeyName,      "ShortcutVim",          "RawWordAfterSlash",    "EmojiSuggestions",
+                                              "YahooEmoticons",    "EmojiPlacement",      "ShortcutEmoji"};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;
@@ -579,6 +614,7 @@ namespace ngosen {
                 {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},        {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
                 {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},   {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
                 {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()}, {paths.fcitxConfigDir + "/ngosen-vim-apps.conf", paths.vimAppsFile()},
+                {paths.fcitxConfigDir + "/ngosen-emoji-words.conf", paths.emojiWordsFile()}, {paths.fcitxConfigDir + "/ngosen-emoji-off-apps.conf", paths.emojiOffAppsFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))

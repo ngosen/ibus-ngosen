@@ -12,6 +12,7 @@ ADWAITA_EVERYWHERE = {
     "dialog-error-symbolic",
     "dialog-information-symbolic",
     "dialog-warning-symbolic",
+    "face-smile-symbolic",
     "document-edit-symbolic",
     "go-next-symbolic",
     "input-keyboard-symbolic",

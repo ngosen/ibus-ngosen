@@ -527,8 +527,9 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.window.content.get_title(), "Check")
         # Shown another way, the page still names itself and its row follows.
         self.window.stack.set_visible_child(self.window.macros.page)
-        self.assertEqual(self.window.content.get_title(), titles[1])
-        self.assertEqual(sidebar.get_selected_row().get_index(), 1)
+        index = titles.index(self.window.macros.page.get_title())
+        self.assertEqual(self.window.content.get_title(), titles[index])
+        self.assertEqual(sidebar.get_selected_row().get_index(), index)
         left = len(self.window.check.findings)
         self.assertEqual(self.window.check_badge.get_label(), str(left))
         self.assertEqual(self.window.check_badge.get_visible(), left > 0)

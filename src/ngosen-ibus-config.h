@@ -27,6 +27,8 @@ namespace ngosen {
     std::string              escapeIniValue(const std::string& value);
 
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
+    // fcitx5's ngosen-emoji-words.conf: the user's changes to the default emoji keywords.
+    std::vector<EmojiWordEdit> emojiWordEdits(const IniFile& ini);
     // The values of [name], keyed 0, 1, …, as fcitx5 stores a key list.
     std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name);
 
@@ -49,11 +51,13 @@ namespace ngosen {
         std::string shortcutPreedit = "q";
         std::string shortcutOff     = "e";
         std::string shortcutVim     = "v";
-        // Which modes the menu shows, and in what order; fcitx5's names, Emoji included.
+        std::string shortcutEmoji   = "w";
+        // Which modes the menu shows, and in what order; fcitx5's names.
         bool        showModeSen     = true;
         bool        showModePreedit = true;
         bool        showModeOff     = true;
         bool        showModeVim     = true;
+        bool        showModeEmoji   = true;
         std::string modeOrder       = "Sen,Preedit,Emoji,Off,Vim";
         // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
         bool showMenuInputMethod     = true;
@@ -94,6 +98,8 @@ namespace ngosen {
         std::string          appModesFile() const;
         std::string          appSwitchesFile() const;
         std::string          vimAppsFile() const;
+        std::string          emojiWordsFile() const;
+        std::string          emojiOffAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // Marks Sen as switched on once, so turning it off afterwards sticks.
