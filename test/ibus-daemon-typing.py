@@ -1815,8 +1815,10 @@ def menu_app(name, hints=0):
         | IBus.Capabilite.PREEDIT_TEXT
         | IBus.Capabilite.SURROUNDING_TEXT
         | IBus.Capabilite.LOOKUP_TABLE
+        | IBus.Capabilite.AUXILIARY_TEXT
     )
     app.menu = None
+    app.title = None
     # IBus frees the table after the signal, so keep its labels rather than the table.
     listen(
         app.ic,
@@ -1830,6 +1832,12 @@ def menu_app(name, hints=0):
         ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    listen(
+        app.ic,
+        "update-auxiliary-text",
+        lambda _ic, text, visible: setattr(app, "title", text.get_text() if visible else None),
+    )
+    app.ic.connect("hide-auxiliary-text", lambda _ic: setattr(app, "title", None))
     return app
 
 
@@ -1855,13 +1863,16 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen", "Gạch chân", "Tắt", "Vim mode: tắt"],
-    "menu: ` shows the three modes and Vim mode",
+    items == ["Gõ Sen  ✓", "Gạch chân", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes and Vim mode, with a mark on the mode in use",
     items,
 )
+# No desktop file names the test app, so the title keeps its program name.
+check(app.title == "Chế độ gõ cho menu", "menu: its title names the app", app.title)
 app.key(IBus.KEY_q)
 pump(500)
 check(app.menu is None, "menu: a pick closes it", app.menu)
+check(app.title == "Gạch chân", "menu: the note of the pick replaces the title", app.title)
 check(
     app_mode("menu") == "menu=5" and setting("DirectTyping") == "DirectTyping=True",
     "menu: q keeps the underline for this app only",
@@ -1890,6 +1901,12 @@ check(
     app.preedits,
 )
 app.key(IBus.KEY_grave)
+pump(200)
+check(
+    app.menu == ["Gõ Sen", "Gạch chân  ✓", "Tắt", "Vim mode: tắt"],
+    "menu: the mark follows the mode kept for the app",
+    app.menu,
+)
 app.key(IBus.KEY_1)
 pump(500)
 check(
@@ -1905,9 +1922,9 @@ app.key(IBus.KEY_grave)
 app.key(IBus.KEY_Escape)
 pump(200)
 check(
-    app.menu is None and app.text == "việt việt nam`",
-    "menu: Esc closes it and types nothing",
-    app.text,
+    app.menu is None and app.title is None and app.text == "việt việt nam`",
+    "menu: Esc closes it with its title and types nothing",
+    (app.title, app.text),
 )
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_e)
@@ -1952,6 +1969,27 @@ check(
     "menu: there 1 turns Sen on again",
     setting("DirectTyping"),
 )
+app.close()
+
+# On Plasma, ibus-ui-gtk3 relays every Wayland app under one name, as GNOME Shell does.
+app = menu_app("wayland")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    app.title == "Chế độ gõ",
+    "menu: the title names no app for a client of every Wayland app",
+    app.title,
+)
+app.key(IBus.KEY_q)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=False" and app_mode("wayland") == "",
+    "menu: there q turns Sen off for every app instead of keeping it for one name",
+    (setting("DirectTyping"), app_mode("wayland")),
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_1)
+pump(500)
 app.close()
 
 set_setting("ModeMenuKey", "Shift+asciitilde")
@@ -2031,7 +2069,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )

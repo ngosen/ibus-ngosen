@@ -29,6 +29,8 @@ namespace ngosen {
         MenuMode    mode;
         std::string label;
         guint       key = 0;
+        // The mode the app types in now, which the menu marks; the cursor may move away from it.
+        bool current = false;
     };
 
     // The shown modes in ModeOrder, then the ones it leaves out; a key an earlier item has picks nothing.

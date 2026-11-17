@@ -19,4 +19,8 @@ namespace ngosen {
     std::vector<std::string>   desktopFiles(const std::string& appId);
     std::optional<std::string> readStartupWmClass(const std::string& path);
 
+    // The name the desktop shows for an app the engine knows by its program name, found by desktop file
+    // id or StartupWMClass; the program name itself when no desktop file names it.
+    std::string appDisplayName(const std::string& program);
+
 } // namespace ngosen

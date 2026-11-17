@@ -8,6 +8,17 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thay đổi
+
+- Menu ` ghi đang đổi chế độ gõ cho app nào, như "Chế độ gõ cho Firefox", và đánh dấu ✓ cạnh chế độ app đang dùng,
+  nên vẫn thấy chế độ hiện tại khi dùng phím mũi tên đi qua các mục (#154).
+
+### Sửa
+
+- Trên Plasma, chọn chế độ trong menu ` giờ đổi chế độ chung cho mọi app, như khi đổi trong cửa sổ cài đặt. Trước đây
+  lựa chọn bị lưu dưới tên "wayland", áp cho mọi app mà vẫn đè lên cửa sổ cài đặt; lựa chọn cũ dưới tên đó nay được
+  bỏ qua (#154).
+
 ## [1.4.0-1] — 16/11/2026
 
 Gõ thừa phím sau từ tiếng Việt không còn làm mất dấu: nhấn Space thì bỏ phím thừa, tách `côngty` thành `công ty` hoặc

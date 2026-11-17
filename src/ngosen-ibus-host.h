@@ -98,8 +98,9 @@ namespace ngosen {
 
         std::string                  keyText(uint32_t sym) const override;
 
-        // The mode menu shares the lookup table; while it is open the candidates wait behind it.
-        void setMenuOpen(bool open);
+        // The mode menu shares the lookup table; while it is open the candidates wait behind it, and its
+        // title takes the line under the preedit.
+        void setMenuOpen(bool open, const std::string& title = {});
         // A short notice on the line under the preedit, which a status line from the core takes over.
         void showNotice(const std::string& text);
         void hideNotice();
@@ -134,6 +135,7 @@ namespace ngosen {
         std::string                  preedit_;
         std::string                  status_;
         std::string                  notice_;
+        std::string                  menuTitle_;
         std::optional<CandidateList> list_;
         bool                         tableShown_ = false;
         bool                         tableDirty_ = false;

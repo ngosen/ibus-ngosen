@@ -13,6 +13,7 @@
 #include "ngosen-ibus-keys.h"
 #include "ngosen-ibus-menu.h"
 #include "ngosen-ibus-mode-menu.h"
+#include "ngosen-ibus-program-name.h"
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-shell.h"
 #include "ngosen-ibus-typing-log.h"
@@ -324,7 +325,22 @@ namespace {
     }
 
     std::vector<ngosen::MenuItem> menuItems(const Session& session) {
-        return ngosen::modeMenuItems(resources().settings(), vimModeHere(session));
+        auto       items   = ngosen::modeMenuItems(resources().settings(), vimModeHere(session));
+        const auto current = menuModeOf(realMode);
+        for (auto& item : items)
+            item.current = item.mode == current;
+        return items;
+    }
+
+    // Names the app the menu changes, since a pick is kept for that app alone.
+    std::string menuTitle(const Session& session) {
+        const std::string app = ngosen::appDisplayName(currentApp(*session.host));
+        if (app.empty())
+            return _("Typing mode");
+        std::string title = _("Typing mode for {app}");
+        if (const size_t at = title.find("{app}"); at != std::string::npos)
+            title.replace(at, 5, app);
+        return title;
     }
 
     void showModeMenu(IBusEngine* engine, const Session& session) {
@@ -338,13 +354,12 @@ namespace {
         session.menuOpen   = true;
         session.menuCursor = 0;
         // As in fcitx5 the cursor starts on the mode the app types in.
-        const auto items   = menuItems(session);
-        const auto current = menuModeOf(realMode);
+        const auto items = menuItems(session);
         for (guint i = 0; i < items.size(); ++i) {
-            if (items[i].mode == current)
+            if (items[i].current)
                 session.menuCursor = i;
         }
-        session.host->setMenuOpen(true);
+        session.host->setMenuOpen(true, menuTitle(session));
         showModeMenu(engine, session);
     }
 

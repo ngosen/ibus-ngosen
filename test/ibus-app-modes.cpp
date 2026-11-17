@@ -30,7 +30,7 @@ namespace {
         check(modeAppName("firefox_firefox") == "firefox", "a snap is named once");
         check(modeAppName("org.gnome.TextEditor.desktop") == "org.gnome.TextEditor", "a GNOME app is named without .desktop");
         check(modeAppName("org.gnome.Ptyxis") == "org.gnome.Ptyxis", "a name stays as it is");
-        for (const char* shared : {"", "gnome-shell", "QIBusInputContext", "xim"})
+        for (const char* shared : {"", "gnome-shell", "QIBusInputContext", "xim", "wayland"})
             check(modeAppName(shared).empty(), std::string("no single app: ") + shared);
     }
 

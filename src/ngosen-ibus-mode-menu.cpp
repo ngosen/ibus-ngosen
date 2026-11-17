@@ -135,7 +135,8 @@ namespace ngosen {
         IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(items.size()), cursor, TRUE, TRUE);
         ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
         for (guint i = 0; i < items.size(); ++i) {
-            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(items[i].label.c_str()));
+            const std::string text = items[i].current ? items[i].label + "  \u2713" : items[i].label;
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(text.c_str()));
             // A key an earlier item took shows no label, as in fcitx5.
             gchar* label = items[i].key == IBUS_KEY_VoidSymbol ? g_strdup("") : g_strdup_printf("%s.", ibus_keyval_name(items[i].key));
             ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label));

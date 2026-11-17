@@ -26,7 +26,8 @@ namespace ngosen {
     using AppModeMap = std::map<std::string, AppMode>;
 
     // The name a mode is remembered by, from the program a field reports. Empty when the name stands for
-    // no single app: GNOME Shell before the portal names the app, Qt and XIM clients of any app.
+    // no single app: GNOME Shell before the portal names the app, ibus-ui-gtk3 as the Wayland input method
+    // of Plasma, Qt and XIM clients of any app.
     std::string modeAppName(const std::string& program);
 
     // The fcitx5 edition's ngosen-app-rules.conf format: "app=number", 0 for Off, 2 for Sen and 5 for

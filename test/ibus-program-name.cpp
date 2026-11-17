@@ -3,6 +3,7 @@
  *
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+#include "ngosen-ibus-i18n.h"
 #include "ngosen-ibus-program-name.h"
 
 #include <filesystem>
@@ -47,6 +48,8 @@ int main() {
     // GLib reads the data directories once, so they are set before the first lookup.
     const std::string userExports   = "home/flatpak/exports/share";
     const std::string systemExports = "system/flatpak/exports/share";
+    // Desktop file names follow the UI language.
+    g_setenv("LANGUAGE", "vi", TRUE);
     g_setenv("XDG_DATA_HOME", (root + "/home").c_str(), TRUE);
     g_setenv("XDG_DATA_DIRS", (root + "/" + userExports + ":" + root + "/" + systemExports + ":" + root + "/native").c_str(), TRUE);
 
@@ -86,6 +89,18 @@ int main() {
     g_mkdir_with_parents((root + "/" + userExports + "/applications/com.example.Viewer.desktop").c_str(), 0700);
     writeFile(systemExports, "com.example.Viewer.desktop", "[Desktop Entry]\nStartupWMClass=imgview\n");
     expect("an unreadable export", gnomeProgramName("com.example.Viewer.desktop"), "imgview");
+
+    writeFile("native", "imgedit.desktop", "[Desktop Entry]\nName=Image Editor\nName[vi]=Sửa ảnh\n");
+    writeFile("native", "org.example.Notes.desktop", "[Desktop Entry]\nName=Notes\nStartupWMClass=notes-app\n");
+    expect("the name in the language in use", appDisplayName("imgedit"), "Sửa ảnh");
+    setUiEnglish(true);
+    expect("the English name while the engine's text is English", appDisplayName("imgedit"), "Image Editor");
+    setUiEnglish(false);
+    expect("a name found by the desktop file id", appDisplayName("org.example.Notes"), "Notes");
+    expect("a name found by the class, whatever its case", appDisplayName("Notes-App"), "Notes");
+    expect("a desktop file with no name", appDisplayName("firefox"), "firefox");
+    expect("no desktop file keeps the program name", appDisplayName("unknown-prog"), "unknown-prog");
+    expect("no program", appDisplayName(""), "");
 
     std::filesystem::remove_all(root);
     if (failures == 0)

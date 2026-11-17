@@ -77,6 +77,14 @@ msgstr "Tiếng Anh"
 msgid "OFF"
 msgstr "Tắt"
 
+#: src/ngosen-ibus-engine.cpp
+msgid "Typing mode"
+msgstr "Chế độ gõ"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Typing mode for {app}"
+msgstr "Chế độ gõ cho {app}"
+
 #: settings/ngosen_settings/options.py
 msgid "Output Charset"
 msgstr "Bảng mã"
