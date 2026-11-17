@@ -1266,6 +1266,14 @@ msgstr "Vim mode: bật"
 msgid "Vim mode: off"
 msgstr "Vim mode: tắt"
 
+#: src/ngosen-ibus-mode-menu.cpp src/ngosen-ibus-engine.cpp
+msgid "Emoji suggestions: on"
+msgstr "Gợi ý emoji: bật"
+
+#: src/ngosen-ibus-mode-menu.cpp src/ngosen-ibus-engine.cpp
+msgid "Emoji suggestions: off"
+msgstr "Gợi ý emoji: tắt"
+
 #: settings/ngosen_settings/options.py
 msgid "Type a word that starts with / as is"
 msgstr "Gõ thô sau dấu / đầu từ (lệnh, đường dẫn)"
@@ -1277,3 +1285,47 @@ msgstr "/cost và /usr/share giữ nguyên như đã gõ khi ở đầu dòng ho
 #: ngosen/src/core/ngosen-state-emoji-offer.cpp
 msgid "pick, Space or Enter: the first, Esc: keep the word"
 msgstr "chọn · Space, Enter: lấy cái đầu · Esc: giữ chữ"
+
+#: settings/ngosen_settings/options.py
+msgid "Show emoji suggestions"
+msgstr "Hiển thị Gợi ý emoji"
+
+#: settings/ngosen_settings/options.py
+msgid "Shortcut for emoji suggestions"
+msgstr "Phím tắt cho Gợi ý emoji"
+
+#: settings/ngosen_settings/options.py
+msgid "Suggest emoji while typing"
+msgstr "Gợi ý emoji khi gõ"
+
+#: settings/ngosen_settings/options.py
+msgid "Put a picked emoji"
+msgstr "Khi chọn emoji"
+
+#: settings/ngosen_settings/options.py
+msgid "Yahoo Messenger emoticons"
+msgstr "Mã emoji Yahoo Messenger"
+
+#: settings/ngosen_settings/options.py
+msgid "cười shows Tab: 😂 … next to the cursor. Tab numbers them: 1–5 picks one, Tab, Space or Enter the first, Esc keeps the word. haha and :) are replaced. Only where the hint is known to show."
+msgstr "Gõ cười là hiện Tab: 😂 … cạnh con trỏ. Bấm Tab để đánh số: 1–5 chọn một emoji, Tab, Space hoặc Enter lấy cái đầu, Esc giữ nguyên chữ. haha và :) được thay bằng emoji. Chỉ hiện ở nơi chắc chắn vẽ được gợi ý."
+
+#: settings/ngosen_settings/options.py
+msgid "=)) and :x offer 🤣 and 😍, like on Yahoo Messenger; Tab swaps the code for the emoji."
+msgstr "Gõ =)) hay :x là gợi ý 🤣 hay 😍 như hồi Yahoo Messenger; bấm Tab để thay mã bằng emoji."
+
+#: settings/ngosen_settings/options.py
+msgid "After the word: cười 😂. Instead of the word: 😂. haha and :) are always replaced."
+msgstr "Đặt sau từ: cười 😂. Thay luôn từ: 😂. Còn haha và :) thì luôn được thay."
+
+#: settings/ngosen_settings/options.py
+msgid "After the word"
+msgstr "Đặt sau từ"
+
+#: settings/ngosen_settings/options.py
+msgid "Instead of the word"
+msgstr "Thay luôn từ"
+
+#: settings/ngosen_settings/pages.py
+msgid "Emoji"
+msgstr "Emoji"

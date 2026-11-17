@@ -52,6 +52,11 @@ namespace {
         return apps;
     }
 
+    ngosen::AppList& emojiOffApps() {
+        static ngosen::AppList apps(resources().paths().emojiOffAppsFile(), ngosen::EmojiOffAppsHeader);
+        return apps;
+    }
+
     // The client of the field typed in last. With use-global-engine on, the default, one engine serves
     // every field, so this is all that is left of it once the focus is in the fake context.
     std::string lastClient;
@@ -154,9 +159,11 @@ namespace {
         ToggleTap                            tap;
         bool                                 showsNotice = false;
         bool                                 menuOpen    = false;
-        // Vim mode for the field in focus when its app has no name to keep it under, as fcitx5 keeps it for the field.
-        bool  vimHere    = false;
-        guint menuCursor = 0;
+        // Vim mode and emoji suggestions for the field in focus when its app has no name to keep them under, as
+        // fcitx5 keeps them for the field.
+        bool  vimHere      = false;
+        bool  emojiOffHere = false;
+        guint menuCursor   = 0;
         // The key whose release the app must not see, as it never saw the press.
         guint menuKeyDown = 0;
 
@@ -324,8 +331,13 @@ namespace {
         return app.empty() ? session.vimHere : vimApps().has(app);
     }
 
+    bool emojiHere(const Session& session) {
+        const std::string app = currentApp(*session.host);
+        return app.empty() ? !session.emojiOffHere : !emojiOffApps().has(app);
+    }
+
     std::vector<ngosen::MenuItem> menuItems(const Session& session) {
-        auto       items   = ngosen::modeMenuItems(resources().settings(), vimModeHere(session));
+        auto       items   = ngosen::modeMenuItems(resources().settings(), vimModeHere(session), emojiHere(session));
         const auto current = menuModeOf(realMode);
         for (auto& item : items)
             item.current = item.mode == current;
@@ -429,9 +441,28 @@ namespace {
         session.showsNotice = true;
     }
 
+    void switchEmoji(IBusEngine* engine, Session& session) {
+        closeModeMenu(engine, session);
+        const bool        on  = !emojiHere(session);
+        const std::string app = currentApp(*session.host);
+        if (app.empty())
+            session.emojiOffHere = !on;
+        else if (!emojiOffApps().set(app, !on))
+            NGOSEN_WARN("Cannot save emoji suggestions for " + app);
+        session.state->setEmojiOn(on);
+        const char* label = on ? _("Emoji suggestions: on") : _("Emoji suggestions: off");
+        NGOSEN_INFO(std::string("Mode menu: ") + label);
+        session.host->showNotice(label);
+        session.showsNotice = true;
+    }
+
     void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
         if (item.mode == ngosen::MenuMode::Vim) {
             switchVimMode(engine, session);
+            return;
+        }
+        if (item.mode == ngosen::MenuMode::Emoji) {
+            switchEmoji(engine, session);
             return;
         }
         closeModeMenu(engine, session);
@@ -545,8 +576,9 @@ namespace {
         // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
         else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
             session->state->commitBuffer();
-        // The portal may name the app after focus-in, so its Vim mode is looked up at each key.
+        // The portal may name the app after focus-in, so its switches are looked up at each key.
         session->state->setVimKeys(vimModeHere(*session));
+        session->state->setEmojiOn(emojiHere(*session));
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -693,8 +725,9 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->tap     = {};
-        session->vimHere = false;
+        session->tap          = {};
+        session->vimHere      = false;
+        session->emojiOffHere = false;
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();
