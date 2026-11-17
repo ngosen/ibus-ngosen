@@ -1975,7 +1975,11 @@ app.close()
 app = menu_app("wayland")
 app.key(IBus.KEY_grave)
 pump(200)
-check(app.title == "Chế độ gõ", "menu: the title names no app for a client of every Wayland app", app.title)
+check(
+    app.title == "Chế độ gõ",
+    "menu: the title names no app for a client of every Wayland app",
+    app.title,
+)
 app.key(IBus.KEY_q)
 pump(500)
 check(
