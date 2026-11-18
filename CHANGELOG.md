@@ -23,7 +23,7 @@ menu được gõ ra, click ra ngoài hay để yên 5 giây thì menu đóng. D
 ### Sửa
 
 - Bản IBus nhận bản sửa của lõi: trên GNOME, gõ nhanh ngay sau khi mở Firefox, nhấn Backspace hai lần liền không còn
-  mất một lần (`nam tieesng`, xoá `ng` rồi gõ lại ra `nam tiiếng`) (ngosen/ngosen#815) (#155).
+  mất một lần (`nam tieesng`, xoá `ng` rồi gõ lại nay ra `nam tiếng`, trước đây ra `nam tiiếng`) (ngosen/ngosen#815) (#155).
 - Bản IBus nhận các bản sửa của lõi 1.12.2: gõ lại dấu thanh sau phụ âm cuối ra đúng chữ (`mooxtj` ra `một`, `toorts`
   ra `tốt` thay vì `mỗ`, `tổ`), `aface` không còn bị cắt thành `ầ` (ngosen/ngosen#835); trên GNOME, gõ nhanh ngay sau
   khi mở Firefox, xoá vài chữ bằng Backspace rồi gõ tiếp không còn thỉnh thoảng ra `nam tiếig` (ngosen/ngosen#831);
