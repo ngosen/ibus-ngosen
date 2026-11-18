@@ -69,7 +69,7 @@ sudo dnf install ibus-ngosen
 Trên Debian, Ubuntu, Arch và openSUSE, có thể cài từ kho APT, pacman, zypper của Ngó Sen, để `apt upgrade`,
 `pacman -Syu`, `zypper up` tự lên version mới: thêm kho theo
 [hướng dẫn của bản fcitx5](https://github.com/ngosen/ngosen#cập-nhật-bằng-trình-quản-lý-gói), rồi cài `ibus-ngosen`
-thay cho `fcitx5-ngosen`.
+thay cho `fcitx5-ngosen`. Trên Arch còn có thể cài từ AUR, tự build trên máy: `yay -S ibus-ngosen`.
 
 ## Chuyển qua lại với bản fcitx5
 
