@@ -65,9 +65,11 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
-* Tue Nov 17 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.4.1-1
-- Two Backspaces pressed back to back right after Firefox opens on GNOME no longer lose one;
-  three settings labels drop "(experimental)"; core ngosen-1.12.1-1.
+* Wed Nov 18 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.4.1-1
+- Fast typing with Backspace right after Firefox opens on GNOME no longer loses a Backspace
+  or mixes up letters; a tone retyped after a final consonant gives the right word; Brave
+  on GNOME keeps its tones; the mode menu closes as in the fcitx5 edition; three settings
+  labels drop "(experimental)"; core ngosen-1.12.2-1.
 
 * Mon Nov 16 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.4.0-1
 - Extra keys after a Vietnamese word no longer undo its marks; Space drops them, splits off
