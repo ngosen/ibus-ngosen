@@ -160,6 +160,8 @@ namespace {
         guint clickTimer = 0;
         // The last key press or the opening of the menu, whichever came later.
         gint64 menuQuietSince = 0;
+        // Clicks seen up to the opening of the menu; a click queued before it must not close it.
+        unsigned menuClicks = 0;
         // The key whose release the app must not see, as it never saw the press.
         guint menuKeyDown = 0;
 
@@ -398,6 +400,7 @@ namespace {
         // A click before the menu opened would close it at once.
         g_mouse_clicked.store(false, std::memory_order_release);
         session.menuQuietSince = g_get_monotonic_time();
+        session.menuClicks     = clicksSeen.load(std::memory_order_acquire);
         stopTimer(session.clickTimer);
         closeModeMenuLater(engine, session);
     }
@@ -915,15 +918,15 @@ namespace ngosen {
             watchX11PointerClicks(stop, [] {
                 needEngineReset.store(true, std::memory_order_release);
                 g_mouse_clicked.store(true, std::memory_order_release);
-                clicksSeen.fetch_add(1, std::memory_order_acq_rel);
+                const unsigned click = clicksSeen.fetch_add(1, std::memory_order_acq_rel) + 1;
                 g_idle_add(
-                    [](gpointer) -> gboolean {
-                        if (focusedEngine != nullptr)
-                            if (Session* session = sessionOf(focusedEngine))
-                                pointerClicked(focusedEngine, *session);
+                    [](gpointer data) -> gboolean {
+                        Session* session = focusedEngine != nullptr ? sessionOf(focusedEngine) : nullptr;
+                        if (session != nullptr && GPOINTER_TO_UINT(data) > session->menuClicks)
+                            pointerClicked(focusedEngine, *session);
                         return G_SOURCE_REMOVE;
                     },
-                    nullptr);
+                    GUINT_TO_POINTER(click));
             });
             clicksWatched.store(false, std::memory_order_release);
         });
