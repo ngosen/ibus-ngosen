@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Menu chọn chế độ gõ (mở bằng `` ` ``) nay đóng như bản fcitx5: bấm phím không có trong menu thì menu đóng và gõ ra
+  phím đó thay vì nuốt phím, click ra ngoài hay vào ô đang gõ thì menu đóng, để yên 5 giây thì menu tự tắt (#157).
+
 ## [1.4.0-1] — 16/11/2026
 
 Gõ thừa phím sau từ tiếng Việt không còn làm mất dấu: nhấn Space thì bỏ phím thừa, tách `côngty` thành `công ty` hoặc
