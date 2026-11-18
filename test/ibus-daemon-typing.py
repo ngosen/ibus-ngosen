@@ -1981,6 +1981,43 @@ app.close()
 set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
 
+# As in fcitx5 the menu closes once the user goes on typing, clicks away or leaves it alone.
+app = menu_app("menu-close")
+app.key(IBus.KEY_grave)
+pump(200)
+app.type("a")
+pump(200)
+check(
+    app.menu is None and app.preedit == "a",
+    "menu: a key not in it closes it and is typed",
+    (app.menu, app.text, app.preedit),
+)
+app.close()
+app = menu_app("menu-idle")
+app.key(IBus.KEY_grave)
+pump(4000)
+check(app.menu is not None, "menu: still open 4 seconds on", app.menu)
+pump(1300)
+check(app.menu is None, "menu: left alone it closes after 5 seconds", app.menu)
+app.close()
+app = menu_app("menu-report")
+app.key(IBus.KEY_grave)
+pump(400)
+app.report()
+pump(20)
+app.key(IBus.KEY_Down)
+pump(300)
+check(app.menu is not None, "menu: a report followed by a key keeps it", app.menu)
+app.close()
+app = menu_app("menu-caret")
+app.type("viet ")
+app.key(IBus.KEY_grave)
+pump(400)
+app.ic.set_surrounding_text(IBus.Text.new_from_string(app.text), 0, 0)
+pump(300)
+check(app.menu is None, "menu: a caret moved with no key closes it", app.menu)
+app.close()
+
 # The panel's clicks and arrows reach the menu, as GNOME Shell sends them.
 panel = TrayPanel()
 bus.request_name(IBus.SERVICE_PANEL, 0)
@@ -2038,16 +2075,18 @@ check(
 app.key(IBus.KEY_q)
 pump(300)
 check(
-    app.menu is not None and app_mode("menu-order") == "",
-    "menu: q picks nothing while hidden",
-    app.menu,
+    app.menu is None and app_mode("menu-order") == "" and app.text == "q",
+    "menu: q picks nothing while hidden and is typed",
+    (app.menu, app.text),
 )
-app.key(IBus.KEY_Escape)
 for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "False")
+app.type(" ")
 app.key(IBus.KEY_grave)
 pump(200)
-check(app.menu is None and app.text == "`", "menu: with every mode hidden ` types itself", app.text)
+check(
+    app.menu is None and app.text == "q `", "menu: with every mode hidden ` types itself", app.text
+)
 app.close()
 for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
     set_setting(name, "True")

@@ -46,14 +46,14 @@ namespace ngosen {
     // What a key pressed while the menu is open does.
     struct MenuKey {
         enum Kind {
-            Swallow,
+            TypeOn,
             Close,
             Up,
             Down,
             PickCursor,
             Pick,
             TypeMenuKey
-        } kind        = Swallow;
+        } kind        = TypeOn;
         MenuMode mode = MenuMode::Sen;
     };
 

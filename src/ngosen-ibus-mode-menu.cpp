@@ -128,7 +128,7 @@ namespace ngosen {
         // As in the fcitx5 edition: the menu key again types itself, since ` is common in code.
         if (matchesAny(settings.modeMenuKeys, keyval, state))
             return {MenuKey::TypeMenuKey};
-        return {MenuKey::Swallow};
+        return {MenuKey::TypeOn};
     }
 
     IBusLookupTable* newModeMenuTable(const std::vector<MenuItem>& items, guint cursor) {
