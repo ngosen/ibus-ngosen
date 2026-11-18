@@ -12,8 +12,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 Trên GNOME, gõ nhanh ngay sau khi mở Firefox rồi xoá bằng Backspace không còn mất phím hay lộn chữ. Gõ lại dấu thanh
 sau phụ âm cuối ra đúng chữ, và Brave không còn mất dấu. Menu chọn chế độ gõ đóng như bản fcitx5: phím không có trong
-menu được gõ ra, click ra ngoài hay để yên 5 giây thì menu đóng. Dùng lõi Ngó Sen `ngosen-1.12.2-1`. Tải gói ở
-[release ibus-ngosen-1.4.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.4.1-1).
+menu được gõ ra, click ra ngoài hay để yên 5 giây thì menu đóng. Arch cài được từ AUR. Dùng lõi Ngó Sen
+`ngosen-1.12.2-1`. Tải gói ở [release ibus-ngosen-1.4.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.4.1-1).
+
+### Thêm
+
+- Arch và các distro dựa trên Arch cài được từ AUR: `yay -S ibus-ngosen`. Mỗi version mới tự lên AUR khi phát
+  hành (#158).
 
 ### Thay đổi
 
