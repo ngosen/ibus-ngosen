@@ -8,10 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
-## [1.4.1-1] — 17/11/2026
+## [1.4.1-1] — 18/11/2026
 
-Trên GNOME, gõ nhanh ngay sau khi mở Firefox, nhấn Backspace hai lần liền không còn mất một lần. Dùng lõi Ngó Sen
-`ngosen-1.12.1-1`. Tải gói ở
+Trên GNOME, gõ nhanh ngay sau khi mở Firefox rồi xoá bằng Backspace không còn mất phím hay lộn chữ. Gõ lại dấu thanh
+sau phụ âm cuối ra đúng chữ, và Brave không còn mất dấu. Menu chọn chế độ gõ đóng như bản fcitx5: phím không có trong
+menu được gõ ra, click ra ngoài hay để yên 5 giây thì menu đóng. Dùng lõi Ngó Sen `ngosen-1.12.2-1`. Tải gói ở
 [release ibus-ngosen-1.4.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.4.1-1).
 
 ### Thay đổi
@@ -23,6 +24,12 @@ Trên GNOME, gõ nhanh ngay sau khi mở Firefox, nhấn Backspace hai lần li�
 
 - Bản IBus nhận bản sửa của lõi: trên GNOME, gõ nhanh ngay sau khi mở Firefox, nhấn Backspace hai lần liền không còn
   mất một lần (`nam tieesng`, xoá `ng` rồi gõ lại ra `nam tiiếng`) (ngosen/ngosen#815) (#155).
+- Bản IBus nhận các bản sửa của lõi 1.12.2: gõ lại dấu thanh sau phụ âm cuối ra đúng chữ (`mooxtj` ra `một`, `toorts`
+  ra `tốt` thay vì `mỗ`, `tổ`), `aface` không còn bị cắt thành `ầ` (ngosen/ngosen#835); trên GNOME, gõ nhanh ngay sau
+  khi mở Firefox, xoá vài chữ bằng Backspace rồi gõ tiếp không còn thỉnh thoảng ra `nam tiếig` (ngosen/ngosen#831);
+  Brave trên GNOME không còn mất dấu hay lộn chữ (`oonr` ra `ổn`) (ngosen/ngosen#842) (#155).
+- Menu chọn chế độ gõ (mở bằng `` ` ``) nay đóng như bản fcitx5: bấm phím không có trong menu thì menu đóng và gõ ra
+  phím đó thay vì nuốt phím, click ra ngoài hay vào ô đang gõ thì menu đóng, để yên 5 giây thì menu tự tắt (#157).
 
 ## [1.4.0-1] — 16/11/2026
 

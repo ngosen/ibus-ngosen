@@ -156,6 +156,12 @@ namespace {
         // Vim mode for the field in focus when its app has no name to keep it under, as fcitx5 keeps it for the field.
         bool  vimHere    = false;
         guint menuCursor = 0;
+        guint menuTimer  = 0;
+        guint clickTimer = 0;
+        // The last key press or the opening of the menu, whichever came later.
+        gint64 menuQuietSince = 0;
+        // Clicks seen up to the opening of the menu; a click queued before it must not close it.
+        unsigned menuClicks = 0;
         // The key whose release the app must not see, as it never saw the press.
         guint menuKeyDown = 0;
 
@@ -235,7 +241,22 @@ namespace {
     void showMenu(IBusEngine* engine, const ngosen::IBusSettings& settings, bool clicked = false);
     void showLanguageItem(IBusEngine* engine);
 
+    // Clears a menu left where no click reaches the engine.
+    constexpr guint MenuTimeoutMs = 5000;
+    // The panel picks an item on button press, so a click on the menu itself is handled first.
+    constexpr guint MenuClickDelayMs = 100;
+    // A report this soon after the menu opens or a key answers the commit or the key, not a click.
+    constexpr gint64 MenuEchoUs = 250000;
+
+    void             stopTimer(guint& id) {
+        if (id != 0)
+            g_source_remove(id);
+        id = 0;
+    }
+
     void closeModeMenu(IBusEngine* engine, Session& session) {
+        stopTimer(session.menuTimer);
+        stopTimer(session.clickTimer);
         if (!session.menuOpen)
             return;
         session.menuOpen = false;
@@ -331,6 +352,36 @@ namespace {
         ibus_engine_update_lookup_table(engine, ngosen::newModeMenuTable(menuItems(session), session.menuCursor), TRUE);
     }
 
+    // Both timers stop before the session goes, so the engine they hold is still alive when they fire.
+    gboolean closeIdleMenu(gpointer data) {
+        auto*    engine    = static_cast<IBusEngine*>(data);
+        Session* session   = sessionOf(engine);
+        session->menuTimer = 0;
+        closeModeMenu(engine, *session);
+        return G_SOURCE_REMOVE;
+    }
+
+    void closeModeMenuLater(IBusEngine* engine, Session& session) {
+        stopTimer(session.menuTimer);
+        session.menuTimer = g_timeout_add(MenuTimeoutMs, closeIdleMenu, engine);
+    }
+
+    gboolean closeClickedMenu(gpointer data) {
+        auto*    engine     = static_cast<IBusEngine*>(data);
+        Session* session    = sessionOf(engine);
+        session->clickTimer = 0;
+        closeModeMenu(engine, *session);
+        return G_SOURCE_REMOVE;
+    }
+
+    // A click that may not have moved the caret; the menu closes unless a key comes first.
+    void pointerClicked(IBusEngine* engine, Session& session) {
+        if (!session.menuOpen)
+            return;
+        stopTimer(session.clickTimer);
+        session.clickTimer = g_timeout_add(MenuClickDelayMs, closeClickedMenu, engine);
+    }
+
     void openModeMenu(IBusEngine* engine, Session& session) {
         // The word ends before the menu, as in the fcitx5 edition.
         session.state->commitBuffer();
@@ -346,6 +397,12 @@ namespace {
         }
         session.host->setMenuOpen(true);
         showModeMenu(engine, session);
+        // A click before the menu opened would close it at once.
+        g_mouse_clicked.store(false, std::memory_order_release);
+        session.menuQuietSince = g_get_monotonic_time();
+        session.menuClicks     = clicksSeen.load(std::memory_order_acquire);
+        stopTimer(session.clickTimer);
+        closeModeMenuLater(engine, session);
     }
 
     // As in fcitx5, a pick is kept for the app unless it is the mode the app gets anyway; Off and picks made
@@ -432,27 +489,29 @@ namespace {
         const auto count   = static_cast<int>(menuItems(session).size());
         session.menuCursor = static_cast<guint>((static_cast<int>(session.menuCursor) + step + count) % count);
         showModeMenu(engine, session);
+        closeModeMenuLater(engine, session);
     }
 
-    void applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
+    // False when the key goes on to be typed.
+    bool applyMenuKey(IBusEngine* engine, Session& session, const ngosen::MenuKey& key, guint keyval) {
         const auto items = menuItems(session);
         // A restore may hide items while the menu is open.
         if (items.empty()) {
             closeModeMenu(engine, session);
-            return;
+            return true;
         }
         session.menuCursor = std::min(session.menuCursor, static_cast<guint>(items.size() - 1));
         switch (key.kind) {
-            case ngosen::MenuKey::Close: closeModeMenu(engine, session); return;
-            case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); return;
-            case ngosen::MenuKey::Down: moveMenuCursor(engine, session, 1); return;
-            case ngosen::MenuKey::PickCursor: pickMode(engine, session, items[session.menuCursor]); return;
+            case ngosen::MenuKey::Close: closeModeMenu(engine, session); return true;
+            case ngosen::MenuKey::Up: moveMenuCursor(engine, session, -1); return true;
+            case ngosen::MenuKey::Down: moveMenuCursor(engine, session, 1); return true;
+            case ngosen::MenuKey::PickCursor: pickMode(engine, session, items[session.menuCursor]); return true;
             case ngosen::MenuKey::Pick:
                 for (const auto& item : items) {
                     if (item.mode == key.mode)
                         pickMode(engine, session, item);
                 }
-                return;
+                return true;
             case ngosen::MenuKey::TypeMenuKey: {
                 closeModeMenu(engine, session);
                 gchar text[8] = {};
@@ -460,10 +519,12 @@ namespace {
                     g_unichar_to_utf8(c, text);
                     session.host->commitText(text);
                 }
-                return;
+                return true;
             }
-            case ngosen::MenuKey::Swallow: return;
+            // As in fcitx5, any other key means the user went on typing.
+            case ngosen::MenuKey::TypeOn: closeModeMenu(engine, session); return false;
         }
+        return true;
     }
 
     // True when the app must not see this key.
@@ -477,7 +538,8 @@ namespace {
         if (ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
             return false;
         if (session.menuOpen) {
-            applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval);
+            if (!applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval))
+                return false;
         } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
             cycleMode(engine, session);
         } else {
@@ -494,6 +556,16 @@ namespace {
     bool isPlainEnter(guint keyval, guint state) {
         constexpr guint modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_RELEASE_MASK;
         return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
+    }
+
+    // Only a pressed key reaches the menu; a release may end a key held across a click.
+    void notePressWhileMenuOpen(IBusEngine* engine, Session& session, guint state) {
+        if (!session.menuOpen || (state & IBUS_RELEASE_MASK) != 0)
+            return;
+        session.menuQuietSince = g_get_monotonic_time();
+        stopTimer(session.clickTimer);
+        if (g_mouse_clicked.load(std::memory_order_acquire))
+            closeModeMenu(engine, session);
     }
 
     gboolean processKeyEvent(IBusEngine* engine, guint keyval, guint keycode, guint state) {
@@ -514,6 +586,7 @@ namespace {
             session->tap = {};
             return FALSE;
         }
+        notePressWhileMenuOpen(engine, *session, state);
         if (handleToggleKey(engine, *session, keyval, state))
             return TRUE;
         // A terminal password prompt gets the keys as typed, and they stay out of the typing log.
@@ -727,8 +800,16 @@ namespace {
     void setSurroundingText(IBusEngine* engine, IBusText* text, guint cursor, guint anchor) {
         IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->set_surrounding_text(engine, text, cursor, anchor);
         if (Session* session = sessionOf(engine)) {
+            const bool seenClick = g_mouse_clicked.load(std::memory_order_acquire);
+            const bool quietMenu = session->menuOpen && g_get_monotonic_time() - session->menuQuietSince >= MenuEchoUs;
             session->host->setReportedText(ibus_text_get_text(text), cursor, anchor);
             session->state->surroundingUpdated();
+            // The caret moving with no edit is the only sign of a click the app gives on Wayland.
+            if (!seenClick && g_mouse_clicked.load(std::memory_order_acquire))
+                closeModeMenu(engine, *session);
+            // Some apps report just before each key, so a key that follows keeps the menu.
+            else if (quietMenu)
+                pointerClicked(engine, *session);
         }
     }
 
@@ -743,6 +824,10 @@ namespace {
         auto* self = reinterpret_cast<NgoSenEngine*>(object);
         if (focusedEngine == &self->parent)
             focusedEngine = nullptr;
+        if (self->session != nullptr) {
+            stopTimer(self->session->menuTimer);
+            stopTimer(self->session->clickTimer);
+        }
         delete self->session;
         self->session = nullptr;
         IBUS_OBJECT_CLASS(ngosen_engine_parent_class)->destroy(object);
@@ -837,7 +922,15 @@ namespace ngosen {
             watchX11PointerClicks(stop, [] {
                 needEngineReset.store(true, std::memory_order_release);
                 g_mouse_clicked.store(true, std::memory_order_release);
-                clicksSeen.fetch_add(1, std::memory_order_acq_rel);
+                const unsigned click = clicksSeen.fetch_add(1, std::memory_order_acq_rel) + 1;
+                g_idle_add(
+                    [](gpointer data) -> gboolean {
+                        Session* session = focusedEngine != nullptr ? sessionOf(focusedEngine) : nullptr;
+                        if (session != nullptr && GPOINTER_TO_UINT(data) > session->menuClicks)
+                            pointerClicked(focusedEngine, *session);
+                        return G_SOURCE_REMOVE;
+                    },
+                    GUINT_TO_POINTER(click));
             });
             clicksWatched.store(false, std::memory_order_release);
         });
