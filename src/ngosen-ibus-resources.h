@@ -19,7 +19,7 @@ namespace ngosen {
     std::string bundledEnglishWordsFile();
     std::string bundledKeepWordsFile();
 
-    // Settings and tables every field shares. No emoji list: the IBus edition has no emoji picker.
+    // Settings and tables every field shares.
     class IBusResources final : public EngineResources {
       public:
         explicit IBusResources(SettingsPaths paths);
@@ -45,13 +45,6 @@ namespace ngosen {
         uintptr_t keepWords() const override {
             return keepWords_;
         }
-        std::vector<EmojiEntry> emojiHistory() override {
-            return {};
-        }
-        std::vector<EmojiEntry> searchEmoji(const std::string& /*prefix*/) override {
-            return {};
-        }
-        void      recordEmoji(const EmojiEntry& /*entry*/) override {}
         Recorder& recorder() override {
             return recorder_;
         }
