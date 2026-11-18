@@ -8,8 +8,15 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
 - Arch và các distro dựa trên Arch cài được từ AUR: `yay -S ibus-ngosen`. Mỗi version mới tự lên AUR khi phát
   hành (#158).
+
+### Sửa
+
+- Menu chọn chế độ gõ (mở bằng `` ` ``) nay đóng như bản fcitx5: bấm phím không có trong menu thì menu đóng và gõ ra
+  phím đó thay vì nuốt phím, click ra ngoài hay vào ô đang gõ thì menu đóng, để yên 5 giây thì menu tự tắt (#157).
 
 ## [1.4.0-1] — 16/11/2026
 
