@@ -199,7 +199,7 @@ namespace {
         settings.modeOrder       = "Sen,Preedit,Emoji,Off";
         settings.showModePreedit = false;
         check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off, MenuMode::Vim}, "a hidden mode is left out");
-        check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Swallow, "the key of a hidden mode picks nothing");
+        check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::TypeOn, "the key of a hidden mode picks nothing");
         settings.modeOrder = "Off,Sen";
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key skips the modes ModeOrder leaves out");
         settings.modeOrder = "Vim,Off,Sen";
@@ -231,20 +231,20 @@ namespace {
         check(!opensModeMenu(settings, {}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "~ does not open the default menu");
         check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_q, 0).mode == MenuMode::Preedit, "q picks underlined typing");
         check(menuKey(settings, IBUS_KEY_e, 0).mode == MenuMode::Off && menuKey(settings, IBUS_KEY_1, 0).mode == MenuMode::Sen, "e and 1 pick their modes");
-        check(menuKey(settings, IBUS_KEY_q, IBUS_CONTROL_MASK).kind == MenuKey::Swallow, "Ctrl+q picks nothing");
+        check(menuKey(settings, IBUS_KEY_q, IBUS_CONTROL_MASK).kind == MenuKey::TypeOn, "Ctrl+q picks nothing");
         check(menuKey(settings, IBUS_KEY_grave, 0).kind == MenuKey::TypeMenuKey, "` again types itself");
         check(menuKey(settings, IBUS_KEY_Escape, 0).kind == MenuKey::Close && menuKey(settings, IBUS_KEY_Return, 0).kind == MenuKey::PickCursor, "Esc closes, Enter picks");
         settings.modeMenuKeys = {"Shift+asciitilde"};
         settings.shortcutOff  = "x";
         check(opensModeMenu(settings, {}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK) && !opensModeMenu(settings, {}, IBUS_KEY_grave, 0), "Shift+~ opens the menu instead of `");
-        check(menuKey(settings, IBUS_KEY_x, 0).mode == MenuMode::Off && menuKey(settings, IBUS_KEY_e, 0).kind == MenuKey::Swallow, "a changed shortcut picks its mode");
+        check(menuKey(settings, IBUS_KEY_x, 0).mode == MenuMode::Off && menuKey(settings, IBUS_KEY_e, 0).kind == MenuKey::TypeOn, "a changed shortcut picks its mode");
         check(menuKey(settings, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK).kind == MenuKey::TypeMenuKey, "Shift+~ again types ~");
         settings.options.inputMethod = "VIQR";
         check(!opensModeMenu(settings, {}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "VIQR keeps ~ for its tone");
         settings.options.inputMethod = "Telex";
         check(!opensModeMenu(settings, {{"~", "DauNga"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "a custom keymap keeps its keys");
         check(opensModeMenu(settings, {{"s", "DauSac"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "other keymap keys leave the menu alone");
-        check(menuKey(settings, IBUS_KEY_r, 0).kind == MenuKey::Swallow, "r picks nothing, since Default Typing is gone");
+        check(menuKey(settings, IBUS_KEY_r, 0).kind == MenuKey::TypeOn, "r picks nothing, since Default Typing is gone");
         check(menuKey(settings, IBUS_KEY_v, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_v, 0).mode == MenuMode::Vim, "v switches Vim mode, as in fcitx5");
     }
 

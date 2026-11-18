@@ -30,6 +30,7 @@ spec_version() {
 check rpm "$(spec_version rpm/ibus-ngosen.spec)" "$want"
 check rpm/opensuse "$(spec_version rpm/opensuse/ibus-ngosen.spec)" "$want"
 check arch/PKGBUILD "$(pkgbuild_version arch/PKGBUILD)" "$want"
+check aur/PKGBUILD "$(pkgbuild_version aur/PKGBUILD)" "$want"
 # rpmbuild warns about a changelog date whose weekday is wrong, and dpkg does not check at all.
 weekday_of() {
     LC_ALL=C date -d "$1" +%a

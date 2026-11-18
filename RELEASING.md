@@ -20,7 +20,7 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
 1. On a `release/X.Y.Z` branch, point the `ngosen` submodule at a released `ngosen-*` tag
    (`misc/check-core-tag.sh` must pass) and set the version in `CMakeLists.txt`,
    `packaging/debian/changelog`, `packaging/rpm/ibus-ngosen.spec` and `packaging/rpm/opensuse/ibus-ngosen.spec`
-   (each with a `%changelog` entry) and `packaging/arch/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must
+   (each with a `%changelog` entry), `packaging/arch/PKGBUILD` and `packaging/aur/PKGBUILD`. `packaging/check-version.sh X.Y.Z-N` must
    pass; the release workflow runs it on the tag. For a feature release (a new X.Y), update `FEATURES` in
    `settings/ngosen_settings/whats_new.py` and the notice text in `src/ngosen-ibus-announce.cpp`, which
    updated users see once, with their Vietnamese in `po/vi.po`.
@@ -38,9 +38,11 @@ The release is `X.Y.Z-N` (`N` is the packaging revision), tagged `ibus-ngosen-X.
 5. Check the draft release before publishing: all packages and `SHA256SUMS` are attached and the sums
    match; release notes list only the systems typed on with this version.
 6. Publish it: `gh release edit ibus-ngosen-X.Y.Z-N --repo ngosen/ibus-ngosen --draft=false --latest`.
-   Arch packages are attached to the release like the others; there is no AUR package.
+   Arch packages are attached to the release like the others.
 7. Publishing starts `Fedora COPR` (`copr.yml`), which builds the release tarball in the COPR project
-   `nguyenphi/ngosen`, next to `fcitx5-ngosen`; check that it passes. It needs the `COPR_CONFIG` secret
+   `nguyenphi/ngosen`, next to `fcitx5-ngosen`, and `AUR` (`aur.yml`), which pushes `packaging/aur/PKGBUILD`
+   with the checksum of the release tarball to the AUR package `ibus-ngosen` using the `AUR_SSH_KEY`
+   secret; check that both pass. It needs the `COPR_CONFIG` secret
    (the API token from https://copr.fedorainfracloud.org/api/) in the `release` environment. If it fails,
    rerun it: `gh workflow run copr.yml --repo ngosen/ibus-ngosen --ref ibus-ngosen-X.Y.Z-N`.
 8. Refresh the APT, pacman and zypper repositories, which are built in `ngosen/ngosen` and run on their own
