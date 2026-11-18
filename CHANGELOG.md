@@ -8,6 +8,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+- Arch và các distro dựa trên Arch cài được từ AUR: `yay -S ibus-ngosen`. Mỗi version mới tự lên AUR khi phát
+  hành (#158).
+
 ## [1.4.0-1] — 16/11/2026
 
 Gõ thừa phím sau từ tiếng Việt không còn làm mất dấu: nhấn Space thì bỏ phím thừa, tách `côngty` thành `công ty` hoặc
