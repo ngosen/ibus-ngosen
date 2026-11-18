@@ -1,3 +1,16 @@
+ibus-ngosen (1.4.1-1) unstable; urgency=medium
+
+  * Fast typing with Backspace right after Firefox opens on GNOME no longer
+    loses a Backspace or mixes up letters.
+  * A tone retyped after a final consonant gives the right word; Brave on
+    GNOME no longer loses tones.
+  * The mode menu closes as in the fcitx5 edition: an unlisted key is typed,
+    a click or 5 seconds left alone closes it.
+  * Three settings labels drop "(experimental)", as in the fcitx5 edition.
+  * Core ngosen-1.12.2-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Wed, 18 Nov 2026 12:00:00 +0700
+
 ibus-ngosen (1.4.0-1) unstable; urgency=medium
 
   * Extra keys after a Vietnamese word no longer undo its marks; Space
