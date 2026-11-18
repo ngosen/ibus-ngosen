@@ -558,6 +558,16 @@ namespace {
         return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
     }
 
+    // Only a pressed key reaches the menu; a release may end a key held across a click.
+    void notePressWhileMenuOpen(IBusEngine* engine, Session& session, guint state) {
+        if (!session.menuOpen || (state & IBUS_RELEASE_MASK) != 0)
+            return;
+        session.menuQuietSince = g_get_monotonic_time();
+        stopTimer(session.clickTimer);
+        if (g_mouse_clicked.load(std::memory_order_acquire))
+            closeModeMenu(engine, session);
+    }
+
     gboolean processKeyEvent(IBusEngine* engine, guint keyval, guint keycode, guint state) {
         Session* session = sessionOf(engine);
         if (session == nullptr)
@@ -576,13 +586,7 @@ namespace {
             session->tap = {};
             return FALSE;
         }
-        // Only a pressed key reaches the menu; a release may end a key held across a click.
-        if (session->menuOpen && (state & IBUS_RELEASE_MASK) == 0) {
-            session->menuQuietSince = g_get_monotonic_time();
-            stopTimer(session->clickTimer);
-            if (g_mouse_clicked.load(std::memory_order_acquire))
-                closeModeMenu(engine, *session);
-        }
+        notePressWhileMenuOpen(engine, *session, state);
         if (handleToggleKey(engine, *session, keyval, state))
             return TRUE;
         // A terminal password prompt gets the keys as typed, and they stay out of the typing log.
