@@ -2219,17 +2219,29 @@ def emoji_off_apps():
 app = menu_app("emoji")
 app.type("cuwowif")
 pump(300)
-check(app.menu == ["Tab: 😂 🤣 😄 😆 😁"], "emoji: a keyword offers its emoji in the lookup table", app.menu)
+check(
+    app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
+    "emoji: a keyword offers its emoji in the lookup table",
+    app.menu,
+)
 app.key(IBus.KEY_Tab)
 pump(200)
 app.key(IBus.KEY_Tab)
 pump(300)
-check(app.text == "cười 😂" and app.menu is None, "emoji: Tab twice adds the first emoji", (app.text, app.menu))
+check(
+    app.text == "cười 😂" and app.menu is None,
+    "emoji: Tab twice adds the first emoji",
+    (app.text, app.menu),
+)
 app.key(IBus.KEY_grave)
 pump(200)
 app.key(IBus.KEY_w)
 pump(300)
-check(emoji_off_apps() == ["emoji"], "menu: w switches emoji suggestions off for this app", emoji_off_apps())
+check(
+    emoji_off_apps() == ["emoji"],
+    "menu: w switches emoji suggestions off for this app",
+    emoji_off_apps(),
+)
 app.type(" cuwowif")
 pump(300)
 check(app.menu is None, "emoji: no offer once they are off", app.menu)
@@ -2249,7 +2261,11 @@ app.key(IBus.KEY_Tab)
 pump(200)
 app.key(IBus.KEY_Return)
 pump(300)
-check(app.text == "😂" and app.preedit == "", "emoji: Tab then Enter puts the emoji in place of the word", (app.text, app.preedit))
+check(
+    app.text == "😂" and app.preedit == "",
+    "emoji: Tab then Enter puts the emoji in place of the word",
+    (app.text, app.preedit),
+)
 app.close()
 set_setting("DirectTyping", "True")
 
