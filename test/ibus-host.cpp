@@ -6,6 +6,7 @@
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-shell.h"
 #include "ngosen-xtest.h"
+#include "ngosen-clock.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -91,6 +92,25 @@ namespace {
         check(host.field().url && !host.field().sendsNoKeys && host.field().surroundingText, "Sen in an address bar through GNOME Shell forwards keys");
         setShellDeliversKeysForTest(false);
         check(host.field().sendsNoKeys && host.field().preeditFallback, "an address bar through a GNOME Shell that drops keys keeps the preedit");
+    }
+
+    // The Shell names the focused app a moment after the focus moves, so the name counts only after a delay.
+    void testAppNameAfterFocus() {
+        IBusEngine engine{};
+        IBusHost   host(&engine);
+        host.setClient("gnome-shell");
+        fakeClockUs = 1000000;
+        host.setFocus(true);
+        check(!host.field().appNameCurrent, "the app name is not current right after focus-in");
+        fakeClockUs += 40000;
+        check(!host.field().appNameCurrent, "nor 40 ms later");
+        fakeClockUs += 20000;
+        check(host.field().appNameCurrent, "60 ms after focus-in the app name is current");
+        host.setFocus(false);
+        check(!host.field().appNameCurrent, "a field without focus has no current app name");
+        host.setFocus(true);
+        check(!host.field().appNameCurrent, "the next focus-in starts the delay over");
+        fakeClockUs = 0;
     }
 
     // Retyping after a switch replaces text before the cursor, so it needs to know when a click moved it.
@@ -185,6 +205,7 @@ int main() {
     testXSend();
     testShellFields();
     testShellAddressBar();
+    testAppNameAfterFocus();
     testCursorMoves();
     testCandidates();
     testWaylandSession();

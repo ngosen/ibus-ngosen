@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Thay đổi
 
+- Trên GNOME, đặt dấu trong Chrome, Edge và các app khác (trừ Firefox) nhanh hơn: phần xoá và chữ mới được gửi
+  cùng lúc thay vì cách nhau một khoảng chờ, như bản fcitx5 (#163).
 - Menu ` ghi đang đổi chế độ gõ cho app nào, như "Chế độ gõ cho Firefox", và đánh dấu ✓ cạnh chế độ app đang dùng,
   nên vẫn thấy chế độ hiện tại khi dùng phím mũi tên đi qua các mục (#154).
 
