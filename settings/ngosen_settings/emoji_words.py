@@ -31,11 +31,16 @@ def parse_edits(text):
     # The engine stops at the first missing index and skips entries without both fields.
     while (section := sections.get(f"{WORDS}/{index}")) is not None:
         # Kept as written: the engine compares keywords literally, so cleaning could merge two.
-        key = (section.get("Emoji", "").strip(), section.get("Keyword", "").strip())
+        key = (section.get("Emoji", ""), section.get("Keyword", ""))
         if all(key):
-            edits[key] = section.get("On", "True") != "False"
+            add_edit(edits, key, section.get("On", "True") != "False")
         index += 1
     return edits
+
+
+def add_edit(edits, key, on):
+    """The engine offers the emoji for any entry that turns it on, whatever comes after."""
+    edits[key] = edits.get(key, False) or on
 
 
 def edits_text(edits):

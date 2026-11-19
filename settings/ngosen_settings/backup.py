@@ -390,9 +390,10 @@ def _emoji_words_file(items):
     edits = {}
     for item in items:
         on = item.get("On", "True")
-        key = (item.get("Emoji", "").strip(), item.get("Keyword", "").strip())
+        key = (item.get("Emoji", ""), item.get("Keyword", ""))
         if all(key) and not any(c in key[0] for c in "\n\r[]"):
-            edits[key] = _text(on) != "False" if isinstance(on, (str, bool)) else True
+            on = _text(on) != "False" if isinstance(on, (str, bool)) else True
+            emoji_words.add_edit(edits, key, on)
     return emoji_words.edits_text(edits).encode("utf-8") if edits else None
 
 

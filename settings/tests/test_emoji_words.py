@@ -120,6 +120,24 @@ class ChipsTest(Folder):
         self.assertEqual(edits, {("😂", "cười"): False, ("😂", "Cười"): True})
         self.assertEqual(emoji_words.parse_edits(emoji_words.edits_text(edits)), edits)
 
+    def test_spaces_around_a_quoted_keyword_are_kept(self):
+        text = (
+            "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n"
+            '[Words/1]\nKeyword=" cười "\nEmoji=😂\nOn=True\n\n'
+        )
+        edits = emoji_words.parse_edits(text)
+        self.assertEqual(edits, {("😂", "cười"): False, ("😂", " cười "): True})
+        self.assertEqual(emoji_words.parse_edits(emoji_words.edits_text(edits)), edits)
+
+    def test_a_word_on_twice_stays_on_whatever_the_order(self):
+        # The engine offers the emoji for any entry that turns it on.
+        for first, second in (("True", "False"), ("False", "True")):
+            text = (
+                f"[Words/0]\nKeyword=cười\nEmoji=😂\nOn={first}\n\n"
+                f"[Words/1]\nKeyword=cười\nEmoji=😂\nOn={second}\n\n"
+            )
+            self.assertEqual(emoji_words.parse_edits(text), {("😂", "cười"): True})
+
     def test_undo_puts_the_words_back(self):
         store = self.store()
         store.set_emoji_edits(EmojiWords(store).toggled("😂", "cười"))

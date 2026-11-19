@@ -468,6 +468,17 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(self.store.emoji_edits, {("😂", "Cười"): False})
         self.assertEqual(self.store.emoji_off_apps, ["firefox"])
 
+    def test_restored_emoji_words_keep_what_the_engine_reads(self):
+        data = fcitx5_backup()
+        data["emoji_words"] = [
+            {"Keyword": "cười", "Emoji": "😂", "On": "True"},
+            {"Keyword": "cười", "Emoji": "😂", "On": "False"},
+            {"Keyword": " sếp ", "Emoji": "👔", "On": "False"},
+        ]
+        self.restore(data)
+        self.store.reload(self.engine)
+        self.assertEqual(self.store.emoji_edits, {("😂", "cười"): True, ("👔", " sếp "): False})
+
     def test_empty_emoji_lists_clear_them(self):
         write_text(self.paths.emoji_words, "[Words/0]\nKeyword=sếp\nEmoji=👔\nOn=True\n")
         write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
