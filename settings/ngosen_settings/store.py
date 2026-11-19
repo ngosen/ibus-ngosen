@@ -7,7 +7,7 @@ import os
 import subprocess
 import tempfile
 
-from . import ini
+from . import emoji_words, ini
 
 MACRO_LIST = "Macro"
 KEYMAP_LIST = "CustomKeymap"
@@ -96,7 +96,8 @@ def read_words(path):
 
 
 class Store:
-    """The settings, the macro list, the keymap and the dictionary, with one step of undo."""
+    """The settings, the macro list, the keymap, the dictionary and the emoji lists, with one step
+    of undo."""
 
     def __init__(self, engine, folder=None):
         self.folder = folder or config_dir()
@@ -109,6 +110,10 @@ class Store:
         self.words = read_words(self.dictionary_file if own else self.bundled_dictionary)
         self.keymap_file = os.path.join(self.folder, "ngosen-custom-keymap.conf")
         self.keymap = ini.read_list(ini.parse(read_text(self.keymap_file) or "")[1], KEYMAP_LIST)
+        self.emoji_words_file = os.path.join(self.folder, "ngosen-emoji-words.conf")
+        self.emoji_edits = emoji_words.parse_edits(read_text(self.emoji_words_file))
+        self.emoji_off_apps_file = os.path.join(self.folder, "ngosen-emoji-off-apps.conf")
+        self.emoji_off_apps = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
         self._undo = None
 
     def set(self, key, value):
@@ -153,13 +158,54 @@ class Store:
         self.keymap = list(keymap)
         return True
 
+    def set_emoji_edits(self, edits):
+        if edits == self.emoji_edits:
+            return False
+        before = read_text(self.emoji_words_file)
+        if edits:
+            write_text(self.emoji_words_file, emoji_words.edits_text(edits))
+        else:
+            restore_text(self.emoji_words_file, None)
+        self._undo = (self.emoji_words_file, before, "emoji_edits", dict(self.emoji_edits))
+        self.emoji_edits = dict(edits)
+        return True
+
+    def enable_emoji_in(self, app):
+        """Offers emoji in app again, starting from the file the engine may have changed since."""
+        current = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+        apps = [a for a in current if a != app]
+        if apps == current:
+            self.emoji_off_apps = current
+            return False
+        write_text(self.emoji_off_apps_file, emoji_words.apps_text(apps))
+        place = current.index(app)
+
+        # Puts the app back where it was, keeping apps the engine turned off since.
+        def undo():
+            now = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+            if app not in now:
+                now[place:place] = [app]
+                write_text(self.emoji_off_apps_file, emoji_words.apps_text(now))
+            self.emoji_off_apps = now
+
+        self._undo = undo
+        self.emoji_off_apps = apps
+        return True
+
+    def reload_emoji_off_apps(self):
+        """The apps the engine switched off from its menu while the window was open."""
+        self.emoji_off_apps = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+
     def can_undo(self):
         return self._undo is not None
 
     def undo(self):
-        path, text, field, value = self._undo
-        restore_text(path, text)
-        setattr(self, field, value)
+        if callable(self._undo):
+            self._undo()
+        else:
+            path, text, field, value = self._undo
+            restore_text(path, text)
+            setattr(self, field, value)
         self._undo = None
 
     def reload(self, engine):

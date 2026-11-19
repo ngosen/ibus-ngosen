@@ -214,6 +214,42 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(row.get_model().get_string(row.get_selected()), "%H:%M:%S %Z")
         self.assertNotIn("TimeFormat", self.settings())
 
+    def test_emoji_word_saves_and_undoes(self):
+        page = self.window.emoji
+        page.toggle("😂", "cười")
+        path = os.path.join(self.folder, "ngosen-emoji-words.conf")
+        self.assertIn("Keyword=cười\nEmoji=😂\nOn=False", read_text(path))
+        self.window.undo()
+        self.assertFalse(os.path.exists(path))
+        self.assertTrue(dict(page.words.chips("😂"))["cười"])
+
+    def test_emoji_back_on_in_an_app_and_undo(self):
+        path = os.path.join(self.folder, "ngosen-emoji-off-apps.conf")
+        write_text(path, "# Apps where Ngó Sen offers no emoji, one per line\nfirefox\n")
+        self.window.emoji.refresh_apps()
+        self.assertEqual(self.window.emoji.apps.get_row_at_index(0).get_title(), "firefox")
+        self.window.emoji.enable_app("firefox")
+        self.assertNotIn("firefox", read_text(path))
+        self.assertIsNotNone(self.window.toast)
+        self.window.undo()
+        self.assertIn("firefox", read_text(path))
+        self.assertEqual(self.window.emoji.apps.get_row_at_index(0).get_title(), "firefox")
+
+    def test_emoji_example_follows_the_switch(self):
+        self.window.rows.rows["EmojiSuggestions"].set_active(True)
+        self.assertTrue(self.window.emoji.example.get_visible())
+        self.window.rows.rows["EmojiSuggestions"].set_active(False)
+        self.assertFalse(self.window.emoji.example.get_visible())
+        self.assertEqual(self.settings()["EmojiSuggestions"], "False")
+
+    def test_emoji_settings_are_found_by_search(self):
+        titles = [
+            t
+            for t, _row, page in window.search.find(self.window.search_pages, "emoji")
+            if page is self.window.emoji.page
+        ]
+        self.assertIn("Suggest emoji while typing", titles)
+
     def test_macro_add_and_remove(self):
         macros = self.window.macros
         macros.key_row.set_text("k g")
