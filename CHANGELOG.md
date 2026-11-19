@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Gợi ý emoji khi gõ như bản fcitx5: gõ xong `cười`, `con mèo` hay `haha` là hiện `Tab: 😂 …` cạnh con trỏ; Tab để
+  đánh số rồi chọn bằng số, Space hay Enter lấy cái đầu, Esc giữ nguyên chữ. Tắt riêng cho app đang dùng bằng mục
+  "Gợi ý emoji" (phím `w`) trong menu `; cửa sổ cài đặt có trang Emoji (#161).
+
 ### Thay đổi
 
 - Menu ` ghi đang đổi chế độ gõ cho app nào, như "Chế độ gõ cho Firefox", và đánh dấu ✓ cạnh chế độ app đang dùng,
