@@ -18,6 +18,7 @@ from . import (  # noqa: E402
     backup,
     brand,
     check_page,
+    emoji,
     i18n,
     ini,
     keys,
@@ -67,7 +68,7 @@ class Window(Adw.ApplicationWindow):
         self.stack = stack = Adw.ViewStack()
         self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
-        self.emoji = pages.emoji_page(self.rows)
+        self.emoji = emoji.EmojiPage(store, self.rows, self.save_emoji_words, self.enable_emoji)
         self.whats_new = whats_new.WhatsNewPage(
             self.open_setting,
             self.show_page,
@@ -75,7 +76,7 @@ class Window(Adw.ApplicationWindow):
         )
         self.named_pages = {
             "typing": typing,
-            "emoji": self.emoji,
+            "emoji": self.emoji.page,
             "macros": self.macros.page,
             "dictionary": self.dictionary.page,
             "keymap": self.keymap.page,
@@ -89,7 +90,7 @@ class Window(Adw.ApplicationWindow):
         # The check page lists findings, not settings.
         self.search_pages = [
             typing,
-            self.emoji,
+            self.emoji.page,
             self.macros.page,
             self.dictionary.page,
             self.keymap.page,
@@ -107,6 +108,8 @@ class Window(Adw.ApplicationWindow):
         narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 700sp"))
         narrow.add_setter(self.split, "collapsed", True)
         self.add_breakpoint(narrow)
+        # The engine's menu can turn emoji off for an app while another window has the focus.
+        self.connect("notify::is-active", lambda w, _p: w.is_active() and w.emoji.refresh_apps())
         self.refresh()
 
     def _sidebar_page(self, version):
@@ -240,9 +243,13 @@ class Window(Adw.ApplicationWindow):
         self.macros.refresh()
         self.dictionary.refresh()
         self.keymap.refresh()
+        self.emoji.reload()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
+        # The example and the hint show these settings.
+        if key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
+            self.emoji.refresh()
         if key == "DirectTyping":
             self.check.run()
 
@@ -269,6 +276,23 @@ class Window(Adw.ApplicationWindow):
         saved = self._write(lambda: self.store.set_keymap(entries), _("Keymap"))
         self.keymap.refresh()
         return saved
+
+    def save_emoji_words(self, edits, label):
+        saved = self._write(lambda: self.store.set_emoji_edits(edits), label)
+        self.emoji.refresh()
+        return saved
+
+    def enable_emoji(self, app):
+        try:
+            if not self.store.enable_emoji_in(app):
+                return
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
+            self.refresh()
+            return
+        toast = Adw.Toast(title=_("Emoji are back on in {}.").format(app), button_label=_("_Undo"))
+        toast.connect("button-clicked", lambda _t: self.undo())
+        self._show(toast)
 
     def _write(self, write, label):
         try:

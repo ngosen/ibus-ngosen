@@ -6,7 +6,7 @@ import os
 import tempfile
 import unittest
 
-from ngosen_settings import backup, ini, keys
+from ngosen_settings import backup, emoji_words, ini, keys
 from ngosen_settings.store import Engine, Store, read_text, write_text
 
 from .test_window import CAN_RUN, FakeSources, Vietnamese, window
@@ -100,6 +100,8 @@ class UserFiles:
             paths.dictionary,
             paths.app_modes,
             paths.app_switches,
+            paths.emoji_words,
+            paths.emoji_off_apps,
             paths.english,
         )
         return {path: backup.read_bytes(path) for path in names}
@@ -414,6 +416,12 @@ class BackupTest(UserFiles, unittest.TestCase):
         write_text(
             self.paths.app_switches, "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n"
         )
+        write_text(
+            self.paths.emoji_words,
+            "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n"
+            "[Words/1]\nKeyword=sếp\nEmoji=👔\nOn=True\n\n",
+        )
+        write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
         backup.put(self.paths.english, b"")
         before = self.files()
         target = os.path.join(self.home, "out.json")
@@ -423,6 +431,14 @@ class BackupTest(UserFiles, unittest.TestCase):
             exported["rules"], [{"App": "firefox", "Mode": "5"}, {"App": "code", "Mode": "0"}]
         )
         self.assertEqual(exported["switches"], [{"App": "kate", "Vietnamese": "False"}])
+        self.assertEqual(
+            exported["emoji_words"],
+            [
+                {"Keyword": "cười", "Emoji": "😂", "On": "False"},
+                {"Keyword": "sếp", "Emoji": "👔", "On": "True"},
+            ],
+        )
+        self.assertEqual(exported["emoji_off_apps"], [{"App": "kate"}])
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["ToggleKey"], {"0": "Alt+z"})
         self.assertEqual(exported["config"]["ModeMenuKey"], {"0": "Shift+asciitilde"})
@@ -440,6 +456,50 @@ class BackupTest(UserFiles, unittest.TestCase):
         del exported["meta"]["timestamp"], second["meta"]["timestamp"]
         self.assertEqual(second, exported)
 
+    def test_fcitx5_emoji_lists_are_restored(self):
+        data = fcitx5_backup()
+        data["emoji_words"] = [
+            {"Keyword": "Cười", "Emoji": "😂", "On": "False"},
+            {"Keyword": "", "Emoji": "😂", "On": "True"},
+        ]
+        data["emoji_off_apps"] = [{"App": "firefox"}, {"App": "# not an app"}, {"App": "firefox"}]
+        self.restore(data)
+        self.store.reload(self.engine)
+        self.assertEqual(self.store.emoji_edits, {("😂", "Cười"): False})
+        self.assertEqual(self.store.emoji_off_apps, ["firefox"])
+
+    def test_restored_emoji_words_keep_what_the_engine_reads(self):
+        data = fcitx5_backup()
+        data["emoji_words"] = [
+            {"Keyword": "cười", "Emoji": "😂", "On": "True"},
+            {"Keyword": "cười", "Emoji": "😂", "On": "False"},
+            {"Keyword": " sếp ", "Emoji": "👔", "On": "False"},
+        ]
+        self.restore(data)
+        self.store.reload(self.engine)
+        self.assertEqual(self.store.emoji_edits, {("😂", "cười"): True, ("👔", " sếp "): False})
+
+    def test_empty_emoji_lists_clear_them(self):
+        write_text(self.paths.emoji_words, "[Words/0]\nKeyword=sếp\nEmoji=👔\nOn=True\n")
+        write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
+        data = fcitx5_backup()
+        data["emoji_words"] = []
+        data["emoji_off_apps"] = []
+        self.restore(data)
+        self.assertFalse(os.path.exists(self.paths.emoji_words))
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.emoji_off_apps)), [])
+
+    def test_damaged_emoji_lists_are_refused(self):
+        for name, items in (
+            ("emoji_words", [{"Keyword": 1, "Emoji": "😂"}]),
+            ("emoji_off_apps", ["kate"]),
+        ):
+            with self.subTest(name=name):
+                data = fcitx5_backup()
+                data[name] = items
+                with self.assertRaises(ValueError):
+                    backup.load(self.save(data))
+
     def test_no_app_modes_file_exports_no_rules(self):
         target = os.path.join(self.home, "out.json")
         backup.export(self.engine, self.paths, target)
@@ -452,7 +512,15 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(exported["dictionary"], "việt\n")
         self.assertEqual(
             exported["meta"]["components"],
-            ["config", "macros", "keymaps", "switches", "dictionary"],
+            [
+                "config",
+                "macros",
+                "keymaps",
+                "switches",
+                "emoji_words",
+                "emoji_off_apps",
+                "dictionary",
+            ],
         )
         # The fcitx5 edition keeps its own per-app switches when it restores this.
         self.assertEqual(exported["meta"]["edition"], "ibus")
