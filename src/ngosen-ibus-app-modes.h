@@ -80,15 +80,19 @@ namespace ngosen {
         bool                                           loaded_ = false;
     };
 
-    // The fcitx5 edition's ngosen-vim-apps.conf: one app per line, # for comments.
-    using VimAppSet = std::set<std::string>;
-    VimAppSet   parseVimApps(const std::string& text);
-    std::string vimAppsText(const VimAppSet& apps);
+    // The fcitx5 edition's app lists, such as ngosen-vim-apps.conf: one app per line, # for comments.
+    using AppNameSet = std::set<std::string>;
+    // The first lines fcitx5 writes, so the files look the same from either edition.
+    constexpr const char* VimAppsHeader      = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line";
+    constexpr const char* EmojiOffAppsHeader = "# Apps where Ngó Sen offers no emoji, one per line";
+    AppNameSet            parseAppList(const std::string& text);
+    std::string           appListText(const std::string& header, const AppNameSet& apps);
 
-    // The apps whose fields follow Vim's normal-mode keys, picked in the mode menu.
-    class VimApps {
+    // Apps picked in the mode menu for a switch kept per app, such as Vim mode.
+    class AppList {
       public:
-        explicit VimApps(std::string path, FileWriter write = writeFileAtomically);
+        // header: the comment line the file starts with.
+        AppList(std::string path, std::string header, FileWriter write = writeFileAtomically);
 
         bool has(const std::string& app);
         // False when the file was not written.
@@ -98,8 +102,9 @@ namespace ngosen {
         void                                           reloadIfChanged();
 
         std::string                                    path_;
+        std::string                                    header_;
         FileWriter                                     write_;
-        VimAppSet                                      apps_;
+        AppNameSet                                     apps_;
         std::optional<std::filesystem::file_time_type> mtime_;
         bool                                           loaded_ = false;
     };

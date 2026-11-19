@@ -67,6 +67,10 @@ namespace ngosen {
         bool hasPreedit() const {
             return !preedit_.empty();
         }
+        // The core shows a status line only while it tells the user what keys such as Enter do.
+        bool showsStatus() const {
+            return !status_.empty();
+        }
         void                         setReportedText(const gchar* text, guint cursor, guint anchor);
 
         void                         commitText(const std::string& text) override;

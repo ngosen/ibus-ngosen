@@ -305,6 +305,15 @@ def typing_page(rows, tip=None, on_tip=None):
     return page
 
 
+def emoji_page(rows):
+    page = Adw.PreferencesPage(title=_("Emoji"), icon_name="face-smile-symbolic")
+    group = preferences_group()
+    for key in options.EMOJI_SETTINGS:
+        group.add(rows.build(key))
+    page.add(group)
+    return page
+
+
 class MacroPage:
     """The macro switches and the list, which saves on every add, edit and removal."""
 

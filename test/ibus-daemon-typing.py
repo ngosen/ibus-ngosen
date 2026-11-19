@@ -1832,6 +1832,19 @@ def menu_app(name, hints=0):
         ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    # GNOME Shell numbers a candidate whose label is missing or empty.
+    listen(
+        app.ic,
+        "update-lookup-table",
+        lambda _ic, table, _visible: setattr(
+            app,
+            "labels",
+            [
+                label.get_text() if (label := table.get_label(i)) else ""
+                for i in range(table.get_number_of_candidates())
+            ],
+        ),
+    )
     listen(
         app.ic,
         "update-auxiliary-text",
@@ -1863,8 +1876,8 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen  ✓", "Gạch chân", "Tắt", "Vim mode: tắt"],
-    "menu: ` shows the three modes and Vim mode, with a mark on the mode in use",
+    items == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes, emoji suggestions and Vim mode, with a mark on the mode in use",
     items,
 )
 # No desktop file names the test app, so the title keeps its program name.
@@ -1903,7 +1916,7 @@ check(
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Gõ Sen", "Gạch chân  ✓", "Tắt", "Vim mode: tắt"],
+    app.menu == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Tắt", "Vim mode: tắt"],
     "menu: the mark follows the mode kept for the app",
     app.menu,
 )
@@ -2101,8 +2114,10 @@ check(
 )
 app.key(IBus.KEY_grave)
 pump(200)
-panel.cursor_down()
-pump(200)
+# Past the emoji item, which sits between the underline and Off as in fcitx5.
+for _ in range(2):
+    panel.cursor_down()
+    pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
 check(
@@ -2120,7 +2135,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen  ✓", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -2133,7 +2148,7 @@ check(
 )
 # Settings apply between words, so the word q ends first.
 app.type(" ")
-for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim", "ShowModeEmoji"):
     set_setting(name, "False")
 app.key(IBus.KEY_grave)
 pump(200)
@@ -2141,7 +2156,7 @@ check(
     app.menu is None and app.text == "q `", "menu: with every mode hidden ` types itself", app.text
 )
 app.close()
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim", "ShowModeEmoji"):
     set_setting(name, "True")
 set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Vim")
 
@@ -2202,6 +2217,75 @@ check(
 )
 app.key(IBus.KEY_Escape)
 app.close()
+
+# Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.
+emoji_off_path = os.path.join(config_dir, "ngosen-emoji-off-apps.conf")
+
+
+def emoji_off_apps():
+    if not os.path.exists(emoji_off_path):
+        return []
+    with open(emoji_off_path) as f:
+        return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+app = menu_app("emoji")
+app.type("cuwowif")
+pump(300)
+check(
+    app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
+    "emoji: a keyword offers its emoji in the lookup table",
+    app.menu,
+)
+app.key(IBus.KEY_Tab)
+pump(200)
+check(
+    app.menu == ["1. 😂", "2. 🤣", "3. 😄", "4. 😆", "5. 😁"] and all(app.labels),
+    "emoji: the list is numbered once, with labels that keep GNOME Shell from adding its own",
+    (app.menu, app.labels),
+)
+app.key(IBus.KEY_Tab)
+pump(300)
+check(
+    app.text == "cười 😂" and app.menu is None,
+    "emoji: Tab twice adds the first emoji",
+    (app.text, app.menu),
+)
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_w)
+pump(300)
+check(
+    emoji_off_apps() == ["emoji"],
+    "menu: w switches emoji suggestions off for this app",
+    emoji_off_apps(),
+)
+app.type(" cuwowif")
+pump(300)
+check(app.menu is None, "emoji: no offer once they are off", app.menu)
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_w)
+pump(300)
+check(emoji_off_apps() == [], "menu: w again switches them back on", emoji_off_apps())
+app.close()
+
+# Enter picks from the open list, so the word it replaces must not go out first.
+set_setting("DirectTyping", "False")
+app = menu_app("emoji-enter")
+app.type("hahaha")
+pump(300)
+app.key(IBus.KEY_Tab)
+pump(200)
+app.key(IBus.KEY_Return)
+pump(300)
+check(
+    app.text == "😂" and app.preedit == "",
+    "emoji: Tab then Enter puts the emoji in place of the word",
+    (app.text, app.preedit),
+)
+app.close()
+set_setting("DirectTyping", "True")
 
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")
@@ -2750,7 +2834,7 @@ app.close()
 app = menu_app("menu-shrinks")
 app.key(IBus.KEY_grave)
 pump(200)
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
+for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim", "ShowModeEmoji"):
     set_setting(name, "False")
 app.key(IBus.KEY_Down)
 pump(300)

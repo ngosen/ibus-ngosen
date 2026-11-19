@@ -42,7 +42,7 @@ namespace ngosen {
             return false;
         }
 
-        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, bool vimOn) {
+        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, bool vimOn, bool emojiOn) {
             struct Known {
                 const char* name;
                 MenuItem    item;
@@ -54,6 +54,10 @@ namespace ngosen {
                 {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
                 {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
                 {"Vim", {MenuMode::Vim, vimOn ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
+                // Turning suggestions off in the settings takes the item away, as in fcitx5.
+                {"Emoji",
+                 {MenuMode::Emoji, emojiOn ? _("Emoji suggestions: on") : _("Emoji suggestions: off"), key(settings.shortcutEmoji)},
+                 settings.showModeEmoji && settings.options.emojiSuggestions},
             };
             std::vector<const Known*> ordered;
             const auto                add = [&ordered](const Known& entry) {
@@ -81,8 +85,8 @@ namespace ngosen {
 
     } // namespace
 
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn) {
-        std::vector<MenuItem> items = shownModes(settings, true, vimOn);
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn, bool emojiOn) {
+        std::vector<MenuItem> items = shownModes(settings, true, vimOn, emojiOn);
         for (auto item = items.begin(); item != items.end(); ++item) {
             if (std::any_of(items.begin(), item, [&](const MenuItem& other) { return other.key == item->key; }))
                 item->key = IBUS_KEY_VoidSymbol;
@@ -92,8 +96,8 @@ namespace ngosen {
 
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings) {
         std::vector<MenuMode> modes;
-        for (const auto& item : shownModes(settings, false, false)) {
-            if (item.mode != MenuMode::Vim)
+        for (const auto& item : shownModes(settings, false, false, true)) {
+            if (item.mode != MenuMode::Vim && item.mode != MenuMode::Emoji)
                 modes.push_back(item.mode);
         }
         return modes;

@@ -44,7 +44,7 @@ namespace ngosen {
                 return false;
             gchar*     name  = g_file_get_basename(file);
             const bool known = g_strcmp0(name, "ngosen.conf") == 0 || g_strcmp0(name, "ngosen-macro-table.conf") == 0 || g_strcmp0(name, "ngosen-custom-keymap.conf") == 0 ||
-                g_strcmp0(name, "vietnamese.cm.dict") == 0;
+                g_strcmp0(name, "ngosen-emoji-words.conf") == 0 || g_strcmp0(name, "vietnamese.cm.dict") == 0;
             g_free(name);
             return known;
         }
@@ -164,6 +164,8 @@ namespace ngosen {
         std::string text;
         settings_ = readFile(paths_.settingsFile(), text) ? readSettings(parseIni(text)) : defaultSettings();
         keymap_   = readList(paths_.keymapFile(), "CustomKeymap");
+        if (readFile(paths_.emojiWordsFile(), text))
+            settings_.options.emojiWordEdits = emojiWordEdits(parseIni(text));
         // An engine keeps its own reference to the tables, so the old handles can go now.
         DeleteObject(macroTable_);
         DeleteObject(dictionary_);
