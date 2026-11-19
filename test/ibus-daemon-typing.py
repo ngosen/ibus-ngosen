@@ -2240,6 +2240,19 @@ pump(300)
 check(emoji_off_apps() == [], "menu: w again switches them back on", emoji_off_apps())
 app.close()
 
+# Enter picks from the open list, so the word it replaces must not go out first.
+set_setting("DirectTyping", "False")
+app = menu_app("emoji-enter")
+app.type("hahaha")
+pump(300)
+app.key(IBus.KEY_Tab)
+pump(200)
+app.key(IBus.KEY_Return)
+pump(300)
+check(app.text == "😂" and app.preedit == "", "emoji: Tab then Enter puts the emoji in place of the word", (app.text, app.preedit))
+app.close()
+set_setting("DirectTyping", "True")
+
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")
 app = menu_app("cycle")

@@ -642,8 +642,9 @@ namespace {
         if (handleModeMenu(engine, *session, keyval, keycode, state))
             return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
-        // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop.
-        if (isPlainEnter(keyval, state) && session->host->hasPreedit())
+        // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop. With a status line
+        // shown, Enter picks from the core's list instead, which needs the word.
+        if (isPlainEnter(keyval, state) && session->host->hasPreedit() && !session->host->showsStatus())
             session->state->commitBufferForEnter();
         // Apps that send no reset on a click (XIM clients) still show the preedit, which the core would drop.
         else if (session->host->hasPreedit() && g_mouse_clicked.load(std::memory_order_acquire))
