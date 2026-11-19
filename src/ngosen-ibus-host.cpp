@@ -247,9 +247,11 @@ namespace ngosen {
         }
         IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), TRUE, FALSE);
         ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
-        // No labels of its own: the core numbers the candidates it lets the user pick by number.
-        for (const auto& label : list_->labels)
-            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(label.c_str()));
+        // The core numbers the candidates itself; GNOME Shell numbers any whose label is empty.
+        for (guint i = 0; i < list_->labels.size(); ++i) {
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(list_->labels[i].c_str()));
+            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string("\u200b"));
+        }
         ibus_engine_update_lookup_table(engine_, table, TRUE);
         tableShown_ = true;
     }

@@ -1832,6 +1832,19 @@ def menu_app(name, hints=0):
         ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    # GNOME Shell numbers a candidate whose label is missing or empty.
+    listen(
+        app.ic,
+        "update-lookup-table",
+        lambda _ic, table, _visible: setattr(
+            app,
+            "labels",
+            [
+                label.get_text() if (label := table.get_label(i)) else ""
+                for i in range(table.get_number_of_candidates())
+            ],
+        ),
+    )
     listen(
         app.ic,
         "update-auxiliary-text",
@@ -2226,6 +2239,11 @@ check(
 )
 app.key(IBus.KEY_Tab)
 pump(200)
+check(
+    app.menu == ["1. 😂", "2. 🤣", "3. 😄", "4. 😆", "5. 😁"] and all(app.labels),
+    "emoji: the list is numbered once, with labels that keep GNOME Shell from adding its own",
+    (app.menu, app.labels),
+)
 app.key(IBus.KEY_Tab)
 pump(300)
 check(
