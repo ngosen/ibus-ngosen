@@ -13,6 +13,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Gợi ý emoji khi gõ như bản fcitx5: gõ xong `cười`, `con mèo` hay `haha` là hiện `Tab: 😂 …` cạnh con trỏ; Tab để
   đánh số rồi chọn bằng số, Space hay Enter lấy cái đầu, Esc giữ nguyên chữ. Tắt riêng cho app đang dùng bằng mục
   "Gợi ý emoji" (phím `w`) trong menu `; cửa sổ cài đặt có trang Emoji (#161).
+- Trang Emoji trong cửa sổ cài đặt như bản fcitx5: tìm emoji, bấm vào từ để tắt hay bật, thêm từ của riêng mình, bật
+  lại emoji cho app đã tắt. Sao lưu và khôi phục mang theo cả hai danh sách này (#164).
 
 ### Thay đổi
 
