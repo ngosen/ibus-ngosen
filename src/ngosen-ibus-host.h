@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include "ngosen-clock.h"
 #include "ngosen-host.h"
 #include "ngosen-key.h"
 
@@ -36,6 +37,8 @@ namespace ngosen {
 
         void setFocus(bool focus) {
             focus_ = focus;
+            if (focus)
+                focus_in_us_ = monotonicUs();
         }
         void setDirectTyping(bool on) {
             direct_ = on;
@@ -126,10 +129,11 @@ namespace ngosen {
         void                         showAuxiliary();
 
         IBusEngine*                  engine_;
-        bool                         focus_   = false;
-        bool                         direct_  = false;
-        guint                        purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
-        guint                        hints_   = IBUS_INPUT_HINT_NONE;
+        bool                         focus_       = false;
+        uint64_t                     focus_in_us_ = 0;
+        bool                         direct_      = false;
+        guint                        purpose_     = IBUS_INPUT_PURPOSE_FREE_FORM;
+        guint                        hints_       = IBUS_INPUT_HINT_NONE;
         std::string                  client_;
         Surrounding                  reported_;
         std::string                  preedit_;

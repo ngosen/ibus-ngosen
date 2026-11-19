@@ -34,6 +34,9 @@ namespace ngosen {
 
         constexpr guint SimpleModifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
 
+        // The Shell names the focused app a moment after the focus moves, as in the fcitx5 edition.
+        constexpr uint64_t AppNameDelayUs = 50000;
+
         class GlibTimer final : public Timer {
           public:
             GlibTimer(uint64_t deadlineUs, std::function<bool(Timer&)> onTime) : onTime_(std::move(onTime)) {
@@ -169,6 +172,7 @@ namespace ngosen {
         f.program = programOf(client_);
         if (f.program != client_)
             f.reportedProgram = client_;
+        f.appNameCurrent  = focus_ && monotonicUs() > focus_in_us_ + AppNameDelayUs;
         f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
