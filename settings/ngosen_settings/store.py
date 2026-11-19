@@ -172,6 +172,7 @@ class Store:
 
     def enable_emoji_in(self, app):
         """Offers emoji in app again, starting from the file the engine may have changed since."""
+        app = emoji_words.app_name(app)
         current = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
         apps = [a for a in current if a != app]
         if apps == current:

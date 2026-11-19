@@ -243,7 +243,7 @@ class Window(Adw.ApplicationWindow):
         self.macros.refresh()
         self.dictionary.refresh()
         self.keymap.refresh()
-        self.emoji.refresh()
+        self.emoji.reload()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))

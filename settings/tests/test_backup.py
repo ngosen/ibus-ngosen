@@ -465,7 +465,7 @@ class BackupTest(UserFiles, unittest.TestCase):
         data["emoji_off_apps"] = [{"App": "firefox"}, {"App": "# not an app"}, {"App": "firefox"}]
         self.restore(data)
         self.store.reload(self.engine)
-        self.assertEqual(self.store.emoji_edits, {("😂", "cười"): False})
+        self.assertEqual(self.store.emoji_edits, {("😂", "Cười"): False})
         self.assertEqual(self.store.emoji_off_apps, ["firefox"])
 
     def test_empty_emoji_lists_clear_them(self):

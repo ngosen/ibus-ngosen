@@ -390,7 +390,7 @@ def _emoji_words_file(items):
     edits = {}
     for item in items:
         on = item.get("On", "True")
-        key = (item.get("Emoji", "").strip(), emoji_words.clean(item.get("Keyword", "")))
+        key = (item.get("Emoji", "").strip(), item.get("Keyword", "").strip())
         if all(key) and not any(c in key[0] for c in "\n\r[]"):
             edits[key] = _text(on) != "False" if isinstance(on, (str, bool)) else True
     return emoji_words.edits_text(edits).encode("utf-8") if edits else None
@@ -400,13 +400,11 @@ def _emoji_off_apps_file(current, items):
     """The apps file as the engine writes it; a name that would read as a comment is left out."""
     apps = []
     for item in items:
-        app = item.get("App", "").strip()
-        if (
-            app
-            and not app.startswith("#")
-            and not any(c in app for c in "\n\r")
-            and app not in apps
-        ):
+        app = item.get("App", "")
+        if app.lstrip().startswith("#") or any(c in app for c in "\n\r"):
+            continue
+        app = emoji_words.app_name(app)
+        if app and app not in apps:
             apps.append(app)
     if current is None and not apps:
         return None

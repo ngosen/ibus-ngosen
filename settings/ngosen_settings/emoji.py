@@ -122,7 +122,13 @@ def _wrap_append(box, child):
 
 
 def _wrap_remove(box, child):
-    box.remove(child.get_parent() if isinstance(box, Gtk.FlowBox) else child)
+    if isinstance(box, Gtk.FlowBox):
+        wrapper = child.get_parent()
+        box.remove(wrapper)
+        # A wrapper still referenced would keep the child, which can then go into no other box.
+        wrapper.set_child(None)
+    else:
+        box.remove(child)
 
 
 def _wrap_show(child, shown):
@@ -197,6 +203,11 @@ class EmojiPage:
         )
         self._show_apps()
         self._show_words()
+
+    def reload(self):
+        """After an undo or a restore, which can change which emoji the filter keeps."""
+        self.refresh()
+        self.refilter(scroll=False)
 
     def refresh_apps(self):
         """Shows the apps turned off from the keyboard while the window was open."""
@@ -349,7 +360,7 @@ class EmojiPage:
         index = next(i for i, b in enumerate(self.group_buttons) if b.get_active())
         return GROUPS[index - 1] if index else None
 
-    def refilter(self):
+    def refilter(self, scroll=True):
         query, only = self.search.get_text(), self.only_on.get_active()
         self.shown = [row[0] for row in self.words.rows(query, self.group(), only)]
         kept = self.store.get_n_items()
@@ -359,7 +370,8 @@ class EmojiPage:
             self.store.splice(kept, 0, [str(i) for i in range(kept, len(self.shown))])
         for position, row in list(self._bound.items()):
             row.show(self.shown[position])
-        self.column.show_list_top()
+        if scroll:
+            self.column.show_list_top()
         shown = len(self.shown)
         self.count.set_text(_("{} emoji").format(shown) if shown else _("No emoji match"))
 

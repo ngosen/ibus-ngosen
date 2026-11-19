@@ -104,11 +104,21 @@ class ChipsTest(Folder):
     def test_the_fcitx5_file_is_read_back(self):
         write_text(
             self.path("ngosen-emoji-words.conf"),
-            "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n[Words/1]\nKeyword=Sếp\nEmoji=👔\nOn=True\n",
+            "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n[Words/1]\nKeyword=sếp\nEmoji=👔\nOn=True\n",
         )
         words = self.words()
         self.assertFalse(dict(words.chips("😂"))["cười"])
         self.assertTrue(dict(words.chips("👔"))["sếp"])
+
+    def test_keywords_in_the_file_are_kept_as_written(self):
+        # The engine compares keywords as written, so "Cười" never stands in for "cười".
+        text = (
+            "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n"
+            "[Words/1]\nKeyword=Cười\nEmoji=😂\nOn=True\n\n"
+        )
+        edits = emoji_words.parse_edits(text)
+        self.assertEqual(edits, {("😂", "cười"): False, ("😂", "Cười"): True})
+        self.assertEqual(emoji_words.parse_edits(emoji_words.edits_text(edits)), edits)
 
     def test_undo_puts_the_words_back(self):
         store = self.store()
@@ -170,6 +180,22 @@ class OffAppsTest(Folder):
         self.apps_file("kate")
         store.undo()
         self.assertEqual(self.saved_apps(), ["firefox", "kate"])
+
+    def test_turning_back_on_drops_every_name_of_the_app(self):
+        # fcitx5 may have saved the names the engine shortens to "firefox".
+        self.apps_file("firefox.desktop", "firefox_firefox", "kate")
+        store = self.store()
+        self.assertEqual(store.emoji_off_apps, ["firefox", "kate"])
+        self.assertTrue(store.enable_emoji_in("firefox"))
+        self.assertEqual(self.saved_apps(), ["kate"])
+
+    def test_undo_after_the_engine_saved_the_app_again_adds_no_second_name(self):
+        self.apps_file("firefox.desktop")
+        store = self.store()
+        store.enable_emoji_in("firefox")
+        self.apps_file("firefox")
+        store.undo()
+        self.assertEqual(self.saved_apps(), ["firefox"])
 
     def test_the_file_keeps_the_engines_header(self):
         self.apps_file("firefox", "kate")

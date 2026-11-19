@@ -30,7 +30,8 @@ def parse_edits(text):
     index = 0
     # The engine stops at the first missing index and skips entries without both fields.
     while (section := sections.get(f"{WORDS}/{index}")) is not None:
-        key = (section.get("Emoji", ""), clean(section.get("Keyword", "")))
+        # Kept as written: the engine compares keywords literally, so cleaning could merge two.
+        key = (section.get("Emoji", "").strip(), section.get("Keyword", "").strip())
         if all(key):
             edits[key] = section.get("On", "True") != "False"
         index += 1
@@ -45,11 +46,27 @@ def edits_text(edits):
     )
 
 
+def app_name(name):
+    """An app as the engine names it, so names fcitx5 saved for the same app count as one."""
+    name = name.strip()
+    if len(name) > len(".desktop") and name.endswith(".desktop"):
+        name = name[: -len(".desktop")]
+    head, colon, rest = name.partition(":")
+    if colon and head.endswith("-im"):
+        name = rest
+    head, underscore, rest = name.partition("_")
+    if underscore and head == rest:
+        name = head
+    return "" if name in ("gnome-shell", "QIBusInputContext", "xim", "wayland") else name
+
+
 def parse_apps(text):
     apps = []
     for line in ini.lines(text or ""):
-        app = line.strip()
-        if app and not app.startswith("#") and app not in apps:
+        if line.startswith("#"):
+            continue
+        app = app_name(line)
+        if app and app not in apps:
             apps.append(app)
     return apps
 
