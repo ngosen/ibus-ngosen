@@ -24,7 +24,7 @@ COMPONENTS = (
 )
 # The fcitx5 edition keeps these as Mode, VietnameseOn and indexed key lists.
 # Key lists fcitx5 writes as {"0": …}; the engine keeps them as one line split at spaces.
-KEY_LISTS = ("ModeMenuKey", "CycleModeKey")
+KEY_LISTS = ("ModeMenuKey", "CycleModeKey", "ConvertKey")
 IBUS_ONLY = ("DirectTyping", "ToggleKey", *KEY_LISTS)
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
 DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
