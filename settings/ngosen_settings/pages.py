@@ -89,7 +89,8 @@ class SettingRows:
             translate = (lambda label: label) if key == "UiLanguage" else _
             pairs = [(value, translate(label)) for value, label in options.CHOICES[key]]
         else:
-            pairs = [(value, value) for value in self.names[key]]
+            names = self.names["OutputCharset" if key in options.CHARSET_KEYS else key]
+            pairs = [(value, value) for value in names]
         current = self.store.values.get(key, "")
         if key == "ModeOrder" and "Vim" not in current.split(","):
             # The menu puts Vim mode last when the order leaves it out, so such an order is its preset.
@@ -99,7 +100,7 @@ class SettingRows:
         if current not in (value for value, _label in pairs):
             shown = (
                 keys.label(current)
-                if key in ("ToggleKey", "ModeMenuKey", "CycleModeKey")
+                if key in ("ToggleKey", "ModeMenuKey", "CycleModeKey", "ConvertKey")
                 else current
             )
             pairs.append((current, shown))

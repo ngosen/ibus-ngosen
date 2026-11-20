@@ -42,6 +42,7 @@ namespace ngosen {
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings);
 
     bool                  cyclesMode(const IBusSettings& settings, guint keyval, guint state);
+    bool                  convertsSelection(const IBusSettings& settings, guint keyval, guint state);
 
     // keymap is the custom keymap in use, if any.
     bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state);

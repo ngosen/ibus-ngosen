@@ -14,6 +14,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <string>
 #include <glib/gi18n-lib.h>
 #include <ibus.h>
 #include <syslog.h>
@@ -47,6 +48,23 @@ namespace {
         return 0;
     }
 
+    // The Convert page's box: the text on stdin, converted as the convert key would.
+    int convertText(int count, char** args) {
+        if (count != 4)
+            return 2;
+        std::string text;
+        char        buffer[4096];
+        while (const size_t read = std::fread(buffer, 1, sizeof buffer, stdin))
+            text.append(buffer, read);
+        Init();
+        char* converted = ConvertText(text.c_str(), args[0], args[1], std::atoi(args[2]), std::strcmp(args[3], "True") == 0);
+        if (converted == nullptr)
+            return 1;
+        std::fputs(converted, stdout);
+        std::free(converted);
+        return 0;
+    }
+
     // The keys the toggle can use, one per line, so a restore names the others before writing.
     int printUsableToggleKeys(int count, char** keys) {
         for (int i = 0; i < count; ++i) {
@@ -62,6 +80,8 @@ int main(int argc, char** argv) {
     openlog("ibus-engine-ngosen", LOG_PID, LOG_USER);
     if (argc > 1 && std::strcmp(argv[1], "--usable-toggle-keys") == 0)
         return printUsableToggleKeys(argc - 2, argv + 2);
+    if (argc > 1 && std::strcmp(argv[1], "--convert-text") == 0)
+        return convertText(argc - 2, argv + 2);
     if (argc > 1) {
         if (const int status = runSettingsCommand(argv[1]); status >= 0)
             return status;

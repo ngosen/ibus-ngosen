@@ -18,6 +18,7 @@ from . import (  # noqa: E402
     backup,
     brand,
     check_page,
+    convert,
     emoji,
     i18n,
     ini,
@@ -69,6 +70,7 @@ class Window(Adw.ApplicationWindow):
         self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
         self.emoji = emoji.EmojiPage(store, self.rows, self.save_emoji_words, self.enable_emoji)
+        self.convert = convert.ConvertPage(self.rows, self.convert_text, self.swap_charsets)
         self.whats_new = whats_new.WhatsNewPage(
             self.open_setting,
             self.show_page,
@@ -77,6 +79,7 @@ class Window(Adw.ApplicationWindow):
         self.named_pages = {
             "typing": typing,
             "emoji": self.emoji.page,
+            "convert": self.convert.page,
             "macros": self.macros.page,
             "dictionary": self.dictionary.page,
             "keymap": self.keymap.page,
@@ -91,6 +94,7 @@ class Window(Adw.ApplicationWindow):
         self.search_pages = [
             typing,
             self.emoji.page,
+            self.convert.page,
             self.macros.page,
             self.dictionary.page,
             self.keymap.page,
@@ -244,6 +248,7 @@ class Window(Adw.ApplicationWindow):
         self.dictionary.refresh()
         self.keymap.refresh()
         self.emoji.reload()
+        self.convert.refresh()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
@@ -252,6 +257,28 @@ class Window(Adw.ApplicationWindow):
             self.emoji.refresh()
         if key == "DirectTyping":
             self.check.run()
+        if key in convert.SETTING_KEYS:
+            self.convert.refresh()
+
+    def swap_charsets(self, values):
+        self._write(lambda: self.store.set_values(values), _("Charsets"))
+        self.refresh()
+
+    def convert_text(self, text):
+        values = self.store.values
+        try:
+            converted = self.engine.convert_text(
+                text,
+                values.get("ConvertFrom", ""),
+                values.get("ConvertTo", ""),
+                convert.case_index(values.get("ConvertCase", "")),
+                values.get("ConvertStripDiacritics") == "True",
+            )
+        except (AttributeError, OSError, subprocess.SubprocessError):
+            return None, _("Cannot run the engine to convert.")
+        if converted is None:
+            return None, _("The engine does not know one of these charsets.")
+        return converted, None
 
     def _toggle_key(self):
         # As the engine read it: keys it cannot parse are left out.

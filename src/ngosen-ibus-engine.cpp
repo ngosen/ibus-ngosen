@@ -598,6 +598,27 @@ namespace {
         return true;
     }
 
+    // As in fcitx5: false lets the key through, which the core asks for in a password field.
+    bool handleConvertKey(Session& session, guint keyval, guint keycode, guint state) {
+        if (!ngosen::convertsSelection(resources().settings(), keyval, state))
+            return false;
+        const char* tip = nullptr;
+        switch (session.state->convertSelection()) {
+            case ngosen::ConvertResult::Converted: break;
+            case ngosen::ConvertResult::Refused: return false;
+            case ngosen::ConvertResult::Unchanged: tip = _("The selected text is the same in both charsets. Check the charsets on the Convert page."); break;
+            case ngosen::ConvertResult::NoSelection: tip = _("Select the text to convert, then press the key again."); break;
+            case ngosen::ConvertResult::Busy: tip = _("Finish the word being typed, then press the key again."); break;
+        }
+        if (tip != nullptr) {
+            NGOSEN_INFO(std::string("Convert key: ") + tip);
+            session.host->showNotice(tip);
+            session.showsNotice = true;
+        }
+        session.menuKeyDown = keycode;
+        return true;
+    }
+
     bool isPlainEnter(guint keyval, guint state) {
         constexpr guint modifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_RELEASE_MASK;
         return (keyval == IBUS_KEY_Return || keyval == IBUS_KEY_KP_Enter) && (state & modifiers) == 0;
@@ -639,7 +660,7 @@ namespace {
             closeModeMenu(engine, *session);
             return FALSE;
         }
-        if (handleModeMenu(engine, *session, keyval, keycode, state))
+        if (handleModeMenu(engine, *session, keyval, keycode, state) || handleConvertKey(*session, keyval, keycode, state))
             return TRUE;
         // The word goes out before Enter, so the core has nothing to commit and lets Enter through
         // instead of holding it back and forwarding it, which GNOME 50.0-50.3 drop. With a status line

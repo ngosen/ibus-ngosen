@@ -107,6 +107,10 @@ namespace ngosen {
         return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.cycleModeKeys, keyval, state);
     }
 
+    bool convertsSelection(const IBusSettings& settings, guint keyval, guint state) {
+        return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.convertKeys, keyval, state);
+    }
+
     bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state) {
         return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.modeMenuKeys, keyval, state) && !typesWithKey(settings, keymap, keyval);
     }

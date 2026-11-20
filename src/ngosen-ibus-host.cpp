@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-i18n.h"
+#include "ngosen-ibus-primary.h"
 
 #include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
@@ -204,9 +205,10 @@ namespace ngosen {
         return std::nullopt;
     }
 
-    // Converting selected text is a fcitx5 shortcut; the IBus edition has none.
+    // Asked only when the convert key is pressed, so waiting for the owner costs nothing while typing.
     std::string IBusHost::primarySelection() const {
-        return {};
+        constexpr int timeoutMs = 500;
+        return readPrimarySelection(timeoutMs);
     }
 
     void IBusHost::showPreedit(const std::string& text, bool /*underline*/) {
