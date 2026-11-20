@@ -21,6 +21,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   thêm sau dấu câu; muốn như trước thì chọn "Sau mỗi từ" ở "Gợi ý emoji" trên trang Emoji. Từ tiếng Anh như `cat`,
   `thumbs up` cũng gợi ý emoji, tắt được bằng "Từ khoá tiếng Anh". Gõ kéo dài chữ (`afaaa` ra `àààà`) và không còn ra
   chữ đôi trong terminal dùng xterm.js (ngosen/ngosen#878) (#168).
+- Teencode theo từng app như bản fcitx5: bấm ` rồi `t` trong app đang gõ là giữ chữ kiểu `zậy`, `đag` thay vì trả
+  về phím đã gõ. Trang Gõ liệt kê các app đang bật, có nút tắt; sao lưu mang theo danh sách này (#169).
 
 ### Thay đổi
 

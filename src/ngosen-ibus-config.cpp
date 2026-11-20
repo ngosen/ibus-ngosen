@@ -91,6 +91,7 @@ namespace ngosen {
             {"ShowModeOff", &IBusSettings::showModeOff},
             {"ShowModeVim", &IBusSettings::showModeVim},
             {"ShowModeEmoji", &IBusSettings::showModeEmoji},
+            {"ShowModeTeencode", &IBusSettings::showModeTeencode},
             {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
             {"ShowMenuCharset", &IBusSettings::showMenuCharset},
             {"ShowMenuSpellCheck", &IBusSettings::showMenuSpellCheck},
@@ -361,6 +362,7 @@ namespace ngosen {
         read.shortcut("ShortcutOff", settings.shortcutOff);
         read.shortcut("ShortcutVim", settings.shortcutVim);
         read.shortcut("ShortcutEmoji", settings.shortcutEmoji);
+        read.shortcut("ShortcutTeencode", settings.shortcutTeencode);
         for (const auto& [key, shown] : ShownItems)
             read.boolean(key, settings.*shown);
         read.text("ModeOrder", settings.modeOrder);
@@ -417,6 +419,7 @@ namespace ngosen {
         line("ShortcutOff", settings.shortcutOff);
         line("ShortcutVim", settings.shortcutVim);
         line("ShortcutEmoji", settings.shortcutEmoji);
+        line("ShortcutTeencode", settings.shortcutTeencode);
         for (const auto& [key, shown] : ShownItems)
             line(key, boolText(settings.*shown));
         line("ModeOrder", settings.modeOrder);
@@ -491,6 +494,10 @@ namespace ngosen {
     }
     std::string SettingsPaths::emojiOffAppsFile() const {
         return configDir + "/ngosen-emoji-off-apps.conf";
+    }
+
+    std::string SettingsPaths::teencodeAppsFile() const {
+        return configDir + "/ngosen-teencode-apps.conf";
     }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
@@ -578,9 +585,9 @@ namespace ngosen {
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
             std::vector<const char*> later = {
-                "RetypeAfterSwitch", "DoubleSpaceToPeriod",    "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",     "UiLanguage",   CycleModeKeyName, "ShortcutVim",
-                "RawWordAfterSlash", "EmojiSuggestions",       "YahooEmoticons",       "EmojiPlacement",       "ShortcutEmoji", ConvertKeyName, "ConvertFrom",    "ConvertTo",
-                "ConvertCase",       "ConvertStripDiacritics", "EnglishEmojiKeywords", "EmojiOfferAt"};
+                "RetypeAfterSwitch", "DoubleSpaceToPeriod",    "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",       "UiLanguage",   CycleModeKeyName, "ShortcutVim",
+                "RawWordAfterSlash", "EmojiSuggestions",       "YahooEmoticons",       "EmojiPlacement",       "ShortcutEmoji",   ConvertKeyName, "ConvertFrom",    "ConvertTo",
+                "ConvertCase",       "ConvertStripDiacritics", "EnglishEmojiKeywords", "EmojiOfferAt",         "ShortcutTeencode"};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;
@@ -634,10 +641,15 @@ namespace ngosen {
         std::string content;
         if (!imported) {
             const std::pair<std::string, std::string> copies[] = {
-                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},        {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
-                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},   {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
-                {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()}, {paths.fcitxConfigDir + "/ngosen-vim-apps.conf", paths.vimAppsFile()},
-                {paths.fcitxConfigDir + "/ngosen-emoji-words.conf", paths.emojiWordsFile()}, {paths.fcitxConfigDir + "/ngosen-emoji-off-apps.conf", paths.emojiOffAppsFile()},
+                {paths.fcitxDataDir + "/vietnamese.cm.dict", paths.dictionaryFile()},
+                {paths.fcitxConfigDir + "/ngosen-macro-table.conf", paths.macroFile()},
+                {paths.fcitxConfigDir + "/ngosen-custom-keymap.conf", paths.keymapFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-rules.conf", paths.appModesFile()},
+                {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()},
+                {paths.fcitxConfigDir + "/ngosen-vim-apps.conf", paths.vimAppsFile()},
+                {paths.fcitxConfigDir + "/ngosen-emoji-words.conf", paths.emojiWordsFile()},
+                {paths.fcitxConfigDir + "/ngosen-emoji-off-apps.conf", paths.emojiOffAppsFile()},
+                {paths.fcitxConfigDir + "/ngosen-teencode-apps.conf", paths.teencodeAppsFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))

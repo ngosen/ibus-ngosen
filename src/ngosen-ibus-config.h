@@ -47,18 +47,20 @@ namespace ngosen {
         // Opens the menu of typing modes; empty when the user turned it off.
         std::vector<std::string> modeMenuKeys;
         // The keys that pick each mode in that menu: one letter or digit.
-        std::string shortcutSen     = "1";
-        std::string shortcutPreedit = "q";
-        std::string shortcutOff     = "e";
-        std::string shortcutVim     = "v";
-        std::string shortcutEmoji   = "w";
+        std::string shortcutSen      = "1";
+        std::string shortcutPreedit  = "q";
+        std::string shortcutOff      = "e";
+        std::string shortcutVim      = "v";
+        std::string shortcutEmoji    = "w";
+        std::string shortcutTeencode = "t";
         // Which modes the menu shows, and in what order; fcitx5's names.
-        bool        showModeSen     = true;
-        bool        showModePreedit = true;
-        bool        showModeOff     = true;
-        bool        showModeVim     = true;
-        bool        showModeEmoji   = true;
-        std::string modeOrder       = "Sen,Preedit,Emoji,Off,Vim";
+        bool        showModeSen      = true;
+        bool        showModePreedit  = true;
+        bool        showModeOff      = true;
+        bool        showModeVim      = true;
+        bool        showModeEmoji    = true;
+        bool        showModeTeencode = true;
+        std::string modeOrder        = "Sen,Preedit,Emoji,Teencode,Off,Vim";
         // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
         bool showMenuInputMethod     = true;
         bool showMenuCharset         = true;
@@ -102,6 +104,7 @@ namespace ngosen {
         std::string          vimAppsFile() const;
         std::string          emojiWordsFile() const;
         std::string          emojiOffAppsFile() const;
+        std::string          teencodeAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // Marks Sen as switched on once, so turning it off afterwards sticks.

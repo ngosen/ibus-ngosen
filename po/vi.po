@@ -1434,6 +1434,9 @@ msgstr "Bật lại emoji trong {}"
 msgid "Emoji are back on in {}."
 msgstr "Đã bật lại emoji trong {}."
 
+msgid "Teencode is off in {}."
+msgstr "Đã tắt teencode trong {}."
+
 #: src/ngosen-ibus-engine.cpp
 msgid "The selected text is the same in both charsets. Check the charsets on the Convert page."
 msgstr "Chữ bôi đen giống nhau ở cả hai bảng mã. Xem lại bảng mã ở trang Chuyển mã."
@@ -1605,3 +1608,43 @@ msgstr "Ở cuối câu"
 #: settings/ngosen_settings/options.py
 msgid "After each word"
 msgstr "Sau mỗi từ"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Teencode: on"
+msgstr "Teencode: bật"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Teencode: off"
+msgstr "Teencode: tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "Show teencode"
+msgstr "Hiển thị Teencode"
+
+#: settings/ngosen_settings/options.py
+msgid "Shortcut for teencode"
+msgstr "Phím tắt cho Teencode"
+
+#: settings/ngosen_settings/pages.py
+msgid "Set a mode menu key and a teencode key on the Keys page to turn teencode on."
+msgstr "Đặt phím mở menu chế độ và phím teencode ở trang Phím để bật teencode."
+
+#: settings/ngosen_settings/pages.py
+msgid "Teencode keeps words like zậy, đag and nhữg instead of restoring the keys typed. In the app you are typing in, press {menu} then {key} to turn it on or off for that app."
+msgstr "Teencode giữ các chữ như zậy, đag, nhữg thay vì trả về phím đã gõ. Ở app đang gõ, bấm {menu} rồi {key} để bật hay tắt teencode cho riêng app đó."
+
+#: settings/ngosen_settings/pages.py
+msgid "Teencode"
+msgstr "Teencode"
+
+#: settings/ngosen_settings/pages.py
+msgid "Turn off"
+msgstr "Tắt"
+
+#: settings/ngosen_settings/pages.py
+msgid "Not on in any app."
+msgstr "Chưa bật ở app nào."
+
+#: settings/ngosen_settings/pages.py
+msgid "Turn teencode off in {}"
+msgstr "Tắt teencode trong {}"
