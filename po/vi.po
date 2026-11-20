@@ -1577,3 +1577,31 @@ msgstr "Chuyển mã chữ bôi đen trong LibreOffice"
 #: settings/ngosen_settings/whats_new.py
 msgid "After a word such as cười, con mèo or haha, emoji show next to the cursor. Press Tab to number them and a number to pick one; Space or Enter takes the first. The Emoji page lists every emoji with its words, which you can change."
 msgstr "Gõ xong một từ như cười, con mèo hay haha là emoji hiện cạnh con trỏ. Bấm Tab để đánh số rồi bấm số để chọn; Space hoặc Enter lấy emoji đầu. Trang Emoji liệt kê mọi emoji kèm từ gợi ý, và bạn đổi được các từ đó."
+
+#: ngosen/src/core/ngosen-state-emoji-offer.cpp
+msgid "pick, or arrows then Enter, Esc: keep the word"
+msgstr "chọn · hoặc mũi tên rồi Enter · Esc: giữ chữ"
+
+#: settings/ngosen_settings/options.py
+msgid "Offer emoji"
+msgstr "Gợi ý emoji"
+
+#: settings/ngosen_settings/options.py
+msgid "English keywords"
+msgstr "Từ khoá tiếng Anh"
+
+#: settings/ngosen_settings/options.py
+msgid "cat and thumbs up also offer 🐈 and 👍, from the Unicode list of English words. Words that are also Vietnamese, like can, are left out."
+msgstr "Gõ cat hay thumbs up cũng gợi ý 🐈 hay 👍, theo danh sách từ tiếng Anh của Unicode. Từ trùng chữ Việt như can thì bỏ qua."
+
+#: settings/ngosen_settings/options.py
+msgid "At the end of a sentence: the emoji of the sentence show while you type. After . ! ? or a short pause, 1–9 picks one, or Tab first where digits type tones, as in VNI; it goes at the cursor. Esc hides them until the next sentence. After each word: the list shows as soon as a keyword is typed."
+msgstr "Cuối câu: emoji của câu hiện suốt lúc gõ. Sau dấu . ! ? hoặc khi dừng tay một chút, bấm 1–9 để chọn, hoặc bấm Tab trước nếu phím số dùng để bỏ dấu như VNI; emoji thêm vào chỗ con trỏ. Esc ẩn chúng tới hết câu. Sau mỗi từ: danh sách hiện ngay khi gõ xong một từ khoá."
+
+#: settings/ngosen_settings/options.py
+msgid "At the end of a sentence"
+msgstr "Ở cuối câu"
+
+#: settings/ngosen_settings/options.py
+msgid "After each word"
+msgstr "Sau mỗi từ"

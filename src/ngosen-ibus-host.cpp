@@ -219,6 +219,17 @@ namespace ngosen {
         preedit_.clear();
     }
 
+    void IBusHost::showHint(const std::string& text) {
+        preedit_.clear();
+        IBusText*   hint   = ibus_text_new_from_string(text.c_str());
+        const guint length = static_cast<guint>(g_utf8_strlen(text.c_str(), -1));
+        if (length > 0)
+            ibus_text_append_attribute(hint, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, length);
+        // The word is already in the app, so the cursor stays before the hint, and the app drops it rather
+        // than commit it on reset or focus out.
+        ibus_engine_update_preedit_text_with_mode(engine_, hint, 0, length > 0, IBUS_ENGINE_PREEDIT_CLEAR);
+    }
+
     void IBusHost::resetPanel() {
         preedit_.clear();
         status_.clear();
@@ -251,8 +262,10 @@ namespace ngosen {
             tableShown_ = false;
             return;
         }
-        IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), TRUE, FALSE);
-        ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
+        // A row's labels carry their own keys, so none of them is highlighted.
+        const bool       row   = list_->layout == CandidateLayout::Row;
+        IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), !row, FALSE);
+        ibus_lookup_table_set_orientation(table, row ? IBUS_ORIENTATION_HORIZONTAL : IBUS_ORIENTATION_VERTICAL);
         // The core numbers the candidates itself; GNOME Shell numbers any whose label is empty.
         for (guint i = 0; i < list_->labels.size(); ++i) {
             ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(list_->labels[i].c_str()));
@@ -290,14 +303,14 @@ namespace ngosen {
         showAuxiliary();
     }
 
-    void IBusHost::showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick) {
+    void IBusHost::showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick, CandidateLayout layout) {
         tableDirty_ = true;
         if (labels.empty()) {
             list_.reset();
             return;
         }
         // IBus aborts on a page of more than 16.
-        list_ = CandidateList{labels, std::clamp(pageSize, 1, 16), 0, std::move(onPick)};
+        list_ = CandidateList{labels, std::clamp(pageSize, 1, 16), 0, std::move(onPick), layout};
     }
 
     void IBusHost::hideCandidates() {
@@ -311,7 +324,7 @@ namespace ngosen {
         CandidatePage page;
         page.total    = static_cast<int>(list_->labels.size());
         page.pageSize = list_->pageSize;
-        page.cursor   = list_->cursor;
+        page.cursor   = list_->layout == CandidateLayout::Row ? -1 : list_->cursor;
         page.page     = list_->cursor / list_->pageSize;
         page.hasPrev  = page.page > 0;
         page.hasNext  = (page.page + 1) * page.pageSize < page.total;

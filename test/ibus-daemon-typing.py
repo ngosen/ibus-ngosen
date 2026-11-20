@@ -1834,6 +1834,13 @@ def menu_app(name, hints=0):
         ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    listen(
+        app.ic,
+        "update-lookup-table",
+        lambda _ic, table, _visible: setattr(
+            app, "row", (table.get_orientation(), table.is_cursor_visible())
+        ),
+    )
     # GNOME Shell numbers a candidate whose label is missing or empty.
     listen(
         app.ic,
@@ -2231,6 +2238,8 @@ def emoji_off_apps():
         return [line for line in f.read().splitlines() if line and not line.startswith("#")]
 
 
+# The list after each word, which users can still pick; the end of a sentence is the default.
+set_setting("EmojiOfferAt", "After each word")
 app = menu_app("emoji")
 app.type("cuwowif")
 pump(300)
@@ -2288,6 +2297,33 @@ check(
 )
 app.close()
 set_setting("DirectTyping", "True")
+set_setting("EmojiOfferAt", "At the end of a sentence")
+
+# At the end of a sentence the emoji show in a row whose labels carry their own digits.
+horizontal = (IBus.Orientation.HORIZONTAL, False)
+app = menu_app("emoji-sentence")
+app.type("cuwowif")
+pump(300)
+check(
+    app.menu == ["😂 🤣 😄 😆 😁"] and app.row == horizontal,
+    "emoji: the sentence's emoji show in a row while typing",
+    (app.menu, app.row),
+)
+app.type(".")
+pump(300)
+check(
+    app.menu == ["1.😂", "2.🤣", "3.😄", "4.😆", "5.😁"] and app.row == horizontal,
+    "emoji: the end of the sentence numbers them in a row with none highlighted",
+    (app.menu, app.row),
+)
+app.type("1")
+pump(300)
+check(
+    app.text == "cười. 😂" and app.menu is None,
+    "emoji: a digit puts its emoji after the sentence",
+    (app.text, app.menu),
+)
+app.close()
 
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")

@@ -63,6 +63,8 @@ class FakeEngine:
             "ConvertTo": "Unicode",
             "ConvertCase": "Keep",
             "ConvertStripDiacritics": "False",
+            "EnglishEmojiKeywords": "True",
+            "EmojiOfferAt": "At the end of a sentence",
         }
 
 
@@ -290,6 +292,8 @@ class WindowTest(unittest.TestCase):
 
     def test_emoji_filter_follows_an_undo(self):
         page = self.window.emoji
+        # Almost every emoji has an English word on.
+        self.window.rows.rows["EnglishEmojiKeywords"].set_active(False)
         page.only_on.set_active(True)
         self.assertNotIn("📱", page.shown)
         page.toggle("📱", "điện thoại")

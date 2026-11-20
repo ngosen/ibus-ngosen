@@ -162,6 +162,7 @@ namespace ngosen {
         const char* const LockWordKeyNames[] = {"Disabled", "Shift", "Ctrl", "Alt"};
         // fcitx5 stores the enum by its English label.
         const char* const EmojiPlacementNames[] = {"After the word", "Instead of the word"};
+        const char* const EmojiOfferAtNames[]   = {"After each word", "At the end of a sentence"};
         // In the order of ConvertText's letter case, named as fcitx5 stores them.
         const char* const ConvertCaseNames[] = {"Keep", "UPPER CASE", "lower case", "Sentence case", "Title Case"};
 
@@ -307,6 +308,8 @@ namespace ngosen {
         IBusSettings settings;
         settings.toggleKeys   = defaultToggleKeys();
         settings.modeMenuKeys = defaultModeMenuKeys();
+        // fcitx5 offers emoji at the end of a sentence unless the user picked each word.
+        settings.options.emojiAtSentenceEnd = true;
         return settings;
     }
 
@@ -344,6 +347,10 @@ namespace ngosen {
         int placement = o.emojiReplacesWord ? 1 : 0;
         read.index("EmojiPlacement", placement, EmojiPlacementNames);
         o.emojiReplacesWord = placement == 1;
+        read.boolean("EnglishEmojiKeywords", o.englishEmojiKeywords);
+        int offerAt = o.emojiAtSentenceEnd ? 1 : 0;
+        read.index("EmojiOfferAt", offerAt, EmojiOfferAtNames);
+        o.emojiAtSentenceEnd = offerAt == 1;
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
@@ -398,6 +405,8 @@ namespace ngosen {
         line("EmojiSuggestions", boolText(o.emojiSuggestions));
         line("YahooEmoticons", boolText(o.yahooEmoticons));
         line("EmojiPlacement", EmojiPlacementNames[o.emojiReplacesWord ? 1 : 0]);
+        line("EnglishEmojiKeywords", boolText(o.englishEmojiKeywords));
+        line("EmojiOfferAt", EmojiOfferAtNames[o.emojiAtSentenceEnd ? 1 : 0]);
         line("EnableDictionary", boolText(settings.enableDictionary));
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
@@ -568,10 +577,10 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash",  "EnableMacroInOffMode", "ModeOrder",
-                                              "UiLanguage",        CycleModeKeyName,      "ShortcutVim",           "RawWordAfterSlash",    "EmojiSuggestions",
-                                              "YahooEmoticons",    "EmojiPlacement",      "ShortcutEmoji",         ConvertKeyName,         "ConvertFrom",
-                                              "ConvertTo",         "ConvertCase",         "ConvertStripDiacritics"};
+            std::vector<const char*> later = {
+                "RetypeAfterSwitch", "DoubleSpaceToPeriod",    "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",     "UiLanguage",   CycleModeKeyName, "ShortcutVim",
+                "RawWordAfterSlash", "EmojiSuggestions",       "YahooEmoticons",       "EmojiPlacement",       "ShortcutEmoji", ConvertKeyName, "ConvertFrom",    "ConvertTo",
+                "ConvertCase",       "ConvertStripDiacritics", "EnglishEmojiKeywords", "EmojiOfferAt"};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;
