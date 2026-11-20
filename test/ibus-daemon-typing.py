@@ -3061,6 +3061,22 @@ check(
     (app.text, app.title),
 )
 app.close()
+# As with the menu closed, the cycle key comes before the convert key when both name the same key.
+set_setting("CycleModeKey", "Control+Shift+F6")
+app = menu_app("convert-cycle-key")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(200)
+press_convert(app)
+check(
+    app.text == "về việt nam",
+    "convert: the cycle key wins over the same convert key with the menu open",
+    (app.text, app.title),
+)
+app.close()
+set_setting("CycleModeKey", "")
 set_setting("ConvertKey", "")
 set_setting("ConvertCase", "Keep")
 

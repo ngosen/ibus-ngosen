@@ -600,17 +600,17 @@ namespace {
         }
         if (ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
             return false;
-        if (session.menuOpen) {
-            // A key the menu passes on closes it, and may still be the convert key.
-            if (!applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval) &&
-                (!ngosen::convertsSelection(resources().settings(), keyval, state) || !convertSelection(session)))
-                return false;
+        // A key the open menu passes on closes it, and goes on as if the menu had been closed.
+        const bool wasOpen = session.menuOpen;
+        if (wasOpen && applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval)) {
         } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
             cycleMode(engine, session);
         } else if (ngosen::convertsSelection(resources().settings(), keyval, state)) {
             // Before the menu key, as in fcitx5, so a key both settings name converts.
             if (!convertSelection(session))
                 return false;
+        } else if (wasOpen) {
+            return false;
         } else {
             // In English the key types as usual, as in the fcitx5 edition, and so it does with every mode hidden.
             const auto keymap = resources().settings().options.inputMethod == "Custom" ? resources().customKeymap() : std::vector<ngosen::KeymapEntry>{};
