@@ -34,12 +34,13 @@ namespace ngosen {
         }
 
         std::optional<AppMode> modeOfNumber(int number) {
-            // As fcitx5 reads the file: 1, 3, 4 and 8 are Sen too.
+            // As fcitx5 reads the file: 1, 3, 4, 6 and 8 are Sen too.
             switch (number) {
                 case 1:
                 case SenNumber:
                 case 3:
                 case 4:
+                case 6:
                 case 8: return AppMode::Sen;
                 case PreeditNumber: return AppMode::Preedit;
                 case OffNumber: return AppMode::Off;

@@ -296,6 +296,7 @@ class AppModesTest(unittest.TestCase):
                 "  spaced =  8 ",
                 "long=123",
                 "org.app_org.app=3",
+                "emoji=6",
             ]
         )
         self.assertEqual(
@@ -308,6 +309,7 @@ class AppModesTest(unittest.TestCase):
                 "term": sc.PREEDIT,
                 "spaced": sc.SEN,
                 "org.app": sc.SEN,
+                "emoji": sc.SEN,
             },
         )
 

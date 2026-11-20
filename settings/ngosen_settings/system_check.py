@@ -40,7 +40,7 @@ MANUAL_ONLY = {CLEAN_FCITX5, ONLY_NGOSEN}
 
 SEN, PREEDIT = "sen", "preedit"
 # As the engine reads ngosen-app-rules.conf (src/ngosen-ibus-app-modes.cpp).
-APP_MODE_NUMBERS = {1: SEN, 2: SEN, 3: SEN, 4: SEN, 8: SEN, 5: PREEDIT}
+APP_MODE_NUMBERS = {1: SEN, 2: SEN, 3: SEN, 4: SEN, 6: SEN, 8: SEN, 5: PREEDIT}
 NOT_APPS = ("gnome-shell", "QIBusInputContext", "xim")
 INI_SPACE = " \t\r\f\v"
 

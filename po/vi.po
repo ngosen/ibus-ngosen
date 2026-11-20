@@ -282,22 +282,6 @@ msgid "Quick typing"
 msgstr "Gõ nhanh"
 
 #: settings/ngosen_settings/pages.py
-msgid "Sen in every app, with its fixes for each app"
-msgstr "Gõ Sen ở mọi app, kèm sửa lỗi riêng từng app"
-
-#: settings/ngosen_settings/pages.py
-msgid "Cứu dấu in every app"
-msgstr "Cứu dấu ở mọi app"
-
-#: settings/ngosen_settings/pages.py
-msgid "The emoji picker, and turning Vietnamese off for one app"
-msgstr "Bảng chọn emoji, và tắt tiếng Việt cho riêng một app"
-
-#: settings/ngosen_settings/pages.py
-msgid "Vim mode for each app"
-msgstr "Vim mode theo app"
-
-#: settings/ngosen_settings/pages.py
 msgid "In the fcitx5 edition"
 msgstr "Có ở bản fcitx5"
 
@@ -829,16 +813,12 @@ msgid "The backup types in a mode this edition does not know ({}), so the curren
 msgstr "Bản sao lưu gõ ở chế độ mà bản này không biết ({}), nên giữ chế độ đang dùng."
 
 #: settings/ngosen_settings/backup.py
-msgid "This edition has no emoji picker, so words are underlined instead."
-msgstr "Bản này không có bảng chọn emoji, nên chữ sẽ gõ có gạch chân."
-
-#: settings/ngosen_settings/backup.py
 msgid "The backup was made while typing English, so typing switches to English."
 msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
 
 #: settings/ngosen_settings/backup.py
-msgid "Rules that pick emoji for an app are kept but do nothing here."
-msgstr "Luật chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
+msgid "Rules with a mode this edition does not know are kept but do nothing here."
+msgstr "Luật đặt cho app một chế độ bản này không biết vẫn được giữ nhưng không có tác dụng."
 
 #: settings/ngosen_settings/window.py
 msgid "The settings changed after the restore, so nothing was undone."
@@ -1573,3 +1553,27 @@ msgstr "Ngó Sen không biết một trong hai bảng mã này."
 #: settings/ngosen_settings/window.py
 msgid "Cannot run the engine to convert."
 msgstr "Không chạy được Ngó Sen để chuyển mã."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Emoji while typing"
+msgstr "Gợi ý emoji khi gõ"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Convert selected text"
+msgstr "Chuyển mã chữ bôi đen"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Select text typed in TCVN3, VNI or another charset and press the convert hotkey to change it to the charset you chose. Set the hotkey on the Convert page, which also converts text pasted into it."
+msgstr "Bôi đen đoạn chữ gõ bằng TCVN3, VNI hay bảng mã khác rồi bấm phím tắt chuyển mã, chữ được đổi sang bảng mã đã chọn. Đặt phím tắt ở trang Chuyển mã; trang này cũng chuyển được chữ dán vào."
+
+#: settings/ngosen_settings/pages.py
+msgid "Cứu dấu on selected text in every app"
+msgstr "Cứu dấu cho chữ đang bôi đen ở mọi app"
+
+#: settings/ngosen_settings/pages.py
+msgid "Converting selected text in LibreOffice"
+msgstr "Chuyển mã chữ bôi đen trong LibreOffice"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "After a word such as cười, con mèo or haha, emoji show next to the cursor. Press Tab to number them and a number to pick one; Space or Enter takes the first. The Emoji page lists every emoji with its words, which you can change."
+msgstr "Gõ xong một từ như cười, con mèo hay haha là emoji hiện cạnh con trỏ. Bấm Tab để đánh số rồi bấm số để chọn; Space hoặc Enter lấy emoji đầu. Trang Emoji liệt kê mọi emoji kèm từ gợi ý, và bạn đổi được các từ đó."

@@ -74,7 +74,12 @@ class Window(Adw.ApplicationWindow):
         self.whats_new = whats_new.WhatsNewPage(
             self.open_setting,
             self.show_page,
-            {"macros": self.macros.page.get_title(), "check": self.check.page.get_title()},
+            {
+                "emoji": self.emoji.page.get_title(),
+                "convert": self.convert.page.get_title(),
+                "macros": self.macros.page.get_title(),
+                "check": self.check.page.get_title(),
+            },
         )
         self.named_pages = {
             "typing": typing,
