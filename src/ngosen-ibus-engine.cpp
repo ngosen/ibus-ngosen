@@ -226,10 +226,12 @@ namespace {
             resources().reloadIfChanged();
             if (generation == resources().generation())
                 return languageChanged;
+            // A new switch scope may change the language too.
+            const bool wasEnglish = typesEnglish();
             applyTypingMode(*host);
             state->setEngine();
             generation = resources().generation();
-            return languageChanged;
+            return languageChanged || typesEnglish() != wasEnglish;
         }
     };
 
