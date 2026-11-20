@@ -138,7 +138,7 @@ namespace {
         check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
         check(!readSettings(parseIni(text)).options.englishEmojiKeywords, "EnglishEmojiKeywords round trip");
         check(parseIni(text).top.at("EmojiOfferAt") == "After each word" && !readSettings(parseIni(text)).options.emojiAtSentenceEnd, "EmojiOfferAt round trip by fcitx5's label");
-        check(parseIni(text).top.size() == 61, "the file has every key");
+        check(parseIni(text).top.size() == 62, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -195,12 +195,15 @@ namespace {
         changed.shortcutOff      = "x";
         changed.shortcutVim      = "m";
         changed.showModeVim      = false;
+        changed.toggleEachApp    = true;
         changed.shortcutTeencode = "k";
         changed.showModeTeencode = false;
         const IBusSettings rt    = readSettings(parseIni(settingsText(changed)));
         check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x", "menu settings round trip");
         check(rt.shortcutVim == "m" && !rt.showModeVim, "the Vim item's settings round trip");
         check(rt.shortcutTeencode == "k" && !rt.showModeTeencode, "the teencode item's settings round trip");
+        check(rt.toggleEachApp && parseIni(settingsText(changed)).top.at("ToggleScope") == "Each app", "ToggleScope round trip by fcitx5's label");
+        check(!defaultSettings().toggleEachApp, "the toggle key switches every app by default, as in fcitx5");
         check(defaults.shortcutVim == "v" && defaults.showModeVim, "Vim mode is in the menu on v by default, as in fcitx5");
         const IBusSettings old = readSettings(parseIni("ShortcutDefault=r\nShowModeDefault=False\nModeOrder=Sen,Preedit,Emoji,Off,Default\n"));
         check(old.modeOrder == "Sen,Preedit,Emoji,Off" && old.showModeSen && old.shortcutSen == "1", "a config saved with Default Typing still reads");

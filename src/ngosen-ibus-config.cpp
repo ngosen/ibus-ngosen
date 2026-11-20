@@ -164,6 +164,7 @@ namespace ngosen {
         // fcitx5 stores the enum by its English label.
         const char* const EmojiPlacementNames[] = {"After the word", "Instead of the word"};
         const char* const EmojiOfferAtNames[]   = {"After each word", "At the end of a sentence"};
+        const char* const ToggleScopeNames[]    = {"All apps", "Each app"};
         // In the order of ConvertText's letter case, named as fcitx5 stores them.
         const char* const ConvertCaseNames[] = {"Keep", "UPPER CASE", "lower case", "Sentence case", "Title Case"};
 
@@ -355,8 +356,11 @@ namespace ngosen {
         read.boolean("EnableDictionary", settings.enableDictionary);
         read.boolean("EnableCustomKeymap", settings.enableCustomKeymap);
         read.boolean("DirectTyping", settings.directTyping);
-        settings.toggleKeys   = readToggleKeys(ini);
-        settings.modeMenuKeys = readModeMenuKeys(ini);
+        settings.toggleKeys = readToggleKeys(ini);
+        int scope           = settings.toggleEachApp ? 1 : 0;
+        read.index("ToggleScope", scope, ToggleScopeNames);
+        settings.toggleEachApp = scope == 1;
+        settings.modeMenuKeys  = readModeMenuKeys(ini);
         read.shortcut("ShortcutSen", settings.shortcutSen);
         read.shortcut("ShortcutPreedit", settings.shortcutPreedit);
         read.shortcut("ShortcutOff", settings.shortcutOff);
@@ -413,6 +417,7 @@ namespace ngosen {
         line("EnableCustomKeymap", boolText(settings.enableCustomKeymap));
         line("DirectTyping", boolText(settings.directTyping));
         line(ToggleKeyName, joinWords(settings.toggleKeys));
+        line("ToggleScope", ToggleScopeNames[settings.toggleEachApp ? 1 : 0]);
         line(ModeMenuKeyName, joinWords(settings.modeMenuKeys));
         line("ShortcutSen", settings.shortcutSen);
         line("ShortcutPreedit", settings.shortcutPreedit);
@@ -585,9 +590,9 @@ namespace ngosen {
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
             std::vector<const char*> later = {
-                "RetypeAfterSwitch", "DoubleSpaceToPeriod",    "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",       "UiLanguage",   CycleModeKeyName, "ShortcutVim",
-                "RawWordAfterSlash", "EmojiSuggestions",       "YahooEmoticons",       "EmojiPlacement",       "ShortcutEmoji",   ConvertKeyName, "ConvertFrom",    "ConvertTo",
-                "ConvertCase",       "ConvertStripDiacritics", "EnglishEmojiKeywords", "EmojiOfferAt",         "ShortcutTeencode"};
+                "RetypeAfterSwitch", "DoubleSpaceToPeriod",    "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",        "UiLanguage",   CycleModeKeyName, "ShortcutVim",
+                "RawWordAfterSlash", "EmojiSuggestions",       "YahooEmoticons",       "EmojiPlacement",       "ShortcutEmoji",    ConvertKeyName, "ConvertFrom",    "ConvertTo",
+                "ConvertCase",       "ConvertStripDiacritics", "EnglishEmojiKeywords", "EmojiOfferAt",         "ShortcutTeencode", "ToggleScope"};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;
