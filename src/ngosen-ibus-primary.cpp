@@ -10,10 +10,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <atomic>
 #include <dlfcn.h>
 #include <future>
 #include <memory>
 #include <poll.h>
+#include <system_error>
 #include <thread>
 
 namespace ngosen {
@@ -172,7 +174,10 @@ namespace ngosen {
             return {};
         }
 
-        std::string readPrimary(Clock::time_point deadline) {
+        // Set while a read runs; a read stuck on a stalled server must not gain company at every key press.
+        std::atomic<bool> reading{false};
+
+        std::string       readPrimary(Clock::time_point deadline) {
             const Xcb&     x    = xcb();
             XcbConnection* conn = x.connect(nullptr, nullptr);
             std::string    text;
@@ -191,10 +196,22 @@ namespace ngosen {
             return {};
         // Connecting and every reply can stall on a busy X server, so a thread does the reading and the
         // engine waits only until the deadline; a late thread finishes on its own.
+        if (reading.exchange(true)) {
+            NGOSEN_INFO("The X server has not answered the last read of the primary selection");
+            return {};
+        }
         const auto deadline = Clock::now() + std::chrono::milliseconds(timeoutMs);
         auto       result   = std::make_shared<std::promise<std::string>>();
         auto       text     = result->get_future();
-        std::thread([result, deadline] { result->set_value(readPrimary(deadline)); }).detach();
+        try {
+            std::thread([result, deadline] {
+                result->set_value(readPrimary(deadline));
+                reading = false;
+            }).detach();
+        } catch (const std::system_error&) {
+            reading = false;
+            return {};
+        }
         if (text.wait_until(deadline + std::chrono::milliseconds(50)) != std::future_status::ready) {
             NGOSEN_INFO("The X server did not answer in time for the primary selection");
             return {};

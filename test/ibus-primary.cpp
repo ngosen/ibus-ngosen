@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <chrono>
 #include <cstdlib>
+#include <dirent.h>
 #include <iostream>
 #include <netinet/in.h>
 #include <string>
@@ -30,6 +31,16 @@ namespace {
         return -1;
     }
 
+    int countThreads() {
+        int count = 0;
+        if (DIR* tasks = opendir("/proc/self/task")) {
+            while (const dirent* entry = readdir(tasks))
+                count += entry->d_name[0] != '.';
+            closedir(tasks);
+        }
+        return count;
+    }
+
 } // namespace
 
 int main() {
@@ -45,6 +56,13 @@ int main() {
     const auto        waited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
     if (!text.empty() || waited > 1000) {
         std::cout << "FAIL an X server that never answers holds the engine for " << waited << " ms\n";
+        _exit(1);
+    }
+    // Pressing the key again while that read is stuck must not start another one.
+    for (int i = 0; i < 5; ++i)
+        ngosen::readPrimarySelection(50);
+    if (const int threads = countThreads(); threads > 2) {
+        std::cout << "FAIL every read stuck on the server keeps a thread: " << threads << " threads\n";
         _exit(1);
     }
     // The reading thread is still stuck on the silent server; leave without waiting for it.
