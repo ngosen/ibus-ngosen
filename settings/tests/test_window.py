@@ -228,6 +228,12 @@ class WindowTest(unittest.TestCase):
             model.get_string(win.rows.rows["ModeOrder"].get_selected()), "OFF, Sen, Preedit"
         )
 
+    def test_the_check_page_follows_the_output_charset(self):
+        collect = window.check_page.system_check.collect
+        with mock.patch.object(window.check_page.system_check, "collect", wraps=collect) as seen:
+            self.window.rows.rows["OutputCharset"].set_selected(1)
+        self.assertEqual(seen.call_args.kwargs["output_charset"], "TCVN3 (ABC)")
+
     def test_languages_are_named_in_their_own_language(self):
         model = self.window.rows.rows["UiLanguage"].get_model()
         self.assertEqual(

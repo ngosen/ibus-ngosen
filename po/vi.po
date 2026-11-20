@@ -1577,3 +1577,11 @@ msgstr "Chuyển mã chữ bôi đen trong LibreOffice"
 #: settings/ngosen_settings/whats_new.py
 msgid "After a word such as cười, con mèo or haha, emoji show next to the cursor. Press Tab to number them and a number to pick one; Space or Enter takes the first. The Emoji page lists every emoji with its words, which you can change."
 msgstr "Gõ xong một từ như cười, con mèo hay haha là emoji hiện cạnh con trỏ. Bấm Tab để đánh số rồi bấm số để chọn; Space hoặc Enter lấy emoji đầu. Trang Emoji liệt kê mọi emoji kèm từ gợi ý, và bạn đổi được các từ đó."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Most apps expect Unicode. With another charset, terminals and web pages can show stray tone marks or lose letters. Keep it only for an old document or app that needs it; otherwise choose Unicode under Typing › Output Charset."
+msgstr "Hầu hết app cần Unicode. Với bảng mã khác, terminal và trang web có thể hiện dấu lạc hoặc mất chữ. Chỉ giữ bảng mã này cho văn bản hay app cũ cần nó; còn lại hãy chọn Unicode ở Gõ chữ › Bảng mã."
+
+#: settings/ngosen_settings/system_check.py
+msgid "Output charset is {charset}, not Unicode"
+msgstr "Bảng mã đang là {charset}, không phải Unicode"

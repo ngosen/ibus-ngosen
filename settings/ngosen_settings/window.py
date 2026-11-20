@@ -64,6 +64,7 @@ class Window(Adw.ApplicationWindow):
             backup.Paths(store).app_modes,
             self._toggle_key,
             store.folder,
+            lambda: store.values.get("OutputCharset", "Unicode"),
         )
 
         self.stack = stack = Adw.ViewStack()
@@ -260,7 +261,7 @@ class Window(Adw.ApplicationWindow):
         # The example and the hint show these settings.
         if key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
             self.emoji.refresh()
-        if key == "DirectTyping":
+        if key in ("DirectTyping", "OutputCharset"):
             self.check.run()
         if key in convert.SETTING_KEYS:
             self.convert.refresh()
