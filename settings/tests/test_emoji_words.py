@@ -257,6 +257,13 @@ class ShareTest(Folder):
         )
         self.assertEqual(emoji_words.read_shared(path), [("😂", "sếp cười")])
 
+    def test_a_file_nested_too_deep_is_refused(self):
+        path = self.path("shared.json")
+        head = json.dumps({"meta": {"kind": emoji_words.SHARE_KIND}})[:-1] + ', "emoji_words": ['
+        write_text(path, head + "[" * 100000 + "]" * 100000 + "]}")
+        with self.assertRaises(ValueError):
+            emoji_words.read_shared(path)
+
     def test_a_backup_or_a_damaged_file_is_refused(self):
         path = self.path("shared.json")
         for data in (

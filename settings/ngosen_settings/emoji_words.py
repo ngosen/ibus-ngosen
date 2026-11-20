@@ -47,7 +47,10 @@ def read_shared(path):
     from .i18n import _
 
     with open(path, encoding="utf-8") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except RecursionError:
+            raise ValueError(_("The emoji words in the file are damaged.")) from None
     meta = data.get("meta") if isinstance(data, dict) else None
     if not isinstance(meta, dict) or meta.get("kind") != SHARE_KIND:
         raise ValueError(_("This is not a file of emoji words exported from Ngó Sen."))
