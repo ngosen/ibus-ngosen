@@ -13,6 +13,12 @@ target_link_libraries(ibus-host-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_host COMMAND ibus-host-test)
 set_tests_properties(ibus_host PROPERTIES LABELS "unit;ibus")
 
+add_executable(ibus-primary-test ibus-primary.cpp)
+target_link_libraries(ibus-primary-test PRIVATE ngosen_ibus)
+add_test(NAME ibus_primary COMMAND ibus-primary-test)
+# Without the deadline the test hangs on the silent server; the timeout turns that into a failure.
+set_tests_properties(ibus_primary PROPERTIES LABELS "unit;ibus" TIMEOUT 10)
+
 add_executable(ibus-program-name-test ibus-program-name.cpp)
 target_link_libraries(ibus-program-name-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_program_name COMMAND ibus-program-name-test)

@@ -1453,3 +1453,123 @@ msgstr "Bật lại emoji trong {}"
 #: settings/ngosen_settings/window.py
 msgid "Emoji are back on in {}."
 msgstr "Đã bật lại emoji trong {}."
+
+#: src/ngosen-ibus-engine.cpp
+msgid "The selected text is the same in both charsets. Check the charsets on the Convert page."
+msgstr "Chữ bôi đen giống nhau ở cả hai bảng mã. Xem lại bảng mã ở trang Chuyển mã."
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Select the text to convert, then press the key again."
+msgstr "Bôi đen chữ cần chuyển mã rồi bấm lại phím."
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Finish the word being typed, then press the key again."
+msgstr "Gõ xong chữ đang gõ rồi bấm lại phím."
+
+#: settings/ngosen_settings/convert.py
+msgid "Copied"
+msgstr "Đã chép"
+
+#: settings/ngosen_settings/convert.py
+msgid "_Copy result"
+msgstr "_Chép kết quả"
+
+#: settings/ngosen_settings/convert.py
+msgid "Convert"
+msgstr "Chuyển mã"
+
+#: settings/ngosen_settings/convert.py
+msgid "Convert here"
+msgstr "Chuyển ngay ở đây"
+
+#: settings/ngosen_settings/convert.py
+msgid "Paste text in the first box; the second shows it converted."
+msgstr "Dán chữ vào ô trên, ô dưới hiện chữ đã chuyển."
+
+#: settings/ngosen_settings/convert.py
+msgid "Paste the text to convert"
+msgstr "Dán chữ cần chuyển mã vào đây"
+
+#: settings/ngosen_settings/convert.py
+msgid "The converted text shows here"
+msgstr "Chữ đã chuyển hiện ở đây"
+
+#: settings/ngosen_settings/convert.py
+msgid "S_wap"
+msgstr "Đả_o chiều"
+
+#: settings/ngosen_settings/convert.py
+msgid "Swap the charsets"
+msgstr "Đảo hai bảng mã"
+
+#: settings/ngosen_settings/options.py
+msgid "Charsets"
+msgstr "Bảng mã"
+
+#: settings/ngosen_settings/options.py
+msgid "Convert Selected Text Hotkey"
+msgstr "Phím tắt chuyển mã chữ bôi đen"
+
+#: settings/ngosen_settings/options.py
+msgid "Convert From"
+msgstr "Chuyển từ bảng mã"
+
+#: settings/ngosen_settings/options.py
+msgid "Convert To"
+msgstr "Sang bảng mã"
+
+#: settings/ngosen_settings/options.py
+msgid "Letter Case"
+msgstr "Chữ hoa, chữ thường"
+
+#: settings/ngosen_settings/options.py
+msgid "Remove Diacritics"
+msgstr "Bỏ dấu"
+
+#: settings/ngosen_settings/options.py
+msgid "Select text in an app, then press this key. The text changes in place; Ctrl+Z brings it back."
+msgstr "Bôi đen chữ trong app rồi bấm phím này. Chữ được đổi ngay tại chỗ; Ctrl+Z để lấy lại."
+
+#: settings/ngosen_settings/options.py
+msgid "Old documents are often TCVN3."
+msgstr "Văn bản cũ thường gõ bằng TCVN3."
+
+#: settings/ngosen_settings/options.py
+msgid "Tiếng Việt becomes Tieng Viet."
+msgstr "Tiếng Việt thành Tieng Viet."
+
+#: settings/ngosen_settings/options.py
+msgid "Keep"
+msgstr "Giữ nguyên"
+
+#: settings/ngosen_settings/options.py
+msgid "UPPER CASE"
+msgstr "CHỮ HOA"
+
+#: settings/ngosen_settings/options.py
+msgid "lower case"
+msgstr "chữ thường"
+
+#: settings/ngosen_settings/options.py
+msgid "Sentence case"
+msgstr "Viết hoa đầu câu"
+
+#: settings/ngosen_settings/options.py
+msgid "Title Case"
+msgstr "Viết Hoa Mỗi Từ"
+
+#: settings/ngosen_settings/options.py
+msgid "Hotkey"
+msgstr "Phím tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "After converting"
+msgstr "Sau khi chuyển"
+
+#: settings/ngosen_settings/window.py
+msgid "The engine does not know one of these charsets."
+msgstr "Ngó Sen không biết một trong hai bảng mã này."
+
+#: settings/ngosen_settings/window.py
+msgid "Cannot run the engine to convert."
+msgstr "Không chạy được Ngó Sen để chuyển mã."

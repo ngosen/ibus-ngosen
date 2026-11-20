@@ -81,6 +81,7 @@ namespace ngosen {
         const char* const ToggleKeyName        = "ToggleKey";
         const char* const ModeMenuKeyName      = "ModeMenuKey";
         const char* const CycleModeKeyName     = "CycleModeKey";
+        const char* const ConvertKeyName       = "ConvertKey";
         const char* const AnnouncedVersionName = "AnnouncedVersion";
 
         // The items each menu shows, as fcitx5 names their switches.
@@ -161,6 +162,8 @@ namespace ngosen {
         const char* const LockWordKeyNames[] = {"Disabled", "Shift", "Ctrl", "Alt"};
         // fcitx5 stores the enum by its English label.
         const char* const EmojiPlacementNames[] = {"After the word", "Instead of the word"};
+        // In the order of ConvertText's letter case, named as fcitx5 stores them.
+        const char* const ConvertCaseNames[] = {"Keep", "UPPER CASE", "lower case", "Sentence case", "Title Case"};
 
         struct Reader {
             const std::map<std::string, std::string>& values;
@@ -357,6 +360,11 @@ namespace ngosen {
         settings.modeOrder = withoutDefaultTyping(settings.modeOrder);
         read.text("UiLanguage", settings.uiLanguage);
         settings.cycleModeKeys = readKeys(ini, CycleModeKeyName, {}, parseMenuKey);
+        settings.convertKeys   = readKeys(ini, ConvertKeyName, {}, parseMenuKey);
+        read.choice("ConvertFrom", o.convertFrom, charsetNames());
+        read.choice("ConvertTo", o.convertTo, charsetNames());
+        read.index("ConvertCase", o.convertCase, ConvertCaseNames);
+        read.boolean("ConvertStripDiacritics", o.convertStripDiacritics);
         return settings;
     }
 
@@ -405,6 +413,11 @@ namespace ngosen {
         line("ModeOrder", settings.modeOrder);
         line("UiLanguage", settings.uiLanguage);
         line(CycleModeKeyName, joinWords(settings.cycleModeKeys));
+        line(ConvertKeyName, joinWords(settings.convertKeys));
+        line("ConvertFrom", o.convertFrom);
+        line("ConvertTo", o.convertTo);
+        line("ConvertCase", ConvertCaseNames[o.convertCase]);
+        line("ConvertStripDiacritics", boolText(o.convertStripDiacritics));
         return out.str();
     }
 
@@ -555,9 +568,10 @@ namespace ngosen {
         // Options this edition began to read after the first import, where fcitx5's choice still applies; a
         // file without one never chose it here. Keys this edition sets its own way, such as ToggleKey, are not.
         bool addLaterSettings(const SettingsPaths& paths, const FileWriter& write) {
-            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash", "EnableMacroInOffMode", "ModeOrder",
-                                              "UiLanguage",        CycleModeKeyName,      "ShortcutVim",          "RawWordAfterSlash",    "EmojiSuggestions",
-                                              "YahooEmoticons",    "EmojiPlacement",      "ShortcutEmoji"};
+            std::vector<const char*> later = {"RetypeAfterSwitch", "DoubleSpaceToPeriod", "DoubleHyphenToEmDash",  "EnableMacroInOffMode", "ModeOrder",
+                                              "UiLanguage",        CycleModeKeyName,      "ShortcutVim",           "RawWordAfterSlash",    "EmojiSuggestions",
+                                              "YahooEmoticons",    "EmojiPlacement",      "ShortcutEmoji",         ConvertKeyName,         "ConvertFrom",
+                                              "ConvertTo",         "ConvertCase",         "ConvertStripDiacritics"};
             for (const auto& item : ShownItems)
                 later.push_back(item.first);
             std::string text;

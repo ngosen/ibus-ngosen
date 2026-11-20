@@ -27,6 +27,21 @@ CYCLE_MODE_KEYS = [
     ("", N_("Disabled")),
     ("Control+grave", "Ctrl+`"),
 ]
+# Off by default, as in fcitx5; a key saved there stays offered.
+CONVERT_KEYS = [
+    ("", N_("Disabled")),
+    ("Control+Shift+F6", "Ctrl+Shift+F6"),
+]
+# Stored by their English labels, in the order of the core's letter case.
+CONVERT_CASES = [
+    ("Keep", N_("Keep")),
+    ("UPPER CASE", N_("UPPER CASE")),
+    ("lower case", N_("lower case")),
+    ("Sentence case", N_("Sentence case")),
+    ("Title Case", N_("Title Case")),
+]
+# Settings that offer the charsets the engine knows.
+CHARSET_KEYS = ("OutputCharset", "ConvertFrom", "ConvertTo")
 # fcitx5 drags the modes into any order; these are the common ones, and a saved order stays offered.
 MODE_ORDERS = [
     ("Sen,Preedit,Emoji,Off,Vim", N_("Sen, Preedit, OFF")),
@@ -98,6 +113,11 @@ LABELS = {
     "ShortcutEmoji": N_("Shortcut for emoji suggestions"),
     "EmojiSuggestions": N_("Suggest emoji while typing"),
     "EmojiPlacement": N_("Put a picked emoji"),
+    "ConvertKey": N_("Convert Selected Text Hotkey"),
+    "ConvertFrom": N_("Convert From"),
+    "ConvertTo": N_("Convert To"),
+    "ConvertCase": N_("Letter Case"),
+    "ConvertStripDiacritics": N_("Remove Diacritics"),
     "YahooEmoticons": N_("Yahoo Messenger emoticons"),
     "DirectTyping": N_("Mode"),
     "OutputCharset": N_("Output Charset"),
@@ -129,6 +149,11 @@ LABELS = {
 }
 
 HINTS = {
+    "ConvertKey": N_(
+        "Select text in an app, then press this key. The text changes in place; Ctrl+Z brings it back."
+    ),
+    "ConvertFrom": N_("Old documents are often TCVN3."),
+    "ConvertStripDiacritics": N_("Tiếng Việt becomes Tieng Viet."),
     "ToggleKey": N_(
         "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
     ),
@@ -246,6 +271,13 @@ TYPING_GROUPS = [
     (N_("Show in the top bar menu"), SHOW_MENUS),
     (N_("Language"), ["UiLanguage"]),
 ]
+# The Convert page, as in fcitx5.
+CONVERT_CHARSETS = N_("Charsets")
+CONVERT_GROUPS = [
+    (N_("Hotkey"), ["ConvertKey"]),
+    (CONVERT_CHARSETS, ["ConvertFrom", "ConvertTo"]),
+    (N_("After converting"), ["ConvertStripDiacritics", "ConvertCase"]),
+]
 # The Emoji page, as in fcitx5.
 EMOJI_SETTINGS = ["EmojiSuggestions", "EmojiPlacement", "YahooEmoticons"]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
@@ -273,13 +305,13 @@ CHOICES = {
     "TimeFormat": TIME_FORMATS,
     "DateFormat": DATE_FORMATS,
     "EmojiPlacement": EMOJI_PLACEMENTS,
+    "ConvertKey": CONVERT_KEYS,
+    "ConvertCase": CONVERT_CASES,
 }
 
 
 def is_switch(key):
-    return (
-        key not in CHOICES and key not in SHORTCUTS and key not in ("InputMethod", "OutputCharset")
-    )
+    return key not in CHOICES and key not in SHORTCUTS and key not in ("InputMethod", *CHARSET_KEYS)
 
 
 def shortcut_problem(key, value, values):

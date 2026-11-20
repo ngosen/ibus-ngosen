@@ -72,6 +72,8 @@ namespace ngosen {
         std::string uiLanguage = "Vietnamese";
         // Moves the app to the next mode in that order; off by default, as in fcitx5.
         std::vector<std::string> cycleModeKeys;
+        // Converts the selected text with the convert options; off by default, as in fcitx5.
+        std::vector<std::string> convertKeys;
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.

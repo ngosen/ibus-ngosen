@@ -6,7 +6,9 @@ import glob
 import itertools
 import os
 import re
+import struct
 import sys
+import threading
 import time
 import warnings
 
@@ -2828,6 +2830,255 @@ if saved_logs:
     modes = (os.stat(state_dir).st_mode & 0o777, os.stat(saved_logs[0]).st_mode & 0o777)
     check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
 app.close()
+
+
+class PrimaryOwner:
+    """Owns the X11 primary selection and hands out text, as Firefox does through Xwayland."""
+
+    class Request(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("owner", ctypes.c_ulong),
+            ("requestor", ctypes.c_ulong),
+            ("selection", ctypes.c_ulong),
+            ("target", ctypes.c_ulong),
+            ("property", ctypes.c_ulong),
+            ("time", ctypes.c_ulong),
+        ]
+
+    class Notify(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("requestor", ctypes.c_ulong),
+            ("selection", ctypes.c_ulong),
+            ("target", ctypes.c_ulong),
+            ("property", ctypes.c_ulong),
+            ("time", ctypes.c_ulong),
+        ]
+
+    class PropertyEvent(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("window", ctypes.c_ulong),
+            ("atom", ctypes.c_ulong),
+            ("time", ctypes.c_ulong),
+            ("state", ctypes.c_int),
+        ]
+
+    def __init__(self, text, parts=None):
+        """parts, if given, are sent one by one (ICCCM INCR), as an owner sends a large selection."""
+        self.text = text.encode()
+        self.parts = [part.encode() for part in parts] if parts else None
+        self.asked = 0
+        ready = threading.Event()
+        threading.Thread(target=self.serve, args=(ready,), daemon=True).start()
+        ready.wait(5)
+
+    # Everything on its own display in this thread, since XNextEvent holds the display while it waits.
+    def serve(self, ready):
+        x = ctypes.CDLL("libX11.so.6")
+        x.XOpenDisplay.restype = ctypes.c_void_p
+        x.XOpenDisplay.argtypes = [ctypes.c_char_p]
+        x.XDefaultRootWindow.argtypes = [ctypes.c_void_p]
+        x.XDefaultRootWindow.restype = ctypes.c_ulong
+        x.XCreateSimpleWindow.argtypes = (
+            [ctypes.c_void_p, ctypes.c_ulong]
+            + [ctypes.c_int] * 2
+            + [ctypes.c_uint] * 3
+            + [ctypes.c_ulong] * 2
+        )
+        x.XCreateSimpleWindow.restype = ctypes.c_ulong
+        x.XInternAtom.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+        x.XInternAtom.restype = ctypes.c_ulong
+        x.XSetSelectionOwner.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+        ]
+        x.XNextEvent.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        x.XChangeProperty.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+        ]
+        x.XSendEvent.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_int,
+            ctypes.c_long,
+            ctypes.c_void_p,
+        ]
+        x.XFlush.argtypes = [ctypes.c_void_p]
+        x.XSelectInput.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.c_long]
+        # A requestor that gave up has destroyed its window; Xlib's default handler would exit the test.
+        self.on_error = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p)(
+            lambda *_: 0
+        )
+        x.XSetErrorHandler(self.on_error)
+        d = x.XOpenDisplay(None)
+        window = x.XCreateSimpleWindow(d, x.XDefaultRootWindow(d), 0, 0, 1, 1, 0, 0, 0)
+        primary, utf8 = 1, x.XInternAtom(d, b"UTF8_STRING", 0)
+        incr = x.XInternAtom(d, b"INCR", 0)
+        sending = None  # (requestor, property, parts left) while a transfer in parts runs
+        x.XSetSelectionOwner(d, primary, window, 0)
+        x.XFlush(d)
+        ready.set()
+        event = ctypes.create_string_buffer(192)
+        while True:
+            x.XNextEvent(d, event)
+            request = PrimaryOwner.Request.from_buffer(event)
+            if request.type == 28 and sending:  # PropertyNotify
+                change = PrimaryOwner.PropertyEvent.from_buffer(event)
+                requestor, prop, left = sending
+                if (change.window, change.atom, change.state) == (requestor, prop, 1):
+                    part = left.pop(0)
+                    x.XChangeProperty(d, requestor, prop, utf8, 8, 0, part, len(part))
+                    x.XFlush(d)
+                    if not left:
+                        sending = None
+                continue
+            if request.type != 30:  # SelectionRequest
+                continue
+            self.asked += 1
+            notify = PrimaryOwner.Notify(
+                31, 0, 1, d, request.requestor, request.selection, request.target, 0, request.time
+            )
+            if request.target == utf8 and self.parts:
+                # Reading the INCR property deletes it, which asks for the first part.
+                x.XSelectInput(d, request.requestor, 1 << 22)  # PropertyChangeMask
+                size = struct.pack("l", len(self.text))
+                x.XChangeProperty(d, request.requestor, request.property, incr, 32, 0, size, 1)
+                sending = (request.requestor, request.property, [*self.parts, b""])
+                notify.property = request.property
+            elif request.target == utf8:
+                x.XChangeProperty(
+                    d, request.requestor, request.property, utf8, 8, 0, self.text, len(self.text)
+                )
+                notify.property = request.property
+            x.XSendEvent(d, request.requestor, 0, 0, ctypes.byref(notify))
+            x.XFlush(d)
+
+
+def press_convert(app):
+    app.key(IBus.KEY_F6, IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK)
+    pump(800)
+
+
+# As in fcitx5 the convert key changes the selected text in place with the convert options.
+set_setting("ConvertKey", "Control+Shift+F6")
+set_setting("ConvertFrom", "Unicode")
+set_setting("ConvertTo", "Unicode")
+set_setting("ConvertCase", "UPPER CASE")
+app = menu_app("convert-gtk")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the selection the app reports is converted in place",
+    app.text,
+)
+app.select(11, 11)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM" and app.title == "Bôi đen chữ cần chuyển mã rồi bấm lại phím.",
+    "convert: with nothing selected the text stays and a notice says why",
+    (app.text, app.title),
+)
+app.close()
+if not no_x:
+    # Firefox reports no selection and keeps the cursor at its start, but puts it in the primary selection.
+    owner = PrimaryOwner("việt nam")
+    app = menu_app("convert-firefox")
+    app.reports_anchor = False
+    app.text = "về việt nam"
+    app.report()
+    app.select(11, 3)
+    press_convert(app)
+    check(
+        owner.asked > 0 and app.text == "về VIỆT NAM",
+        "convert: the primary selection is converted where the app reports none",
+        (owner.asked, app.text),
+    )
+    app.close()
+    # A large selection comes in parts; the engine collects them all.
+    owner = PrimaryOwner("việt nam", parts=["việt ", "nam"])
+    app = menu_app("convert-parts")
+    app.reports_anchor = False
+    app.text = "về việt nam"
+    app.report()
+    app.select(11, 3)
+    press_convert(app)
+    check(
+        owner.asked > 0 and app.text == "về VIỆT NAM",
+        "convert: a primary selection sent in parts is converted whole",
+        (owner.asked, app.text),
+    )
+    app.close()
+# A key that both the convert and the mode menu settings name converts, as in fcitx5.
+set_setting("ConvertKey", "grave")
+app = menu_app("convert-menu-key")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(800)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the convert key wins over the same mode menu key",
+    (app.text, app.title),
+)
+app.key(IBus.KEY_grave, IBus.ModifierType.RELEASE_MASK)
+app.close()
+set_setting("ConvertKey", "Control+Shift+F6")
+# The convert key still converts while the mode menu is open, which it closes.
+app = menu_app("convert-menu-open")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(200)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the convert key converts while the mode menu is open",
+    (app.text, app.title),
+)
+app.close()
+# As with the menu closed, the cycle key comes before the convert key when both name the same key.
+set_setting("CycleModeKey", "Control+Shift+F6")
+app = menu_app("convert-cycle-key")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(200)
+press_convert(app)
+check(
+    app.text == "về việt nam",
+    "convert: the cycle key wins over the same convert key with the menu open",
+    (app.text, app.title),
+)
+app.close()
+set_setting("CycleModeKey", "")
+set_setting("ConvertKey", "")
+set_setting("ConvertCase", "Keep")
 
 # Last, since an engine that dies here fails every check after it. A restore may hide the items of
 # a menu that is open.

@@ -572,6 +572,24 @@ namespace {
         return true;
     }
 
+    // As in fcitx5: false lets the key through, which the core asks for in a password field.
+    bool convertSelection(Session& session) {
+        const char* tip = nullptr;
+        switch (session.state->convertSelection()) {
+            case ngosen::ConvertResult::Converted: break;
+            case ngosen::ConvertResult::Refused: return false;
+            case ngosen::ConvertResult::Unchanged: tip = _("The selected text is the same in both charsets. Check the charsets on the Convert page."); break;
+            case ngosen::ConvertResult::NoSelection: tip = _("Select the text to convert, then press the key again."); break;
+            case ngosen::ConvertResult::Busy: tip = _("Finish the word being typed, then press the key again."); break;
+        }
+        if (tip != nullptr) {
+            NGOSEN_INFO(std::string("Convert key: ") + tip);
+            session.host->showNotice(tip);
+            session.showsNotice = true;
+        }
+        return true;
+    }
+
     // True when the app must not see this key.
     bool handleModeMenu(IBusEngine* engine, Session& session, guint keyval, guint keycode, guint state) {
         if ((state & IBUS_RELEASE_MASK) != 0) {
@@ -582,11 +600,17 @@ namespace {
         }
         if (ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
             return false;
-        if (session.menuOpen) {
-            if (!applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval))
-                return false;
+        // A key the open menu passes on closes it, and goes on as if the menu had been closed.
+        const bool wasOpen = session.menuOpen;
+        if (wasOpen && applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval)) {
         } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
             cycleMode(engine, session);
+        } else if (ngosen::convertsSelection(resources().settings(), keyval, state)) {
+            // Before the menu key, as in fcitx5, so a key both settings name converts.
+            if (!convertSelection(session))
+                return false;
+        } else if (wasOpen) {
+            return false;
         } else {
             // In English the key types as usual, as in the fcitx5 edition, and so it does with every mode hidden.
             const auto keymap = resources().settings().options.inputMethod == "Custom" ? resources().customKeymap() : std::vector<ngosen::KeymapEntry>{};

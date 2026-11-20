@@ -58,6 +58,11 @@ class FakeEngine:
             "ShortcutPreedit": "q",
             "ShortcutOff": "e",
             "UiLanguage": "Vietnamese",
+            "ConvertKey": "",
+            "ConvertFrom": "TCVN3 (ABC)",
+            "ConvertTo": "Unicode",
+            "ConvertCase": "Keep",
+            "ConvertStripDiacritics": "False",
         }
 
 
@@ -139,6 +144,34 @@ class WindowTest(unittest.TestCase):
 
     def settings(self):
         return ini.parse(read_text(self.store.settings_file))[0]
+
+    def test_convert_box_shows_the_text_converted(self):
+        page = self.window.convert
+        page.source.get_buffer().set_text("việt nam")
+        page.refresh()
+        self.assertEqual(page.error.get_text(), "Cannot run the engine to convert.")
+        self.window.engine = mock.Mock()
+        self.window.engine.convert_text.return_value = "VIỆT NAM"
+        self.window.rows.rows["ConvertCase"].set_selected(1)
+        self.assertEqual(
+            self.window.engine.convert_text.call_args.args,
+            ("việt nam", "TCVN3 (ABC)", "Unicode", 1, False),
+        )
+        buffer = page.result.get_buffer()
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+        self.assertEqual((text, page.error.get_visible()), ("VIỆT NAM", False))
+
+    def test_convert_charsets_swap_in_one_save(self):
+        self.window.convert.swap()
+        self.assertEqual(
+            (self.settings()["ConvertFrom"], self.settings()["ConvertTo"]),
+            ("Unicode", "TCVN3 (ABC)"),
+        )
+        self.assertEqual(self.window.rows.rows["ConvertFrom"].get_selected(), 0)
+        self.window.undo()
+        values = self.store.values
+        self.assertEqual((values["ConvertFrom"], values["ConvertTo"]), ("TCVN3 (ABC)", "Unicode"))
+        self.assertNotIn("ConvertFrom", self.settings())
 
     def test_switch_saves_and_undoes(self):
         self.window.rows.rows["SpellCheck"].set_active(False)

@@ -132,7 +132,7 @@ namespace {
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
         check(parseIni(text).top.at("EmojiPlacement") == "Instead of the word", "EmojiPlacement is written by fcitx5's label");
         check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
-        check(parseIni(text).top.size() == 52, "the file has every key");
+        check(parseIni(text).top.size() == 57, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -248,6 +248,23 @@ namespace {
         check(readSettings(parseIni("[CycleModeKey]\n0=Alt+m\n")).cycleModeKeys == std::vector<std::string>{"Alt+m"}, "fcitx5's key list is read");
         const IBusSettings again = readSettings(parseIni(settingsText(read)));
         check(!again.showModeOff && again.modeOrder == "Off" && again.cycleModeKeys == read.cycleModeKeys, "they round trip");
+    }
+
+    void testConvertSettings() {
+        const IBusSettings defaults = defaultSettings();
+        check(defaults.convertKeys.empty() && defaults.options.convertFrom == "TCVN3 (ABC)" && defaults.options.convertTo == "Unicode",
+              "the convert key is off by default and converts TCVN3 to Unicode, as in fcitx5");
+        const IBusSettings read =
+            readSettings(parseIni("ConvertFrom=VNI Windows\nConvertTo=Unicode\nConvertCase=Title Case\nConvertStripDiacritics=True\n[ConvertKey]\n0=Control+Shift+F6\n"));
+        check(read.convertKeys == std::vector<std::string>{"Control+Shift+F6"}, "fcitx5's convert key list is read");
+        check(read.options.convertFrom == "VNI Windows" && read.options.convertCase == 4 && read.options.convertStripDiacritics,
+              "the charsets, the letter case by fcitx5's name and the diacritics are read");
+        check(readSettings(parseIni("ConvertFrom=Klingon\nConvertCase=Shouting\n")).options.convertFrom == "TCVN3 (ABC)", "an unknown charset keeps the default");
+        const IBusSettings again = readSettings(parseIni(settingsText(read)));
+        check(again.convertKeys == read.convertKeys && again.options.convertFrom == "VNI Windows" && again.options.convertCase == 4 && again.options.convertStripDiacritics,
+              "they round trip");
+        check(convertsSelection(read, IBUS_KEY_F6, IBUS_CONTROL_MASK | IBUS_SHIFT_MASK) && !convertsSelection(read, IBUS_KEY_F6, IBUS_CONTROL_MASK),
+              "the key converts only with its modifiers");
     }
 
     void testModeMenuKeys() {
@@ -619,6 +636,7 @@ int main() {
     testOneSetting();
     testToggleKeys();
     testModeMenuSettings();
+    testConvertSettings();
     testModeMenuKeys();
     testModeMenuOrder();
     testKeyMatching();

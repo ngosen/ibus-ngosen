@@ -70,6 +70,12 @@ class Engine:
     def charsets(self):
         return self._run("--list-charsets").splitlines()
 
+    def convert_text(self, text, source, target, case, strip):
+        """The text as the convert key would leave it; None for a charset the engine does not know."""
+        args = [self.program, "--convert-text", source, target, str(case), str(strip)]
+        result = subprocess.run(args, input=text, capture_output=True, text=True, timeout=10)
+        return result.stdout if result.returncode == 0 else None
+
     def dictionary_paths(self):
         """The user's word list and the one that comes with the package."""
         paths = self._run("--print-dictionary-paths").split("\n")[:-1]
@@ -117,12 +123,20 @@ class Store:
         self._undo = None
 
     def set(self, key, value):
-        if self.values.get(key) == value:
+        return self.set_values({key: value})
+
+    def set_values(self, changes):
+        """Saves several settings at once, so one Undo puts them all back."""
+        changes = {key: value for key, value in changes.items() if self.values.get(key) != value}
+        if not changes:
             return False
         before = read_text(self.settings_file)
-        write_text(self.settings_file, ini.set_value(before or "", key, value))
+        text = before or ""
+        for key, value in changes.items():
+            text = ini.set_value(text, key, value)
+        write_text(self.settings_file, text)
         self._undo = (self.settings_file, before, "values", dict(self.values))
-        self.values[key] = value
+        self.values.update(changes)
         return True
 
     def set_macros(self, macros):

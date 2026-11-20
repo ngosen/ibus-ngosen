@@ -22,6 +22,7 @@ DEFAULTS = {
     "ToggleKey": DEFAULT_TOGGLE,
     "ModeMenuKey": "grave",
     "CycleModeKey": "",
+    "ConvertKey": "",
 }
 
 
@@ -402,6 +403,13 @@ class BackupTest(UserFiles, unittest.TestCase):
         target = os.path.join(self.home, "out.json")
         backup.export(self.engine, self.paths, target)
         self.assertEqual(backup.load(target)["config"]["CycleModeKey"], {"0": "Control+grave"})
+
+    def test_convert_key_list_goes_both_ways_as_in_fcitx5(self):
+        self.restore(fcitx5_backup(ConvertKey={"0": "Control+Shift+F6"}))
+        self.assertEqual(self.settings()["ConvertKey"], "Control+Shift+F6")
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        self.assertEqual(backup.load(target)["config"]["ConvertKey"], {"0": "Control+Shift+F6"})
 
     def test_export_then_restore_gives_the_same_files(self):
         write_text(
