@@ -601,7 +601,9 @@ namespace {
         if (ngosen::IBusKeyPress(keyval, keycode, state).isModifier())
             return false;
         if (session.menuOpen) {
-            if (!applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval))
+            // A key the menu passes on closes it, and may still be the convert key.
+            if (!applyMenuKey(engine, session, ngosen::menuKey(resources().settings(), keyval, state), keyval) &&
+                (!ngosen::convertsSelection(resources().settings(), keyval, state) || !convertSelection(session)))
                 return false;
         } else if (ngosen::cyclesMode(resources().settings(), keyval, state)) {
             cycleMode(engine, session);

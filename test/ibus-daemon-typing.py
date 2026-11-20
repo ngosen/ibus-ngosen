@@ -3046,6 +3046,21 @@ check(
 )
 app.key(IBus.KEY_grave, IBus.ModifierType.RELEASE_MASK)
 app.close()
+set_setting("ConvertKey", "Control+Shift+F6")
+# The convert key still converts while the mode menu is open, which it closes.
+app = menu_app("convert-menu-open")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(200)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the convert key converts while the mode menu is open",
+    (app.text, app.title),
+)
+app.close()
 set_setting("ConvertKey", "")
 set_setting("ConvertCase", "Keep")
 
