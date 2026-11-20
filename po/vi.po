@@ -1660,3 +1660,23 @@ msgstr "Chưa bật ở app nào."
 #: settings/ngosen_settings/pages.py
 msgid "Turn teencode off in {}"
 msgstr "Tắt teencode trong {}"
+
+#: settings/ngosen_settings/options.py
+msgid "Switch Applies To"
+msgstr "Phím chuyển áp dụng cho"
+
+#: settings/ngosen_settings/options.py
+msgid "All apps switches English/Vietnamese everywhere except apps set to OFF; Each app remembers a separate choice for each app."
+msgstr "Mọi app chuyển Anh/Việt cùng lúc, trừ app đặt Tắt; Từng app nhớ lựa chọn riêng cho mỗi app."
+
+#: settings/ngosen_settings/options.py
+msgid "All apps"
+msgstr "Mọi app"
+
+#: settings/ngosen_settings/options.py
+msgid "Each app"
+msgstr "Từng app"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "This app is set to English"
+msgstr "App này đang ở chế độ tiếng Anh"

@@ -44,6 +44,8 @@ namespace ngosen {
         bool directTyping = true;
         // Switches between English and Vietnamese; empty when the user turned the key off.
         std::vector<std::string> toggleKeys;
+        // As in fcitx5, the toggle key switches every app unless the user picked each app on its own.
+        bool toggleEachApp = false;
         // Opens the menu of typing modes; empty when the user turned it off.
         std::vector<std::string> modeMenuKeys;
         // The keys that pick each mode in that menu: one letter or digit.

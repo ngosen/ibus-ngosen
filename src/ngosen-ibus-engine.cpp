@@ -80,13 +80,18 @@ namespace {
         return resources().settings().directTyping ? ngosen::Mode::Sen : ngosen::Mode::Preedit;
     }
 
-    // As in the fcitx5 edition: the toggle key's last choice in the app decides the language, else the
-    // mode picked for it, else the last switch anywhere. A mode picked for the app then wins over the
-    // shared one.
+    bool toggleEachApp() {
+        return resources().settings().toggleEachApp;
+    }
+
+    // As in the fcitx5 edition. Switching every app, Off from the menu keeps an app in English and the
+    // toggle key decides for the rest. Switching each app, the toggle key's last choice in the app
+    // decides, else the mode picked for it, else the last switch anywhere. A mode picked for the app
+    // then wins over the shared one.
     ngosen::Mode typingMode(const ngosen::IBusHost& host) {
-        const std::string app        = currentApp(host);
-        const auto        mode       = appModes().find(app);
-        const bool        vietnamese = appSwitches().find(app).value_or(mode ? *mode != ngosen::AppMode::Off : !englishOn);
+        const std::string app  = currentApp(host);
+        const auto        mode = appModes().find(app);
+        const bool vietnamese = !toggleEachApp() ? mode != ngosen::AppMode::Off && !englishOn : appSwitches().find(app).value_or(mode ? *mode != ngosen::AppMode::Off : !englishOn);
         if (!vietnamese)
             return ngosen::Mode::Off;
         if (mode == ngosen::AppMode::Sen)
@@ -221,10 +226,12 @@ namespace {
             resources().reloadIfChanged();
             if (generation == resources().generation())
                 return languageChanged;
+            // A new switch scope may change the language too.
+            const bool wasEnglish = typesEnglish();
             applyTypingMode(*host);
             state->setEngine();
             generation = resources().generation();
-            return languageChanged;
+            return languageChanged || typesEnglish() != wasEnglish;
         }
     };
 
@@ -278,12 +285,25 @@ namespace {
         session.host->setMenuOpen(false);
     }
 
+    void openModeMenu(IBusEngine* engine, Session& session);
+
     void toggleLanguage(IBusEngine* engine, Session& session) {
+        const bool        menuWasOpen = session.menuOpen;
+        const std::string app         = currentApp(*session.host);
         closeModeMenu(engine, session);
+        // Switching every app would leave this one in English anyway; the menu can change its Off.
+        if (!toggleEachApp() && appModes().find(app) == ngosen::AppMode::Off) {
+            NGOSEN_INFO("Toggle key in " + app + ", which the menu keeps in English");
+            // With no field, as from the top bar menu, the menu has nowhere to go.
+            if (session.host->inFakeContext())
+                session.host->showNotice(_("This app is set to English"));
+            else if (!menuWasOpen)
+                openModeMenu(engine, session);
+            return;
+        }
         // Read again: the portal or a restore may have changed the app's language since the last key.
-        const bool        vietnamese = typingMode(*session.host) == ngosen::Mode::Off;
-        const std::string app        = currentApp(*session.host);
-        if (!app.empty() && !appSwitches().set(app, vietnamese))
+        const bool vietnamese = toggleEachApp() ? typingMode(*session.host) == ngosen::Mode::Off : englishOn;
+        if (toggleEachApp() && !app.empty() && !appSwitches().set(app, vietnamese))
             NGOSEN_WARN("Cannot save the language for " + app);
         englishOn = !vietnamese;
         ngosen::saveEnglishOn(resources().paths(), englishOn);
@@ -449,6 +469,11 @@ namespace {
     void keepMode(ngosen::IBusHost& host, ngosen::MenuMode mode) {
         const std::string app = currentApp(host);
         if (!app.empty()) {
+            // Switching every app, a typing mode picked for one means Vietnamese, as in fcitx5.
+            if (!toggleEachApp() && mode != ngosen::MenuMode::Off && englishOn) {
+                englishOn = false;
+                ngosen::saveEnglishOn(resources().paths(), englishOn);
+            }
             std::optional<ngosen::AppMode> kept;
             if (mode == ngosen::MenuMode::Off)
                 kept = ngosen::AppMode::Off;
@@ -456,7 +481,8 @@ namespace {
                 kept = mode == ngosen::MenuMode::Sen ? ngosen::AppMode::Sen : ngosen::AppMode::Preedit;
             if (!appModes().set(app, kept))
                 NGOSEN_WARN("Cannot save the typing mode for " + app);
-            if (!appSwitches().set(app, std::nullopt))
+            // A mode picked for the app wins over where the toggle key last left it.
+            if (toggleEachApp() && !appSwitches().set(app, std::nullopt))
                 NGOSEN_WARN("Cannot save the language for " + app);
             return;
         }
