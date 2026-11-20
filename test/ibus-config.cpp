@@ -124,6 +124,8 @@ namespace {
         changed.options.emojiSuggestions     = false;
         changed.options.yahooEmoticons       = false;
         changed.options.emojiReplacesWord    = true;
+        changed.options.englishEmojiKeywords = false;
+        changed.options.emojiAtSentenceEnd   = false;
         changed.shortcutEmoji                = "m";
         changed.showModeEmoji                = false;
         const std::string text               = settingsText(changed);
@@ -134,6 +136,8 @@ namespace {
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
         check(parseIni(text).top.at("EmojiPlacement") == "Instead of the word", "EmojiPlacement is written by fcitx5's label");
         check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
+        check(!readSettings(parseIni(text)).options.englishEmojiKeywords, "EnglishEmojiKeywords round trip");
+        check(parseIni(text).top.at("EmojiOfferAt") == "After each word" && !readSettings(parseIni(text)).options.emojiAtSentenceEnd, "EmojiOfferAt round trip by fcitx5's label");
         check(parseIni(text).top.size() == 61, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");

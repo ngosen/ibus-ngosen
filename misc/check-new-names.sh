@@ -14,8 +14,10 @@ if [ -n "$names" ]; then
     status=1
 fi
 
-# git grep stays out of the ngosen submodule, whose legacy names are its own business.
-hits=$(git grep -n -i lotus -- . ':!misc/check-new-names.sh' ':!AGENTS.md' |
+# git grep stays out of the ngosen submodule, whose legacy names are its own business. The emoji
+# table is the core's copy of Unicode's names, where lotus is the flower.
+hits=$(git grep -n -i lotus -- . ':!misc/check-new-names.sh' ':!AGENTS.md' \
+    ':!settings/ngosen_settings/emoji_table.py' |
     grep -v 'github.com/LotusInputMethod/fcitx5-lotus' || true)
 if [ -n "$hits" ]; then
     echo "Only the credit line may mention lotus:"
