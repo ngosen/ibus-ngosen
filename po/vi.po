@@ -194,8 +194,8 @@ msgid "Date Format ($DATE in macro)"
 msgstr "Định dạng ngày ($DATE trong gõ tắt)"
 
 #: settings/ngosen_settings/options.py
-msgid "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
-msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã khác như TCVN3 (ABC)."
+msgid "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC). Unicode tổ hợp sends tone marks apart from their letters, which terminals and many apps handle badly. Cứu dấu works only with Unicode."
+msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã khác như TCVN3 (ABC). Unicode tổ hợp gửi dấu thanh tách khỏi chữ, nên terminal và nhiều app hiện sai. Cứu dấu chỉ chạy với Unicode."
 
 #: settings/ngosen_settings/options.py
 msgid "The keys below, used when the input method is Custom."
