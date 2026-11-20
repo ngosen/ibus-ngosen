@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 import os
 import tempfile
 import time
@@ -286,6 +287,31 @@ class WindowTest(unittest.TestCase):
         row = self.window.rows.rows["TimeFormat"]
         self.assertEqual(row.get_model().get_string(row.get_selected()), "%H:%M:%S %Z")
         self.assertNotIn("TimeFormat", self.settings())
+
+    def test_emoji_words_export_and_import_with_undo(self):
+        page = self.window.emoji
+        page.toggle("😂", "cười")
+        path = os.path.join(self.folder, "shared.json")
+        self.window.export_emoji_words(path)
+        self.assertEqual(json.load(open(path, encoding="utf-8"))["emoji_words"], [])
+        write_text(
+            path,
+            json.dumps(
+                {
+                    "meta": {"kind": "ngosen-emoji-words"},
+                    "emoji_words": [
+                        {"Keyword": "sếp", "Emoji": "😂"},
+                        {"Keyword": "cười", "Emoji": "😂"},
+                    ],
+                }
+            ),
+        )
+        self.window.import_emoji_words(path)
+        chips = dict(page.words.chips("😂"))
+        self.assertTrue(chips["sếp"])
+        self.assertFalse(chips["cười"])
+        self.window.undo()
+        self.assertNotIn("sếp", dict(page.words.chips("😂")))
 
     def test_emoji_word_saves_and_undoes(self):
         page = self.window.emoji

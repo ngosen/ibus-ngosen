@@ -1609,6 +1609,66 @@ msgstr "Ở cuối câu"
 msgid "After each word"
 msgstr "Sau mỗi từ"
 
+#: settings/ngosen_settings/emoji.py
+msgid "Export…"
+msgstr "Xuất…"
+
+#: settings/ngosen_settings/emoji.py
+msgid "Save the words you turned on, to share them"
+msgstr "Lưu các từ mình đã bật ra file để chia sẻ"
+
+#: settings/ngosen_settings/emoji.py
+msgid "Import…"
+msgstr "Nhập…"
+
+#: settings/ngosen_settings/emoji.py
+msgid "Add the words from a file someone shared"
+msgstr "Thêm các từ trong file người khác chia sẻ"
+
+#: settings/ngosen_settings/emoji_words.py
+msgid "This is not a file of emoji words exported from Ngó Sen."
+msgstr "Đây không phải file từ gợi ý emoji xuất từ Ngó Sen."
+
+#: settings/ngosen_settings/emoji_words.py
+msgid "The emoji words in the file are damaged."
+msgstr "Các từ gợi ý emoji trong file bị hỏng."
+
+#: settings/ngosen_settings/window.py
+msgid "Export Emoji Words"
+msgstr "Xuất từ gợi ý emoji"
+
+#: settings/ngosen_settings/window.py
+msgid "Emoji words"
+msgstr "Từ gợi ý emoji"
+
+#: settings/ngosen_settings/window.py
+msgid "Import Emoji Words"
+msgstr "Nhập từ gợi ý emoji"
+
+#: settings/ngosen_settings/window.py
+msgid "{} words from the file"
+msgstr "{} từ trong file"
+
+#: settings/ngosen_settings/window.py
+msgid "You already have every word in that file."
+msgstr "Mọi từ trong file đó mình đã có rồi."
+
+#: settings/ngosen_settings/window.py
+msgid "Saved {} words to {}."
+msgstr "Đã lưu {} từ vào {}."
+
+#: settings/ngosen_settings/window.py
+msgid "Could not export: {}"
+msgstr "Không xuất được: {}"
+
+#: settings/ngosen_settings/window.py
+msgid "Could not import: {}"
+msgstr "Không nhập được: {}"
+
+#: settings/ngosen_settings/backup.py:214
+msgid "This file holds emoji words; import it on the Emoji page."
+msgstr "Tệp này chứa từ gợi ý emoji; hãy nhập nó ở trang Emoji."
+
 #: src/ngosen-ibus-engine.cpp
 msgid "Teencode: on"
 msgstr "Teencode: bật"

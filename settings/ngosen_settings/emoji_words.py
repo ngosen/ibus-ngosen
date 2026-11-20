@@ -7,6 +7,7 @@ Only the user's changes to the default words are kept, as in fcitx5, so words ad
 version still reach the user.
 """
 
+import json
 import unicodedata
 
 from . import ini
@@ -17,11 +18,64 @@ WORDS = "Words"
 OFF_APPS_HEADER = "# Apps where Ngó Sen offers no emoji, one per line"
 TEENCODE_APPS_HEADER = "# Apps where Ngó Sen keeps teencode, one per line"
 _BY_EMOJI = {row[0]: row for row in EMOJI}
+# The fcitx5 edition's file of shared words, so either edition imports the other's.
+SHARE_KIND = "ngosen-emoji-words"
+MOST_SHARED = 5000
+LONGEST_WORD = 40
 
 
 def clean(word):
     """A word as the engine compares it: lower case, composed, single spaces."""
     return " ".join(unicodedata.normalize("NFC", word).lower().split())
+
+
+def export_words(edits, path):
+    """Writes the words the user turned on to path, for others to import. Returns how many."""
+    items = [{"Keyword": w, "Emoji": e} for (e, w), on in sorted(edits.items()) if on]
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(
+            {"meta": {"kind": SHARE_KIND, "version": 1}, "emoji_words": items},
+            f,
+            indent=2,
+            ensure_ascii=False,
+        )
+    return len(items)
+
+
+def read_shared(path):
+    """The (emoji, word) pairs in a shared file; raises OSError or ValueError when it is not one."""
+    # i18n reads the settings through the store, which loads this module.
+    from .i18n import _
+
+    with open(path, encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+        except RecursionError:
+            raise ValueError(_("The emoji words in the file are damaged.")) from None
+    meta = data.get("meta") if isinstance(data, dict) else None
+    if not isinstance(meta, dict) or meta.get("kind") != SHARE_KIND:
+        raise ValueError(_("This is not a file of emoji words exported from Ngó Sen."))
+    items = data.get("emoji_words")
+    if not isinstance(items, list) or len(items) > MOST_SHARED:
+        raise ValueError(_("The emoji words in the file are damaged."))
+    pairs = []
+    for item in items:
+        if not isinstance(item, dict):
+            raise ValueError(_("The emoji words in the file are damaged."))
+        emoji, word = item.get("Emoji"), clean(str(item.get("Keyword", "")))
+        # An emoji this version does not list, a long text or one the settings file cannot hold is
+        # skipped rather than refused.
+        if isinstance(emoji, str) and emoji in _BY_EMOJI and _fits(word):
+            pairs.append((emoji, word))
+    return pairs
+
+
+def _fits(word):
+    try:
+        word.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return 0 < len(word) <= LONGEST_WORD
 
 
 def parse_edits(text):
@@ -136,6 +190,17 @@ class EmojiWords:
         if not word or any(w == word for w, _on in self.chips(emoji)):
             return None
         return {**self.edits, (emoji, word): True}
+
+    def merged(self, pairs):
+        """The edits with the words in pairs turned on, except ones the user turned off, and how many."""
+        edits = dict(self.edits)
+        added = 0
+        for emoji, word in pairs:
+            if (emoji, word) in edits or self.is_on(emoji, word):
+                continue
+            edits[(emoji, word)] = True
+            added += 1
+        return edits, added
 
     def changed(self, emoji):
         return any(e == emoji for e, _w in self.edits)

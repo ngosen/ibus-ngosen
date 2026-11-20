@@ -23,6 +23,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   chữ đôi trong terminal dùng xterm.js (ngosen/ngosen#878) (#168).
 - Teencode theo từng app như bản fcitx5: bấm ` rồi `t` trong app đang gõ là giữ chữ kiểu `zậy`, `đag` thay vì trả
   về phím đã gõ. Trang Gõ liệt kê các app đang bật, có nút tắt; sao lưu mang theo danh sách này (#169).
+- Trang Emoji có nút "Xuất…" và "Nhập…" như bản fcitx5: Xuất lưu các từ mình đã bật ra một file nhỏ, Nhập thêm từ của
+  file vào mà giữ nguyên từ mình đã tắt. File của hai bản đọc được lẫn nhau; "Khôi phục bản sao lưu" không nhận file này (#170).
 
 ### Thay đổi
 
