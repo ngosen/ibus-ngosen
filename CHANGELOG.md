@@ -21,6 +21,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   thêm sau dấu câu; muốn như trước thì chọn "Sau mỗi từ" ở "Gợi ý emoji" trên trang Emoji. Từ tiếng Anh như `cat`,
   `thumbs up` cũng gợi ý emoji, tắt được bằng "Từ khoá tiếng Anh". Gõ kéo dài chữ (`afaaa` ra `àààà`) và không còn ra
   chữ đôi trong terminal dùng xterm.js (ngosen/ngosen#878) (#168).
+- Trang Emoji có nút "Xuất…" và "Nhập…" như bản fcitx5: Xuất lưu các từ mình đã bật ra một file nhỏ, Nhập thêm từ của
+  file vào mà giữ nguyên từ mình đã tắt. File của hai bản đọc được lẫn nhau; "Khôi phục bản sao lưu" không nhận file này (#170).
 
 ### Thay đổi
 
