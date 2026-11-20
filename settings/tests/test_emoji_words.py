@@ -247,6 +247,7 @@ class ShareTest(Folder):
         path = self.path("shared.json")
         items = [
             {"Emoji": "not an emoji", "Keyword": "x"},
+            {"Emoji": [], "Keyword": "x"},
             {"Emoji": "😂", "Keyword": "a" * 41},
             {"Emoji": "😂", "Keyword": " Sếp  Cười "},
         ]

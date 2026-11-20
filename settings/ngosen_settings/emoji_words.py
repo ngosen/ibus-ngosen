@@ -45,6 +45,7 @@ def read_shared(path):
     """The (emoji, word) pairs in a shared file; raises OSError or ValueError when it is not one."""
     # i18n reads the settings through the store, which loads this module.
     from .i18n import _
+
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     meta = data.get("meta") if isinstance(data, dict) else None
@@ -59,7 +60,7 @@ def read_shared(path):
             raise ValueError(_("The emoji words in the file are damaged."))
         emoji, word = item.get("Emoji"), clean(str(item.get("Keyword", "")))
         # An emoji this version does not list, or a long text, is skipped rather than refused.
-        if emoji in _BY_EMOJI and word and len(word) <= LONGEST_WORD:
+        if isinstance(emoji, str) and emoji in _BY_EMOJI and word and len(word) <= LONGEST_WORD:
             pairs.append((emoji, word))
     return pairs
 
