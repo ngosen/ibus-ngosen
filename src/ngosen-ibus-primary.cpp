@@ -11,7 +11,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
+#include <future>
+#include <memory>
 #include <poll.h>
+#include <thread>
 
 namespace ngosen {
 
@@ -30,9 +33,17 @@ namespace ngosen {
 
         constexpr uint32_t PrimaryAtom     = 1; // XCB_ATOM_PRIMARY
         constexpr uint32_t AnyPropertyType = 0;
+        constexpr uint8_t  PropertyNotify  = 28;
         constexpr uint8_t  SelectionNotify = 31;
+        constexpr uint8_t  NewValue        = 0;
         constexpr uint16_t InputOnly       = 2;
+        constexpr uint32_t EventMask       = 0x800;      // XCB_CW_EVENT_MASK
+        constexpr uint32_t PropertyChange  = 0x400000;   // XCB_EVENT_MASK_PROPERTY_CHANGE
         constexpr uint32_t ReadAll         = 0x1fffffff; // in 4-byte units
+        // Far more than a document anyone converts at once, and a bound on a runaway owner.
+        constexpr size_t MaxBytes = 16 * 1024 * 1024;
+
+        using Clock = std::chrono::steady_clock;
 
         struct Xcb {
             void* lib = dlopen("libxcb.so.1", RTLD_NOW | RTLD_LOCAL);
@@ -85,62 +96,110 @@ namespace ngosen {
             return value;
         }
 
-        // The property the owner wrote, or nothing when it refused or the time ran out.
-        uint32_t waitForSelection(const Xcb& x, XcbConnection* conn, int timeoutMs) {
-            const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
-            pollfd     fd{x.fileDescriptor(conn), POLLIN, 0};
+        // Waits for an event that matches; false when the time ran out or the connection broke.
+        template <typename Match>
+        bool waitFor(const Xcb& x, XcbConnection* conn, Clock::time_point deadline, Match matches) {
+            pollfd fd{x.fileDescriptor(conn), POLLIN, 0};
             while (true) {
                 while (uint8_t* event = x.pollForEvent(conn)) {
-                    const bool     notify   = (event[0] & 0x7f) == SelectionNotify;
-                    const uint32_t property = notify ? readU32(event, 20) : 0;
+                    const bool found = matches(event);
                     std::free(event);
-                    if (notify)
-                        return property;
+                    if (found)
+                        return true;
                 }
-                const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - std::chrono::steady_clock::now()).count();
+                const auto left = std::chrono::duration_cast<std::chrono::milliseconds>(deadline - Clock::now()).count();
                 if (left <= 0 || x.hasError(conn) != 0 || poll(&fd, 1, static_cast<int>(left)) <= 0)
-                    return 0;
+                    return false;
             }
         }
 
-        std::string convertPrimary(const Xcb& x, XcbConnection* conn, int timeoutMs) {
+        struct Property {
+            uint32_t    type = 0;
+            std::string data;
+        };
+
+        // Reading deletes the property, which tells an owner sending in parts to send the next one.
+        Property takeProperty(const Xcb& x, XcbConnection* conn, uint32_t window, uint32_t property) {
+            uint8_t* reply = x.getPropertyReply(conn, x.getProperty(conn, 1, window, property, AnyPropertyType, 0, ReadAll), nullptr);
+            Property result;
+            if (reply != nullptr) {
+                result.type = readU32(reply, 8);
+                result.data.assign(static_cast<const char*>(x.propertyValue(reply)), static_cast<size_t>(x.propertyLength(reply)));
+            }
+            std::free(reply);
+            return result;
+        }
+
+        // A large selection comes in parts (ICCCM INCR): each part is a new value of the property, and an empty one ends it.
+        bool readParts(const Xcb& x, XcbConnection* conn, uint32_t window, uint32_t property, uint32_t utf8, Clock::time_point deadline, std::string& text) {
+            const auto newValue = [&](const uint8_t* event) {
+                return (event[0] & 0x7f) == PropertyNotify && readU32(event, 4) == window && readU32(event, 8) == property && event[16] == NewValue;
+            };
+            while (waitFor(x, conn, deadline, newValue)) {
+                const Property part = takeProperty(x, conn, window, property);
+                if (part.type != utf8 || text.size() + part.data.size() > MaxBytes)
+                    return false;
+                if (part.data.empty())
+                    return true;
+                text += part.data;
+            }
+            return false;
+        }
+
+        std::string convertPrimary(const Xcb& x, XcbConnection* conn, Clock::time_point deadline) {
             const XcbScreenIterator screen = x.roots(x.getSetup(conn));
             if (screen.rem == 0 || screen.data == nullptr)
                 return {};
             const uint32_t window = x.generateId(conn);
-            x.createWindow(conn, 0, window, screen.data[0], 0, 0, 1, 1, 0, InputOnly, 0, 0, nullptr);
+            const uint32_t events = PropertyChange;
+            x.createWindow(conn, 0, window, screen.data[0], 0, 0, 1, 1, 0, InputOnly, 0, EventMask, &events);
             const uint32_t utf8     = atom(x, conn, "UTF8_STRING");
+            const uint32_t incr     = atom(x, conn, "INCR");
             const uint32_t property = atom(x, conn, "NGOSEN_PRIMARY");
-            if (utf8 == 0 || property == 0)
+            if (utf8 == 0 || incr == 0 || property == 0)
                 return {};
             x.convertSelection(conn, window, PrimaryAtom, utf8, property, 0);
             x.flush(conn);
-            if (waitForSelection(x, conn, timeoutMs) != property)
+            const auto notified = [&](const uint8_t* event) { return (event[0] & 0x7f) == SelectionNotify && readU32(event, 20) == property; };
+            if (!waitFor(x, conn, deadline, notified))
                 return {};
-            uint8_t* reply = x.getPropertyReply(conn, x.getProperty(conn, 1, window, property, AnyPropertyType, 0, ReadAll), nullptr);
-            // A large selection comes in parts (INCR), which converting a selection never needs.
+            Property first = takeProperty(x, conn, window, property);
+            if (first.type == utf8)
+                return first.data;
             std::string text;
-            if (reply != nullptr && readU32(reply, 8) == utf8)
-                text.assign(static_cast<const char*>(x.propertyValue(reply)), static_cast<size_t>(x.propertyLength(reply)));
-            std::free(reply);
+            if (first.type == incr && readParts(x, conn, window, property, utf8, deadline, text))
+                return text;
+            return {};
+        }
+
+        std::string readPrimary(Clock::time_point deadline) {
+            const Xcb&     x    = xcb();
+            XcbConnection* conn = x.connect(nullptr, nullptr);
+            std::string    text;
+            // No logging here: this runs off the main thread.
+            if (conn != nullptr && x.hasError(conn) == 0)
+                text = convertPrimary(x, conn, deadline);
+            if (conn != nullptr)
+                x.disconnect(conn);
             return text;
         }
 
     } // namespace
 
     std::string readPrimarySelection(int timeoutMs) {
-        const Xcb& x = xcb();
-        if (!x.usable() || std::getenv("DISPLAY") == nullptr)
+        if (!xcb().usable() || std::getenv("DISPLAY") == nullptr)
             return {};
-        XcbConnection* conn = x.connect(nullptr, nullptr);
-        std::string    text;
-        if (conn != nullptr && x.hasError(conn) == 0)
-            text = convertPrimary(x, conn, timeoutMs);
-        else
-            NGOSEN_INFO("Cannot open the X display to read the primary selection");
-        if (conn != nullptr)
-            x.disconnect(conn);
-        return text;
+        // Connecting and every reply can stall on a busy X server, so a thread does the reading and the
+        // engine waits only until the deadline; a late thread finishes on its own.
+        const auto deadline = Clock::now() + std::chrono::milliseconds(timeoutMs);
+        auto       result   = std::make_shared<std::promise<std::string>>();
+        auto       text     = result->get_future();
+        std::thread([result, deadline] { result->set_value(readPrimary(deadline)); }).detach();
+        if (text.wait_until(deadline + std::chrono::milliseconds(50)) != std::future_status::ready) {
+            NGOSEN_INFO("The X server did not answer in time for the primary selection");
+            return {};
+        }
+        return text.get();
     }
 
 } // namespace ngosen
