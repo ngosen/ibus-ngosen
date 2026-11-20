@@ -148,12 +148,13 @@ class BackupTest(UserFiles, unittest.TestCase):
             ("OFF", "True"),
             ("Off", "True"),
             ("Preedit", "False"),
-            ("Emoji Picker", "False"),
+            # fcitx5 itself now reads its former Emoji Picker mode as Sen.
+            ("Emoji Picker", "True"),
         ):
             with self.subTest(mode):
                 _, notes = self.restore(fcitx5_backup(Mode=mode))
                 self.assertEqual(self.settings()["DirectTyping"], direct)
-                self.assertEqual(len(notes), 1 if mode == "Emoji Picker" else 0, notes)
+                self.assertEqual(notes, [])
 
     def test_unknown_mode_keeps_the_current_one(self):
         write_text(self.paths.settings, "DirectTyping=True\n")
@@ -600,9 +601,9 @@ class WindowBackupTest(UserFiles, unittest.TestCase):
 
     def test_losses_are_asked_about_first(self):
         before = self.files()
-        path = self.save(fcitx5_backup(Mode="Emoji Picker"))
+        path = self.save(fcitx5_backup(Mode="Vim"))
         dialog = self.window.restore_backup(path)
-        self.assertIn("emoji", dialog.get_body())
+        self.assertIn("Vim", dialog.get_body())
         self.assertEqual(self.files(), before)
         dialog.emit("response", "cancel")
         self.assertEqual(self.files(), before)

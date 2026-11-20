@@ -27,7 +27,8 @@ COMPONENTS = (
 KEY_LISTS = ("ModeMenuKey", "CycleModeKey", "ConvertKey")
 IBUS_ONLY = ("DirectTyping", "ToggleKey", *KEY_LISTS)
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
-DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
+# fcitx5 reads its former Emoji Picker mode as Sen, where emoji are offered as you type.
+DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "True"}
 # The engine types English for 0, with Sen for 1, 2, 3, 4 and 8 and underlined for 5, as fcitx5 reads them.
 APP_MODES = {"0", "1", "2", "3", "4", "5", "8"}
 APP_MODES_HEADER = "# The typing mode picked for each app: 0 = Off, 2 = Sen, 5 = Preedit\n"
@@ -303,8 +304,6 @@ def _direct_typing(mode, notes):
                 "The backup types in a mode this edition does not know ({}), so the current one stays."
             ).format(name)
         )
-    elif name.lower() == "emoji picker":
-        notes.append(_("This edition has no emoji picker, so words are underlined instead."))
     return value
 
 
