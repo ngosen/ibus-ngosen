@@ -197,7 +197,9 @@ HINTS = {
         "With the mode menu open, press a mode's key to pick it for the app in use. Pick the app's usual mode again to make it follow the global setting."
     ),
     "OutputCharset": N_(
-        "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
+        "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC). "
+        "Unicode tổ hợp sends tone marks apart from their letters, which terminals and many apps "
+        "handle badly. Cứu dấu works only with Unicode."
     ),
     "EnableCustomKeymap": N_("The keys below, used when the input method is Custom."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),

@@ -249,6 +249,7 @@ class ShareTest(Folder):
             {"Emoji": "not an emoji", "Keyword": "x"},
             {"Emoji": [], "Keyword": "x"},
             {"Emoji": "😂", "Keyword": "\ud800"},
+            {"Emoji": "😂", "Keyword": "a\0b"},
             {"Emoji": "😂", "Keyword": "a" * 41},
             {"Emoji": "😂", "Keyword": " Sếp  Cười "},
         ]
