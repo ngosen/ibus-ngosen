@@ -516,6 +516,10 @@ namespace ngosen {
         return stateDir + "/english";
     }
 
+    std::string SettingsPaths::toggleRequest() const {
+        return stateDir + "/toggle";
+    }
+
     bool readEnglishOn(const SettingsPaths& paths) {
         return fileExists(paths.englishMark());
     }

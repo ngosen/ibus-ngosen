@@ -74,6 +74,11 @@ namespace ngosen {
         void onChange(std::function<void()> callback) {
             onChange_ = std::move(callback);
         }
+        // ngosen-toggle left its request; the engine switches as with the toggle key.
+        void noticeToggleRequest();
+        void onToggleRequest(std::function<void()> callback) {
+            onToggleRequest_ = std::move(callback);
+        }
 
       private:
         void                     load();
@@ -94,6 +99,7 @@ namespace ngosen {
         GFileMonitor*            stateMonitor_   = nullptr;
         Recorder                 recorder_;
         std::function<void()>    onChange_;
+        std::function<void()>    onToggleRequest_;
     };
 
 } // namespace ngosen

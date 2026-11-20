@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -287,7 +288,7 @@ namespace {
 
     void openModeMenu(IBusEngine* engine, Session& session);
 
-    void toggleLanguage(IBusEngine* engine, Session& session) {
+    void toggleLanguage(IBusEngine* engine, Session& session, bool offerRetype = true) {
         const bool        menuWasOpen = session.menuOpen;
         const std::string app         = currentApp(*session.host);
         closeModeMenu(engine, session);
@@ -317,7 +318,7 @@ namespace {
         session.showsNotice = true;
         // A click moving the cursor must be seen, or the offer would replace text somewhere else. An
         // address bar may select its completion after the typed text, which the deletion would take first.
-        if (!typesEnglish() && session.host->seesCursorMoves() && !session.host->field().url)
+        if (offerRetype && !typesEnglish() && session.host->seesCursorMoves() && !session.host->field().url)
             session.state->offerRetype();
     }
 
@@ -808,7 +809,27 @@ namespace {
     // The panel shows this engine's menu, which a change from the settings window updates at once.
     IBusEngine* focusedEngine = nullptr;
 
-    void        showNewSettings() {
+    // ngosen-toggle, run by a desktop shortcut, switches as the toggle key does, also with no field.
+    void toggleFromCommand() {
+        std::error_code error;
+        // Each request is a file; later events for the same one find it gone.
+        if (!std::filesystem::remove(resources().paths().toggleRequest(), error))
+            return;
+        Session* session = focusedEngine != nullptr ? sessionOf(focusedEngine) : nullptr;
+        if (session == nullptr) {
+            englishOn = !englishOn;
+            ngosen::saveEnglishOn(resources().paths(), englishOn);
+            NGOSEN_INFO(std::string("Toggle command with no field: ") + (englishOn ? "English" : "Vietnamese"));
+            return;
+        }
+        NGOSEN_INFO("Toggle command");
+        // The shortcut's modifiers coming up must not end a tap of the toggle key and switch back.
+        session->tap.armed = session->tap.pending = false;
+        // Keys sent to retype while the shortcut is still held would reach the app with its modifiers.
+        toggleLanguage(focusedEngine, *session, false);
+    }
+
+    void showNewSettings() {
         if (focusedEngine == nullptr)
             return;
         if (Session* session = sessionOf(focusedEngine))
@@ -824,6 +845,7 @@ namespace {
         static bool watching = false;
         if (!watching) {
             resources().onChange(showNewSettings);
+            resources().onToggleRequest(toggleFromCommand);
             useUiLanguage(resources().savedSettings());
             // After the language, which the notice is written in.
             ngosen::announceRelease(ngosen::releaseToAnnounce(resources().paths(), NGOSEN_IBUS_VERSION));

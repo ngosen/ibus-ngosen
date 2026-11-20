@@ -10,6 +10,7 @@
 #include "ngosen-log.h"
 
 #include <cstdlib>
+#include <filesystem>
 #include <fcntl.h>
 
 namespace ngosen {
@@ -49,13 +50,13 @@ namespace ngosen {
             return known;
         }
 
-        bool isEnglishMark(GFile* file) {
+        bool isNamed(GFile* file, const char* wanted) {
             if (file == nullptr)
                 return false;
-            gchar*     name = g_file_get_basename(file);
-            const bool mark = g_strcmp0(name, "english") == 0;
+            gchar*     name  = g_file_get_basename(file);
+            const bool named = g_strcmp0(name, wanted) == 0;
             g_free(name);
-            return mark;
+            return named;
         }
 
         void onDirChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
@@ -64,8 +65,11 @@ namespace ngosen {
         }
 
         void onStateChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
-            if (isEnglishMark(file) || isEnglishMark(other))
-                static_cast<IBusResources*>(resources)->noticeEnglishChange();
+            auto* self = static_cast<IBusResources*>(resources);
+            if (isNamed(file, "english") || isNamed(other, "english"))
+                self->noticeEnglishChange();
+            if (isNamed(file, "toggle") || isNamed(other, "toggle"))
+                self->noticeToggleRequest();
         }
 
         GFileMonitor* watchDirectory(const std::string& path, GCallback onChanged, IBusResources* resources) {
@@ -102,6 +106,9 @@ namespace ngosen {
         dataMonitor_ = watchDirectory(paths_.dataDir, G_CALLBACK(onDirChanged), this);
         // The settings window restores the language by writing the marker.
         g_mkdir_with_parents(paths_.stateDir.c_str(), 0700);
+        // A request left while the engine was not running is not a press of the shortcut now.
+        std::error_code error;
+        std::filesystem::remove(paths_.toggleRequest(), error);
         stateMonitor_ = watchDirectory(paths_.stateDir, G_CALLBACK(onStateChanged), this);
     }
 
@@ -126,6 +133,11 @@ namespace ngosen {
         englishChanged_ = true;
         if (onChange_)
             onChange_();
+    }
+
+    void IBusResources::noticeToggleRequest() {
+        if (onToggleRequest_)
+            onToggleRequest_();
     }
 
     bool IBusResources::takeEnglishChange() {
