@@ -234,6 +234,17 @@ class WindowTest(unittest.TestCase):
             self.window.rows.rows["OutputCharset"].set_selected(1)
         self.assertEqual(seen.call_args.kwargs["output_charset"], "TCVN3 (ABC)")
 
+    def test_the_check_page_follows_an_undo_of_the_charset(self):
+        self.window.rows.rows["OutputCharset"].set_selected(1)
+        self.window.undo()
+        self.assertEqual(self.window.check.facts.output_charset, "Unicode")
+
+    def test_checking_again_reads_the_charset_the_engine_saved(self):
+        settings = self.store.settings_file
+        write_text(settings, read_text(settings) + "OutputCharset=VNI Windows\n")
+        self.window.check.run()
+        self.assertEqual(self.window.check.facts.output_charset, "VNI Windows")
+
     def test_languages_are_named_in_their_own_language(self):
         model = self.window.rows.rows["UiLanguage"].get_model()
         self.assertEqual(

@@ -64,7 +64,7 @@ class Window(Adw.ApplicationWindow):
             backup.Paths(store).app_modes,
             self._toggle_key,
             store.folder,
-            lambda: store.values.get("OutputCharset", "Unicode"),
+            self._output_charset,
         )
 
         self.stack = stack = Adw.ViewStack()
@@ -255,6 +255,10 @@ class Window(Adw.ApplicationWindow):
         self.keymap.refresh()
         self.emoji.reload()
         self.convert.refresh()
+        # An undo or a restore may change the charset the Check page notes.
+        facts = getattr(self.check, "facts", None)
+        if facts is not None and facts.output_charset != self._output_charset():
+            self.check.run()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
@@ -289,6 +293,11 @@ class Window(Adw.ApplicationWindow):
     def _toggle_key(self):
         # As the engine read it: keys it cannot parse are left out.
         return bool(self.store.values.get("ToggleKey", "").strip())
+
+    def _output_charset(self):
+        # The engine's menu saves the charset itself, as it does the mode.
+        saved = ini.parse(read_text(self.store.settings_file) or "")[0]
+        return saved.get("OutputCharset", self.store.values.get("OutputCharset", "Unicode"))
 
     def _direct_typing(self):
         # The engine saves the mode itself when it is picked from its menu.
