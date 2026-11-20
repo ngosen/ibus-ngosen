@@ -1434,6 +1434,9 @@ msgstr "Bật lại emoji trong {}"
 msgid "Emoji are back on in {}."
 msgstr "Đã bật lại emoji trong {}."
 
+msgid "Teencode is off in {}."
+msgstr "Đã tắt teencode trong {}."
+
 #: src/ngosen-ibus-engine.cpp
 msgid "The selected text is the same in both charsets. Check the charsets on the Convert page."
 msgstr "Chữ bôi đen giống nhau ở cả hai bảng mã. Xem lại bảng mã ở trang Chuyển mã."
@@ -1589,3 +1592,71 @@ msgstr "Bảng mã đang là {charset}, không phải Unicode"
 #: settings/ngosen_settings/pages.py:667
 msgid "The ngosen-toggle command, to switch English/Vietnamese from a desktop shortcut"
 msgstr "Lệnh ngosen-toggle, để chuyển Anh/Việt bằng phím tắt của desktop"
+
+#: ngosen/src/core/ngosen-state-emoji-offer.cpp
+msgid "pick, or arrows then Enter, Esc: keep the word"
+msgstr "chọn · hoặc mũi tên rồi Enter · Esc: giữ chữ"
+
+#: settings/ngosen_settings/options.py
+msgid "Offer emoji"
+msgstr "Gợi ý emoji"
+
+#: settings/ngosen_settings/options.py
+msgid "English keywords"
+msgstr "Từ khoá tiếng Anh"
+
+#: settings/ngosen_settings/options.py
+msgid "cat and thumbs up also offer 🐈 and 👍, from the Unicode list of English words. Words that are also Vietnamese, like can, are left out."
+msgstr "Gõ cat hay thumbs up cũng gợi ý 🐈 hay 👍, theo danh sách từ tiếng Anh của Unicode. Từ trùng chữ Việt như can thì bỏ qua."
+
+#: settings/ngosen_settings/options.py
+msgid "At the end of a sentence: the emoji of the sentence show while you type. After . ! ? or a short pause, 1–9 picks one, or Tab first where digits type tones, as in VNI; it goes at the cursor. Esc hides them until the next sentence. After each word: the list shows as soon as a keyword is typed."
+msgstr "Cuối câu: emoji của câu hiện suốt lúc gõ. Sau dấu . ! ? hoặc khi dừng tay một chút, bấm 1–9 để chọn, hoặc bấm Tab trước nếu phím số dùng để bỏ dấu như VNI; emoji thêm vào chỗ con trỏ. Esc ẩn chúng tới hết câu. Sau mỗi từ: danh sách hiện ngay khi gõ xong một từ khoá."
+
+#: settings/ngosen_settings/options.py
+msgid "At the end of a sentence"
+msgstr "Ở cuối câu"
+
+#: settings/ngosen_settings/options.py
+msgid "After each word"
+msgstr "Sau mỗi từ"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Teencode: on"
+msgstr "Teencode: bật"
+
+#: src/ngosen-ibus-engine.cpp
+msgid "Teencode: off"
+msgstr "Teencode: tắt"
+
+#: settings/ngosen_settings/options.py
+msgid "Show teencode"
+msgstr "Hiển thị Teencode"
+
+#: settings/ngosen_settings/options.py
+msgid "Shortcut for teencode"
+msgstr "Phím tắt cho Teencode"
+
+#: settings/ngosen_settings/pages.py
+msgid "Set a mode menu key and a teencode key on the Keys page to turn teencode on."
+msgstr "Đặt phím mở menu chế độ và phím teencode ở trang Phím để bật teencode."
+
+#: settings/ngosen_settings/pages.py
+msgid "Teencode keeps words like zậy, đag and nhữg instead of restoring the keys typed. In the app you are typing in, press {menu} then {key} to turn it on or off for that app."
+msgstr "Teencode giữ các chữ như zậy, đag, nhữg thay vì trả về phím đã gõ. Ở app đang gõ, bấm {menu} rồi {key} để bật hay tắt teencode cho riêng app đó."
+
+#: settings/ngosen_settings/pages.py
+msgid "Teencode"
+msgstr "Teencode"
+
+#: settings/ngosen_settings/pages.py
+msgid "Turn off"
+msgstr "Tắt"
+
+#: settings/ngosen_settings/pages.py
+msgid "Not on in any app."
+msgstr "Chưa bật ở app nào."
+
+#: settings/ngosen_settings/pages.py
+msgid "Turn teencode off in {}"
+msgstr "Tắt teencode trong {}"

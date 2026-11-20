@@ -87,11 +87,12 @@ namespace ngosen {
 
         void                         showPreedit(const std::string& text, bool underline) override;
         void                         clearPreedit() override;
+        void                         showHint(const std::string& text) override;
         void                         resetPanel() override;
         void                         refreshPreedit() override;
         void                         refreshPanel() override;
 
-        void                         showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick) override;
+        void                         showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick, CandidateLayout layout) override;
         void                         hideCandidates() override;
         std::optional<CandidatePage> candidates() const override;
         void                         highlightCandidate(int index) override;
@@ -126,6 +127,7 @@ namespace ngosen {
             int                         pageSize = 1;
             int                         cursor   = 0;
             std::function<void(size_t)> onPick;
+            CandidateLayout             layout = CandidateLayout::Column;
         };
 
         bool                         reportsText() const;

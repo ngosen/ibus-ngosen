@@ -120,6 +120,8 @@ class Store:
         self.emoji_edits = emoji_words.parse_edits(read_text(self.emoji_words_file))
         self.emoji_off_apps_file = os.path.join(self.folder, "ngosen-emoji-off-apps.conf")
         self.emoji_off_apps = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+        self.teencode_apps_file = os.path.join(self.folder, "ngosen-teencode-apps.conf")
+        self.teencode_apps = emoji_words.parse_apps(read_text(self.teencode_apps_file))
         self._undo = None
 
     def set(self, key, value):
@@ -186,30 +188,39 @@ class Store:
 
     def enable_emoji_in(self, app):
         """Offers emoji in app again, starting from the file the engine may have changed since."""
+        return self._drop_app("emoji_off_apps", emoji_words.OFF_APPS_HEADER, app)
+
+    def teencode_off_in(self, app):
+        """Restores the keys of teencode words in app again."""
+        return self._drop_app("teencode_apps", emoji_words.TEENCODE_APPS_HEADER, app)
+
+    def _drop_app(self, field, header, app):
+        path = getattr(self, field + "_file")
         app = emoji_words.app_name(app)
-        current = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+        current = emoji_words.parse_apps(read_text(path))
         apps = [a for a in current if a != app]
         if apps == current:
-            self.emoji_off_apps = current
+            setattr(self, field, current)
             return False
-        write_text(self.emoji_off_apps_file, emoji_words.apps_text(apps))
+        write_text(path, emoji_words.apps_text(apps, header))
         place = current.index(app)
 
-        # Puts the app back where it was, keeping apps the engine turned off since.
+        # Puts the app back where it was, keeping apps the engine added since.
         def undo():
-            now = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+            now = emoji_words.parse_apps(read_text(path))
             if app not in now:
                 now[place:place] = [app]
-                write_text(self.emoji_off_apps_file, emoji_words.apps_text(now))
-            self.emoji_off_apps = now
+                write_text(path, emoji_words.apps_text(now, header))
+            setattr(self, field, now)
 
         self._undo = undo
-        self.emoji_off_apps = apps
+        setattr(self, field, apps)
         return True
 
     def reload_emoji_off_apps(self):
-        """The apps the engine switched off from its menu while the window was open."""
+        """The apps the engine switched from its menu while the window was open."""
         self.emoji_off_apps = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+        self.teencode_apps = emoji_words.parse_apps(read_text(self.teencode_apps_file))
 
     def can_undo(self):
         return self._undo is not None

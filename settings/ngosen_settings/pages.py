@@ -92,11 +92,16 @@ class SettingRows:
             names = self.names["OutputCharset" if key in options.CHARSET_KEYS else key]
             pairs = [(value, value) for value in names]
         current = self.store.values.get(key, "")
-        if key == "ModeOrder" and "Vim" not in current.split(","):
-            # The menu puts Vim mode last when the order leaves it out, so such an order is its preset.
-            pairs = [
-                (current if value == current + ",Vim" else value, label) for value, label in pairs
-            ]
+        if key == "ModeOrder":
+            # An order saved before a switch existed still reads as the preset of its modes.
+            def modes(order):
+                return [name for name in order.split(",") if name in options.ORDERED_MODES]
+
+            if current not in (value for value, _label in pairs):
+                pairs = [
+                    (current if modes(value) == modes(current) else value, label)
+                    for value, label in pairs
+                ]
         if current not in (value for value, _label in pairs):
             shown = (
                 keys.label(current)
@@ -692,6 +697,51 @@ def about_dialog(version):
     for name, url in (FORK, VMK):
         dialog.add_link(name, url)
     return dialog
+
+
+def teencode_hint(menu_key, teencode_key):
+    """How to turn teencode on for one app, with the keys the user set (ModeMenuKey, ShortcutTeencode)."""
+    entries = (menu_key or "").split()
+    if not entries or not teencode_key:
+        return _("Set a mode menu key and a teencode key on the Keys page to turn teencode on.")
+    return _(
+        "Teencode keeps words like zậy, đag and nhữg instead of restoring the keys typed. In the"
+        " app you are typing in, press {menu} then {key} to turn it on or off for that app."
+    ).format(menu=keys.label(entries[0]), key=teencode_key)
+
+
+class TeencodeGroup:
+    """The apps where teencode is on; on_off(app) turns it off in one of them."""
+
+    def __init__(self, store, on_off):
+        self.store = store
+        self.on_off = on_off
+        self.group = preferences_group(N_("Teencode"))
+        self.apps = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
+        # App names are the user's own entries, not settings to find.
+        self.apps.searchable = False
+        self.group.add(self.apps)
+        self.refresh()
+
+    def refresh(self):
+        values = self.store.values
+        self.group.set_description(
+            teencode_hint(values.get("ModeMenuKey", ""), values.get("ShortcutTeencode", ""))
+        )
+        self.apps.remove_all()
+        for app in self.store.teencode_apps:
+            row = Adw.ActionRow(title=app, use_markup=False)
+            button = Gtk.Button(label=_("Turn off"), valign=Gtk.Align.CENTER)
+            button.update_property(
+                [Gtk.AccessibleProperty.LABEL], [_("Turn teencode off in {}").format(app)]
+            )
+            button.connect("clicked", lambda _b, app=app: self.on_off(app))
+            row.add_suffix(button)
+            self.apps.append(row)
+        if not self.store.teencode_apps:
+            empty = Adw.ActionRow(title=_("Not on in any app."), css_classes=["dim-label"])
+            empty.set_activatable(False)
+            self.apps.append(empty)
 
 
 def fcitx5_group(show_toast, back_up):

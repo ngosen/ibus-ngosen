@@ -57,12 +57,15 @@ class FakeEngine:
             "ShortcutSen": "1",
             "ShortcutPreedit": "q",
             "ShortcutOff": "e",
+            "ShortcutTeencode": "t",
             "UiLanguage": "Vietnamese",
             "ConvertKey": "",
             "ConvertFrom": "TCVN3 (ABC)",
             "ConvertTo": "Unicode",
             "ConvertCase": "Keep",
             "ConvertStripDiacritics": "False",
+            "EnglishEmojiKeywords": "True",
+            "EmojiOfferAt": "At the end of a sentence",
         }
 
 
@@ -245,6 +248,37 @@ class WindowTest(unittest.TestCase):
         self.window.check.run()
         self.assertEqual(self.window.check.facts.output_charset, "VNI Windows")
 
+    def test_mode_order_saved_before_teencode_is_its_preset(self):
+        engine = FakeEngine(self.folder)
+        saved = engine.settings()
+        saved["ModeOrder"] = "Sen,Preedit,Emoji,Off,Vim"
+        engine.settings = lambda: saved
+        win = window.Window(
+            None,
+            Store(engine, self.folder),
+            {"InputMethod": ["Telex"], "OutputCharset": ["Unicode"]},
+            "1.0.0",
+            FakeSources(),
+        )
+        row = win.rows.rows["ModeOrder"]
+        self.assertEqual(row.get_model().get_n_items(), 3)
+        self.assertEqual(row.get_model().get_string(row.get_selected()), "Sen, Preedit, OFF")
+
+    def test_teencode_off_in_an_app_and_undo(self):
+        path = os.path.join(self.folder, "ngosen-teencode-apps.conf")
+        write_text(path, "# Apps where Ngó Sen keeps teencode, one per line\ndiscord\n")
+        group = self.window.teencode
+        self.window._refresh_apps()
+        self.assertEqual(group.apps.get_row_at_index(0).get_title(), "discord")
+        self.assertIn("` then t", group.group.get_description())
+        group.on_off("discord")
+        self.assertNotIn("discord", read_text(path))
+        self.assertEqual(group.apps.get_row_at_index(0).get_title(), "Not on in any app.")
+        self.assertIsNotNone(self.window.toast)
+        self.window.undo()
+        self.assertIn("discord", read_text(path))
+        self.assertEqual(group.apps.get_row_at_index(0).get_title(), "discord")
+
     def test_languages_are_named_in_their_own_language(self):
         model = self.window.rows.rows["UiLanguage"].get_model()
         self.assertEqual(
@@ -307,6 +341,8 @@ class WindowTest(unittest.TestCase):
 
     def test_emoji_filter_follows_an_undo(self):
         page = self.window.emoji
+        # Almost every emoji has an English word on.
+        self.window.rows.rows["EnglishEmojiKeywords"].set_active(False)
         page.only_on.set_active(True)
         self.assertNotIn("📱", page.shown)
         page.toggle("📱", "điện thoại")

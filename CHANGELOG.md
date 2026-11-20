@@ -17,6 +17,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   lại emoji cho app đã tắt. Sao lưu và khôi phục mang theo cả hai danh sách này (#164).
 - Chuyển mã như bản fcitx5: bôi đen chữ cũ (TCVN3, VNI…) rồi bấm phím là đổi sang Unicode ngay tại chỗ, cả trong
   Firefox (LibreOffice chưa được). Đặt phím, bảng mã, chữ hoa/thường ở trang Chuyển mã, có ô dán chữ để đổi tại chỗ (#165).
+- Nhận lõi 1.13: gợi ý emoji mặc định hiện ở cuối câu thành một hàng, gõ `. ! ?` rồi bấm số để chọn (Telex), emoji
+  thêm sau dấu câu; muốn như trước thì chọn "Sau mỗi từ" ở "Gợi ý emoji" trên trang Emoji. Từ tiếng Anh như `cat`,
+  `thumbs up` cũng gợi ý emoji, tắt được bằng "Từ khoá tiếng Anh". Gõ kéo dài chữ (`afaaa` ra `àààà`) và không còn ra
+  chữ đôi trong terminal dùng xterm.js (ngosen/ngosen#878) (#168).
+- Teencode theo từng app như bản fcitx5: bấm ` rồi `t` trong app đang gõ là giữ chữ kiểu `zậy`, `đag` thay vì trả
+  về phím đã gõ. Trang Gõ liệt kê các app đang bật, có nút tắt; sao lưu mang theo danh sách này (#169).
 
 ### Thay đổi
 

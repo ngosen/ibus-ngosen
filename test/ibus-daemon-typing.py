@@ -1834,6 +1834,13 @@ def menu_app(name, hints=0):
         ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    listen(
+        app.ic,
+        "update-lookup-table",
+        lambda _ic, table, _visible: setattr(
+            app, "row", (table.get_orientation(), table.is_cursor_visible())
+        ),
+    )
     # GNOME Shell numbers a candidate whose label is missing or empty.
     listen(
         app.ic,
@@ -1878,8 +1885,9 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Tắt", "Vim mode: tắt"],
-    "menu: ` shows the three modes, emoji suggestions and Vim mode, with a mark on the mode in use",
+    items
+    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes and the switches, with a mark on the mode in use",
     items,
 )
 # No desktop file names the test app, so the title keeps its program name.
@@ -1918,7 +1926,8 @@ check(
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Tắt", "Vim mode: tắt"],
+    app.menu
+    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: the mark follows the mode kept for the app",
     app.menu,
 )
@@ -2116,8 +2125,8 @@ check(
 )
 app.key(IBus.KEY_grave)
 pump(200)
-# Past the emoji item, which sits between the underline and Off as in fcitx5.
-for _ in range(2):
+# Past the emoji and teencode items, which sit between the underline and Off as in fcitx5.
+for _ in range(3):
     panel.cursor_down()
     pump(200)
 app.key(IBus.KEY_Return)
@@ -2137,7 +2146,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -2150,7 +2159,7 @@ check(
 )
 # Settings apply between words, so the word q ends first.
 app.type(" ")
-for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim", "ShowModeEmoji"):
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim", "ShowModeEmoji", "ShowModeTeencode"):
     set_setting(name, "False")
 app.key(IBus.KEY_grave)
 pump(200)
@@ -2158,9 +2167,16 @@ check(
     app.menu is None and app.text == "q `", "menu: with every mode hidden ` types itself", app.text
 )
 app.close()
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim", "ShowModeEmoji"):
+for name in (
+    "ShowModeSen",
+    "ShowModePreedit",
+    "ShowModeOff",
+    "ShowModeVim",
+    "ShowModeEmoji",
+    "ShowModeTeencode",
+):
     set_setting(name, "True")
-set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Vim")
+set_setting("ModeOrder", "Sen,Preedit,Emoji,Teencode,Off,Vim")
 
 # Vim mode is switched for the app in use and kept in the file the fcitx5 edition uses.
 vim_apps_path = os.path.join(config_dir, "ngosen-vim-apps.conf")
@@ -2220,6 +2236,58 @@ check(
 app.key(IBus.KEY_Escape)
 app.close()
 
+# Teencode is switched for the app in use and kept in the file the fcitx5 edition uses.
+teencode_apps_path = os.path.join(config_dir, "ngosen-teencode-apps.conf")
+
+
+def teencode_apps():
+    if not os.path.exists(teencode_apps_path):
+        return []
+    with open(teencode_apps_path) as f:
+        return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+app = menu_app("teen")
+app.type("zaajy ")
+pump(300)
+check(
+    app.text == "zaajy ",
+    "teencode: off by default, a teencode word goes back to its keys",
+    app.text,
+)
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_t)
+pump(300)
+check(
+    app.menu is None and teencode_apps() == ["teen"],
+    "menu: t switches teencode on for this app",
+    (app.menu, teencode_apps()),
+)
+app.type(" zaajy ")
+pump(300)
+check(app.text == "zaajy  zậy ", "teencode: the next word in the field keeps its marks", app.text)
+app.close()
+# A new field of the same app reads the switch from the file.
+app = menu_app("teen")
+app.type("zaajy ")
+pump(300)
+check(app.text == "zậy ", "teencode: on for the app, the word keeps its marks", app.text)
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    "Teencode: bật" in (app.menu or []),
+    "menu: the teencode item says it is on",
+    app.menu,
+)
+app.key(IBus.KEY_t)
+pump(300)
+check(teencode_apps() == [], "menu: t again switches teencode off", teencode_apps())
+app.type(" zaajy ")
+pump(300)
+check(app.text == "zậy  zaajy ", "teencode: off again, the word goes back to its keys", app.text)
+app.close()
+
 # Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.
 emoji_off_path = os.path.join(config_dir, "ngosen-emoji-off-apps.conf")
 
@@ -2231,6 +2299,8 @@ def emoji_off_apps():
         return [line for line in f.read().splitlines() if line and not line.startswith("#")]
 
 
+# The list after each word, which users can still pick; the end of a sentence is the default.
+set_setting("EmojiOfferAt", "After each word")
 app = menu_app("emoji")
 app.type("cuwowif")
 pump(300)
@@ -2288,6 +2358,33 @@ check(
 )
 app.close()
 set_setting("DirectTyping", "True")
+set_setting("EmojiOfferAt", "At the end of a sentence")
+
+# At the end of a sentence the emoji show in a row whose labels carry their own digits.
+horizontal = (IBus.Orientation.HORIZONTAL, False)
+app = menu_app("emoji-sentence")
+app.type("cuwowif")
+pump(300)
+check(
+    app.menu == ["😂 🤣 😄 😆 😁"] and app.row == horizontal,
+    "emoji: the sentence's emoji show in a row while typing",
+    (app.menu, app.row),
+)
+app.type(".")
+pump(300)
+check(
+    app.menu == ["1.😂", "2.🤣", "3.😄", "4.😆", "5.😁"] and app.row == horizontal,
+    "emoji: the end of the sentence numbers them in a row with none highlighted",
+    (app.menu, app.row),
+)
+app.type("1")
+pump(300)
+check(
+    app.text == "cười. 😂" and app.menu is None,
+    "emoji: a digit puts its emoji after the sentence",
+    (app.text, app.menu),
+)
+app.close()
 
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")
@@ -3085,7 +3182,14 @@ set_setting("ConvertCase", "Keep")
 app = menu_app("menu-shrinks")
 app.key(IBus.KEY_grave)
 pump(200)
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim", "ShowModeEmoji"):
+for name in (
+    "ShowModeSen",
+    "ShowModePreedit",
+    "ShowModeOff",
+    "ShowModeVim",
+    "ShowModeEmoji",
+    "ShowModeTeencode",
+):
     set_setting(name, "False")
 app.key(IBus.KEY_Down)
 pump(300)

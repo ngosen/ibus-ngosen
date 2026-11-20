@@ -69,6 +69,8 @@ class Window(Adw.ApplicationWindow):
 
         self.stack = stack = Adw.ViewStack()
         self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
+        self.teencode = pages.TeencodeGroup(store, self.teencode_off)
+        typing.add(self.teencode.group)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
         self.emoji = emoji.EmojiPage(store, self.rows, self.save_emoji_words, self.enable_emoji)
         self.convert = convert.ConvertPage(self.rows, self.convert_text, self.swap_charsets)
@@ -118,8 +120,8 @@ class Window(Adw.ApplicationWindow):
         narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 700sp"))
         narrow.add_setter(self.split, "collapsed", True)
         self.add_breakpoint(narrow)
-        # The engine's menu can turn emoji off for an app while another window has the focus.
-        self.connect("notify::is-active", lambda w, _p: w.is_active() and w.emoji.refresh_apps())
+        # The engine's menu can switch emoji or teencode for an app while another window has the focus.
+        self.connect("notify::is-active", lambda w, _p: w.is_active() and w._refresh_apps())
         self.refresh()
 
     def _sidebar_page(self, version):
@@ -254,17 +256,27 @@ class Window(Adw.ApplicationWindow):
         self.dictionary.refresh()
         self.keymap.refresh()
         self.emoji.reload()
+        self.teencode.refresh()
         self.convert.refresh()
         # An undo or a restore may change the charset the Check page notes.
         facts = getattr(self.check, "facts", None)
         if facts is not None and facts.output_charset != self._output_charset():
             self.check.run()
 
+    def _refresh_apps(self):
+        self.emoji.refresh_apps()
+        self.teencode.refresh()
+
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
         # The example and the hint show these settings.
-        if key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
+        if key == "EnglishEmojiKeywords":
+            # The English words decide which emoji have a word on.
+            self.emoji.reload()
+        elif key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
             self.emoji.refresh()
+        if key in ("ModeMenuKey", "ShortcutTeencode"):
+            self.teencode.refresh()
         if key in ("DirectTyping", "OutputCharset"):
             self.check.run()
         if key in convert.SETTING_KEYS:
@@ -323,6 +335,19 @@ class Window(Adw.ApplicationWindow):
         saved = self._write(lambda: self.store.set_emoji_edits(edits), label)
         self.emoji.refresh()
         return saved
+
+    def teencode_off(self, app):
+        try:
+            changed = self.store.teencode_off_in(app)
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
+            changed = False
+        self.teencode.refresh()
+        if not changed:
+            return
+        toast = Adw.Toast(title=_("Teencode is off in {}.").format(app), button_label=_("_Undo"))
+        toast.connect("button-clicked", lambda _t: self.undo())
+        self._show(toast)
 
     def enable_emoji(self, app):
         try:
