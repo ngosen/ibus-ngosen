@@ -51,7 +51,7 @@ namespace {
     // As the fcitx5 edition writes them: defaults are commented out.
     const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\n"
                                       "DoubleSpaceToPeriod=True\nVietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\n"
-                                      "RetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\nEnableMacroInOffMode=True\n";
+                                      "RetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\nEnableMacroInOffMode=True\nToggleScope=Each app\n";
     const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
 
     void              testValues() {
@@ -436,6 +436,7 @@ namespace {
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
         check(settings.top.count("Mode") == 0, "Mode not imported");
+        check(readSettings(settings).toggleEachApp, "switching each app imported");
         check(settings.top.count("SettingsVersion") == 0, "the fcitx5 SettingsVersion not imported");
         check(read(paths.macroFile()) == FcitxMacros, "macros copied as they are");
         check(read(paths.dictionaryFile()) == "người dùng\n", "the user's dictionary copied");
@@ -533,6 +534,14 @@ namespace {
         check(!menu.showModeOff && menu.modeOrder == "Off,Sen" && menu.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the mode menu set up in fcitx5 comes over");
         check(!menu.showMenuCharset && menu.showMenuSpellCheck, "items hidden from the fcitx5 tray menu stay hidden");
         check(menu.uiLanguage == "English", "the interface language picked in fcitx5 comes over");
+
+        paths = pathsIn(root / "toggle-scope");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "ToggleScope=Each app\n");
+        check(prepareSettings(paths) && readSettings(parseIni(read(paths.settingsFile()))).toggleEachApp, "switching each app, as set in fcitx5, comes over");
+        paths = pathsIn(root / "toggle-scope-update");
+        earlier(paths, "InputMethod=VNI\n");
+        check(prepareSettings(paths) && !readSettings(parseIni(read(paths.settingsFile()))).toggleEachApp, "an update without fcitx5 switches every app");
 
         paths = pathsIn(root / "macro-chosen-here");
         earlier(paths, "EnableMacroInOffMode=False\n");
