@@ -23,6 +23,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -171,6 +172,8 @@ namespace {
         bool                                 menuOpen    = false;
         // Vim mode and emoji suggestions for the field in focus when its app has no name to keep them under, as
         // fcitx5 keeps them for the field.
+        // Between enable and disable, while Ngó Sen is the input method of this context.
+        bool  enabled      = true;
         bool  vimHere      = false;
         bool  emojiOffHere = false;
         bool  teencodeHere = false;
@@ -287,7 +290,7 @@ namespace {
 
     void openModeMenu(IBusEngine* engine, Session& session);
 
-    void toggleLanguage(IBusEngine* engine, Session& session) {
+    void toggleLanguage(IBusEngine* engine, Session& session, bool offerRetype = true) {
         const bool        menuWasOpen = session.menuOpen;
         const std::string app         = currentApp(*session.host);
         closeModeMenu(engine, session);
@@ -317,7 +320,7 @@ namespace {
         session.showsNotice = true;
         // A click moving the cursor must be seen, or the offer would replace text somewhere else. An
         // address bar may select its completion after the typed text, which the deletion would take first.
-        if (!typesEnglish() && session.host->seesCursorMoves() && !session.host->field().url)
+        if (offerRetype && !typesEnglish() && session.host->seesCursorMoves() && !session.host->field().url)
             session.state->offerRetype();
     }
 
@@ -807,8 +810,34 @@ namespace {
 
     // The panel shows this engine's menu, which a change from the settings window updates at once.
     IBusEngine* focusedEngine = nullptr;
+    // A request from ngosen-toggle is dropped when no context has Ngó Sen as its input method.
+    int enabledEngines = 0;
 
-    void        showNewSettings() {
+    // ngosen-toggle, run by a desktop shortcut, switches as the toggle key does, also with no field.
+    void toggleFromCommand(const std::string& path) {
+        std::error_code error;
+        // Each request is a file; later events for the same one find it gone.
+        if (!std::filesystem::remove(path, error))
+            return;
+        if (enabledEngines == 0) {
+            NGOSEN_INFO("Toggle command while another input method is in use, dropped");
+            return;
+        }
+        Session* session = focusedEngine != nullptr ? sessionOf(focusedEngine) : nullptr;
+        if (session == nullptr) {
+            englishOn = !englishOn;
+            ngosen::saveEnglishOn(resources().paths(), englishOn);
+            NGOSEN_INFO(std::string("Toggle command with no field: ") + (englishOn ? "English" : "Vietnamese"));
+            return;
+        }
+        NGOSEN_INFO("Toggle command");
+        // The shortcut's modifiers coming up must not end a tap of the toggle key and switch back.
+        session->tap.armed = session->tap.pending = false;
+        // Keys sent to retype while the shortcut is still held would reach the app with its modifiers.
+        toggleLanguage(focusedEngine, *session, false);
+    }
+
+    void showNewSettings() {
         if (focusedEngine == nullptr)
             return;
         if (Session* session = sessionOf(focusedEngine))
@@ -824,6 +853,7 @@ namespace {
         static bool watching = false;
         if (!watching) {
             resources().onChange(showNewSettings);
+            resources().onToggleRequest(toggleFromCommand);
             useUiLanguage(resources().savedSettings());
             // After the language, which the notice is written in.
             ngosen::announceRelease(ngosen::releaseToAnnounce(resources().paths(), NGOSEN_IBUS_VERSION));
@@ -923,7 +953,19 @@ namespace {
         session->state->resetAfterAppCommit(false);
     }
 
+    void enable(IBusEngine* engine) {
+        IBUS_ENGINE_CLASS(ngosen_engine_parent_class)->enable(engine);
+        if (Session* session = sessionOf(engine); session != nullptr && !session->enabled) {
+            session->enabled = true;
+            ++enabledEngines;
+        }
+    }
+
     void disable(IBusEngine* engine) {
+        if (Session* session = sessionOf(engine); session != nullptr && session->enabled) {
+            session->enabled = false;
+            --enabledEngines;
+        }
         focusOut(engine);
     }
 
@@ -955,6 +997,8 @@ namespace {
         if (focusedEngine == &self->parent)
             focusedEngine = nullptr;
         if (self->session != nullptr) {
+            if (self->session->enabled)
+                --enabledEngines;
             stopTimer(self->session->menuTimer);
             stopTimer(self->session->clickTimer);
         }
@@ -1012,6 +1056,7 @@ static void ngosen_engine_class_init(NgoSenEngineClass* klass) {
     engineClass->focus_in             = focusIn;
     engineClass->focus_out            = focusOut;
     engineClass->reset                = reset;
+    engineClass->enable               = enable;
     engineClass->disable              = disable;
     engineClass->set_surrounding_text = setSurroundingText;
     engineClass->set_content_type     = setContentType;
@@ -1033,6 +1078,7 @@ static void ngosen_engine_init(NgoSenEngine* self) {
     // A settings change seen by no engine yet still reaches the new one.
     applyTypingMode(*session->host);
     self->session = session;
+    ++enabledEngines;
 }
 
 namespace ngosen {
