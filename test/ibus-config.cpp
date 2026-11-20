@@ -134,7 +134,7 @@ namespace {
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
         check(parseIni(text).top.at("EmojiPlacement") == "Instead of the word", "EmojiPlacement is written by fcitx5's label");
         check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
-        check(parseIni(text).top.size() == 59, "the file has every key");
+        check(parseIni(text).top.size() == 61, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -209,14 +209,14 @@ namespace {
 
     void testModeMenuOrder() {
         IBusSettings settings = defaultSettings();
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Emoji, MenuMode::Off, MenuMode::Vim},
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Emoji, MenuMode::Teencode, MenuMode::Off, MenuMode::Vim},
               "the menu lists the modes in fcitx5's order");
         settings.modeOrder = "Off,Default,Sen,Emoji,Nope";
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Emoji, MenuMode::Preedit, MenuMode::Vim},
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Emoji, MenuMode::Preedit, MenuMode::Teencode, MenuMode::Vim},
               "ModeOrder sorts the menu, the modes it leaves out come last");
         settings.modeOrder       = "Sen,Preedit,Emoji,Off";
         settings.showModePreedit = false;
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Emoji, MenuMode::Off, MenuMode::Vim}, "a hidden mode is left out");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Emoji, MenuMode::Off, MenuMode::Teencode, MenuMode::Vim}, "a hidden mode is left out");
         check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Pass, "the key of a hidden mode closes the menu and types");
         check(menuKey(settings, IBUS_KEY_d, 0).kind == MenuKey::Pass, "a key no item takes closes the menu and types");
         settings.modeOrder = "Off,Sen";
@@ -225,14 +225,24 @@ namespace {
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key never switches Vim mode");
         settings.modeOrder = "Emoji,Off,Sen";
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "nor emoji suggestions");
-        check(modeMenuItems(settings, false, true).front().label == "Emoji suggestions: on" && modeMenuItems(settings, false, false).front().label == "Emoji suggestions: off",
+        settings.modeOrder = "Teencode,Off,Sen";
+        check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "nor teencode");
+        check(modeMenuItems(settings, {false, true, true}).front().label == "Teencode: on" && modeMenuItems(settings, {}).front().label == "Teencode: off",
+              "the teencode item says whether the app keeps teencode");
+        check(menuKey(settings, IBUS_KEY_t, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_t, 0).mode == MenuMode::Teencode, "t picks the teencode item, as in fcitx5");
+        settings.options.autoNonVnRestore = false;
+        check(menuModes(settings).front() == MenuMode::Off, "teencode needs words to go back to their keys, so it leaves the menu without it");
+        settings.options.autoNonVnRestore = true;
+        settings.modeOrder                = "Emoji,Off,Sen";
+        check(modeMenuItems(settings, {false, true}).front().label == "Emoji suggestions: on" && modeMenuItems(settings, {false, false}).front().label == "Emoji suggestions: off",
               "the emoji item says whether the app has emoji suggestions");
         check(menuKey(settings, IBUS_KEY_w, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_w, 0).mode == MenuMode::Emoji, "w picks the emoji item, as in fcitx5");
         settings.options.emojiSuggestions = false;
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Vim}, "with emoji suggestions off in the settings, the menu has no emoji item");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Teencode, MenuMode::Vim},
+              "with emoji suggestions off in the settings, the menu has no emoji item");
         settings.options.emojiSuggestions = true;
         settings.modeOrder                = "Vim,Off,Sen";
-        check(modeMenuItems(settings, false).front().label == "Vim mode: off" && modeMenuItems(settings, true).front().label == "Vim mode: on",
+        check(modeMenuItems(settings, {false}).front().label == "Vim mode: off" && modeMenuItems(settings, {true}).front().label == "Vim mode: on",
               "the Vim item says whether the app has Vim mode");
         settings.modeOrder     = "Sen,Preedit,Emoji,Off";
         settings.shortcutOff   = settings.shortcutSen;
@@ -240,7 +250,7 @@ namespace {
         check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 2))).empty(), "an item whose key an earlier one took shows no key");
         g_object_unref(g_object_ref_sink(table));
         settings.shortcutOff = defaultSettings().shortcutOff;
-        settings.showModeSen = settings.showModeOff = settings.showModeVim = settings.showModeEmoji = false;
+        settings.showModeSen = settings.showModeOff = settings.showModeVim = settings.showModeEmoji = settings.showModeTeencode = false;
         check(modeMenuItems(settings).empty(), "every mode can be hidden");
 
         const IBusSettings read = readSettings(parseIni("ShowModeOff=False\nModeOrder=Default,Off\nCycleModeKey=Control+grave Shift_L\n"));

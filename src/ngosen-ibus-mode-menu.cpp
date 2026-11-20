@@ -42,22 +42,27 @@ namespace ngosen {
             return false;
         }
 
-        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, bool vimOn, bool emojiOn) {
+        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, const MenuSwitches& on) {
             struct Known {
                 const char* name;
                 MenuItem    item;
                 bool        shown;
             };
-            const auto  key     = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
+            const auto key = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
+            // In fcitx5's default order, which the modes a saved order leaves out follow.
             const Known known[] = {
                 {"Sen", {MenuMode::Sen, _("Sen"), key(settings.shortcutSen)}, settings.showModeSen},
                 {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
-                {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
-                {"Vim", {MenuMode::Vim, vimOn ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
                 // Turning suggestions off in the settings takes the item away, as in fcitx5.
                 {"Emoji",
-                 {MenuMode::Emoji, emojiOn ? _("Emoji suggestions: on") : _("Emoji suggestions: off"), key(settings.shortcutEmoji)},
+                 {MenuMode::Emoji, on.emoji ? _("Emoji suggestions: on") : _("Emoji suggestions: off"), key(settings.shortcutEmoji)},
                  settings.showModeEmoji && settings.options.emojiSuggestions},
+                // Teencode only changes which words go back to their keys, so it needs that setting on.
+                {"Teencode",
+                 {MenuMode::Teencode, on.teencode ? _("Teencode: on") : _("Teencode: off"), key(settings.shortcutTeencode)},
+                 settings.showModeTeencode && settings.options.autoNonVnRestore},
+                {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
+                {"Vim", {MenuMode::Vim, on.vim ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
             };
             std::vector<const Known*> ordered;
             const auto                add = [&ordered](const Known& entry) {
@@ -85,8 +90,8 @@ namespace ngosen {
 
     } // namespace
 
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn, bool emojiOn) {
-        std::vector<MenuItem> items = shownModes(settings, true, vimOn, emojiOn);
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, const MenuSwitches& switches) {
+        std::vector<MenuItem> items = shownModes(settings, true, switches);
         for (auto item = items.begin(); item != items.end(); ++item) {
             if (std::any_of(items.begin(), item, [&](const MenuItem& other) { return other.key == item->key; }))
                 item->key = IBUS_KEY_VoidSymbol;
@@ -96,8 +101,8 @@ namespace ngosen {
 
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings) {
         std::vector<MenuMode> modes;
-        for (const auto& item : shownModes(settings, false, false, true)) {
-            if (item.mode != MenuMode::Vim && item.mode != MenuMode::Emoji)
+        for (const auto& item : shownModes(settings, false, {})) {
+            if (item.mode != MenuMode::Vim && item.mode != MenuMode::Emoji && item.mode != MenuMode::Teencode)
                 modes.push_back(item.mode);
         }
         return modes;

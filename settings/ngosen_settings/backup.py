@@ -20,6 +20,7 @@ COMPONENTS = (
     "switches",
     "emoji_words",
     "emoji_off_apps",
+    "teencode_apps",
     "dictionary",
 )
 # The fcitx5 edition keeps these as Mode, VietnameseOn and indexed key lists.
@@ -63,6 +64,7 @@ class Paths:
         self.app_switches = os.path.join(folder, "ngosen-app-switch.conf")
         self.emoji_words = store.emoji_words_file
         self.emoji_off_apps = store.emoji_off_apps_file
+        self.teencode_apps = store.teencode_apps_file
         self.english = english_mark()
 
 
@@ -187,6 +189,8 @@ def export(engine, paths, target):
     ]
     apps = emoji_words.parse_apps(_current(paths.emoji_off_apps))
     backup["emoji_off_apps"] = [{"App": app} for app in apps]
+    apps = emoji_words.parse_apps(_current(paths.teencode_apps))
+    backup["teencode_apps"] = [{"App": app} for app in apps]
     # The list in effect, so restoring brings back the packaged one over a later own list.
     dictionary = read_bytes(paths.dictionary)
     if dictionary is None:
@@ -210,7 +214,15 @@ def load(path):
         raise ValueError(_("No settings found in the file."))
     if not isinstance(backup.get("config", {}), dict):
         raise ValueError(_("The settings in the file are damaged."))
-    for name in ("macros", "keymaps", "rules", "switches", "emoji_words", "emoji_off_apps"):
+    for name in (
+        "macros",
+        "keymaps",
+        "rules",
+        "switches",
+        "emoji_words",
+        "emoji_off_apps",
+        "teencode_apps",
+    ):
         items = backup.get(name, [])
         if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
             raise ValueError(_("The lists in the file are damaged."))
@@ -221,6 +233,7 @@ def load(path):
         ("switches", ("App",)),
         ("emoji_words", ("Keyword", "Emoji")),
         ("emoji_off_apps", ("App",)),
+        ("teencode_apps", ("App",)),
     ):
         for item in backup.get(name, []):
             if not all(isinstance(item.get(k, ""), str) for k in fields):
@@ -398,7 +411,7 @@ def _emoji_words_file(items):
     return emoji_words.edits_text(edits).encode("utf-8") if edits else None
 
 
-def _emoji_off_apps_file(current, items):
+def _apps_file(current, items, header=emoji_words.OFF_APPS_HEADER):
     """The apps file as the engine writes it; a name that would read as a comment is left out."""
     apps = []
     for item in items:
@@ -410,7 +423,7 @@ def _emoji_off_apps_file(current, items):
             apps.append(app)
     if current is None and not apps:
         return None
-    return emoji_words.apps_text(apps).encode("utf-8", "surrogateescape")
+    return emoji_words.apps_text(apps, header).encode("utf-8", "surrogateescape")
 
 
 def _keymap_file(text, items):
@@ -466,8 +479,14 @@ def plan(backup, paths, engine, taken=frozenset()):
     if "emoji_words" in backup:
         changes[paths.emoji_words] = _emoji_words_file(backup["emoji_words"])
     if "emoji_off_apps" in backup:
-        changes[paths.emoji_off_apps] = _emoji_off_apps_file(
+        changes[paths.emoji_off_apps] = _apps_file(
             _current(paths.emoji_off_apps), backup["emoji_off_apps"]
+        )
+    if "teencode_apps" in backup:
+        changes[paths.teencode_apps] = _apps_file(
+            _current(paths.teencode_apps),
+            backup["teencode_apps"],
+            emoji_words.TEENCODE_APPS_HEADER,
         )
     # Last, so the running engine switches language only once the rest is written.
     if "VietnameseOn" in config:

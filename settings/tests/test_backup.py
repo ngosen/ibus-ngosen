@@ -103,6 +103,7 @@ class UserFiles:
             paths.app_switches,
             paths.emoji_words,
             paths.emoji_off_apps,
+            paths.teencode_apps,
             paths.english,
         )
         return {path: backup.read_bytes(path) for path in names}
@@ -507,10 +508,23 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertFalse(os.path.exists(self.paths.emoji_words))
         self.assertEqual(emoji_words.parse_apps(read_text(self.paths.emoji_off_apps)), [])
 
+    def test_teencode_apps_round_trip(self):
+        write_text(self.paths.teencode_apps, emoji_words.apps_text(["discord"]))
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        exported = backup.load(target)
+        self.assertEqual(exported["teencode_apps"], [{"App": "discord"}])
+        exported["teencode_apps"] = [{"App": "zalo"}, {"App": "# not an app"}]
+        self.restore(exported)
+        text = read_text(self.paths.teencode_apps)
+        self.assertTrue(text.startswith(emoji_words.TEENCODE_APPS_HEADER))
+        self.assertEqual(emoji_words.parse_apps(text), ["zalo"])
+
     def test_damaged_emoji_lists_are_refused(self):
         for name, items in (
             ("emoji_words", [{"Keyword": 1, "Emoji": "😂"}]),
             ("emoji_off_apps", ["kate"]),
+            ("teencode_apps", [{"App": 1}]),
         ):
             with self.subTest(name=name):
                 data = fcitx5_backup()
@@ -537,6 +551,7 @@ class BackupTest(UserFiles, unittest.TestCase):
                 "switches",
                 "emoji_words",
                 "emoji_off_apps",
+                "teencode_apps",
                 "dictionary",
             ],
         )
