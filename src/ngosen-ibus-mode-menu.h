@@ -16,14 +16,15 @@ typedef struct _IBusLookupTable IBusLookupTable;
 
 namespace ngosen {
 
-    // The modes the menu offers, kept for the app in use. Vim and Emoji are no modes but switch Vim mode
-    // and emoji suggestions for the app, as in fcitx5.
+    // The modes the menu offers, kept for the app in use. Vim, Emoji and Teencode are no modes but switch
+    // Vim mode, emoji suggestions and teencode for the app, as in fcitx5.
     enum class MenuMode {
         Sen,
         Preedit,
         Off,
         Vim,
-        Emoji
+        Emoji,
+        Teencode
     };
 
     struct MenuItem {
@@ -35,8 +36,14 @@ namespace ngosen {
     };
 
     // The shown modes in ModeOrder, then the ones it leaves out; a key an earlier item has picks nothing.
-    // vimOn, emojiOn: whether the app in use has Vim mode and emoji suggestions, which their items say.
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn = false, bool emojiOn = true);
+    // What the app in use has switched on, which the items of its switches say.
+    struct MenuSwitches {
+        bool vim      = false;
+        bool emoji    = true;
+        bool teencode = false;
+    };
+
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, const MenuSwitches& switches = {});
 
     // As in fcitx5 the cycle key goes through only the modes ModeOrder names, the switches left out.
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings);

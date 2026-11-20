@@ -52,6 +52,11 @@ namespace {
         return apps;
     }
 
+    ngosen::AppList& teencodeApps() {
+        static ngosen::AppList apps(resources().paths().teencodeAppsFile(), ngosen::TeencodeAppsHeader);
+        return apps;
+    }
+
     ngosen::AppList& emojiOffApps() {
         static ngosen::AppList apps(resources().paths().emojiOffAppsFile(), ngosen::EmojiOffAppsHeader);
         return apps;
@@ -163,6 +168,7 @@ namespace {
         // fcitx5 keeps them for the field.
         bool  vimHere      = false;
         bool  emojiOffHere = false;
+        bool  teencodeHere = false;
         guint menuCursor   = 0;
         guint menuTimer    = 0;
         guint clickTimer   = 0;
@@ -357,8 +363,13 @@ namespace {
         return app.empty() ? !session.emojiOffHere : !emojiOffApps().has(app);
     }
 
+    bool teencodeHere(const Session& session) {
+        const std::string app = currentApp(*session.host);
+        return app.empty() ? session.teencodeHere : teencodeApps().has(app);
+    }
+
     std::vector<ngosen::MenuItem> menuItems(const Session& session) {
-        auto       items   = ngosen::modeMenuItems(resources().settings(), vimModeHere(session), emojiHere(session));
+        auto       items   = ngosen::modeMenuItems(resources().settings(), ngosen::MenuSwitches{vimModeHere(session), emojiHere(session), teencodeHere(session)});
         const auto current = menuModeOf(realMode);
         for (auto& item : items)
             item.current = item.mode == current;
@@ -513,6 +524,21 @@ namespace {
         session.showsNotice = true;
     }
 
+    void switchTeencode(IBusEngine* engine, Session& session) {
+        closeModeMenu(engine, session);
+        const bool        on  = !teencodeHere(session);
+        const std::string app = currentApp(*session.host);
+        if (app.empty())
+            session.teencodeHere = on;
+        else if (!teencodeApps().set(app, on))
+            NGOSEN_WARN("Cannot save teencode for " + app);
+        session.state->setTeencodeOn(on);
+        const char* label = on ? _("Teencode: on") : _("Teencode: off");
+        NGOSEN_INFO(std::string("Mode menu: ") + label);
+        session.host->showNotice(label);
+        session.showsNotice = true;
+    }
+
     void pickMode(IBusEngine* engine, Session& session, const ngosen::MenuItem& item) {
         if (item.mode == ngosen::MenuMode::Vim) {
             switchVimMode(engine, session);
@@ -520,6 +546,10 @@ namespace {
         }
         if (item.mode == ngosen::MenuMode::Emoji) {
             switchEmoji(engine, session);
+            return;
+        }
+        if (item.mode == ngosen::MenuMode::Teencode) {
+            switchTeencode(engine, session);
             return;
         }
         closeModeMenu(engine, session);
@@ -676,6 +706,7 @@ namespace {
         // The portal may name the app after focus-in, so its switches are looked up at each key.
         session->state->setVimKeys(vimModeHere(*session));
         session->state->setEmojiOn(emojiHere(*session));
+        session->state->setTeencodeOn(teencodeHere(*session));
         ngosen::IBusKeyPress key(keyval, keycode, state);
         session->state->keyEvent(key);
         if (key.accepted())
@@ -825,6 +856,7 @@ namespace {
         session->tap          = {};
         session->vimHere      = false;
         session->emojiOffHere = false;
+        session->teencodeHere = false;
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();

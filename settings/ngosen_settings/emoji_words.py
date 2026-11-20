@@ -16,6 +16,7 @@ from .emoji_table import EMOJI, GROUPS
 WORDS = "Words"
 # The engine writes the same line when it switches an app from its menu.
 OFF_APPS_HEADER = "# Apps where Ngó Sen offers no emoji, one per line"
+TEENCODE_APPS_HEADER = "# Apps where Ngó Sen keeps teencode, one per line"
 _BY_EMOJI = {row[0]: row for row in EMOJI}
 # The fcitx5 edition's file of shared words, so either edition imports the other's.
 SHARE_KIND = "ngosen-emoji-words"
@@ -130,8 +131,8 @@ def parse_apps(text):
     return apps
 
 
-def apps_text(apps):
-    return OFF_APPS_HEADER + "\n" + "".join(app + "\n" for app in apps)
+def apps_text(apps, header=OFF_APPS_HEADER):
+    return header + "\n" + "".join(app + "\n" for app in apps)
 
 
 class EmojiWords:
