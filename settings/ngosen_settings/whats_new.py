@@ -16,6 +16,28 @@ from .i18n import N_, _
 # Newest release first. A release with no entry gets no section.
 FEATURES = [
     {
+        "version": "1.5",
+        "title": N_("Emoji while typing"),
+        "how": N_(
+            "After a word such as cười, con mèo or haha, emoji show next to the cursor. Press Tab "
+            "to number them and a number to pick one; Space or Enter takes the first. The Emoji "
+            "page lists every emoji with its words, which you can change."
+        ),
+        "example": "",
+        "target": ("page", "emoji"),
+    },
+    {
+        "version": "1.5",
+        "title": N_("Convert selected text"),
+        "how": N_(
+            "Select text typed in TCVN3, VNI or another charset and press the convert hotkey to "
+            "change it to the charset you chose. Set the hotkey on the Convert page, which also "
+            "converts text pasted into it."
+        ),
+        "example": "",
+        "target": ("page", "convert"),
+    },
+    {
         "version": "1.4",
         "title": N_("Extra keys after a word"),
         "how": N_(

@@ -662,10 +662,8 @@ class KeymapPage:
 
 
 FCITX5_ONLY = [
-    N_("Sen in every app, with its fixes for each app"),
-    N_("Cứu dấu in every app"),
-    N_("Vim mode for each app"),
-    N_("The emoji picker, and turning Vietnamese off for one app"),
+    N_("Cứu dấu on selected text in every app"),
+    N_("Converting selected text in LibreOffice"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
 # The window only hands the command over: the installer needs a terminal for sudo.
