@@ -1585,3 +1585,7 @@ msgstr "Hầu hết app cần Unicode. Với bảng mã khác, terminal và tran
 #: settings/ngosen_settings/system_check.py
 msgid "Output charset is {charset}, not Unicode"
 msgstr "Bảng mã đang là {charset}, không phải Unicode"
+
+#: settings/ngosen_settings/pages.py:667
+msgid "The ngosen-toggle command, to switch English/Vietnamese from a desktop shortcut"
+msgstr "Lệnh ngosen-toggle, để chuyển Anh/Việt bằng phím tắt của desktop"
