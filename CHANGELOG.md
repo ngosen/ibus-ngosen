@@ -16,7 +16,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Trang Emoji trong cửa sổ cài đặt như bản fcitx5: tìm emoji, bấm vào từ để tắt hay bật, thêm từ của riêng mình, bật
   lại emoji cho app đã tắt. Sao lưu và khôi phục mang theo cả hai danh sách này (#164).
 - Chuyển mã như bản fcitx5: bôi đen chữ cũ (TCVN3, VNI…) rồi bấm phím là đổi sang Unicode ngay tại chỗ, cả trong
-  Firefox và LibreOffice. Đặt phím, bảng mã, chữ hoa/thường ở trang Chuyển mã, có ô dán chữ để đổi tại chỗ (#165).
+  Firefox (LibreOffice chưa được). Đặt phím, bảng mã, chữ hoa/thường ở trang Chuyển mã, có ô dán chữ để đổi tại chỗ (#165).
 
 ### Thay đổi
 
