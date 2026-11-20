@@ -584,6 +584,16 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.restore({"dictionary": "nam\nkhô\n"})
         self.assertEqual(read_text(self.paths.dictionary), "nam\nkhô\n")
 
+    def test_undo_puts_the_teencode_apps_back(self):
+        write_text(self.paths.teencode_apps, emoji_words.apps_text(["discord"]))
+        data = fcitx5_backup()
+        data["teencode_apps"] = [{"App": "zalo"}]
+        changes, _ = backup.plan(data, self.paths, self.engine)
+        snapshot = backup.replace(changes)
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.teencode_apps)), ["zalo"])
+        self.assertTrue(backup.undo(snapshot, changes))
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.teencode_apps)), ["discord"])
+
     def test_undo_only_while_the_files_hold_the_restore(self):
         before = self.files()
         changes, _ = backup.plan(fcitx5_backup(VietnameseOn="False"), self.paths, self.engine)

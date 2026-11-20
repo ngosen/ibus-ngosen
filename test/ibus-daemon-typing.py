@@ -2264,6 +2264,9 @@ check(
     "menu: t switches teencode on for this app",
     (app.menu, teencode_apps()),
 )
+app.type(" zaajy ")
+pump(300)
+check(app.text == "zaajy  zậy ", "teencode: the next word in the field keeps its marks", app.text)
 app.close()
 # A new field of the same app reads the switch from the file.
 app = menu_app("teen")
@@ -2280,6 +2283,9 @@ check(
 app.key(IBus.KEY_t)
 pump(300)
 check(teencode_apps() == [], "menu: t again switches teencode off", teencode_apps())
+app.type(" zaajy ")
+pump(300)
+check(app.text == "zậy  zaajy ", "teencode: off again, the word goes back to its keys", app.text)
 app.close()
 
 # Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.

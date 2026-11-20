@@ -190,14 +190,17 @@ namespace {
         const IBusSettings shortcuts = readSettings(parseIni("ShortcutSen=a\nShortcutPreedit=semicolon\nShortcutOff=\n"));
         check(shortcuts.shortcutSen == "a" && shortcuts.shortcutPreedit == "q" && shortcuts.shortcutOff == "e", "a shortcut is one letter or digit");
         check(readSettings(parseIni("ShortcutOff=X\n")).shortcutOff == "x", "a shortcut written in capitals is read in lowercase");
-        IBusSettings changed  = defaults;
-        changed.modeMenuKeys  = {};
-        changed.shortcutOff   = "x";
-        changed.shortcutVim   = "m";
-        changed.showModeVim   = false;
-        const IBusSettings rt = readSettings(parseIni(settingsText(changed)));
+        IBusSettings changed     = defaults;
+        changed.modeMenuKeys     = {};
+        changed.shortcutOff      = "x";
+        changed.shortcutVim      = "m";
+        changed.showModeVim      = false;
+        changed.shortcutTeencode = "k";
+        changed.showModeTeencode = false;
+        const IBusSettings rt    = readSettings(parseIni(settingsText(changed)));
         check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x", "menu settings round trip");
         check(rt.shortcutVim == "m" && !rt.showModeVim, "the Vim item's settings round trip");
+        check(rt.shortcutTeencode == "k" && !rt.showModeTeencode, "the teencode item's settings round trip");
         check(defaults.shortcutVim == "v" && defaults.showModeVim, "Vim mode is in the menu on v by default, as in fcitx5");
         const IBusSettings old = readSettings(parseIni("ShortcutDefault=r\nShowModeDefault=False\nModeOrder=Sen,Preedit,Emoji,Off,Default\n"));
         check(old.modeOrder == "Sen,Preedit,Emoji,Off" && old.showModeSen && old.shortcutSen == "1", "a config saved with Default Typing still reads");
@@ -425,6 +428,7 @@ namespace {
         write(paths.fcitxConfigDir + "/ngosen-app-rules.conf", "firefox=5\ncode=0\n");
         write(paths.fcitxConfigDir + "/ngosen-app-switch.conf", FcitxSwitches);
         write(paths.fcitxConfigDir + "/ngosen-vim-apps.conf", "kitty\n");
+        write(paths.fcitxConfigDir + "/ngosen-teencode-apps.conf", "discord\n");
         check(prepareSettings(paths), "import succeeds");
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
@@ -436,6 +440,7 @@ namespace {
         check(read(paths.appModesFile()) == "firefox=5\ncode=0\n", "the modes picked for each app copied as they are");
         check(read(paths.appSwitchesFile()) == FcitxSwitches, "the language each app was switched to copied as it is");
         check(read(paths.vimAppsFile()) == "kitty\n", "the apps with Vim mode copied as they are");
+        check(read(paths.teencodeAppsFile()) == "discord\n", "the apps with teencode copied as they are");
 
         write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
         check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");
