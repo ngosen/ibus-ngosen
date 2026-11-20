@@ -30,8 +30,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Trên Plasma, chọn chế độ trong menu ` giờ đổi chế độ chung cho mọi app, như khi đổi trong cửa sổ cài đặt. Trước đây
   lựa chọn bị lưu dưới tên "wayland", áp cho mọi app mà vẫn đè lên cửa sổ cài đặt; lựa chọn cũ dưới tên đó nay được
   bỏ qua (#154).
-- Khôi phục bản sao lưu fcitx5 có chế độ Emoji Picker giờ ra Gõ Sen như bản fcitx5, thay vì gạch chân. Mục "Bản fcitx5
-  có thêm" trong cửa sổ cài đặt chỉ còn những gì bản IBus chưa có, và "Có gì mới" có mục cho bản 1.5 (#166).
+- Khôi phục bản sao lưu fcitx5 có chế độ Emoji Picker giờ ra Gõ Sen như bản fcitx5, thay vì gạch chân. Mục "Có ở bản
+  fcitx5" trong cửa sổ cài đặt chỉ còn những gì bản IBus chưa có, và "Có gì mới" có mục cho bản 1.5 (#166).
 
 ## [1.4.1-1] — 18/11/2026
 

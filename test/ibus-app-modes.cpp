@@ -36,9 +36,9 @@ namespace {
 
     void testFormat() {
         const AppModeMap modes = parseAppModes("# comment\nfirefox=5\nkate = 2\nlegacy=1\ncode=0\nemoji=6\nwide=99\nword=abc\nno equals\ngnome-shell=5\n");
-        check(modes.size() == 4, "Sen, Preedit and Off for a named app are kept");
+        check(modes.size() == 5, "Sen, Preedit and Off for a named app are kept");
         check(modes.count("code") && modes.at("code") == AppMode::Off, "0 is Off");
-        check(!modes.count("emoji"), "an emoji pick has no meaning here");
+        check(modes.count("emoji") && modes.at("emoji") == AppMode::Sen, "the former Emoji Picker is Sen, as fcitx5 reads it");
         check(modes.count("firefox") && modes.at("firefox") == AppMode::Preedit, "5 is Preedit");
         check(modes.count("kate") && modes.at("kate") == AppMode::Sen, "2 is Sen, spaces trimmed");
         check(modes.count("legacy") && modes.at("legacy") == AppMode::Sen, "a former Sen number is Sen");

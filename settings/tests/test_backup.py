@@ -232,13 +232,22 @@ class BackupTest(UserFiles, unittest.TestCase):
             read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "firefox=5\nkate=2\n"
         )
 
-    def test_emoji_rules_are_kept_and_reported(self):
+    def test_former_emoji_picker_rules_are_sen(self):
         data = fcitx5_backup()
         data["rules"] = [{"App": "code", "Mode": "0"}, {"App": "kate", "Mode": "6"}]
         _, notes = self.restore(data)
-        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes, [])
         self.assertEqual(
             read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "code=0\nkate=6\n"
+        )
+
+    def test_unknown_rules_are_kept_and_reported(self):
+        data = fcitx5_backup()
+        data["rules"] = [{"App": "code", "Mode": "0"}, {"App": "kate", "Mode": "7"}]
+        _, notes = self.restore(data)
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(
+            read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "code=0\nkate=7\n"
         )
 
     def test_switches_come_back_for_each_app(self):

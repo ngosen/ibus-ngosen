@@ -817,8 +817,8 @@ msgid "The backup was made while typing English, so typing switches to English."
 msgstr "Bản sao lưu được tạo lúc đang gõ tiếng Anh, nên Ngó Sen sẽ chuyển sang gõ tiếng Anh."
 
 #: settings/ngosen_settings/backup.py
-msgid "Rules that pick emoji for an app are kept but do nothing here."
-msgstr "Luật chọn emoji cho từng app vẫn được giữ nhưng bản này không dùng."
+msgid "Rules with a mode this edition does not know are kept but do nothing here."
+msgstr "Luật đặt cho app một chế độ bản này không biết vẫn được giữ nhưng không có tác dụng."
 
 #: settings/ngosen_settings/window.py
 msgid "The settings changed after the restore, so nothing was undone."
