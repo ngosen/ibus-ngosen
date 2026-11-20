@@ -232,6 +232,23 @@ class WindowTest(unittest.TestCase):
             model.get_string(win.rows.rows["ModeOrder"].get_selected()), "OFF, Sen, Preedit"
         )
 
+    def test_the_check_page_follows_the_output_charset(self):
+        collect = window.check_page.system_check.collect
+        with mock.patch.object(window.check_page.system_check, "collect", wraps=collect) as seen:
+            self.window.rows.rows["OutputCharset"].set_selected(1)
+        self.assertEqual(seen.call_args.kwargs["output_charset"], "TCVN3 (ABC)")
+
+    def test_the_check_page_follows_an_undo_of_the_charset(self):
+        self.window.rows.rows["OutputCharset"].set_selected(1)
+        self.window.undo()
+        self.assertEqual(self.window.check.facts.output_charset, "Unicode")
+
+    def test_checking_again_reads_the_charset_the_engine_saved(self):
+        settings = self.store.settings_file
+        write_text(settings, read_text(settings) + "OutputCharset=VNI Windows\n")
+        self.window.check.run()
+        self.assertEqual(self.window.check.facts.output_charset, "VNI Windows")
+
     def test_mode_order_saved_before_teencode_is_its_preset(self):
         engine = FakeEngine(self.folder)
         saved = engine.settings()

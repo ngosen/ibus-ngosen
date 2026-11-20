@@ -669,6 +669,7 @@ class KeymapPage:
 FCITX5_ONLY = [
     N_("Cứu dấu on selected text in every app"),
     N_("Converting selected text in LibreOffice"),
+    N_("The ngosen-toggle command, to switch English/Vietnamese from a desktop shortcut"),
 ]
 FULL_EDITION_URL = "https://github.com/ngosen/ngosen"
 # The window only hands the command over: the installer needs a terminal for sudo.

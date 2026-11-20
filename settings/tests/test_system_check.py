@@ -52,6 +52,15 @@ class StepsTest(unittest.TestCase):
         (step,) = [f for f in found if f.level == sc.INFO]
         self.assertNotIn("top bar", step.fix)
 
+    def test_a_charset_other_than_unicode_is_a_tip_in_the_report(self):
+        f = facts(output_charset="TCVN3 (ABC)")
+        found = sc.steps(f)
+        (step,) = [x for x in found if x.level == sc.INFO]
+        self.assertEqual(step.title, "Output charset is TCVN3 (ABC), not Unicode")
+        self.assertEqual(sc.summary(found)[0], "This machine is ready")
+        self.assertIn("[i] Output charset is TCVN3 (ABC), not Unicode", sc.report(f, found))
+        self.assertEqual(titles(sc.steps(facts()), sc.INFO), [])
+
     def test_engine_unknown_or_replaced_asks_for_a_restart(self):
         for kwargs in ({"engine_known": False}, {"engine_replaced": True}):
             found = sc.steps(facts(**kwargs))
