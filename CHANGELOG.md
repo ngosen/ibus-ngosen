@@ -43,6 +43,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Sửa
 
+- Nhận lõi 1.13.1: bấm Backspace khi đang gõ dở chữ kéo dài hay chữ teencode, như `chaiiif` ra `chàiii`, chỉ xoá
+  một chữ, không còn mất dấu. Nhập từ emoji bỏ qua từ có ký tự NUL. Lời giải thích dưới Bảng mã nói rõ "Unicode tổ
+  hợp" gửi dấu tách khỏi chữ nên terminal và nhiều app gõ sai (#173).
 - Trên Plasma, chọn chế độ trong menu ` giờ đổi chế độ chung cho mọi app, như khi đổi trong cửa sổ cài đặt. Trước đây
   lựa chọn bị lưu dưới tên "wayland", áp cho mọi app mà vẫn đè lên cửa sổ cài đặt; lựa chọn cũ dưới tên đó nay được
   bỏ qua (#154).
