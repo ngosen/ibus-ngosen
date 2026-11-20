@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.4.1
+Version:        1.5.0
 Release:        1%{?dist}
 Summary:        Ngó Sen for GNOME, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -61,6 +61,12 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Sat Nov 21 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.5.0-1
+- Emoji while typing, with an Emoji page to edit, export and import keywords; convert
+  selected text from TCVN3, VNI and other charsets in place; the switch key changes every
+  app at once, and a new ngosen-toggle command switches from a desktop shortcut; teencode
+  for chosen apps and drawn-out letters; core ngosen-1.13.1-1.
+
 * Wed Nov 18 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.4.1-1
 - Fast typing with Backspace right after Firefox opens on GNOME no longer loses a Backspace
   or mixes up letters; a tone retyped after a final consonant gives the right word; Brave
