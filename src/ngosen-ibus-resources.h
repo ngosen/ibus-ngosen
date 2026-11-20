@@ -75,31 +75,31 @@ namespace ngosen {
             onChange_ = std::move(callback);
         }
         // ngosen-toggle left its request; the engine switches as with the toggle key.
-        void noticeToggleRequest();
-        void onToggleRequest(std::function<void()> callback) {
+        void noticeToggleRequest(const std::string& path);
+        void onToggleRequest(std::function<void(const std::string&)> callback) {
             onToggleRequest_ = std::move(callback);
         }
 
       private:
-        void                     load();
-        uintptr_t                openDictionary() const;
+        void                                    load();
+        uintptr_t                               openDictionary() const;
 
-        SettingsPaths            paths_;
-        IBusSettings             settings_;
-        std::vector<KeymapEntry> keymap_;
-        uintptr_t                dictionary_     = 0;
-        uintptr_t                macroTable_     = 0;
-        uintptr_t                englishWords_   = 0;
-        uintptr_t                keepWords_      = 0;
-        unsigned                 generation_     = 0;
-        bool                     changed_        = false;
-        bool                     englishChanged_ = false;
-        GFileMonitor*            monitor_        = nullptr;
-        GFileMonitor*            dataMonitor_    = nullptr;
-        GFileMonitor*            stateMonitor_   = nullptr;
-        Recorder                 recorder_;
-        std::function<void()>    onChange_;
-        std::function<void()>    onToggleRequest_;
+        SettingsPaths                           paths_;
+        IBusSettings                            settings_;
+        std::vector<KeymapEntry>                keymap_;
+        uintptr_t                               dictionary_     = 0;
+        uintptr_t                               macroTable_     = 0;
+        uintptr_t                               englishWords_   = 0;
+        uintptr_t                               keepWords_      = 0;
+        unsigned                                generation_     = 0;
+        bool                                    changed_        = false;
+        bool                                    englishChanged_ = false;
+        GFileMonitor*                           monitor_        = nullptr;
+        GFileMonitor*                           dataMonitor_    = nullptr;
+        GFileMonitor*                           stateMonitor_   = nullptr;
+        Recorder                                recorder_;
+        std::function<void()>                   onChange_;
+        std::function<void(const std::string&)> onToggleRequest_;
     };
 
 } // namespace ngosen

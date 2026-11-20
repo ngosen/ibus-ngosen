@@ -5,11 +5,13 @@
 
 import os
 import sys
+import time
 
 from . import i18n, system_check
 from .i18n import _
 
-REQUEST = "toggle"
+# The engine takes any file named so; one per run, so two quick presses are two requests.
+REQUEST_PREFIX = "toggle-"
 
 
 def state_dir():
@@ -17,19 +19,24 @@ def state_dir():
     return os.path.join(base, "ngosen")
 
 
-def toggle(folder=None, engine_in_use=system_check.engine_in_use):
+def ibus_running():
+    return system_check.session_owner(os.environ) == "ibus"
+
+
+def toggle(folder=None, engine_in_use=system_check.engine_in_use, running=ibus_running):
     """Returns (exit code, message); the message is empty when it worked."""
-    engine = engine_in_use()
-    if not engine:
+    if not running():
         return 1, _("IBus is not running.")
-    if engine != system_check.ENGINE:
-        # A request now would switch later, when Ngó Sen starts, which nobody asked for.
+    # Empty where each field has its own engine; the engine then drops a request it cannot take.
+    engine = engine_in_use()
+    if engine and engine != system_check.ENGINE:
         return 1, _("Ngó Sen is not the input source in use. Switch to it once, then try again.")
     folder = folder or state_dir()
     try:
         os.makedirs(folder, mode=0o700, exist_ok=True)
         # The engine watches the folder, switches as with the toggle key and removes the file.
-        with open(os.path.join(folder, REQUEST), "w", encoding="utf-8"):
+        name = f"{REQUEST_PREFIX}{time.monotonic_ns()}-{os.getpid()}"
+        with open(os.path.join(folder, name), "x", encoding="utf-8"):
             pass
     except OSError as e:
         return 1, str(e)

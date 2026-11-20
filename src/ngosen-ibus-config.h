@@ -113,8 +113,6 @@ namespace ngosen {
         std::string senDefaultMark() const;
         // There while typing English. Not a setting: deleting ngosen.conf does not switch back.
         std::string englishMark() const;
-        // Left by ngosen-toggle, which a desktop shortcut runs.
-        std::string toggleRequest() const;
         // Marks the forward-keys extension as enabled once, so turning it off is not undone.
         std::string extensionEnabledMark() const;
         // Marks the duplicate English (US) source as handled once, so a source added back stays.

@@ -3029,6 +3029,47 @@ check(
     "toggle command: the next field types Vietnamese",
     app.commits[-1:],
 )
+toggle_dir = os.path.dirname(english_mark)
+
+
+def toggle_requests():
+    return [n for n in os.listdir(toggle_dir) if n.startswith("toggle")]
+
+
+# A check that failed must not leave English or requests behind for the next ones.
+def clean_toggle():
+    for name in toggle_requests():
+        os.remove(os.path.join(toggle_dir, name))
+    if os.path.exists(english_mark):
+        os.remove(english_mark)
+    pump(1000)
+
+
+# Two presses before the engine reads either are two switches, back where they started.
+for name in ("toggle-1", "toggle-2"):
+    open(os.path.join(toggle_dir, name), "w").close()
+pump(1000)
+check(
+    not os.path.exists(english_mark) and toggle_requests() == [],
+    "toggle command: two quick requests switch twice",
+    (os.path.exists(english_mark), toggle_requests()),
+)
+clean_toggle()
+# With another input method in use a request is dropped, not kept until Ngó Sen is back.
+bus.set_global_engine("xkb:us::eng")
+pump(500)
+open(os.path.join(toggle_dir, "toggle"), "w").close()
+pump(1000)
+check(
+    not os.path.exists(english_mark) and toggle_requests() == [],
+    "toggle command: dropped while another input method is in use",
+    (os.path.exists(english_mark), toggle_requests()),
+)
+clean_toggle()
+bus.set_global_engine("ngosen")
+app.ic.focus_out()
+app.ic.focus_in()
+pump(500)
 app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
 pump(500)
 state_dir = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen")

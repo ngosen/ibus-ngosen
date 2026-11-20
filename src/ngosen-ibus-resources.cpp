@@ -59,6 +59,20 @@ namespace ngosen {
             return named;
         }
 
+        // One file per run of ngosen-toggle, so two quick presses are two requests.
+        bool isToggleName(const char* name) {
+            return g_strcmp0(name, "toggle") == 0 || g_str_has_prefix(name, "toggle-");
+        }
+
+        bool isToggleRequest(GFile* file) {
+            if (file == nullptr)
+                return false;
+            gchar*     name    = g_file_get_basename(file);
+            const bool request = isToggleName(name);
+            g_free(name);
+            return request;
+        }
+
         void onDirChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
             if (isSettingsFile(file) || isSettingsFile(other))
                 static_cast<IBusResources*>(resources)->noticeChange();
@@ -68,8 +82,14 @@ namespace ngosen {
             auto* self = static_cast<IBusResources*>(resources);
             if (isNamed(file, "english") || isNamed(other, "english"))
                 self->noticeEnglishChange();
-            if (isNamed(file, "toggle") || isNamed(other, "toggle"))
-                self->noticeToggleRequest();
+            // Created in place, or renamed into place from a temporary name.
+            for (GFile* named : {file, other}) {
+                if (isToggleRequest(named)) {
+                    gchar* path = g_file_get_path(named);
+                    self->noticeToggleRequest(path);
+                    g_free(path);
+                }
+            }
         }
 
         GFileMonitor* watchDirectory(const std::string& path, GCallback onChanged, IBusResources* resources) {
@@ -108,7 +128,10 @@ namespace ngosen {
         g_mkdir_with_parents(paths_.stateDir.c_str(), 0700);
         // A request left while the engine was not running is not a press of the shortcut now.
         std::error_code error;
-        std::filesystem::remove(paths_.toggleRequest(), error);
+        for (const auto& entry : std::filesystem::directory_iterator(paths_.stateDir, error)) {
+            if (isToggleName(entry.path().filename().c_str()))
+                std::filesystem::remove(entry.path(), error);
+        }
         stateMonitor_ = watchDirectory(paths_.stateDir, G_CALLBACK(onStateChanged), this);
     }
 
@@ -135,9 +158,9 @@ namespace ngosen {
             onChange_();
     }
 
-    void IBusResources::noticeToggleRequest() {
+    void IBusResources::noticeToggleRequest(const std::string& path) {
         if (onToggleRequest_)
-            onToggleRequest_();
+            onToggleRequest_(path);
     }
 
     bool IBusResources::takeEnglishChange() {
