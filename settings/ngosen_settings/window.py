@@ -258,7 +258,10 @@ class Window(Adw.ApplicationWindow):
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
         # The example and the hint show these settings.
-        if key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
+        if key == "EnglishEmojiKeywords":
+            # The English words decide which emoji have a word on.
+            self.emoji.reload()
+        elif key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
             self.emoji.refresh()
         if key == "DirectTyping":
             self.check.run()

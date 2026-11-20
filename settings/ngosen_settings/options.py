@@ -64,6 +64,10 @@ SHOW_MENUS = [
 # The keys that pick a mode in the menu, each one letter or digit.
 SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutEmoji", "ShortcutOff", "ShortcutVim"]
 # Stored by their English labels, as fcitx5 stores the enum.
+EMOJI_OFFER_AT = [
+    ("At the end of a sentence", N_("At the end of a sentence")),
+    ("After each word", N_("After each word")),
+]
 EMOJI_PLACEMENTS = [
     ("After the word", N_("After the word")),
     ("Instead of the word", N_("Instead of the word")),
@@ -113,6 +117,8 @@ LABELS = {
     "ShortcutEmoji": N_("Shortcut for emoji suggestions"),
     "EmojiSuggestions": N_("Suggest emoji while typing"),
     "EmojiPlacement": N_("Put a picked emoji"),
+    "EmojiOfferAt": N_("Offer emoji"),
+    "EnglishEmojiKeywords": N_("English keywords"),
     "ConvertKey": N_("Convert Selected Text Hotkey"),
     "ConvertFrom": N_("Convert From"),
     "ConvertTo": N_("Convert To"),
@@ -217,6 +223,16 @@ HINTS = {
     "EmojiPlacement": N_(
         "After the word: cười 😂. Instead of the word: 😂. haha and :) are always replaced."
     ),
+    "EnglishEmojiKeywords": N_(
+        "cat and thumbs up also offer 🐈 and 👍, from the Unicode list of English words. Words that"
+        " are also Vietnamese, like can, are left out."
+    ),
+    "EmojiOfferAt": N_(
+        "At the end of a sentence: the emoji of the sentence show while you type. After . ! ? or a"
+        " short pause, 1–9 picks one, or Tab first where digits type tones, as in VNI; it goes at the"
+        " cursor. Esc hides them until the next sentence."
+        " After each word: the list shows as soon as a keyword is typed."
+    ),
 }
 
 # What a word looks like while typing it, shown under the input method.
@@ -279,7 +295,13 @@ CONVERT_GROUPS = [
     (N_("After converting"), ["ConvertStripDiacritics", "ConvertCase"]),
 ]
 # The Emoji page, as in fcitx5.
-EMOJI_SETTINGS = ["EmojiSuggestions", "EmojiPlacement", "YahooEmoticons"]
+EMOJI_SETTINGS = [
+    "EmojiSuggestions",
+    "EmojiOfferAt",
+    "EmojiPlacement",
+    "YahooEmoticons",
+    "EnglishEmojiKeywords",
+]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 # The mode of apps not set on their own, shown as the fcitx5 edition shows its Mode: (saved value, label, hint).
 TYPING_MODES = [
@@ -305,6 +327,7 @@ CHOICES = {
     "TimeFormat": TIME_FORMATS,
     "DateFormat": DATE_FORMATS,
     "EmojiPlacement": EMOJI_PLACEMENTS,
+    "EmojiOfferAt": EMOJI_OFFER_AT,
     "ConvertKey": CONVERT_KEYS,
     "ConvertCase": CONVERT_CASES,
 }

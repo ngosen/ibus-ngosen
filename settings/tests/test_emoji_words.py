@@ -160,6 +160,8 @@ class FilterTest(Folder):
 
     def test_only_emoji_with_a_word_on(self):
         store = self.store()
+        # Almost every emoji has an English word on.
+        store.set("EnglishEmojiKeywords", "False")
         words = EmojiWords(store)
         self.assertNotIn("📱", [e for e, *_ in words.rows(only_on=True)])
         store.set_emoji_edits(words.toggled("📱", "điện thoại"))

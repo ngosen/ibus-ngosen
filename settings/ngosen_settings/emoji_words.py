@@ -94,27 +94,36 @@ class EmojiWords:
     def off_apps(self):
         return self.store.emoji_off_apps
 
-    # The words of an emoji, as (word, on): its defaults, then the user's own, then its name's.
+    @property
+    def english(self):
+        """Off hides the English words, as the engine skips them."""
+        return self.store.values.get("EnglishEmojiKeywords", "True") != "False"
+
+    # The words of an emoji, as (word, on): its defaults, the user's own, English, then its name's.
     def chips(self, emoji):
-        _e, _group, _name, defaults, others = _BY_EMOJI.get(emoji, (emoji, 0, "", (), ()))
-        known = (*defaults, *others)
+        row = _BY_EMOJI.get(emoji, (emoji, 0, "", (), (), ()))
+        defaults, others, english = row[3], row[4], self._english(emoji)
+        known = (*defaults, *english, *others)
         added = [w for (e, w) in self.edits if e == emoji and w not in known]
-        return [(w, self.is_on(emoji, w)) for w in (*defaults, *added, *others)]
+        return [(w, self.is_on(emoji, w)) for w in (*defaults, *added, *english, *others)]
+
+    def _english(self, emoji):
+        return _BY_EMOJI[emoji][5] if self.english and emoji in _BY_EMOJI else ()
 
     def is_on(self, emoji, word):
         return self.edits.get((emoji, word), word in self._defaults(emoji))
 
     def _defaults(self, emoji):
-        return _BY_EMOJI[emoji][3] if emoji in _BY_EMOJI else ()
+        return (*_BY_EMOJI[emoji][3], *self._english(emoji)) if emoji in _BY_EMOJI else ()
 
     def toggled(self, emoji, word):
         """The edits with word switched for emoji."""
         edits = dict(self.edits)
         on = not self.is_on(emoji, word)
         row = _BY_EMOJI.get(emoji)
-        known = row is not None and word in (*row[3], *row[4])
+        known = row is not None and word in (*row[3], *row[4], *row[5])
         # A word of the user's own keeps its entry, so it stays on the page when turned off.
-        if known and on == (word in row[3]):
+        if known and on == (word in self._defaults(emoji)):
             edits.pop((emoji, word), None)
         else:
             edits[(emoji, word)] = on
