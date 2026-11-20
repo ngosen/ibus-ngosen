@@ -818,6 +818,7 @@ if no_x:
     check(not any("\x7f" in c for c in app.commits), "portal, Shell restarted: named", app.commits)
     # A click in the top bar menu reaches the engine through the fake context, about the app the
     # portal names then: an app closed since it had the focus keeps its own choice.
+    set_setting("ToggleScope", "Each app")
     tray = TrayPanel()
     bus.request_name(IBus.SERVICE_PANEL, 0)
     pump(300)
@@ -1806,6 +1807,20 @@ tap_ctrl_shift(app)
 app.type("vieetj ")
 check(app.text == "việt ", "toggle: there and back before the first word", app.text)
 app.close()
+# As in fcitx5 the key switches every app, so an app switched to English follows a later switch elsewhere.
+first = App("toggle-all-first")
+tap_ctrl_shift(first)
+second = App("toggle-all-second")
+tap_ctrl_shift(second)
+second.close()
+first.ic.focus_in()
+pump(300)
+first.type("vieetj ")
+check(first.text == "việt ", "toggle: a switch in one app switches every app", first.text)
+first.close()
+# Under each app, as the check of this one runs, the toggle keys leave switches behind.
+if os.path.exists(os.path.join(config_dir, "ngosen-app-switch.conf")):
+    os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
 
 
 # The mode menu: its key ends the word, then a key picks Sen, underline or Off for the app.
@@ -1966,13 +1981,28 @@ check(other.text == "việt ", "menu: Off in one app leaves another in Vietnames
 other.close()
 app.ic.focus_in()
 pump(300)
+# Switching every app would leave this one in English, so the key offers the menu instead, as in fcitx5.
+tap_ctrl_shift(app)
+check(
+    app.menu is not None and app.text.endswith("vieetj`") and app_mode("menu") == "menu=0",
+    "menu: the toggle key opens the menu in an app set to Off",
+    (app.menu, app.text, app_mode("menu")),
+)
+if app.menu is not None:
+    app.key(IBus.KEY_Escape)
+    pump(200)
+# Under each app, as the check of this one runs, the toggle keys leave switches behind.
+if os.path.exists(os.path.join(config_dir, "ngosen-app-switch.conf")):
+    os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
+set_setting("ToggleScope", "Each app")
 tap_ctrl_shift(app)
 app.type("vieetj ")
 check(
     app.text.endswith("`việt ") and app_mode("menu") == "menu=0",
-    "menu: the toggle key types Vietnamese again in an app set to Off",
+    "menu: switching each app, the toggle key types Vietnamese again in an app set to Off",
     (app.text, app_mode("menu")),
 )
+set_setting("ToggleScope", "All apps")
 app.close()
 
 # A key no item takes closes the menu and is typed as usual, so a stray ` costs nothing.
@@ -2413,7 +2443,26 @@ check(
     (app_mode("cycle"), app.text),
 )
 app.close()
-# With English everywhere, the shared mode would leave the app in English, so Sen is kept for it.
+# Switching every app, Sen picked while English is on means Vietnamese again everywhere.
+app = menu_app("cycle-all")
+tap_ctrl_shift(app)
+english = os.path.exists(english_mark)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(
+    english
+    and not os.path.exists(english_mark)
+    and app_mode("cycle-all") == ""
+    and app.text == "việt ",
+    "cycle: switching every app, Sen while English is on turns Vietnamese on",
+    (english, os.path.exists(english_mark), app_mode("cycle-all"), app.text),
+)
+app.close()
+if os.path.exists(english_mark):
+    os.remove(english_mark)
+# Switching each app, the shared mode would leave the app in English, so Sen is kept for it.
+set_setting("ToggleScope", "Each app")
 app = menu_app("cycle-english")
 tap_ctrl_shift(app)
 app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
@@ -2431,11 +2480,13 @@ app = menu_app("cycle-vietnamese")
 tap_ctrl_shift(app)
 app.close()
 os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
+set_setting("ToggleScope", "All apps")
 set_setting("CycleModeKey", "")
 os.remove(app_modes_path)
 
-# As in fcitx5 each app keeps the language the toggle key last chose in it; an app never switched
-# follows the last switch.
+# Switching each app, as in fcitx5 each app keeps the language the toggle key last chose in it; an app
+# never switched follows the last switch.
+set_setting("ToggleScope", "Each app")
 app_switches_path = os.path.join(config_dir, "ngosen-app-switch.conf")
 
 
@@ -2509,6 +2560,7 @@ if os.path.exists(english_mark):
 if os.path.exists(app_switches_path):
     os.remove(app_switches_path)
 os.remove(app_modes_path)
+set_setting("ToggleScope", "All apps")
 
 
 # Cứu chữ: English typed by mistake is retyped once Vietnamese comes back.
@@ -2563,6 +2615,7 @@ app.close()
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
         os.remove(path)
+set_setting("ToggleScope", "Each app")
 tray = panel
 first = App("tray-first")
 tap_ctrl_shift(first)
@@ -2625,6 +2678,24 @@ check(not os.path.exists(english_mark), "tray: a second click restores Vietnames
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
         os.remove(path)
+set_setting("ToggleScope", "All apps")
+# Switching every app, a click for an app set to Off has no field to open the menu in.
+off = menu_app("tray-off")
+off.key(IBus.KEY_grave)
+pump(200)
+off.key(IBus.KEY_e)
+pump(500)
+off.ic.focus_out()
+pump(300)
+tray.notices = []
+tray.property_activate("InputMode", IBus.PropState.CHECKED)
+pump(500)
+check(
+    tray.notices[-1:] == ["App này đang ở chế độ tiếng Anh"] and not os.path.exists(english_mark),
+    "tray: switching every app, a click for an app set to Off says so and switches nothing",
+    (tray.notices, os.path.exists(english_mark)),
+)
+off.close()
 bus.release_name(IBus.SERVICE_PANEL)
 pump(300)
 
@@ -2916,6 +2987,21 @@ pump(1000)
 check(symbols[-1:] == ["V"], "menu: a marker removed elsewhere switches back", symbols)
 app.type("vie65t ")
 check(app.commits[-1:] == ["việt "], "menu: Vietnamese after the marker is removed", app.commits)
+# Switching each app, this app is kept in Vietnamese while every other is English; a change of scope
+# in the middle of a word waits for its end and must still show the language it brings.
+set_setting("ToggleScope", "Each app")
+write_file(app_switches_path, "[Switches]\n[Switches/0]\nApp=menu\nVietnamese=True\n\n")
+write_file(english_mark, "")
+pump(1000)
+app.type("vie")
+set_setting("ToggleScope", "All apps")
+pump(500)
+app.type("65t a")
+pump(300)
+check(symbols[-1:] == ["E"], "menu: a new scope applied after the word shows English", symbols)
+os.remove(english_mark)
+write_file(app_switches_path, "[Switches]\n")
+pump(1000)
 app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
 pump(500)
 state_dir = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen")

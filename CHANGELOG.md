@@ -26,6 +26,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Thay đổi
 
+- Ctrl+Shift giờ chuyển Anh/Việt cho mọi app cùng lúc như bản fcitx5 và UniKey, trừ app đã chọn "Tắt" trong menu `
+  (bấm Ctrl+Shift ở đó mở menu). Muốn mỗi app nhớ riêng như trước thì chọn "Từng app" ở "Phím chuyển áp dụng cho" trên
+  trang Gõ (#172).
 - Trên GNOME, đặt dấu trong Chrome, Edge và các app khác (trừ Firefox) nhanh hơn: phần xoá và chữ mới được gửi
   cùng lúc thay vì cách nhau một khoảng chờ, như bản fcitx5 (#163).
 - Menu ` ghi đang đổi chế độ gõ cho app nào, như "Chế độ gõ cho Firefox", và đánh dấu ✓ cạnh chế độ app đang dùng,

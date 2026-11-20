@@ -80,6 +80,7 @@ SHORTCUTS = [
     "ShortcutVim",
 ]
 # Stored by their English labels, as fcitx5 stores the enum.
+TOGGLE_SCOPES = [("All apps", N_("All apps")), ("Each app", N_("Each app"))]
 EMOJI_OFFER_AT = [
     ("At the end of a sentence", N_("At the end of a sentence")),
     ("After each word", N_("After each word")),
@@ -108,6 +109,7 @@ DATE_FORMATS = [
 LABELS = {
     "InputMethod": N_("Input Method"),
     "ToggleKey": N_("Switch Between English and Vietnamese"),
+    "ToggleScope": N_("Switch Applies To"),
     "ModeMenuKey": N_("Mode Menu Hotkey"),
     "CycleModeKey": N_("Cycle Mode Hotkey"),
     "ModeOrder": N_("Mode Order"),
@@ -180,6 +182,9 @@ HINTS = {
     "ConvertStripDiacritics": N_("Tiếng Việt becomes Tieng Viet."),
     "ToggleKey": N_(
         "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+    ),
+    "ToggleScope": N_(
+        "All apps switches English/Vietnamese everywhere except apps set to OFF; Each app remembers a separate choice for each app."
     ),
     "ModeMenuKey": N_(
         "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
@@ -269,6 +274,7 @@ TYPING_GROUPS = [
         [
             "InputMethod",
             "ToggleKey",
+            "ToggleScope",
             "ModeMenuKey",
             "CycleModeKey",
             "DirectTyping",
@@ -335,6 +341,7 @@ TYPING_MODES = [
 
 CHOICES = {
     "ToggleKey": TOGGLE_KEYS,
+    "ToggleScope": TOGGLE_SCOPES,
     "ModeMenuKey": MODE_MENU_KEYS,
     "CycleModeKey": CYCLE_MODE_KEYS,
     "ModeOrder": MODE_ORDERS,
