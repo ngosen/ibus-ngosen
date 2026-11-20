@@ -63,8 +63,8 @@ def read_shared(path):
         if not isinstance(item, dict):
             raise ValueError(_("The emoji words in the file are damaged."))
         emoji, word = item.get("Emoji"), clean(str(item.get("Keyword", "")))
-        # An emoji this version does not list, a long text or one the settings file cannot hold is
-        # skipped rather than refused.
+        # An emoji this version does not list, a long text, or one the settings file cannot hold
+        # (a NUL, a lone surrogate) is skipped rather than refused.
         if isinstance(emoji, str) and emoji in _BY_EMOJI and _fits(word):
             pairs.append((emoji, word))
     return pairs
@@ -75,7 +75,7 @@ def _fits(word):
         word.encode("utf-8")
     except UnicodeEncodeError:
         return False
-    return 0 < len(word) <= LONGEST_WORD
+    return 0 < len(word) <= LONGEST_WORD and "\0" not in word
 
 
 def parse_edits(text):
