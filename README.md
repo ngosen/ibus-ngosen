@@ -47,7 +47,7 @@ Cửa sổ cài đặt theo giao diện sáng/tối của máy, lưu thay đổi
 - **Menu chế độ riêng cho từng app:** bấm phím `` ` `` để mở menu cạnh con trỏ, chọn **Gõ Sen**, **Gạch chân** hoặc **Tắt** để đổi riêng cho app đang dùng; Ngó Sen nhớ lựa chọn đó cho app ấy. Gặp app gõ sai thì chuyển app đó sang Gạch chân và báo cho Ngó Sen. Menu ghi rõ đang đổi chế độ gõ cho app nào và đánh dấu ✓ cạnh chế độ đang dùng. Cửa sổ cài đặt cho đổi thứ tự hay ẩn bớt các chế độ trong menu, và đặt phím chuyển thẳng sang chế độ kế tiếp không cần mở menu. Muốn gạch chân ở mọi app chưa chọn riêng thì chọn Gạch chân ở mục "Chế độ gõ" trong cửa sổ cài đặt.
 - **Phím chuyển Anh/Việt riêng (Ctrl+Shift):** nhấp `Ctrl + Shift` để đổi Anh/Việt như UniKey; thanh trên cùng (hoặc khay IBus) hiện chữ V hoặc E. Như bản fcitx5, mỗi app nhớ riêng đang gõ Anh hay Việt, app chưa đổi lần nào thì theo lần đổi gần nhất. Cửa sổ cài đặt cho đổi sang `Shift + Alt`, hoặc tắt phím này nếu không cần. `Super + Space` vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME.
 - **Cứu chữ:** lỡ gõ chữ lúc đang ở tiếng Anh thì chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (`vieetj` → `việt`), nhấn `Tab` hoặc `Esc` để lấy lại chữ đã gõ.
-- **Cứu dấu:** ở chế độ Gõ Sen, chỉ cần bấm chuột ngay sau một từ rồi gõ phím dấu để thêm, đổi hoặc bỏ dấu; trên các app X11, bôi đen chữ rồi gõ phím dấu thanh.
+- **Cứu dấu:** ở chế độ Gõ Sen, chỉ cần bấm chuột ngay sau một từ rồi gõ phím dấu thanh để thêm, đổi hoặc bỏ dấu thanh; trên các app X11, bôi đen chữ rồi gõ phím dấu thanh.
 - **Vim mode riêng cho từng app:** bật/tắt Vim mode riêng cho từng app từ menu `` ` `` (tiện cho app dùng phím Vim như nvim).
 - **Lệnh và đường dẫn:** từ và đường dẫn bắt đầu bằng `/` được giữ nguyên như khi gõ (`/cost`, `cd /usr/share`).
 - **Gợi ý emoji khi gõ:** gõ xong `cười`, `con mèo` hay `haha` là hiện `Tab: 😂 …` cạnh con trỏ; `Tab` để đánh số rồi chọn bằng phím số, `Space` hoặc `Enter` lấy emoji đầu tiên, `Esc` giữ nguyên chữ. Có thể tắt riêng cho app đang dùng bằng mục "Gợi ý emoji" (phím `w`) trong menu `` ` ``. Trang **Emoji** trong cửa sổ cài đặt liệt kê toàn bộ emoji và từ gợi ý, cho phép tìm kiếm, bấm vào từ để bật/tắt, thêm từ của riêng mình hoặc bật lại emoji cho app đã tắt.
@@ -63,7 +63,7 @@ Bản fcitx5 vẫn có những điểm mà bản IBus chưa có: Cứu dấu tr�
 Chi tiết từng version ở [CHANGELOG.md](CHANGELOG.md).
 
 <a id="cai-dat"></a>
-<a id="cai"></a>
+<a id="cài"></a>
 
 ## 📦 Cài đặt
 
@@ -117,7 +117,7 @@ Lần đầu gõ bằng Ngó Sen, nó tự bỏ nguồn nhập "Tiếng Anh (M�
 Mở cửa sổ cài đặt từ **Cài đặt** › **Bàn phím** › **"Tiếng Việt (Ngó Sen)"**, hoặc tìm "Ngó Sen" trong danh sách app. Đổi gì lưu ngay; nút Hoàn tác trên thông báo ở đáy đưa cài đặt về như trước lần đổi đó.
 
 <a id="chuyen-ban"></a>
-<a id="chuyen-qua-lai-voi-ban-fcitx5"></a>
+<a id="chuyển-qua-lại-với-bản-fcitx5"></a>
 
 ## 🔄 Chuyển qua lại với bản fcitx5
 
@@ -152,7 +152,7 @@ Cài đặt nằm trong `~/.config/ngosen/`, cùng định dạng và tên khoá
 Báo lỗi tại [Issues](https://github.com/ngosen/ibus-ngosen/issues).
 
 <a id="go-cai-dat"></a>
-<a id="go"></a>
+<a id="gỡ"></a>
 
 ## 🗑️ Gỡ cài đặt
 
@@ -168,11 +168,12 @@ sudo zypper remove ibus-ngosen   # openSUSE Tumbleweed
 Gỡ xong, đăng xuất rồi đăng nhập lại. Cài đặt trong `~/.config/ngosen/` được giữ lại.
 
 <a id="dung-tu-ma-nguon"></a>
+<a id="dựng-từ-mã-nguồn"></a>
 
 ## 🏗️ Dựng từ mã nguồn
 
 Cần IBus ≥ 1.5.27 (gói `libibus-1.0-dev` hoặc `ibus-devel`), CMake, trình dịch C++17, Rust ≥ 1.88, Python 3 và `msgfmt` (gói `gettext`). Cửa sổ cài đặt chạy bằng Python với GTK 4 và libadwaita ≥ 1.5 (`python3-gi`, `gir1.2-adw-1` hoặc `libadwaita`).
-Test engine chạy một ibus-daemon riêng, cần thêm `ibus`, `dbus-run-session` và `python3-gi` có IBus; bỏ test này bằng `-DNGOSEN_IBUS_DAEMON_TESTS=OFF`. Test cửa sổ cài đặt cần `xvfb-run`, thiếu thì được bỏ qua.
+Test engine chạy một ibus-daemon riêng, cần thêm `ibus`, `dbus-run-session`, Xvfb, libXtst và `python3-gi` có IBus; bỏ test này bằng `-DNGOSEN_IBUS_DAEMON_TESTS=OFF`. Test cửa sổ cài đặt cần `xvfb-run`, thiếu thì được bỏ qua.
 
 ```bash
 git clone --recurse-submodules https://github.com/ngosen/ibus-ngosen.git
@@ -186,6 +187,7 @@ sudo cmake --install build
 Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
 
 <a id="nguon-goc"></a>
+<a id="nguồn-gốc"></a>
 
 ## 🏛️ Nguồn gốc & ghi công
 
@@ -196,7 +198,7 @@ Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ng�
 
 ## English
 
-Ngó Sen for GNOME (`ibus-ngosen`) is a Vietnamese input method for GNOME that integrates directly into the system's built-in IBus without requiring fcitx5. It shares the same typing core as [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen) and is licensed under GPL-3.0-or-later.
+Ngó Sen for GNOME (`ibus-ngosen`) is a Vietnamese input method for GNOME that integrates directly into the system's built-in IBus without requiring fcitx5. It shares the same typing core as [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen) and is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
 
 Key features include:
 - Gõ Sen (direct typing without underline) by default, with Preedit or Off configurable per app via the `` ` `` menu.
