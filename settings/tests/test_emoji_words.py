@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 import os
 import tempfile
 import unittest
@@ -224,3 +225,44 @@ class OffAppsTest(Folder):
             read_text(self.path("ngosen-emoji-off-apps.conf")),
             "# Apps where Ngó Sen offers no emoji, one per line\nfirefox\n",
         )
+
+
+class ShareTest(Folder):
+    def test_export_then_import_adds_the_words_turned_on(self):
+        edits = {("😂", "sếp cười"): True, ("😂", "cười"): False}
+        path = self.path("shared.json")
+        self.assertEqual(emoji_words.export_words(edits, path), 1)
+        self.assertEqual(emoji_words.read_shared(path), [("😂", "sếp cười")])
+        words = EmojiWords(self.store())
+        merged, added = words.merged(emoji_words.read_shared(path))
+        self.assertEqual((merged, added), ({("😂", "sếp cười"): True}, 1))
+
+    def test_import_keeps_a_word_turned_off(self):
+        store = self.store()
+        store.emoji_edits = {("😂", "cười"): False}
+        merged, added = EmojiWords(store).merged([("😂", "cười"), ("😂", "haha")])
+        self.assertEqual((merged, added), ({("😂", "cười"): False}, 0))
+
+    def test_unknown_emoji_and_long_words_are_skipped(self):
+        path = self.path("shared.json")
+        items = [
+            {"Emoji": "not an emoji", "Keyword": "x"},
+            {"Emoji": "😂", "Keyword": "a" * 41},
+            {"Emoji": "😂", "Keyword": " Sếp  Cười "},
+        ]
+        write_text(
+            path, json.dumps({"meta": {"kind": emoji_words.SHARE_KIND}, "emoji_words": items})
+        )
+        self.assertEqual(emoji_words.read_shared(path), [("😂", "sếp cười")])
+
+    def test_a_backup_or_a_damaged_file_is_refused(self):
+        path = self.path("shared.json")
+        for data in (
+            {"config": {}},
+            {"meta": {"kind": emoji_words.SHARE_KIND}, "emoji_words": [1]},
+            {"meta": {"kind": emoji_words.SHARE_KIND}, "emoji_words": {}},
+        ):
+            with self.subTest(data=data):
+                write_text(path, json.dumps(data))
+                with self.assertRaises(ValueError):
+                    emoji_words.read_shared(path)

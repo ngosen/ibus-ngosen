@@ -161,8 +161,9 @@ def toggle_hint(menu_key, emoji_key):
 class EmojiPage:
     """on_save(edits, label) saves the words with Undo; on_enable(app) offers emoji in app again."""
 
-    def __init__(self, store, rows, on_save, on_enable):
+    def __init__(self, store, rows, on_save, on_enable, on_share=(None, None)):
         self.config = store
+        self.on_export, self.on_import = on_share
         self.words = EmojiWords(store)
         self.on_save = on_save
         self.on_enable = on_enable
@@ -328,7 +329,25 @@ class EmojiPage:
         bar.append(top)
         bar.append(kinds)
         group.add(bar)
+        group.set_header_suffix(self._share_buttons())
         return group
+
+    def _share_buttons(self):
+        box = Gtk.Box(spacing=6, valign=Gtk.Align.CENTER)
+        self.export_button = Gtk.Button(
+            label=_("Export…"), tooltip_text=_("Save the words you turned on, to share them")
+        )
+        self.import_button = Gtk.Button(
+            label=_("Import…"), tooltip_text=_("Add the words from a file someone shared")
+        )
+        for button, run in (
+            (self.export_button, self.on_export),
+            (self.import_button, self.on_import),
+        ):
+            if run is not None:
+                button.connect("clicked", lambda _b, run=run: run())
+            box.append(button)
+        return box
 
     def _table(self):
         # Items are places in self.shown, not emoji: filtering then changes what the rows show

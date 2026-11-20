@@ -507,6 +507,12 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertFalse(os.path.exists(self.paths.emoji_words))
         self.assertEqual(emoji_words.parse_apps(read_text(self.paths.emoji_off_apps)), [])
 
+    def test_shared_emoji_words_are_not_a_backup(self):
+        path = os.path.join(self.home, "shared.json")
+        emoji_words.export_words({("😂", "sếp"): True}, path)
+        with self.assertRaisesRegex(ValueError, "Emoji page"):
+            backup.load(path)
+
     def test_damaged_emoji_lists_are_refused(self):
         for name, items in (
             ("emoji_words", [{"Keyword": 1, "Emoji": "😂"}]),

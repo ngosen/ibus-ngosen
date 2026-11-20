@@ -208,6 +208,10 @@ def load(path):
         backup = json.load(f)
     if not isinstance(backup, dict) or not any(k in backup for k in COMPONENTS):
         raise ValueError(_("No settings found in the file."))
+    # Restoring it would replace all of the user's emoji words with the shared ones.
+    meta = backup.get("meta")
+    if isinstance(meta, dict) and meta.get("kind") == emoji_words.SHARE_KIND:
+        raise ValueError(_("This file holds emoji words; import it on the Emoji page."))
     if not isinstance(backup.get("config", {}), dict):
         raise ValueError(_("The settings in the file are damaged."))
     for name in ("macros", "keymaps", "rules", "switches", "emoji_words", "emoji_off_apps"):

@@ -20,6 +20,7 @@ from . import (  # noqa: E402
     check_page,
     convert,
     emoji,
+    emoji_words,
     i18n,
     ini,
     keys,
@@ -69,7 +70,13 @@ class Window(Adw.ApplicationWindow):
         self.stack = stack = Adw.ViewStack()
         self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
-        self.emoji = emoji.EmojiPage(store, self.rows, self.save_emoji_words, self.enable_emoji)
+        self.emoji = emoji.EmojiPage(
+            store,
+            self.rows,
+            self.save_emoji_words,
+            self.enable_emoji,
+            (self.choose_emoji_export, self.choose_emoji_import),
+        )
         self.convert = convert.ConvertPage(self.rows, self.convert_text, self.swap_charsets)
         self.whats_new = whats_new.WhatsNewPage(
             self.open_setting,
@@ -312,6 +319,36 @@ class Window(Adw.ApplicationWindow):
         self.keymap.refresh()
         return saved
 
+    def choose_emoji_export(self):
+        dialog = self._file_dialog(_("Export Emoji Words"), _("Emoji words"))
+        dialog.set_initial_name("ngosen-emoji-words.json")
+        dialog.save(self, None, self._on_file, dialog.save_finish, self.export_emoji_words)
+
+    def choose_emoji_import(self):
+        dialog = self._file_dialog(_("Import Emoji Words"), _("Emoji words"))
+        dialog.open(self, None, self._on_file, dialog.open_finish, self.import_emoji_words)
+
+    def export_emoji_words(self, path):
+        try:
+            count = emoji_words.export_words(self.store.emoji_edits, path)
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Could not export: {}").format(reason(error)), timeout=0))
+            return
+        self._show(Adw.Toast(title=_("Saved {} words to {}.").format(count, path)))
+
+    def import_emoji_words(self, path):
+        try:
+            pairs = emoji_words.read_shared(path)
+        except (OSError, ValueError) as error:
+            self._show(Adw.Toast(title=_("Could not import: {}").format(reason(error)), timeout=0))
+            return
+        edits, added = self.emoji.words.merged(pairs)
+        if not added:
+            self._show(Adw.Toast(title=_("You already have every word in that file.")))
+            return
+        self.save_emoji_words(edits, _("{} words from the file").format(added))
+        self.emoji.reload()
+
     def save_emoji_words(self, edits, label):
         saved = self._write(lambda: self.store.set_emoji_edits(edits), label)
         self.emoji.refresh()
@@ -405,8 +442,8 @@ class Window(Adw.ApplicationWindow):
         dialog = self._file_dialog(_("Restore Settings"))
         dialog.open(self, None, self._on_file, dialog.open_finish, self.restore_backup)
 
-    def _file_dialog(self, title):
-        json_files = Gtk.FileFilter(name=_("Ngó Sen backup"))
+    def _file_dialog(self, title, kind=None):
+        json_files = Gtk.FileFilter(name=kind or _("Ngó Sen backup"))
         json_files.add_suffix("json")
         filters = Gio.ListStore.new(Gtk.FileFilter)
         filters.append(json_files)
