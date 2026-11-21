@@ -46,6 +46,15 @@ def pump(ms):
         time.sleep(0.001)
 
 
+# A slow runner can take longer than a fixed wait to reload the settings file.
+def pump_until(done, ms):
+    context = GLib.MainContext.default()
+    end = time.monotonic() + ms / 1000
+    while not done() and time.monotonic() < end:
+        context.iteration(False)
+        time.sleep(0.001)
+
+
 def connect():
     IBus.init()
     end = time.monotonic() + 10
@@ -2895,7 +2904,7 @@ check(
 app.type("vie")
 check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
 app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
-pump(1000)
+pump_until(lambda: gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả", 5000)
 check(
     gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
     "menu: a click while a word is underlined shows the new setting",
