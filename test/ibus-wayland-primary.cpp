@@ -34,18 +34,25 @@ namespace {
         return reinterpret_cast<const wl_interface*>(interface);
     }
 
-    // A compositor with a seat and, unless told otherwise, a data-control manager whose primary
-    // selection is `text`, as KDE offers it while an app has text selected.
+    enum class App {
+        Sends,     // the app holding the selection sends it
+        Stalls,    // it sends a part and never closes the pipe
+        NoPrimary, // the compositor has data-control but no primary selection
+    };
+
+    // A compositor with a seat and, given a protocol, a data-control manager whose primary selection
+    // is `text`, as KDE offers it while an app has text selected.
     struct FakeCompositor {
         const ngosen::wayland::DataControl* protocol = nullptr;
         std::string                         text;
-        bool                                answers = true;
+        App                                 app;
         wl_display*                         display = wl_display_create();
         std::vector<int>                    heldFds;
-        std::atomic<bool>                   stop = false;
+        std::atomic<int>                    receives = 0;
+        std::atomic<bool>                   stop     = false;
         std::thread                         loop;
 
-        FakeCompositor(const ngosen::wayland::DataControl* p, std::string t, bool a, const std::string& socket) : protocol(p), text(std::move(t)), answers(a) {
+        FakeCompositor(const ngosen::wayland::DataControl* p, std::string t, App a, const std::string& socket) : protocol(p), text(std::move(t)), app(a) {
             wl_display_add_socket(display, socket.c_str());
             wl_global_create(display, &wl_seat_interface, 1, nullptr,
                              [](wl_client* c, void*, uint32_t v, uint32_t id) { wl_resource_create(c, &wl_seat_interface, static_cast<int>(v), id); });
@@ -91,7 +98,9 @@ namespace {
             static const void* const offerRequests[] = {
                 reinterpret_cast<const void*>(+[](wl_client*, wl_resource* offer, const char*, int32_t fd) {
                     auto* self = static_cast<FakeCompositor*>(wl_resource_get_user_data(offer));
-                    if (!self->answers) {
+                    ++self->receives;
+                    if (self->app == App::Stalls) {
+                        (void)!write(fd, self->text.data(), 2);
                         self->heldFds.push_back(fd);
                         return;
                     }
@@ -107,7 +116,8 @@ namespace {
             wl_resource_post_event(device, ngosen::wayland::op::DeviceDataOffer, offer);
             wl_resource_post_event(offer, ngosen::wayland::op::OfferOffer, "text/plain;charset=utf-8");
             wl_resource_post_event(device, ngosen::wayland::op::DeviceSelection, nullptr);
-            wl_resource_post_event(device, ngosen::wayland::op::DevicePrimarySelection, offer);
+            if (app != App::NoPrimary)
+                wl_resource_post_event(device, ngosen::wayland::op::DevicePrimarySelection, offer);
         }
     };
 
@@ -127,30 +137,37 @@ int main() {
     unsetenv("DISPLAY");
 
     {
-        FakeCompositor kde(&ngosen::wayland::extDataControl, "việt", true, "wayland-ext");
+        FakeCompositor kde(&ngosen::wayland::extDataControl, "việt", App::Sends, "wayland-ext");
         setenv("WAYLAND_DISPLAY", "wayland-ext", 1);
         const std::string got = read(500);
         check(got == "việt", "reads the primary selection over ext-data-control", got);
     }
     {
-        FakeCompositor sway(&ngosen::wayland::wlrDataControl, "việt", true, "wayland-wlr");
+        FakeCompositor sway(&ngosen::wayland::wlrDataControl, "việt", App::Sends, "wayland-wlr");
         setenv("WAYLAND_DISPLAY", "wayland-wlr", 1);
         const std::string got = read(500);
         check(got == "việt", "reads the primary selection over wlr-data-control", got);
     }
     {
-        FakeCompositor gnome(nullptr, "", true, "wayland-none");
+        FakeCompositor gnome(nullptr, "", App::Sends, "wayland-none");
         setenv("WAYLAND_DISPLAY", "wayland-none", 1);
         const auto got = ngosen::readWaylandPrimarySelection(500);
         check(!got.has_value(), "a compositor without data-control leaves the reading to X11", got.value_or("(none)"));
     }
     {
-        FakeCompositor stuck(&ngosen::wayland::extDataControl, "việt", false, "wayland-stuck");
+        FakeCompositor noPrimary(&ngosen::wayland::extDataControl, "việt", App::NoPrimary, "wayland-noprimary");
+        setenv("WAYLAND_DISPLAY", "wayland-noprimary", 1);
+        const auto got = ngosen::readWaylandPrimarySelection(500);
+        check(!got.has_value(), "a compositor without a primary selection leaves the reading to X11", got.value_or("(none)"));
+    }
+    {
+        FakeCompositor stuck(&ngosen::wayland::extDataControl, "việt", App::Stalls, "wayland-stuck");
         setenv("WAYLAND_DISPLAY", "wayland-stuck", 1);
         const auto        start  = std::chrono::steady_clock::now();
         const std::string got    = read(200);
         const auto        waited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count();
-        check(got.empty() && waited < 1000, "an app that never sends its selection holds the engine " + std::to_string(waited) + " ms", got);
+        check(stuck.receives == 1, "the stalled app was asked for its selection", std::to_string(stuck.receives));
+        check(got.empty() && waited < 1000, "an app that never finishes sending holds the engine " + std::to_string(waited) + " ms or gives part of it", got);
     }
     rmdir(folder);
     if (failures == 0)

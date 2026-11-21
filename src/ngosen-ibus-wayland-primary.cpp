@@ -154,15 +154,22 @@ namespace ngosen {
             return left > 0 ? static_cast<int>(left) : 0;
         }
 
-        // Dispatches events until the compositor has answered everything sent so far, or the deadline.
+        // A round trip bounded by the deadline: wl_display_roundtrip would wait forever on a stalled compositor.
         bool sync(Session& s, Clock::time_point deadline) {
             const Wl& w     = s.w;
             s.synced        = false;
             Proxy* callback = w.marshal(s.display, 0, w.callbackInterface, w.version(s.display), 0, nullptr);
             w.addListener(callback, callbackEvents, &s);
             while (!s.synced) {
-                while (w.prepareRead(s.display) != 0)
-                    w.dispatchPending(s.display);
+                // After a protocol error dispatching fails without emptying the queue, so stop instead of spinning.
+                bool broken = false;
+                while (!broken && w.prepareRead(s.display) != 0)
+                    broken = w.dispatchPending(s.display) < 0;
+                if (broken || s.synced) {
+                    if (!broken)
+                        w.cancelRead(s.display);
+                    break;
+                }
                 w.flush(s.display);
                 pollfd fd = {w.fileDescriptor(s.display), POLLIN, 0};
                 if (poll(&fd, 1, remainingMs(deadline)) <= 0) {
@@ -187,7 +194,7 @@ namespace ngosen {
             return {};
         }
 
-        // The app holding the selection writes it into a pipe and closes it.
+        // Text cut short would replace the whole selection, so anything but a complete transfer gives nothing.
         std::string receive(Session& s, const Offer& offer, const std::string& mimeType, Clock::time_point deadline) {
             int ends[2];
             if (pipe2(ends, O_CLOEXEC) != 0)
@@ -197,25 +204,28 @@ namespace ngosen {
             close(ends[1]);
             std::string text;
             char        buffer[4096];
+            bool        complete = false;
             for (;;) {
                 pollfd fd = {ends[0], POLLIN, 0};
-                if (poll(&fd, 1, remainingMs(deadline)) <= 0) {
-                    text.clear();
+                if (poll(&fd, 1, remainingMs(deadline)) <= 0)
                     break;
-                }
                 const ssize_t got = read(ends[0], buffer, sizeof buffer);
+                complete          = got == 0;
                 if (got <= 0 || text.size() + static_cast<size_t>(got) > MaxBytes)
                     break;
                 text.append(buffer, static_cast<size_t>(got));
             }
             close(ends[0]);
-            return text;
+            return complete ? text : std::string();
         }
 
         std::optional<std::string> readFromCompositor(Session& s, Proxy* registry, Clock::time_point deadline) {
             const Wl& w = s.w;
             w.addListener(registry, registryEvents, &s);
-            if (!sync(s, deadline) || !s.protocol || s.seatName == 0)
+            // Only a compositor that answered without data-control hands the read to X11; a stalled one has used the time.
+            if (!sync(s, deadline))
+                return std::string();
+            if (!s.protocol || s.seatName == 0)
                 return std::nullopt;
             const auto bind = [&](uint32_t name, const Interface* interface, uint32_t version) {
                 return w.marshal(registry, op::RegistryBind, interface, version, 0, name, interface->name, version, nullptr);
@@ -225,9 +235,11 @@ namespace ngosen {
             Proxy*                     device  = w.marshal(manager, op::ManagerGetDataDevice, s.protocol->device, s.managerVersion, 0, nullptr, seat);
             std::optional<std::string> text    = std::string();
             w.addListener(device, deviceEvents, &s);
-            // The device sends the current selections as soon as it exists.
-            if (sync(s, deadline) && s.primaryAnswered && s.primary) {
-                if (const std::string mimeType = pickMimeType(*s.primary); !mimeType.empty())
+            if (sync(s, deadline)) {
+                // A compositor without a primary selection never sends the event; Xwayland may still have one.
+                if (!s.primaryAnswered)
+                    text = std::nullopt;
+                else if (const std::string mimeType = s.primary ? pickMimeType(*s.primary) : std::string(); !mimeType.empty())
                     text = receive(s, *s.primary, mimeType, deadline);
             }
             for (const auto& offer : s.offers)

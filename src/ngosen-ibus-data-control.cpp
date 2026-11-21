@@ -64,7 +64,7 @@ namespace ngosen::wayland {
         const Message wlrManagerRequests[] = {
             {"create_data_source", "n", wlrNewSource},
             {"get_data_device", "no", wlrNewDevice},
-            {"destroy", "2", none},
+            {"destroy", "", none},
         };
         const Message wlrDeviceRequests[] = {
             {"set_selection", "?o", none},
@@ -82,8 +82,8 @@ namespace ngosen::wayland {
         const Interface extOffer   = {"ext_data_control_offer_v1", 1, 2, offerRequests, 1, offerEvents};
         const Interface extDevice  = {"ext_data_control_device_v1", 1, 3, extDeviceRequests, 4, extDeviceEvents};
         const Interface extManager = {"ext_data_control_manager_v1", 1, 3, extManagerRequests, 0, nullptr};
-        const Interface wlrSource  = {"zwlr_data_control_source_v1", 2, 2, sourceRequests, 2, sourceEvents};
-        const Interface wlrOffer   = {"zwlr_data_control_offer_v1", 2, 2, offerRequests, 1, offerEvents};
+        const Interface wlrSource  = {"zwlr_data_control_source_v1", 1, 2, sourceRequests, 2, sourceEvents};
+        const Interface wlrOffer   = {"zwlr_data_control_offer_v1", 1, 2, offerRequests, 1, offerEvents};
         const Interface wlrDevice  = {"zwlr_data_control_device_v1", 2, 3, wlrDeviceRequests, 4, wlrDeviceEvents};
         const Interface wlrManager = {"zwlr_data_control_manager_v1", 2, 3, wlrManagerRequests, 0, nullptr};
 
