@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-resources.h"
 
+#include "ngosen-ibus-app-modes.h"
 #include "ngosen-ibus-sources.h"
 #include "bamboo-core.h"
 #include "ngosen-log.h"
@@ -217,6 +218,13 @@ namespace ngosen {
         DeleteObject(dictionary_);
         macroTable_ = newMacroTable(readList(paths_.macroFile(), "Macro"));
         dictionary_ = openDictionary();
+        loadWebTerminalApps(readWebTerminalApps(paths_.webTerminalAppsFile()));
+    }
+
+    // Deleting the file makes Ngó Sen learn these apps again.
+    void IBusResources::webTerminalAppsChanged() {
+        if (!writeWebTerminalApps(paths_.webTerminalAppsFile(), webTerminalApps_))
+            NGOSEN_WARN("Could not save the apps with an xterm.js terminal");
     }
 
     std::string bundledDictionaryFile() {

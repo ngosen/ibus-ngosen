@@ -1,6 +1,6 @@
 [English](CONTRIBUTING.en.md) | [Tiếng Việt](CONTRIBUTING.md)
 
-# Contributing to Ngó Sen for GNOME
+# Contributing to Ngó Sen for IBus
 
 Thanks for your interest in `ibus-ngosen`! This repository is the IBus shell of Ngó Sen: it connects IBus to the
 typing core in the `ngosen` submodule ([ngosen/ngosen](https://github.com/ngosen/ngosen)). Detailed rules for code

@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-shell.h"
+#include "ngosen-app-quirks.h"
 #include "ngosen-xtest.h"
 #include "ngosen-clock.h"
 
@@ -129,6 +130,20 @@ namespace {
         clicksWatched.store(false);
     }
 
+    // A backspace forwarded inside an XIM request comes back late; the core holds it for XIM fields.
+    // ibus-x11 drops a DEL in a commit, so the field carries no app name that would pick that.
+    void testXimField() {
+        IBusEngine engine{};
+        IBusHost   host(&engine);
+        host.setDirectTyping(true);
+        host.setClient("xim");
+        const Field f = host.field();
+        check(f.frontend == "xim" && f.program == "xim", "an XIM client is reported with the XIM frontend");
+        check(!erasesWithCommittedDel(f), "an XIM client never erases with DEL");
+        host.setClient("gtk3-im:gedit");
+        check(host.field().frontend == "ibus" && host.field().program == "gtk3-im:gedit", "other clients stay IBus clients");
+    }
+
     bool samePage(const std::optional<CandidatePage>& page, int pageNumber, int cursor, bool hasPrev, bool hasNext) {
         return page && page->total == 10 && page->pageSize == 4 && page->page == pageNumber && page->cursor == cursor && page->hasPrev == hasPrev && page->hasNext == hasNext;
     }
@@ -213,6 +228,7 @@ int main() {
     testShellAddressBar();
     testAppNameAfterFocus();
     testCursorMoves();
+    testXimField();
     testCandidates();
     testWaylandSession();
     testShiftForCharacters();

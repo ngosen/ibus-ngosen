@@ -16,9 +16,9 @@ TOGGLE_KEYS = [
     ("Shift+Alt_L Shift+Alt_R Alt+Shift_L Alt+Shift_R", "Shift+Alt"),
     ("", N_("Disabled")),
 ]
-# The fcitx5 edition's default, and Shift+~ as ibus-unikey uses.
+# The fcitx5 edition's default, and Shift+~ as ibus-unikey uses. A lone ` is too small to see in a combo.
 MODE_MENU_KEYS = [
-    ("grave", "`"),
+    ("grave", N_("` (key above Tab)")),
     ("Shift+asciitilde", "Shift+~"),
     ("", N_("Disabled")),
 ]

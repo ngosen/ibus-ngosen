@@ -1,3 +1,18 @@
+ibus-ngosen (1.5.1-1) unstable; urgency=medium
+
+  * xterm types right with Backspace on Wayland and X11.
+  * xterm.js terminals the core learns in unnamed apps are remembered
+    across restarts, as in the fcitx5 edition.
+  * Fields of apps without a name keep their Vim mode, emoji and teencode
+    choices across window switches.
+  * The convert key points to the Convert page when an app gives no
+    selected text.
+  * The edition is named Ngó Sen for IBus; the mode menu key shows as
+    "` (key above Tab)".
+  * Core ngosen-1.13.2-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Sun, 22 Nov 2026 12:00:00 +0700
+
 ibus-ngosen (1.5.0-1) unstable; urgency=medium
 
   * Emoji while typing: the emoji of a sentence show in a row, picked with

@@ -2,7 +2,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Hỏi về cách cài hoặc dùng Ngó Sen cho GNOME ở đây.
+        Hỏi về cách cài hoặc dùng Ngó Sen bản IBus ở đây.
         Nếu Ngó Sen gõ sai chữ hoặc treo, mở issue bằng form [Báo lỗi](https://github.com/ngosen/ibus-ngosen/issues/new/choose).
 
   - type: textarea
