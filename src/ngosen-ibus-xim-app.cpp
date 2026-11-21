@@ -6,10 +6,16 @@
 #include "ngosen-ibus-xim-app.h"
 #include "ngosen-log.h"
 
+#include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
+#include <future>
+#include <memory>
+#include <system_error>
+#include <thread>
 
 namespace ngosen {
 
@@ -24,6 +30,8 @@ namespace ngosen {
         constexpr uint32_t WmClassAtom = 67; // XCB_ATOM_WM_CLASS
         constexpr uint32_t StringAtom  = 31; // XCB_ATOM_STRING
         constexpr int      MaxParents  = 8;
+        // Runs on focus-in, before the first key reaches the new field.
+        constexpr auto LookupTime = std::chrono::milliseconds(50);
 
         struct Xcb {
             void* lib = dlopen("libxcb.so.1", RTLD_NOW | RTLD_LOCAL);
@@ -51,86 +59,105 @@ namespace ngosen {
             }
         };
 
+        const Xcb& xcb() {
+            static const Xcb loaded;
+            return loaded;
+        }
+
         uint32_t readU32(const uint8_t* bytes, size_t offset) {
             uint32_t value;
             std::memcpy(&value, bytes + offset, sizeof value);
             return value;
         }
 
-        struct XimApp {
-            Xcb            x;
-            XcbConnection* conn = nullptr;
-            std::string    program;
-            bool           forTest = false;
-
-            // One connection for the session; a broken one is opened again on the next focus.
-            bool connected() {
-                if (conn != nullptr && x.hasError(conn) == 0)
-                    return true;
-                if (conn != nullptr)
-                    x.disconnect(conn);
-                conn = x.connect(nullptr, nullptr);
-                return conn != nullptr && x.hasError(conn) == 0;
+        // The instance part of WM_CLASS, which is the name fcitx5 gives an XIM client.
+        std::string instanceName(const Xcb& x, XcbConnection* conn, uint32_t window) {
+            uint8_t*    reply = x.getPropertyReply(conn, x.getProperty(conn, 0, window, WmClassAtom, StringAtom, 0, 64), nullptr);
+            std::string name;
+            if (reply != nullptr) {
+                const char* value = static_cast<const char*>(x.propertyValue(reply));
+                name.assign(value, strnlen(value, static_cast<size_t>(x.propertyLength(reply))));
             }
+            std::free(reply);
+            return name;
+        }
 
-            // The instance part of WM_CLASS, which is the name fcitx5 gives an XIM client.
-            std::string instanceName(uint32_t window) {
-                uint8_t*    reply = x.getPropertyReply(conn, x.getProperty(conn, 0, window, WmClassAtom, StringAtom, 0, 64), nullptr);
-                std::string name;
-                if (reply != nullptr) {
-                    const char* value = static_cast<const char*>(x.propertyValue(reply));
-                    name.assign(value, strnlen(value, static_cast<size_t>(x.propertyLength(reply))));
-                }
-                std::free(reply);
-                return name;
-            }
+        uint32_t parentOf(const Xcb& x, XcbConnection* conn, uint32_t window) {
+            uint8_t*       reply  = x.queryTreeReply(conn, x.queryTree(conn, window), nullptr);
+            const uint32_t root   = reply ? readU32(reply, 8) : 0;
+            const uint32_t parent = reply ? readU32(reply, 12) : 0;
+            std::free(reply);
+            return parent == root ? 0 : parent;
+        }
 
-            uint32_t parentOf(uint32_t window) {
-                uint8_t*       reply  = x.queryTreeReply(conn, x.queryTree(conn, window), nullptr);
-                const uint32_t root   = reply ? readU32(reply, 8) : 0;
-                const uint32_t parent = reply ? readU32(reply, 12) : 0;
-                std::free(reply);
-                return parent == root ? 0 : parent;
-            }
-
-            // The focus can sit on a child of the window that carries WM_CLASS.
-            std::string focusedName() {
+        // The focus can sit on a child of the window that carries WM_CLASS.
+        std::string focusedName() {
+            const Xcb&     x    = xcb();
+            XcbConnection* conn = x.connect(nullptr, nullptr);
+            std::string    name;
+            if (conn != nullptr && x.hasError(conn) == 0) {
                 uint8_t* reply  = x.getInputFocusReply(conn, x.getInputFocus(conn), nullptr);
                 uint32_t window = reply ? readU32(reply, 8) : 0;
                 std::free(reply);
-                for (int i = 0; window > 1 && i < MaxParents; ++i, window = parentOf(window)) {
-                    if (std::string name = instanceName(window); !name.empty())
-                        return name;
+                for (int i = 0; window > 1 && i < MaxParents && name.empty(); ++i) {
+                    name = instanceName(x, conn, window);
+                    if (name.empty())
+                        window = parentOf(x, conn, window);
                 }
+            }
+            if (conn != nullptr)
+                x.disconnect(conn);
+            return name;
+        }
+
+        std::atomic<bool> looking{false};
+        std::string       program;
+        bool              forTest = false;
+
+        // Connecting and every reply can stall on a busy X server, so a thread asks and the engine waits
+        // only until the deadline; a late thread finishes on its own.
+        std::string askForFocusedName() {
+            if (!xcb().usable() || std::getenv("DISPLAY") == nullptr)
+                return {};
+            if (looking.exchange(true))
+                return {};
+            auto result = std::make_shared<std::promise<std::string>>();
+            auto name   = result->get_future();
+            try {
+                std::thread([result] {
+                    result->set_value(focusedName());
+                    looking = false;
+                }).detach();
+            } catch (const std::system_error&) {
+                looking = false;
                 return {};
             }
-        };
-
-        XimApp& ximApp() {
-            static XimApp app;
-            return app;
+            if (name.wait_for(LookupTime) != std::future_status::ready) {
+                NGOSEN_INFO("The X server did not name the focused window in time");
+                return {};
+            }
+            return name.get();
         }
 
     } // namespace
 
     // An XIM client asks for focus after its window got the X input focus, so that window is the client's.
     void noteXimFocus() {
-        XimApp& app = ximApp();
-        if (app.forTest)
+        if (forTest)
             return;
-        const std::string old = app.program;
-        app.program           = app.x.usable() && app.connected() ? app.focusedName() : std::string();
-        if (app.program != old)
-            NGOSEN_INFO("XIM focused app: " + (app.program.empty() ? std::string("unknown") : app.program));
+        const std::string old = program;
+        program               = askForFocusedName();
+        if (program != old)
+            NGOSEN_INFO("XIM focused app: " + (program.empty() ? std::string("unknown") : program));
     }
 
     const std::string& ximFocusedApp() {
-        return ximApp().program;
+        return program;
     }
 
-    void setXimFocusedAppForTest(std::string program) {
-        ximApp().forTest = true;
-        ximApp().program = std::move(program);
+    void setXimFocusedAppForTest(std::string name) {
+        forTest = true;
+        program = std::move(name);
     }
 
 } // namespace ngosen
