@@ -8,6 +8,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Lệnh `ngosen-save-log` lưu nhật ký gõ từ terminal như mục "Lưu nhật ký gõ" trong menu, rồi in đường dẫn tệp (#189).
+
 ### Bỏ
 
 - Bỏ ô "Kiểm tra chính tả" khỏi cửa sổ cài đặt và menu trên thanh trên cùng, vì nó chỉ có tác dụng khi "Tự khôi
