@@ -46,6 +46,15 @@ def pump(ms):
         time.sleep(0.001)
 
 
+# A slow runner can take longer than a fixed wait to reload the settings file.
+def pump_until(done, ms):
+    context = GLib.MainContext.default()
+    end = time.monotonic() + ms / 1000
+    while not done() and time.monotonic() < end:
+        context.iteration(False)
+        time.sleep(0.001)
+
+
 def connect():
     IBus.init()
     end = time.monotonic() + 10
@@ -2265,6 +2274,37 @@ check(
 )
 app.key(IBus.KEY_Escape)
 app.close()
+# As in fcitx5, each field keeps its choice until it goes away, not only while it has focus.
+first = menu_app("xim")
+first.key(IBus.KEY_grave)
+pump(200)
+first.key(IBus.KEY_v)
+pump(300)
+first.ic.focus_out()
+pump(200)
+second = menu_app("xim")
+second.key(IBus.KEY_grave)
+pump(200)
+check(
+    (second.menu or [""])[-1] == "Vim mode: tắt",
+    "menu: another field without a name starts without Vim mode",
+    second.menu,
+)
+second.key(IBus.KEY_Escape)
+second.ic.focus_out()
+pump(200)
+first.ic.focus_in()
+pump(200)
+first.key(IBus.KEY_grave)
+pump(200)
+check(
+    (first.menu or [""])[-1] == "Vim mode: bật",
+    "menu: a field without a name keeps Vim mode when it gets focus back",
+    first.menu,
+)
+first.key(IBus.KEY_Escape)
+first.close()
+second.close()
 
 # Teencode is switched for the app in use and kept in the file the fcitx5 edition uses.
 teencode_apps_path = os.path.join(config_dir, "ngosen-teencode-apps.conf")
@@ -2895,7 +2935,7 @@ check(
 app.type("vie")
 check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
 app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
-pump(1000)
+pump_until(lambda: gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả", 5000)
 check(
     gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
     "menu: a click while a word is underlined shows the new setting",
@@ -3248,7 +3288,9 @@ check(
 app.select(11, 11)
 press_convert(app)
 check(
-    app.text == "về VIỆT NAM" and app.title == "Bôi đen chữ cần chuyển mã rồi bấm lại phím.",
+    app.text == "về VIỆT NAM"
+    and app.title
+    == "Bôi đen chữ cần chuyển mã rồi bấm lại phím. App nào không cho thì dán chữ vào trang Chuyển mã.",
     "convert: with nothing selected the text stays and a notice says why",
     (app.text, app.title),
 )

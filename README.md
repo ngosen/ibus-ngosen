@@ -2,13 +2,13 @@
 
 <img src="https://raw.githubusercontent.com/ngosen/ngosen/main/data/icons/hicolor/scalable/apps/io.github.ngosen.NgoSen.Settings.svg" alt="Logo Ngó Sen" width="128">
 
-# Ngó Sen cho GNOME
+# Ngó Sen bản IBus
 
-**Bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5.**
+**Bộ gõ tiếng Việt chạy trên IBus, không cần cài fcitx5.**
 
 [![Release](https://img.shields.io/github/v/release/ngosen/ibus-ngosen?label=version&color=1f6e5c)](https://github.com/ngosen/ibus-ngosen/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-1f6e5c)](LICENSE)
-[![IBus · GNOME](https://img.shields.io/badge/IBus%20%C2%B7%20GNOME-c9a96e)](#cai-dat)
+[![IBus · GNOME · KDE Plasma · Cinnamon · Xfce](https://img.shields.io/badge/IBus%20%C2%B7%20GNOME%20%C2%B7%20KDE%20Plasma%20%C2%B7%20Cinnamon%20%C2%B7%20Xfce-c9a96e)](#cai-dat)
 
 [Cài đặt](#cai-dat) · [Tính năng](#tinh-nang) · [Khắc phục sự cố](#khac-phuc-su-co) · [CHANGELOG](CHANGELOG.md) · [Báo lỗi](https://github.com/ngosen/ibus-ngosen/issues)
 
@@ -16,7 +16,7 @@
 
 ---
 
-Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Bản IBus gần như tương đương 1:1 với [bản fcitx5](https://github.com/ngosen/ngosen), dùng chung lõi gõ; tính năng mới có thể đến bản IBus muộn hơn. Người dùng lựa chọn phiên bản tuỳ theo sở thích: bản IBus hướng đến sự đơn giản và ổn định, tận dụng những gì GNOME có sẵn và cài xong là gõ được ngay trên GNOME, không phải thiết lập gì thêm.
+Ngó Sen bản IBus là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, và cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus; không cần cài fcitx5. Bản này dùng chung lõi gõ với [bản fcitx5](https://github.com/ngosen/ngosen) nên tính năng hiện tương đương 1:1, chọn bản nào là tuỳ sở thích của bạn. Trên distro dùng IBus mặc định, như các distro dùng GNOME (Ubuntu, Fedora Workstation), bản IBus là lựa chọn đơn giản. Tính năng mới sẽ đến bản IBus chậm hơn một chút. Riêng trên GNOME, cài xong là gõ được ngay, không phải thiết lập gì thêm.
 
 Cửa sổ cài đặt theo giao diện sáng/tối của máy, lưu thay đổi ngay và có nút Hoàn tác.
 
@@ -45,7 +45,7 @@ Cửa sổ cài đặt theo giao diện sáng/tối của máy, lưu thay đổi
 
 - **Gõ thẳng không gạch chân (Gõ Sen):** mặc định ở mọi app như bản fcitx5, chữ hiện thẳng vào ô gõ, không gạch chân.
 - **Menu chế độ riêng cho từng app:** bấm phím `` ` `` để mở menu cạnh con trỏ, chọn **Gõ Sen**, **Gạch chân** hoặc **Tắt** để đổi riêng cho app đang dùng; Ngó Sen nhớ lựa chọn đó cho app ấy. Gặp app gõ sai thì chuyển app đó sang Gạch chân và báo cho Ngó Sen. Menu ghi rõ đang đổi chế độ gõ cho app nào và đánh dấu ✓ cạnh chế độ đang dùng. Cửa sổ cài đặt cho đổi thứ tự hay ẩn bớt các chế độ trong menu, và đặt phím chuyển thẳng sang chế độ kế tiếp không cần mở menu. Muốn gạch chân ở mọi app chưa chọn riêng thì chọn Gạch chân ở mục "Chế độ gõ" trong cửa sổ cài đặt.
-- **Phím chuyển Anh/Việt riêng (Ctrl+Shift):** nhấp `Ctrl + Shift` để đổi Anh/Việt như UniKey; thanh trên cùng (hoặc khay IBus) hiện chữ V hoặc E. Như bản fcitx5, phím này đổi mọi app cùng lúc, trừ app đã chọn Tắt trong menu `` ` ``; muốn mỗi app nhớ riêng thì chọn "Từng app" ở "Phím chuyển áp dụng cho". Cửa sổ cài đặt cho đổi sang `Shift + Alt`, hoặc tắt phím này nếu không cần. Muốn đổi cả khi chưa bấm vào ô nào, như `Alt + Z` của UniKey, thêm lệnh `ngosen-toggle` ở Cài đặt › Bàn phím › Phím tắt › Phím tắt tự chọn. `Super + Space` vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME.
+- **Phím chuyển Anh/Việt riêng (Ctrl+Shift):** nhấp `Ctrl + Shift` để đổi Anh/Việt như UniKey; thanh trên cùng (hoặc khay IBus) hiện chữ V hoặc E. Như bản fcitx5, phím này đổi mọi app cùng lúc, trừ app đã chọn Tắt trong menu `` ` ``; muốn mỗi app nhớ riêng thì chọn "Từng app" ở "Phím chuyển áp dụng cho". Cửa sổ cài đặt cho đổi sang `Shift + Alt`, hoặc tắt phím này nếu không cần. Muốn đổi cả khi chưa bấm vào ô nào, như `Alt + Z` của UniKey, thêm lệnh `ngosen-toggle` vào phím tắt tự chọn của desktop (trên GNOME: Cài đặt › Bàn phím › Phím tắt › Phím tắt tự chọn). `Super + Space` vẫn đổi nguồn nhập như các nguồn nhập khác của GNOME.
 - **Cứu chữ:** lỡ gõ chữ lúc đang ở tiếng Anh thì chuyển sang tiếng Việt, Cứu chữ gõ lại chữ đó có dấu (`vieetj` → `việt`), nhấn `Tab` hoặc `Esc` để lấy lại chữ đã gõ.
 - **Cứu dấu:** ở chế độ Gõ Sen, chỉ cần bấm chuột ngay sau một từ rồi gõ phím dấu thanh để thêm, đổi hoặc bỏ dấu thanh; trên các app X11, bôi đen chữ rồi gõ phím dấu thanh.
 - **Vim mode riêng cho từng app:** bật/tắt Vim mode riêng cho từng app từ menu `` ` `` (tiện cho app dùng phím Vim như nvim).
@@ -114,7 +114,7 @@ Lần đầu gõ bằng Ngó Sen, nó tự bỏ nguồn nhập "Tiếng Anh (M�
 2. Mở IBus Preferences bằng lệnh `ibus-setup`, thêm "Tiếng Việt (Ngó Sen)", hoặc bấm "Thêm Ngó Sen" ở mục "Kiểm tra" trong cửa sổ cài đặt. Cinnamon giữ phím Super cho menu nên `Super + Space` không tới được IBus; đặt phím chuyển khác như `Ctrl + Space` ở tab General.
 3. Đăng xuất rồi đăng nhập lại.
 
-Mở cửa sổ cài đặt từ **Cài đặt** › **Bàn phím** › **"Tiếng Việt (Ngó Sen)"**, hoặc tìm "Ngó Sen" trong danh sách app. Đổi gì lưu ngay; nút Hoàn tác trên thông báo ở đáy đưa cài đặt về như trước lần đổi đó.
+Mở cửa sổ cài đặt bằng cách tìm "Ngó Sen" trong danh sách app, hoặc trên GNOME từ **Cài đặt** › **Bàn phím** › **"Tiếng Việt (Ngó Sen)"**. Đổi gì lưu ngay; nút Hoàn tác trên thông báo ở đáy đưa cài đặt về như trước lần đổi đó.
 
 <a id="chuyen-ban"></a>
 <a id="chuyển-qua-lại-với-bản-fcitx5"></a>
@@ -122,7 +122,7 @@ Mở cửa sổ cài đặt từ **Cài đặt** › **Bàn phím** › **"Tiế
 ## 🔄 Chuyển qua lại với bản fcitx5
 
 - **Từ bản fcitx5 sang bản này:** gỡ bản fcitx5 bằng `install.sh --uninstall` như hướng dẫn của nó, rồi cài bản này. Nếu đã gỡ bằng trình quản lý gói, lệnh cài fcitx5 có thể còn để lại biến môi trường hay mục tự chạy làm app vẫn đi qua fcitx5: mở tab "Kiểm tra" trong cửa sổ cài đặt, bấm "Xoá" ở bước "Tài khoản này còn cài đặt của bản fcitx5" rồi đăng xuất và đăng nhập lại. Nút chỉ xoá những tệp còn y nguyên như lệnh cài đã ghi; tệp đã sửa tay thì bước kế bên chỉ ra đường dẫn để tự sửa.
-- **Từ bản này sang bản fcitx5:** trong cửa sổ cài đặt, mục "Có ở bản fcitx5" có lệnh cài để chép. Trên Debian và Ubuntu lệnh tự thay bản này; trên Fedora, openSUSE và Arch, chép lệnh, gỡ `ibus-ngosen` rồi mới chạy.
+- **Từ bản này sang bản fcitx5:** trong cửa sổ cài đặt, mục "Có ở bản fcitx5" có lệnh cài để chép. Trên Debian, Ubuntu và Fedora lệnh tự thay bản này; trên openSUSE và Arch, chép lệnh, gỡ `ibus-ngosen` rồi mới chạy.
 - **Đồng bộ cài đặt:** cài đặt chỉ được chép một lần, lúc bản này chạy lần đầu trên máy đã có bản fcitx5 (kiểu gõ, gõ tắt, bảng phím riêng và từ điển riêng được chép sang, từ điển vào `~/.local/share/ngosen/`; file của fcitx5 giữ nguyên). Sau đó hai bản không đồng bộ với nhau; muốn mang thay đổi sang bản kia thì sao lưu ở bản này rồi khôi phục ở bản kia. Trước khi khôi phục một bản sao lưu của bản này vào bản fcitx5, hãy sao lưu cài đặt của bản fcitx5: bản fcitx5 cũ hơn [ngosen/ngosen#648](https://github.com/ngosen/ngosen/pull/648) xoá các app đã chọn riêng tiếng Việt hay tiếng Anh.
 
 <a id="khac-phuc-su-co"></a>
@@ -184,7 +184,7 @@ ctest --test-dir build
 sudo cmake --install build
 ```
 
-Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
+Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập như ở [Thiết lập sau khi cài đặt](#thiet-lap) (trên GNOME: Cài đặt › Bàn phím › Nguồn nhập).
 
 <a id="nguon-goc"></a>
 <a id="nguồn-gốc"></a>
@@ -198,7 +198,7 @@ Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ng�
 
 ## English
 
-Ngó Sen for GNOME (`ibus-ngosen`) is a Vietnamese input method for GNOME that integrates directly into the system's built-in IBus without requiring fcitx5. It shares the same typing core as [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen) and is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
+Ngó Sen for IBus (`ibus-ngosen`) is a Vietnamese input method for IBus, the input method GNOME comes with; it also runs on Cinnamon, Xfce and KDE Plasma set up with IBus, and needs no fcitx5. It shares the typing core of [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen), so both currently have the same features; pick whichever you prefer. On a distro that uses IBus by default, such as those shipping GNOME (Ubuntu, Fedora Workstation), the IBus edition is the simple choice. New features reach the IBus edition a little later. It is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
 
 Key features include:
 - Gõ Sen (direct typing without underline) by default, with Preedit or Off configurable per app via the `` ` `` menu.
@@ -207,6 +207,6 @@ Key features include:
 - Emoji suggestions while typing and in-place charset conversion (TCVN3, VNI to Unicode).
 - Per-app Vim mode, macros, custom keymaps, and typing logs.
 
-To install, download the package for your distribution from the [latest release](https://github.com/ngosen/ibus-ngosen/releases/latest) and install it using your package manager (`apt`, `dnf`, `pacman`, or `zypper`), or install from software repositories (COPR for Fedora, AUR for Arch via `yay -S ibus-ngosen`). After installing, log out, log back in, and add "Tiếng Việt (Ngó Sen)" under Settings → Keyboard → Input Sources.
+To install, download the package for your distribution from the [latest release](https://github.com/ngosen/ibus-ngosen/releases/latest) and install it using your package manager (`apt`, `dnf`, `pacman`, or `zypper`), or install from software repositories (COPR for Fedora, AUR for Arch via `yay -S ibus-ngosen`). After installing, log out, log back in, and add "Tiếng Việt (Ngó Sen)" as an input source: on GNOME under Settings → Keyboard → Input Sources; on Cinnamon, Xfce and KDE Plasma see [the setup section](#thiet-lap).
 
 The rest of this page is in Vietnamese.
