@@ -1,3 +1,16 @@
+ibus-ngosen (1.5.0-1) unstable; urgency=medium
+
+  * Emoji while typing: the emoji of a sentence show in a row, picked with
+    a number; English keywords too. An Emoji page lists, edits, exports and
+    imports the keywords.
+  * Convert selected text from TCVN3, VNI and other charsets in place.
+  * The switch key changes every app at once, as in UniKey; Each app keeps
+    the old behaviour. New ngosen-toggle command for a desktop shortcut.
+  * Teencode for chosen apps and drawn-out letters (afaaa gives àààà).
+  * Core ngosen-1.13.1-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Sat, 21 Nov 2026 12:00:00 +0700
+
 ibus-ngosen (1.4.1-1) unstable; urgency=medium
 
   * Fast typing with Backspace right after Firefox opens on GNOME no longer

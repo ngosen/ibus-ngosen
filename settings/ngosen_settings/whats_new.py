@@ -17,11 +17,23 @@ from .i18n import N_, _
 FEATURES = [
     {
         "version": "1.5",
+        "title": N_("One switch for every app"),
+        "how": N_(
+            "The switch key now changes all apps at once, as in UniKey. Apps set to OFF stay in "
+            "English; the switch key there opens the ` menu to pick Sen or Preedit. For the old "
+            "behavior, choose Each app under Switch Applies To on the Typing page."
+        ),
+        "example": "",
+        "target": ("setting", "ToggleScope"),
+    },
+    {
+        "version": "1.5",
         "title": N_("Emoji while typing"),
         "how": N_(
-            "After a word such as cười, con mèo or haha, emoji show next to the cursor. Press Tab "
-            "to number them and a number to pick one; Space or Enter takes the first. The Emoji "
-            "page lists every emoji with its words, which you can change."
+            "Emoji for the words of a sentence show in a row as you type. After . ! ? or a pause, "
+            "press a number to pick one, or Tab first in VNI. English words such as cat or thumbs up "
+            "count too. The Emoji page lists every emoji with its words, which you can change, "
+            "export and import."
         ),
         "example": "",
         "target": ("page", "emoji"),
@@ -36,6 +48,36 @@ FEATURES = [
         ),
         "example": "",
         "target": ("page", "convert"),
+    },
+    {
+        "version": "1.5",
+        "title": N_("Drawn-out letters"),
+        "how": N_(
+            "Repeat the last letter of a marked word and it repeats with its mark, instead of "
+            "bringing back the keys you typed. English words such as besttt stay as typed."
+        ),
+        "example": "afaaa → àààà, ddusngggg → đúngggg",
+        "target": None,
+    },
+    {
+        "version": "1.5",
+        "title": N_("Teencode for chosen apps"),
+        "how": N_(
+            "Turn teencode on for one app with the teencode key in the ` menu. Words like zậy, đag "
+            "and nhưg then keep their marks. It is off by default."
+        ),
+        "example": "nhuwgx → nhữg",
+        "target": ("setting", "ShortcutTeencode"),
+    },
+    {
+        "version": "1.5",
+        "title": N_("A command for your own shortcut"),
+        "how": N_(
+            "Bind the ngosen-toggle command to a desktop shortcut to switch between English and "
+            "Vietnamese, even when no text field has focus."
+        ),
+        "example": "",
+        "target": None,
     },
     {
         "version": "1.4",

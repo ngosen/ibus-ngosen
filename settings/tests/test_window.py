@@ -769,7 +769,9 @@ class WindowTest(unittest.TestCase):
         for kind, name in filter(None, targets):
             if kind == "setting":
                 self.assertTrue(self.window.open_setting(name), name)
-                self.assertIs(self.window.get_focus(), self.window.rows.rows[name])
+                # An entry row hands focus to the text inside it.
+                focus, row = self.window.get_focus(), self.window.rows.rows[name]
+                self.assertTrue(focus is row or focus.is_ancestor(row), name)
             else:
                 self.window.show_page(name)
                 self.assertIs(self.window.stack.get_visible_child(), self.window.named_pages[name])

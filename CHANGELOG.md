@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.5.0-1] — 21/11/2026
+
+Gợi ý emoji khi gõ, có trang Emoji để sửa, xuất và nhập từ gợi ý; chuyển mã chữ TCVN3, VNI ngay tại chỗ. Ctrl+Shift
+đổi Anh/Việt cho mọi app cùng lúc như UniKey, và lệnh `ngosen-toggle` đổi được từ một phím tắt của GNOME. Teencode theo
+từng app và gõ kéo dài chữ. Khớp đủ tính năng bản fcitx5 trừ những mục ghi ở "Có ở bản fcitx5". Dùng lõi Ngó Sen
+`ngosen-1.13.1-1`. Tải gói ở [release ibus-ngosen-1.5.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.5.0-1).
+
 ### Thêm
 
 - Gợi ý emoji khi gõ như bản fcitx5: gõ xong `cười`, `con mèo` hay `haha` là hiện `Tab: 😂 …` cạnh con trỏ; Tab để
