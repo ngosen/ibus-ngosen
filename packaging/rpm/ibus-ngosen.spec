@@ -20,6 +20,8 @@ Requires:       ibus >= 1.5.27
 Conflicts:      fcitx5-ngosen
 # Loaded with dlopen on X11 to watch clicks and press keys, which the automatic requires miss.
 Requires:       libxcb
+# Loaded with dlopen on Wayland to read the primary selection.
+Requires:       libwayland-client
 Requires:       python3-gobject
 Requires:       gtk4
 Requires:       libadwaita >= 1.5
