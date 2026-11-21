@@ -7,8 +7,11 @@ foreach(path NGOSEN_IBUS_EXEC NGOSEN_SETUP_EXEC NGOSEN_IBUS_DATADIR)
 endforeach()
 configure_file(ibus-setup-ngosen.in ${CMAKE_CURRENT_BINARY_DIR}/ibus-setup-ngosen @ONLY)
 configure_file(ibus-setup-ngosen.desktop.in ${CMAKE_CURRENT_BINARY_DIR}/ibus-setup-ngosen.desktop @ONLY)
+configure_file(ngosen-toggle.in ${CMAKE_CURRENT_BINARY_DIR}/ngosen-toggle @ONLY)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ibus-setup-ngosen DESTINATION ${CMAKE_INSTALL_LIBEXECDIR})
+# Named as in the fcitx5 edition, which the package conflicts with, so a shortcut set for one runs either.
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ngosen-toggle DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(DIRECTORY ngosen_settings DESTINATION ${NGOSEN_SETTINGS_DIR} FILES_MATCHING PATTERN "*.py")
 # GNOME Settings opens an IBus engine's settings through ibus-setup-<engine>.desktop.
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ibus-setup-ngosen.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)

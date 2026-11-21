@@ -6,7 +6,7 @@ import os
 import tempfile
 import unittest
 
-from ngosen_settings import backup, ini, keys
+from ngosen_settings import backup, emoji_words, ini, keys
 from ngosen_settings.store import Engine, Store, read_text, write_text
 
 from .test_window import CAN_RUN, FakeSources, Vietnamese, window
@@ -22,6 +22,7 @@ DEFAULTS = {
     "ToggleKey": DEFAULT_TOGGLE,
     "ModeMenuKey": "grave",
     "CycleModeKey": "",
+    "ConvertKey": "",
 }
 
 
@@ -100,6 +101,9 @@ class UserFiles:
             paths.dictionary,
             paths.app_modes,
             paths.app_switches,
+            paths.emoji_words,
+            paths.emoji_off_apps,
+            paths.teencode_apps,
             paths.english,
         )
         return {path: backup.read_bytes(path) for path in names}
@@ -145,12 +149,13 @@ class BackupTest(UserFiles, unittest.TestCase):
             ("OFF", "True"),
             ("Off", "True"),
             ("Preedit", "False"),
-            ("Emoji Picker", "False"),
+            # fcitx5 itself now reads its former Emoji Picker mode as Sen.
+            ("Emoji Picker", "True"),
         ):
             with self.subTest(mode):
                 _, notes = self.restore(fcitx5_backup(Mode=mode))
                 self.assertEqual(self.settings()["DirectTyping"], direct)
-                self.assertEqual(len(notes), 1 if mode == "Emoji Picker" else 0, notes)
+                self.assertEqual(notes, [])
 
     def test_unknown_mode_keeps_the_current_one(self):
         write_text(self.paths.settings, "DirectTyping=True\n")
@@ -228,13 +233,22 @@ class BackupTest(UserFiles, unittest.TestCase):
             read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "firefox=5\nkate=2\n"
         )
 
-    def test_emoji_rules_are_kept_and_reported(self):
+    def test_former_emoji_picker_rules_are_sen(self):
         data = fcitx5_backup()
         data["rules"] = [{"App": "code", "Mode": "0"}, {"App": "kate", "Mode": "6"}]
         _, notes = self.restore(data)
-        self.assertEqual(len(notes), 1)
+        self.assertEqual(notes, [])
         self.assertEqual(
             read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "code=0\nkate=6\n"
+        )
+
+    def test_unknown_rules_are_kept_and_reported(self):
+        data = fcitx5_backup()
+        data["rules"] = [{"App": "code", "Mode": "0"}, {"App": "kate", "Mode": "7"}]
+        _, notes = self.restore(data)
+        self.assertEqual(len(notes), 1)
+        self.assertEqual(
+            read_text(self.paths.app_modes), backup.APP_MODES_HEADER + "code=0\nkate=7\n"
         )
 
     def test_switches_come_back_for_each_app(self):
@@ -401,6 +415,13 @@ class BackupTest(UserFiles, unittest.TestCase):
         backup.export(self.engine, self.paths, target)
         self.assertEqual(backup.load(target)["config"]["CycleModeKey"], {"0": "Control+grave"})
 
+    def test_convert_key_list_goes_both_ways_as_in_fcitx5(self):
+        self.restore(fcitx5_backup(ConvertKey={"0": "Control+Shift+F6"}))
+        self.assertEqual(self.settings()["ConvertKey"], "Control+Shift+F6")
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        self.assertEqual(backup.load(target)["config"]["ConvertKey"], {"0": "Control+Shift+F6"})
+
     def test_export_then_restore_gives_the_same_files(self):
         write_text(
             self.paths.settings,
@@ -414,6 +435,12 @@ class BackupTest(UserFiles, unittest.TestCase):
         write_text(
             self.paths.app_switches, "[Switches]\n[Switches/0]\nApp=kate\nVietnamese=False\n\n"
         )
+        write_text(
+            self.paths.emoji_words,
+            "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n"
+            "[Words/1]\nKeyword=sếp\nEmoji=👔\nOn=True\n\n",
+        )
+        write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
         backup.put(self.paths.english, b"")
         before = self.files()
         target = os.path.join(self.home, "out.json")
@@ -423,6 +450,14 @@ class BackupTest(UserFiles, unittest.TestCase):
             exported["rules"], [{"App": "firefox", "Mode": "5"}, {"App": "code", "Mode": "0"}]
         )
         self.assertEqual(exported["switches"], [{"App": "kate", "Vietnamese": "False"}])
+        self.assertEqual(
+            exported["emoji_words"],
+            [
+                {"Keyword": "cười", "Emoji": "😂", "On": "False"},
+                {"Keyword": "sếp", "Emoji": "👔", "On": "True"},
+            ],
+        )
+        self.assertEqual(exported["emoji_off_apps"], [{"App": "kate"}])
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["ToggleKey"], {"0": "Alt+z"})
         self.assertEqual(exported["config"]["ModeMenuKey"], {"0": "Shift+asciitilde"})
@@ -440,6 +475,69 @@ class BackupTest(UserFiles, unittest.TestCase):
         del exported["meta"]["timestamp"], second["meta"]["timestamp"]
         self.assertEqual(second, exported)
 
+    def test_fcitx5_emoji_lists_are_restored(self):
+        data = fcitx5_backup()
+        data["emoji_words"] = [
+            {"Keyword": "Cười", "Emoji": "😂", "On": "False"},
+            {"Keyword": "", "Emoji": "😂", "On": "True"},
+        ]
+        data["emoji_off_apps"] = [{"App": "firefox"}, {"App": "# not an app"}, {"App": "firefox"}]
+        self.restore(data)
+        self.store.reload(self.engine)
+        self.assertEqual(self.store.emoji_edits, {("😂", "Cười"): False})
+        self.assertEqual(self.store.emoji_off_apps, ["firefox"])
+
+    def test_restored_emoji_words_keep_what_the_engine_reads(self):
+        data = fcitx5_backup()
+        data["emoji_words"] = [
+            {"Keyword": "cười", "Emoji": "😂", "On": "True"},
+            {"Keyword": "cười", "Emoji": "😂", "On": "False"},
+            {"Keyword": " sếp ", "Emoji": "👔", "On": "False"},
+        ]
+        self.restore(data)
+        self.store.reload(self.engine)
+        self.assertEqual(self.store.emoji_edits, {("😂", "cười"): True, ("👔", " sếp "): False})
+
+    def test_empty_emoji_lists_clear_them(self):
+        write_text(self.paths.emoji_words, "[Words/0]\nKeyword=sếp\nEmoji=👔\nOn=True\n")
+        write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
+        data = fcitx5_backup()
+        data["emoji_words"] = []
+        data["emoji_off_apps"] = []
+        self.restore(data)
+        self.assertFalse(os.path.exists(self.paths.emoji_words))
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.emoji_off_apps)), [])
+
+    def test_shared_emoji_words_are_not_a_backup(self):
+        path = os.path.join(self.home, "shared.json")
+        emoji_words.export_words({("😂", "sếp"): True}, path)
+        with self.assertRaisesRegex(ValueError, "Emoji page"):
+            backup.load(path)
+
+    def test_teencode_apps_round_trip(self):
+        write_text(self.paths.teencode_apps, emoji_words.apps_text(["discord"]))
+        target = os.path.join(self.home, "out.json")
+        backup.export(self.engine, self.paths, target)
+        exported = backup.load(target)
+        self.assertEqual(exported["teencode_apps"], [{"App": "discord"}])
+        exported["teencode_apps"] = [{"App": "zalo"}, {"App": "# not an app"}]
+        self.restore(exported)
+        text = read_text(self.paths.teencode_apps)
+        self.assertTrue(text.startswith(emoji_words.TEENCODE_APPS_HEADER))
+        self.assertEqual(emoji_words.parse_apps(text), ["zalo"])
+
+    def test_damaged_emoji_lists_are_refused(self):
+        for name, items in (
+            ("emoji_words", [{"Keyword": 1, "Emoji": "😂"}]),
+            ("emoji_off_apps", ["kate"]),
+            ("teencode_apps", [{"App": 1}]),
+        ):
+            with self.subTest(name=name):
+                data = fcitx5_backup()
+                data[name] = items
+                with self.assertRaises(ValueError):
+                    backup.load(self.save(data))
+
     def test_no_app_modes_file_exports_no_rules(self):
         target = os.path.join(self.home, "out.json")
         backup.export(self.engine, self.paths, target)
@@ -452,7 +550,16 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertEqual(exported["dictionary"], "việt\n")
         self.assertEqual(
             exported["meta"]["components"],
-            ["config", "macros", "keymaps", "switches", "dictionary"],
+            [
+                "config",
+                "macros",
+                "keymaps",
+                "switches",
+                "emoji_words",
+                "emoji_off_apps",
+                "teencode_apps",
+                "dictionary",
+            ],
         )
         # The fcitx5 edition keeps its own per-app switches when it restores this.
         self.assertEqual(exported["meta"]["edition"], "ibus")
@@ -482,6 +589,16 @@ class BackupTest(UserFiles, unittest.TestCase):
         self.assertFalse(os.path.exists(self.paths.dictionary))
         self.restore({"dictionary": "nam\nkhô\n"})
         self.assertEqual(read_text(self.paths.dictionary), "nam\nkhô\n")
+
+    def test_undo_puts_the_teencode_apps_back(self):
+        write_text(self.paths.teencode_apps, emoji_words.apps_text(["discord"]))
+        data = fcitx5_backup()
+        data["teencode_apps"] = [{"App": "zalo"}]
+        changes, _ = backup.plan(data, self.paths, self.engine)
+        snapshot = backup.replace(changes)
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.teencode_apps)), ["zalo"])
+        self.assertTrue(backup.undo(snapshot, changes))
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.teencode_apps)), ["discord"])
 
     def test_undo_only_while_the_files_hold_the_restore(self):
         before = self.files()
@@ -524,9 +641,9 @@ class WindowBackupTest(UserFiles, unittest.TestCase):
 
     def test_losses_are_asked_about_first(self):
         before = self.files()
-        path = self.save(fcitx5_backup(Mode="Emoji Picker"))
+        path = self.save(fcitx5_backup(Mode="Vim"))
         dialog = self.window.restore_backup(path)
-        self.assertIn("emoji", dialog.get_body())
+        self.assertIn("Vim", dialog.get_body())
         self.assertEqual(self.files(), before)
         dialog.emit("response", "cancel")
         self.assertEqual(self.files(), before)

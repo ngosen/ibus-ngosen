@@ -8,6 +8,57 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.5.0-1] — 21/11/2026
+
+Gợi ý emoji khi gõ, có trang Emoji để sửa, xuất và nhập từ gợi ý; chuyển mã chữ TCVN3, VNI ngay tại chỗ. Ctrl+Shift
+đổi Anh/Việt cho mọi app cùng lúc như UniKey, và lệnh `ngosen-toggle` đổi được từ một phím tắt của GNOME. Teencode theo
+từng app và gõ kéo dài chữ. Khớp đủ tính năng bản fcitx5 trừ những mục ghi ở "Có ở bản fcitx5". Dùng lõi Ngó Sen
+`ngosen-1.13.1-1`. Tải gói ở [release ibus-ngosen-1.5.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.5.0-1).
+
+### Thêm
+
+- Gợi ý emoji khi gõ như bản fcitx5: gõ xong `cười`, `con mèo` hay `haha` là hiện `Tab: 😂 …` cạnh con trỏ; Tab để
+  đánh số rồi chọn bằng số, Space hay Enter lấy cái đầu, Esc giữ nguyên chữ. Tắt riêng cho app đang dùng bằng mục
+  "Gợi ý emoji" (phím `w`) trong menu `; cửa sổ cài đặt có trang Emoji (#161).
+- Trang Emoji trong cửa sổ cài đặt như bản fcitx5: tìm emoji, bấm vào từ để tắt hay bật, thêm từ của riêng mình, bật
+  lại emoji cho app đã tắt. Sao lưu và khôi phục mang theo cả hai danh sách này (#164).
+- Chuyển mã như bản fcitx5: bôi đen chữ cũ (TCVN3, VNI…) rồi bấm phím là đổi sang Unicode ngay tại chỗ, cả trong
+  Firefox (LibreOffice chưa được). Đặt phím, bảng mã, chữ hoa/thường ở trang Chuyển mã, có ô dán chữ để đổi tại chỗ (#165).
+- Nhận lõi 1.13: gợi ý emoji mặc định hiện ở cuối câu thành một hàng, gõ `. ! ?` rồi bấm số để chọn (Telex), emoji
+  thêm sau dấu câu; muốn như trước thì chọn "Sau mỗi từ" ở "Gợi ý emoji" trên trang Emoji. Từ tiếng Anh như `cat`,
+  `thumbs up` cũng gợi ý emoji, tắt được bằng "Từ khoá tiếng Anh". Gõ kéo dài chữ (`afaaa` ra `àààà`) và không còn ra
+  chữ đôi trong terminal dùng xterm.js (ngosen/ngosen#878) (#168).
+- Teencode theo từng app như bản fcitx5: bấm ` rồi `t` trong app đang gõ là giữ chữ kiểu `zậy`, `đag` thay vì trả
+  về phím đã gõ. Trang Gõ liệt kê các app đang bật, có nút tắt; sao lưu mang theo danh sách này (#169).
+- Lệnh `ngosen-toggle` như bản fcitx5: gán vào một phím tắt của GNOME (vd. `Alt + Z` như UniKey) để đổi Anh/Việt cả
+  khi chưa bấm vào ô nào. Ngó Sen không phải nguồn nhập đang dùng thì lệnh báo lý do (#174).
+- Trang Emoji có nút "Xuất…" và "Nhập…" như bản fcitx5: Xuất lưu các từ mình đã bật ra một file nhỏ, Nhập thêm từ của
+  file vào mà giữ nguyên từ mình đã tắt. File của hai bản đọc được lẫn nhau; "Khôi phục bản sao lưu" không nhận file này (#170).
+
+### Thay đổi
+
+- Ctrl+Shift giờ chuyển Anh/Việt cho mọi app cùng lúc như bản fcitx5 và UniKey, trừ app đã chọn "Tắt" trong menu `
+  (bấm Ctrl+Shift ở đó mở menu). Muốn mỗi app nhớ riêng như trước thì chọn "Từng app" ở "Phím chuyển áp dụng cho" trên
+  trang Gõ (#172).
+- Trang Kiểm tra máy nhắc khi Bảng mã không phải Unicode, kèm cách đổi lại; bản báo lỗi copy ra cũng ghi bảng mã. Mục
+  "Có ở bản fcitx5" thêm lệnh `ngosen-toggle` (#171).
+- Trên GNOME, đặt dấu trong Chrome, Edge và các app khác (trừ Firefox) nhanh hơn: phần xoá và chữ mới được gửi
+  cùng lúc thay vì cách nhau một khoảng chờ, như bản fcitx5 (#163).
+- Menu ` ghi đang đổi chế độ gõ cho app nào, như "Chế độ gõ cho Firefox", và đánh dấu ✓ cạnh chế độ app đang dùng,
+  nên vẫn thấy chế độ hiện tại khi dùng phím mũi tên đi qua các mục (#154).
+- README trình bày lại như bản fcitx5, có ảnh cửa sổ cài đặt và đủ tính năng của bản 1.5 (#167).
+
+### Sửa
+
+- Nhận lõi 1.13.1: bấm Backspace khi đang gõ dở chữ kéo dài hay chữ teencode, như `chaiiif` ra `chàiii`, chỉ xoá
+  một chữ, không còn mất dấu. Nhập từ emoji bỏ qua từ có ký tự NUL. Lời giải thích dưới Bảng mã nói rõ "Unicode tổ
+  hợp" gửi dấu tách khỏi chữ nên terminal và nhiều app gõ sai (#173).
+- Trên Plasma, chọn chế độ trong menu ` giờ đổi chế độ chung cho mọi app, như khi đổi trong cửa sổ cài đặt. Trước đây
+  lựa chọn bị lưu dưới tên "wayland", áp cho mọi app mà vẫn đè lên cửa sổ cài đặt; lựa chọn cũ dưới tên đó nay được
+  bỏ qua (#154).
+- Khôi phục bản sao lưu fcitx5 có chế độ Emoji Picker giờ ra Gõ Sen như bản fcitx5, thay vì gạch chân. Mục "Có ở bản
+  fcitx5" trong cửa sổ cài đặt chỉ còn những gì bản IBus chưa có, và "Có gì mới" có mục cho bản 1.5 (#166).
+
 ## [1.4.1-1] — 18/11/2026
 
 Trên GNOME, gõ nhanh ngay sau khi mở Firefox rồi xoá bằng Backspace không còn mất phím hay lộn chữ. Gõ lại dấu thanh

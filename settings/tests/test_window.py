@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+import json
 import os
 import tempfile
 import time
@@ -14,9 +15,15 @@ try:
     from ngosen_settings import window  # Picks the GTK and libadwaita versions first.
 
     Adw, GLib = window.Adw, window.GLib
-    from gi.repository import Pango
+    from gi.repository import Gtk, Pango
 except (ImportError, ValueError):
     window = None
+
+
+def flow_box(spacing):
+    return Gtk.FlowBox(
+        selection_mode=Gtk.SelectionMode.NONE, column_spacing=spacing, row_spacing=spacing
+    )
 
 
 class Vietnamese:
@@ -51,7 +58,15 @@ class FakeEngine:
             "ShortcutSen": "1",
             "ShortcutPreedit": "q",
             "ShortcutOff": "e",
+            "ShortcutTeencode": "t",
             "UiLanguage": "Vietnamese",
+            "ConvertKey": "",
+            "ConvertFrom": "TCVN3 (ABC)",
+            "ConvertTo": "Unicode",
+            "ConvertCase": "Keep",
+            "ConvertStripDiacritics": "False",
+            "EnglishEmojiKeywords": "True",
+            "EmojiOfferAt": "At the end of a sentence",
         }
 
 
@@ -134,6 +149,34 @@ class WindowTest(unittest.TestCase):
     def settings(self):
         return ini.parse(read_text(self.store.settings_file))[0]
 
+    def test_convert_box_shows_the_text_converted(self):
+        page = self.window.convert
+        page.source.get_buffer().set_text("việt nam")
+        page.refresh()
+        self.assertEqual(page.error.get_text(), "Cannot run the engine to convert.")
+        self.window.engine = mock.Mock()
+        self.window.engine.convert_text.return_value = "VIỆT NAM"
+        self.window.rows.rows["ConvertCase"].set_selected(1)
+        self.assertEqual(
+            self.window.engine.convert_text.call_args.args,
+            ("việt nam", "TCVN3 (ABC)", "Unicode", 1, False),
+        )
+        buffer = page.result.get_buffer()
+        text = buffer.get_text(buffer.get_start_iter(), buffer.get_end_iter(), False)
+        self.assertEqual((text, page.error.get_visible()), ("VIỆT NAM", False))
+
+    def test_convert_charsets_swap_in_one_save(self):
+        self.window.convert.swap()
+        self.assertEqual(
+            (self.settings()["ConvertFrom"], self.settings()["ConvertTo"]),
+            ("Unicode", "TCVN3 (ABC)"),
+        )
+        self.assertEqual(self.window.rows.rows["ConvertFrom"].get_selected(), 0)
+        self.window.undo()
+        values = self.store.values
+        self.assertEqual((values["ConvertFrom"], values["ConvertTo"]), ("TCVN3 (ABC)", "Unicode"))
+        self.assertNotIn("ConvertFrom", self.settings())
+
     def test_switch_saves_and_undoes(self):
         self.window.rows.rows["SpellCheck"].set_active(False)
         self.assertEqual(self.settings(), {"SpellCheck": "False", "FutureKey": "kept"})
@@ -189,6 +232,54 @@ class WindowTest(unittest.TestCase):
             model.get_string(win.rows.rows["ModeOrder"].get_selected()), "OFF, Sen, Preedit"
         )
 
+    def test_the_check_page_follows_the_output_charset(self):
+        collect = window.check_page.system_check.collect
+        with mock.patch.object(window.check_page.system_check, "collect", wraps=collect) as seen:
+            self.window.rows.rows["OutputCharset"].set_selected(1)
+        self.assertEqual(seen.call_args.kwargs["output_charset"], "TCVN3 (ABC)")
+
+    def test_the_check_page_follows_an_undo_of_the_charset(self):
+        self.window.rows.rows["OutputCharset"].set_selected(1)
+        self.window.undo()
+        self.assertEqual(self.window.check.facts.output_charset, "Unicode")
+
+    def test_checking_again_reads_the_charset_the_engine_saved(self):
+        settings = self.store.settings_file
+        write_text(settings, read_text(settings) + "OutputCharset=VNI Windows\n")
+        self.window.check.run()
+        self.assertEqual(self.window.check.facts.output_charset, "VNI Windows")
+
+    def test_mode_order_saved_before_teencode_is_its_preset(self):
+        engine = FakeEngine(self.folder)
+        saved = engine.settings()
+        saved["ModeOrder"] = "Sen,Preedit,Emoji,Off,Vim"
+        engine.settings = lambda: saved
+        win = window.Window(
+            None,
+            Store(engine, self.folder),
+            {"InputMethod": ["Telex"], "OutputCharset": ["Unicode"]},
+            "1.0.0",
+            FakeSources(),
+        )
+        row = win.rows.rows["ModeOrder"]
+        self.assertEqual(row.get_model().get_n_items(), 3)
+        self.assertEqual(row.get_model().get_string(row.get_selected()), "Sen, Preedit, OFF")
+
+    def test_teencode_off_in_an_app_and_undo(self):
+        path = os.path.join(self.folder, "ngosen-teencode-apps.conf")
+        write_text(path, "# Apps where Ngó Sen keeps teencode, one per line\ndiscord\n")
+        group = self.window.teencode
+        self.window._refresh_apps()
+        self.assertEqual(group.apps.get_row_at_index(0).get_title(), "discord")
+        self.assertIn("` then t", group.group.get_description())
+        group.on_off("discord")
+        self.assertNotIn("discord", read_text(path))
+        self.assertEqual(group.apps.get_row_at_index(0).get_title(), "Not on in any app.")
+        self.assertIsNotNone(self.window.toast)
+        self.window.undo()
+        self.assertIn("discord", read_text(path))
+        self.assertEqual(group.apps.get_row_at_index(0).get_title(), "discord")
+
     def test_languages_are_named_in_their_own_language(self):
         model = self.window.rows.rows["UiLanguage"].get_model()
         self.assertEqual(
@@ -213,6 +304,94 @@ class WindowTest(unittest.TestCase):
         row = self.window.rows.rows["TimeFormat"]
         self.assertEqual(row.get_model().get_string(row.get_selected()), "%H:%M:%S %Z")
         self.assertNotIn("TimeFormat", self.settings())
+
+    def test_emoji_words_export_and_import_with_undo(self):
+        page = self.window.emoji
+        page.toggle("😂", "cười")
+        path = os.path.join(self.folder, "shared.json")
+        self.window.export_emoji_words(path)
+        self.assertEqual(json.load(open(path, encoding="utf-8"))["emoji_words"], [])
+        write_text(
+            path,
+            json.dumps(
+                {
+                    "meta": {"kind": "ngosen-emoji-words"},
+                    "emoji_words": [
+                        {"Keyword": "sếp", "Emoji": "😂"},
+                        {"Keyword": "cười", "Emoji": "😂"},
+                    ],
+                }
+            ),
+        )
+        self.window.import_emoji_words(path)
+        chips = dict(page.words.chips("😂"))
+        self.assertTrue(chips["sếp"])
+        self.assertFalse(chips["cười"])
+        self.window.undo()
+        self.assertNotIn("sếp", dict(page.words.chips("😂")))
+
+    def test_emoji_word_saves_and_undoes(self):
+        page = self.window.emoji
+        page.toggle("😂", "cười")
+        path = os.path.join(self.folder, "ngosen-emoji-words.conf")
+        self.assertIn("Keyword=cười\nEmoji=😂\nOn=False", read_text(path))
+        self.window.undo()
+        self.assertFalse(os.path.exists(path))
+        self.assertTrue(dict(page.words.chips("😂"))["cười"])
+
+    def test_emoji_back_on_in_an_app_and_undo(self):
+        path = os.path.join(self.folder, "ngosen-emoji-off-apps.conf")
+        write_text(path, "# Apps where Ngó Sen offers no emoji, one per line\nfirefox\n")
+        self.window.emoji.refresh_apps()
+        self.assertEqual(self.window.emoji.apps.get_row_at_index(0).get_title(), "firefox")
+        self.window.emoji.enable_app("firefox")
+        self.assertNotIn("firefox", read_text(path))
+        self.assertIsNotNone(self.window.toast)
+        self.window.undo()
+        self.assertIn("firefox", read_text(path))
+        self.assertEqual(self.window.emoji.apps.get_row_at_index(0).get_title(), "firefox")
+
+    def test_emoji_word_editor_moves_between_rows_without_wrap_box(self):
+        # libadwaita 1.5 has no WrapBox, so the rows hold their words in a FlowBox.
+        with mock.patch.object(window.emoji, "_wrap_box", flow_box):
+            page = self.window.emoji
+            first, second = window.emoji._EmojiRow(page), window.emoji._EmojiRow(page)
+        first.show("😂")
+        second.show("🤣")
+        page.editor.open(first)
+        # As a GTK wrapper still referenced elsewhere would hold it.
+        held = page.editor.get_parent()
+        page.editor.open(second)
+        self.assertIsNot(page.editor.get_parent(), held)
+        self.assertTrue(page.editor.is_ancestor(second.words))
+
+    def test_emoji_filter_follows_an_undo(self):
+        page = self.window.emoji
+        # Almost every emoji has an English word on.
+        self.window.rows.rows["EnglishEmojiKeywords"].set_active(False)
+        page.only_on.set_active(True)
+        self.assertNotIn("📱", page.shown)
+        page.toggle("📱", "điện thoại")
+        self.window.undo()
+        self.assertNotIn("📱", page.shown)
+        self.store.set_emoji_edits({("📱", "điện thoại"): True})
+        self.window.refresh()
+        self.assertIn("📱", page.shown)
+
+    def test_emoji_example_follows_the_switch(self):
+        self.window.rows.rows["EmojiSuggestions"].set_active(True)
+        self.assertTrue(self.window.emoji.example.get_visible())
+        self.window.rows.rows["EmojiSuggestions"].set_active(False)
+        self.assertFalse(self.window.emoji.example.get_visible())
+        self.assertEqual(self.settings()["EmojiSuggestions"], "False")
+
+    def test_emoji_settings_are_found_by_search(self):
+        titles = [
+            t
+            for t, _row, page in window.search.find(self.window.search_pages, "emoji")
+            if page is self.window.emoji.page
+        ]
+        self.assertIn("Suggest emoji while typing", titles)
 
     def test_macro_add_and_remove(self):
         macros = self.window.macros
@@ -527,8 +706,9 @@ class WindowTest(unittest.TestCase):
         self.assertEqual(self.window.content.get_title(), "Check")
         # Shown another way, the page still names itself and its row follows.
         self.window.stack.set_visible_child(self.window.macros.page)
-        self.assertEqual(self.window.content.get_title(), titles[1])
-        self.assertEqual(sidebar.get_selected_row().get_index(), 1)
+        index = titles.index(self.window.macros.page.get_title())
+        self.assertEqual(self.window.content.get_title(), titles[index])
+        self.assertEqual(sidebar.get_selected_row().get_index(), index)
         left = len(self.window.check.findings)
         self.assertEqual(self.window.check_badge.get_label(), str(left))
         self.assertEqual(self.window.check_badge.get_visible(), left > 0)
@@ -589,7 +769,9 @@ class WindowTest(unittest.TestCase):
         for kind, name in filter(None, targets):
             if kind == "setting":
                 self.assertTrue(self.window.open_setting(name), name)
-                self.assertIs(self.window.get_focus(), self.window.rows.rows[name])
+                # An entry row hands focus to the text inside it.
+                focus, row = self.window.get_focus(), self.window.rows.rows[name]
+                self.assertTrue(focus is row or focus.is_ancestor(row), name)
             else:
                 self.window.show_page(name)
                 self.assertIs(self.window.stack.get_visible_child(), self.window.named_pages[name])

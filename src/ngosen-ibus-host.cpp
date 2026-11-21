@@ -5,6 +5,7 @@
  */
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-i18n.h"
+#include "ngosen-ibus-primary.h"
 
 #include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
@@ -33,6 +34,9 @@ namespace ngosen {
         constexpr guint ReturnKeycode    = 28;
 
         constexpr guint SimpleModifiers = IBUS_SHIFT_MASK | IBUS_CONTROL_MASK | IBUS_MOD1_MASK | IBUS_MOD4_MASK | IBUS_SUPER_MASK | IBUS_HYPER_MASK | IBUS_META_MASK;
+
+        // The Shell names the focused app a moment after the focus moves, as in the fcitx5 edition.
+        constexpr uint64_t AppNameDelayUs = 50000;
 
         class GlibTimer final : public Timer {
           public:
@@ -169,6 +173,7 @@ namespace ngosen {
         f.program = programOf(client_);
         if (f.program != client_)
             f.reportedProgram = client_;
+        f.appNameCurrent  = focus_ && monotonicUs() > focus_in_us_ + AppNameDelayUs;
         f.surroundingText = throughShell() ? reportsText() : (engine_->client_capabilities & IBUS_CAP_SURROUNDING_TEXT) != 0;
         f.preedit         = (engine_->client_capabilities & IBUS_CAP_PREEDIT_TEXT) != 0;
         f.url             = purpose_ == IBUS_INPUT_PURPOSE_URL;
@@ -186,6 +191,8 @@ namespace ngosen {
         f.password = purpose_ == IBUS_INPUT_PURPOSE_PASSWORD || purpose_ == IBUS_INPUT_PURPOSE_PIN;
         // Chrome marks every field of an incognito window; that keeps the text out of logs, not out of typing.
         f.sensitive = (hints_ & IBUS_INPUT_HINT_PRIVATE) != 0;
+        // Every IBus panel draws the lookup table next to the cursor; the fake context has no cursor to draw at.
+        f.drawsCandidates = !inFakeContext();
         return f;
     }
 
@@ -198,9 +205,10 @@ namespace ngosen {
         return std::nullopt;
     }
 
-    // Converting selected text is a fcitx5 shortcut; the IBus edition has none.
+    // Asked only when the convert key is pressed, so waiting for the owner costs nothing while typing.
     std::string IBusHost::primarySelection() const {
-        return {};
+        constexpr int timeoutMs = 500;
+        return readPrimarySelection(timeoutMs);
     }
 
     void IBusHost::showPreedit(const std::string& text, bool /*underline*/) {
@@ -209,6 +217,17 @@ namespace ngosen {
 
     void IBusHost::clearPreedit() {
         preedit_.clear();
+    }
+
+    void IBusHost::showHint(const std::string& text) {
+        preedit_.clear();
+        IBusText*   hint   = ibus_text_new_from_string(text.c_str());
+        const guint length = static_cast<guint>(g_utf8_strlen(text.c_str(), -1));
+        if (length > 0)
+            ibus_text_append_attribute(hint, IBUS_ATTR_TYPE_UNDERLINE, IBUS_ATTR_UNDERLINE_SINGLE, 0, length);
+        // The word is already in the app, so the cursor stays before the hint, and the app drops it rather
+        // than commit it on reset or focus out.
+        ibus_engine_update_preedit_text_with_mode(engine_, hint, 0, length > 0, IBUS_ENGINE_PREEDIT_CLEAR);
     }
 
     void IBusHost::resetPanel() {
@@ -243,27 +262,35 @@ namespace ngosen {
             tableShown_ = false;
             return;
         }
-        IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), TRUE, FALSE);
-        ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
-        // No labels of its own: the core numbers the candidates it lets the user pick by number.
-        for (const auto& label : list_->labels)
-            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(label.c_str()));
+        // A row's labels carry their own keys, so none of them is highlighted.
+        const bool       row   = list_->layout == CandidateLayout::Row;
+        IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), !row, FALSE);
+        ibus_lookup_table_set_orientation(table, row ? IBUS_ORIENTATION_HORIZONTAL : IBUS_ORIENTATION_VERTICAL);
+        // The core numbers the candidates itself; GNOME Shell numbers any whose label is empty.
+        for (guint i = 0; i < list_->labels.size(); ++i) {
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(list_->labels[i].c_str()));
+            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string("\u200b"));
+        }
         ibus_engine_update_lookup_table(engine_, table, TRUE);
         tableShown_ = true;
     }
 
     void IBusHost::showAuxiliary() {
-        const std::string& text = status_.empty() ? notice_ : status_;
+        const std::string& text = menuOpen_ ? menuTitle_ : status_.empty() ? notice_ : status_;
         ibus_engine_update_auxiliary_text(engine_, ibus_text_new_from_string(text.c_str()), !text.empty());
     }
 
-    void IBusHost::setMenuOpen(bool open) {
-        menuOpen_ = open;
+    void IBusHost::setMenuOpen(bool open, const std::string& title) {
+        menuOpen_  = open;
+        menuTitle_ = open ? title : std::string();
         // The menu takes the table; candidates still shown go out again on the next refresh.
         if (open) {
             tableShown_ = false;
             tableDirty_ = true;
+            // A notice from before the menu would come back when it closes, out of date.
+            notice_.clear();
         }
+        showAuxiliary();
     }
 
     void IBusHost::showNotice(const std::string& text) {
@@ -276,14 +303,14 @@ namespace ngosen {
         showAuxiliary();
     }
 
-    void IBusHost::showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick) {
+    void IBusHost::showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick, CandidateLayout layout) {
         tableDirty_ = true;
         if (labels.empty()) {
             list_.reset();
             return;
         }
         // IBus aborts on a page of more than 16.
-        list_ = CandidateList{labels, std::clamp(pageSize, 1, 16), 0, std::move(onPick)};
+        list_ = CandidateList{labels, std::clamp(pageSize, 1, 16), 0, std::move(onPick), layout};
     }
 
     void IBusHost::hideCandidates() {
@@ -297,7 +324,7 @@ namespace ngosen {
         CandidatePage page;
         page.total    = static_cast<int>(list_->labels.size());
         page.pageSize = list_->pageSize;
-        page.cursor   = list_->cursor;
+        page.cursor   = list_->layout == CandidateLayout::Row ? -1 : list_->cursor;
         page.page     = list_->cursor / list_->pageSize;
         page.hasPrev  = page.page > 0;
         page.hasNext  = (page.page + 1) * page.pageSize < page.total;
