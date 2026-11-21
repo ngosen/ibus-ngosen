@@ -3288,7 +3288,9 @@ check(
 app.select(11, 11)
 press_convert(app)
 check(
-    app.text == "về VIỆT NAM" and app.title == "Bôi đen chữ cần chuyển mã rồi bấm lại phím. App nào không cho thì dán chữ vào trang Chuyển mã.",
+    app.text == "về VIỆT NAM"
+    and app.title
+    == "Bôi đen chữ cần chuyển mã rồi bấm lại phím. App nào không cho thì dán chữ vào trang Chuyển mã.",
     "convert: with nothing selected the text stays and a notice says why",
     (app.text, app.title),
 )
