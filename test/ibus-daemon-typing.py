@@ -3029,6 +3029,22 @@ check(
     "toggle command: the next field types Vietnamese",
     app.commits[-1:],
 )
+# ngosen-save-log leaves a request; the engine saves the log and names the file in its answer.
+save_request = os.path.join(os.path.dirname(english_mark), "save-log-1")
+save_reply = os.path.join(os.path.dirname(english_mark), "saved-log-1")
+open(save_request, "w").close()
+pump(1000)
+saved = open(save_reply).read() if os.path.exists(save_reply) else ""
+check(
+    not os.path.exists(save_request)
+    and os.path.basename(saved).startswith("typing-")
+    and "việt" in (open(saved).read() if os.path.exists(saved) else ""),
+    "save-log command: saves the log and answers with its path",
+    (os.path.exists(save_request), saved),
+)
+for leftover in (save_reply, saved):
+    if leftover and os.path.exists(leftover):
+        os.remove(leftover)
 toggle_dir = os.path.dirname(english_mark)
 
 

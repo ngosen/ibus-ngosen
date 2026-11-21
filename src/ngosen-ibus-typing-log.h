@@ -7,9 +7,12 @@
 
 #include "ngosen-recorder.h"
 
+#include <string>
+
 namespace ngosen {
 
     // Saves the last typing events to a file to attach to a bug report, and tells the user where.
-    void saveTypingLog(const Recorder& recorder);
+    // Returns the file, or an empty string when it could not be written.
+    std::string saveTypingLog(const Recorder& recorder);
 
 } // namespace ngosen
