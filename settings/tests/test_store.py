@@ -262,6 +262,25 @@ class EngineTest(unittest.TestCase):
             self.assertEqual(self.engine.settings()["InputMethod"], name)
         self.assertIn("Unicode", self.engine.charsets())
 
+    def test_engine_converts_as_the_convert_key_does(self):
+        convert = self.engine.convert_text
+        self.assertEqual(convert("việt nam", "Unicode", "Unicode", 1, False), "VIỆT NAM")
+        old = convert("tiếng việt", "Unicode", "TCVN3 (ABC)", 0, False)
+        self.assertNotEqual(old, "tiếng việt")
+        self.assertEqual(convert(old, "TCVN3 (ABC)", "Unicode", 0, True), "tieng viet")
+        self.assertIsNone(convert("x", "Klingon", "Unicode", 0, False))
+
+    def test_engine_reads_the_convert_settings_the_window_writes(self):
+        store = Store(self.engine)
+        for key, value in [
+            ("ConvertKey", "Control+Shift+F6"),
+            ("ConvertFrom", "VNI Windows"),
+            ("ConvertCase", "Title Case"),
+            ("ConvertStripDiacritics", "True"),
+        ]:
+            store.set(key, value)
+            self.assertEqual(self.engine.settings()[key], value)
+
     def test_dictionary_paths(self):
         own, bundled = self.engine.dictionary_paths()
         self.assertEqual(own, os.path.join(self.home, "data", "ngosen", "vietnamese.cm.dict"))

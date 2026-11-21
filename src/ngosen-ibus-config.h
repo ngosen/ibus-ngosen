@@ -27,6 +27,8 @@ namespace ngosen {
     std::string              escapeIniValue(const std::string& value);
 
     std::vector<KeymapEntry> iniList(const IniFile& ini, const std::string& name);
+    // fcitx5's ngosen-emoji-words.conf: the user's changes to the default emoji keywords.
+    std::vector<EmojiWordEdit> emojiWordEdits(const IniFile& ini);
     // The values of [name], keyed 0, 1, …, as fcitx5 stores a key list.
     std::vector<std::string> iniKeyList(const IniFile& ini, const std::string& name);
 
@@ -42,19 +44,25 @@ namespace ngosen {
         bool directTyping = true;
         // Switches between English and Vietnamese; empty when the user turned the key off.
         std::vector<std::string> toggleKeys;
+        // As in fcitx5, the toggle key switches every app unless the user picked each app on its own.
+        bool toggleEachApp = false;
         // Opens the menu of typing modes; empty when the user turned it off.
         std::vector<std::string> modeMenuKeys;
         // The keys that pick each mode in that menu: one letter or digit.
-        std::string shortcutSen     = "1";
-        std::string shortcutPreedit = "q";
-        std::string shortcutOff     = "e";
-        std::string shortcutVim     = "v";
-        // Which modes the menu shows, and in what order; fcitx5's names, Emoji included.
-        bool        showModeSen     = true;
-        bool        showModePreedit = true;
-        bool        showModeOff     = true;
-        bool        showModeVim     = true;
-        std::string modeOrder       = "Sen,Preedit,Emoji,Off,Vim";
+        std::string shortcutSen      = "1";
+        std::string shortcutPreedit  = "q";
+        std::string shortcutOff      = "e";
+        std::string shortcutVim      = "v";
+        std::string shortcutEmoji    = "w";
+        std::string shortcutTeencode = "t";
+        // Which modes the menu shows, and in what order; fcitx5's names.
+        bool        showModeSen      = true;
+        bool        showModePreedit  = true;
+        bool        showModeOff      = true;
+        bool        showModeVim      = true;
+        bool        showModeEmoji    = true;
+        bool        showModeTeencode = true;
+        std::string modeOrder        = "Sen,Preedit,Emoji,Teencode,Off,Vim";
         // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
         bool showMenuInputMethod     = true;
         bool showMenuCharset         = true;
@@ -68,6 +76,8 @@ namespace ngosen {
         std::string uiLanguage = "Vietnamese";
         // Moves the app to the next mode in that order; off by default, as in fcitx5.
         std::vector<std::string> cycleModeKeys;
+        // Converts the selected text with the convert options; off by default, as in fcitx5.
+        std::vector<std::string> convertKeys;
     };
 
     // The fcitx5 edition's defaults, without the features that delete text the app already has.
@@ -94,6 +104,9 @@ namespace ngosen {
         std::string          appModesFile() const;
         std::string          appSwitchesFile() const;
         std::string          vimAppsFile() const;
+        std::string          emojiWordsFile() const;
+        std::string          emojiOffAppsFile() const;
+        std::string          teencodeAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // Marks Sen as switched on once, so turning it off afterwards sticks.

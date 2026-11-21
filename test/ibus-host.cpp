@@ -6,6 +6,7 @@
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-shell.h"
 #include "ngosen-xtest.h"
+#include "ngosen-clock.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -93,6 +94,25 @@ namespace {
         check(host.field().sendsNoKeys && host.field().preeditFallback, "an address bar through a GNOME Shell that drops keys keeps the preedit");
     }
 
+    // The Shell names the focused app a moment after the focus moves, so the name counts only after a delay.
+    void testAppNameAfterFocus() {
+        IBusEngine engine{};
+        IBusHost   host(&engine);
+        host.setClient("gnome-shell");
+        fakeClockUs = 1000000;
+        host.setFocus(true);
+        check(!host.field().appNameCurrent, "the app name is not current right after focus-in");
+        fakeClockUs += 40000;
+        check(!host.field().appNameCurrent, "nor 40 ms later");
+        fakeClockUs += 20000;
+        check(host.field().appNameCurrent, "60 ms after focus-in the app name is current");
+        host.setFocus(false);
+        check(!host.field().appNameCurrent, "a field without focus has no current app name");
+        host.setFocus(true);
+        check(!host.field().appNameCurrent, "the next focus-in starts the delay over");
+        fakeClockUs = 0;
+    }
+
     // Retyping after a switch replaces text before the cursor, so it needs to know when a click moved it.
     void testCursorMoves() {
         IBusEngine engine{};
@@ -118,7 +138,7 @@ namespace {
         IBusEngine          engine{};
         IBusHost            host(&engine);
         std::vector<size_t> picked;
-        host.showCandidates({"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}, 4, [&picked](size_t index) { picked.push_back(index); });
+        host.showCandidates({"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}, 4, [&picked](size_t index) { picked.push_back(index); }, CandidateLayout::Column);
         check(samePage(host.candidates(), 0, 0, false, true), "a shown list starts on its first page with the first highlighted");
         host.prevCandidatePage();
         check(samePage(host.candidates(), 0, 0, false, true), "the page before the first is the first");
@@ -130,22 +150,28 @@ namespace {
         check(picked == std::vector<size_t>{7}, "a pick calls back with the index picked");
 
         picked.clear();
-        host.showCandidates({"a", "b"}, 1, [&](size_t index) {
-            picked.push_back(index);
-            host.hideCandidates();
-        });
+        host.showCandidates(
+            {"a", "b"}, 1,
+            [&](size_t index) {
+                picked.push_back(index);
+                host.hideCandidates();
+            },
+            CandidateLayout::Column);
         host.pickCandidate(1);
         check(picked == std::vector<size_t>{1} && !host.candidates(), "a pick that hides the list calls back once");
 
         picked.clear();
-        host.showCandidates({"a"}, 1, [&picked](size_t index) { picked.push_back(index); });
+        host.showCandidates({"a"}, 1, [&picked](size_t index) { picked.push_back(index); }, CandidateLayout::Column);
         host.resetPanel();
         check(!host.candidates(), "resetPanel hides the list");
         host.pickCandidate(0);
         check(picked.empty(), "a pick after resetPanel calls nothing");
 
-        host.showCandidates(std::vector<std::string>(20, "a"), 20, {});
+        host.showCandidates(std::vector<std::string>(20, "a"), 20, {}, CandidateLayout::Column);
         check(host.candidates() && host.candidates()->pageSize == 16, "a page is at most the 16 IBus can show");
+
+        host.showCandidates({"1.a", "2.b"}, 2, {}, CandidateLayout::Row);
+        check(host.candidates() && host.candidates()->cursor == -1, "a row highlights none, as its labels carry their keys");
     }
 
     void testWaylandSession() {
@@ -185,6 +211,7 @@ int main() {
     testXSend();
     testShellFields();
     testShellAddressBar();
+    testAppNameAfterFocus();
     testCursorMoves();
     testCandidates();
     testWaylandSession();

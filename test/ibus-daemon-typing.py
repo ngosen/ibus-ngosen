@@ -6,7 +6,9 @@ import glob
 import itertools
 import os
 import re
+import struct
 import sys
+import threading
 import time
 import warnings
 
@@ -816,6 +818,7 @@ if no_x:
     check(not any("\x7f" in c for c in app.commits), "portal, Shell restarted: named", app.commits)
     # A click in the top bar menu reaches the engine through the fake context, about the app the
     # portal names then: an app closed since it had the focus keeps its own choice.
+    set_setting("ToggleScope", "Each app")
     tray = TrayPanel()
     bus.request_name(IBus.SERVICE_PANEL, 0)
     pump(300)
@@ -1804,6 +1807,20 @@ tap_ctrl_shift(app)
 app.type("vieetj ")
 check(app.text == "việt ", "toggle: there and back before the first word", app.text)
 app.close()
+# As in fcitx5 the key switches every app, so an app switched to English follows a later switch elsewhere.
+first = App("toggle-all-first")
+tap_ctrl_shift(first)
+second = App("toggle-all-second")
+tap_ctrl_shift(second)
+second.close()
+first.ic.focus_in()
+pump(300)
+first.type("vieetj ")
+check(first.text == "việt ", "toggle: a switch in one app switches every app", first.text)
+first.close()
+# Under each app, as the check of this one runs, the toggle keys leave switches behind.
+if os.path.exists(os.path.join(config_dir, "ngosen-app-switch.conf")):
+    os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
 
 
 # The mode menu: its key ends the word, then a key picks Sen, underline or Off for the app.
@@ -1815,8 +1832,10 @@ def menu_app(name, hints=0):
         | IBus.Capabilite.PREEDIT_TEXT
         | IBus.Capabilite.SURROUNDING_TEXT
         | IBus.Capabilite.LOOKUP_TABLE
+        | IBus.Capabilite.AUXILIARY_TEXT
     )
     app.menu = None
+    app.title = None
     # IBus frees the table after the signal, so keep its labels rather than the table.
     listen(
         app.ic,
@@ -1830,6 +1849,32 @@ def menu_app(name, hints=0):
         ),
     )
     app.ic.connect("hide-lookup-table", lambda _ic: setattr(app, "menu", None))
+    listen(
+        app.ic,
+        "update-lookup-table",
+        lambda _ic, table, _visible: setattr(
+            app, "row", (table.get_orientation(), table.is_cursor_visible())
+        ),
+    )
+    # GNOME Shell numbers a candidate whose label is missing or empty.
+    listen(
+        app.ic,
+        "update-lookup-table",
+        lambda _ic, table, _visible: setattr(
+            app,
+            "labels",
+            [
+                label.get_text() if (label := table.get_label(i)) else ""
+                for i in range(table.get_number_of_candidates())
+            ],
+        ),
+    )
+    listen(
+        app.ic,
+        "update-auxiliary-text",
+        lambda _ic, text, visible: setattr(app, "title", text.get_text() if visible else None),
+    )
+    app.ic.connect("hide-auxiliary-text", lambda _ic: setattr(app, "title", None))
     return app
 
 
@@ -1855,13 +1900,17 @@ pump(200)
 check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
-    items == ["Gõ Sen", "Gạch chân", "Tắt", "Vim mode: tắt"],
-    "menu: ` shows the three modes and Vim mode",
+    items
+    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    "menu: ` shows the three modes and the switches, with a mark on the mode in use",
     items,
 )
+# No desktop file names the test app, so the title keeps its program name.
+check(app.title == "Chế độ gõ cho menu", "menu: its title names the app", app.title)
 app.key(IBus.KEY_q)
 pump(500)
 check(app.menu is None, "menu: a pick closes it", app.menu)
+check(app.title == "Gạch chân", "menu: the note of the pick replaces the title", app.title)
 check(
     app_mode("menu") == "menu=5" and setting("DirectTyping") == "DirectTyping=True",
     "menu: q keeps the underline for this app only",
@@ -1890,6 +1939,13 @@ check(
     app.preedits,
 )
 app.key(IBus.KEY_grave)
+pump(200)
+check(
+    app.menu
+    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    "menu: the mark follows the mode kept for the app",
+    app.menu,
+)
 app.key(IBus.KEY_1)
 pump(500)
 check(
@@ -1905,9 +1961,9 @@ app.key(IBus.KEY_grave)
 app.key(IBus.KEY_Escape)
 pump(200)
 check(
-    app.menu is None and app.text == "việt việt nam`",
-    "menu: Esc closes it and types nothing",
-    app.text,
+    app.menu is None and app.title is None and app.text == "việt việt nam`",
+    "menu: Esc closes it with its title and types nothing",
+    (app.title, app.text),
 )
 app.key(IBus.KEY_grave)
 app.key(IBus.KEY_e)
@@ -1925,12 +1981,40 @@ check(other.text == "việt ", "menu: Off in one app leaves another in Vietnames
 other.close()
 app.ic.focus_in()
 pump(300)
+# Switching every app would leave this one in English, so the key offers the menu instead, as in fcitx5.
+tap_ctrl_shift(app)
+check(
+    app.menu is not None and app.text.endswith("vieetj`") and app_mode("menu") == "menu=0",
+    "menu: the toggle key opens the menu in an app set to Off",
+    (app.menu, app.text, app_mode("menu")),
+)
+if app.menu is not None:
+    app.key(IBus.KEY_Escape)
+    pump(200)
+# Under each app, as the check of this one runs, the toggle keys leave switches behind.
+if os.path.exists(os.path.join(config_dir, "ngosen-app-switch.conf")):
+    os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
+set_setting("ToggleScope", "Each app")
 tap_ctrl_shift(app)
 app.type("vieetj ")
 check(
     app.text.endswith("`việt ") and app_mode("menu") == "menu=0",
-    "menu: the toggle key types Vietnamese again in an app set to Off",
+    "menu: switching each app, the toggle key types Vietnamese again in an app set to Off",
     (app.text, app_mode("menu")),
+)
+set_setting("ToggleScope", "All apps")
+app.close()
+
+# A key no item takes closes the menu and is typed as usual, so a stray ` costs nothing.
+app = menu_app("menu-other-key")
+app.key(IBus.KEY_grave)
+pump(200)
+app.type("dda")
+pump(200)
+check(
+    app.menu is None and app.text == "đa",
+    "menu: a key no item takes closes it and types",
+    (app.menu, app.text),
 )
 app.close()
 
@@ -1952,6 +2036,27 @@ check(
     "menu: there 1 turns Sen on again",
     setting("DirectTyping"),
 )
+app.close()
+
+# On Plasma, ibus-ui-gtk3 relays every Wayland app under one name, as GNOME Shell does.
+app = menu_app("wayland")
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    app.title == "Chế độ gõ",
+    "menu: the title names no app for a client of every Wayland app",
+    app.title,
+)
+app.key(IBus.KEY_q)
+pump(500)
+check(
+    setting("DirectTyping") == "DirectTyping=False" and app_mode("wayland") == "",
+    "menu: there q turns Sen off for every app instead of keeping it for one name",
+    (setting("DirectTyping"), app_mode("wayland")),
+)
+app.key(IBus.KEY_grave)
+app.key(IBus.KEY_1)
+pump(500)
 app.close()
 
 set_setting("ModeMenuKey", "Shift+asciitilde")
@@ -1981,18 +2086,7 @@ app.close()
 set_setting("InputMethod", "Telex")
 set_setting("DirectTyping", "False")
 
-# As in fcitx5 the menu closes once the user goes on typing, clicks away or leaves it alone.
-app = menu_app("menu-close")
-app.key(IBus.KEY_grave)
-pump(200)
-app.type("a")
-pump(200)
-check(
-    app.menu is None and app.preedit == "a",
-    "menu: a key not in it closes it and is typed",
-    (app.menu, app.text, app.preedit),
-)
-app.close()
+# As in fcitx5 the menu closes once the user clicks away or leaves it alone.
 app = menu_app("menu-idle")
 app.key(IBus.KEY_grave)
 pump(4000)
@@ -2061,8 +2155,10 @@ check(
 )
 app.key(IBus.KEY_grave)
 pump(200)
-panel.cursor_down()
-pump(200)
+# Past the emoji and teencode items, which sit between the underline and Off as in fcitx5.
+for _ in range(3):
+    panel.cursor_down()
+    pump(200)
 app.key(IBus.KEY_Return)
 pump(500)
 check(
@@ -2080,29 +2176,37 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
 app.key(IBus.KEY_q)
 pump(300)
 check(
-    app.menu is None and app_mode("menu-order") == "" and app.text == "q",
-    "menu: q picks nothing while hidden and is typed",
+    app.menu is None and app.text == "q" and app_mode("menu-order") == "",
+    "menu: q of a hidden mode closes it and types q",
     (app.menu, app.text),
 )
-for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim"):
-    set_setting(name, "False")
+# Settings apply between words, so the word q ends first.
 app.type(" ")
+for name in ("ShowModeSen", "ShowModeOff", "ShowModeVim", "ShowModeEmoji", "ShowModeTeencode"):
+    set_setting(name, "False")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
     app.menu is None and app.text == "q `", "menu: with every mode hidden ` types itself", app.text
 )
 app.close()
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
+for name in (
+    "ShowModeSen",
+    "ShowModePreedit",
+    "ShowModeOff",
+    "ShowModeVim",
+    "ShowModeEmoji",
+    "ShowModeTeencode",
+):
     set_setting(name, "True")
-set_setting("ModeOrder", "Sen,Preedit,Emoji,Off,Vim")
+set_setting("ModeOrder", "Sen,Preedit,Emoji,Teencode,Off,Vim")
 
 # Vim mode is switched for the app in use and kept in the file the fcitx5 edition uses.
 vim_apps_path = os.path.join(config_dir, "ngosen-vim-apps.conf")
@@ -2162,6 +2266,156 @@ check(
 app.key(IBus.KEY_Escape)
 app.close()
 
+# Teencode is switched for the app in use and kept in the file the fcitx5 edition uses.
+teencode_apps_path = os.path.join(config_dir, "ngosen-teencode-apps.conf")
+
+
+def teencode_apps():
+    if not os.path.exists(teencode_apps_path):
+        return []
+    with open(teencode_apps_path) as f:
+        return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+app = menu_app("teen")
+app.type("zaajy ")
+pump(300)
+check(
+    app.text == "zaajy ",
+    "teencode: off by default, a teencode word goes back to its keys",
+    app.text,
+)
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_t)
+pump(300)
+check(
+    app.menu is None and teencode_apps() == ["teen"],
+    "menu: t switches teencode on for this app",
+    (app.menu, teencode_apps()),
+)
+app.type(" zaajy ")
+pump(300)
+check(app.text == "zaajy  zậy ", "teencode: the next word in the field keeps its marks", app.text)
+app.close()
+# A new field of the same app reads the switch from the file.
+app = menu_app("teen")
+app.type("zaajy ")
+pump(300)
+check(app.text == "zậy ", "teencode: on for the app, the word keeps its marks", app.text)
+app.key(IBus.KEY_grave)
+pump(200)
+check(
+    "Teencode: bật" in (app.menu or []),
+    "menu: the teencode item says it is on",
+    app.menu,
+)
+app.key(IBus.KEY_t)
+pump(300)
+check(teencode_apps() == [], "menu: t again switches teencode off", teencode_apps())
+app.type(" zaajy ")
+pump(300)
+check(app.text == "zậy  zaajy ", "teencode: off again, the word goes back to its keys", app.text)
+app.close()
+
+# Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.
+emoji_off_path = os.path.join(config_dir, "ngosen-emoji-off-apps.conf")
+
+
+def emoji_off_apps():
+    if not os.path.exists(emoji_off_path):
+        return []
+    with open(emoji_off_path) as f:
+        return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+# The list after each word, which users can still pick; the end of a sentence is the default.
+set_setting("EmojiOfferAt", "After each word")
+app = menu_app("emoji")
+app.type("cuwowif")
+pump(300)
+check(
+    app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
+    "emoji: a keyword offers its emoji in the lookup table",
+    app.menu,
+)
+app.key(IBus.KEY_Tab)
+pump(200)
+check(
+    app.menu == ["1. 😂", "2. 🤣", "3. 😄", "4. 😆", "5. 😁"] and all(app.labels),
+    "emoji: the list is numbered once, with labels that keep GNOME Shell from adding its own",
+    (app.menu, app.labels),
+)
+app.key(IBus.KEY_Tab)
+pump(300)
+check(
+    app.text == "cười 😂" and app.menu is None,
+    "emoji: Tab twice adds the first emoji",
+    (app.text, app.menu),
+)
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_w)
+pump(300)
+check(
+    emoji_off_apps() == ["emoji"],
+    "menu: w switches emoji suggestions off for this app",
+    emoji_off_apps(),
+)
+app.type(" cuwowif")
+pump(300)
+check(app.menu is None, "emoji: no offer once they are off", app.menu)
+app.key(IBus.KEY_grave)
+pump(200)
+app.key(IBus.KEY_w)
+pump(300)
+check(emoji_off_apps() == [], "menu: w again switches them back on", emoji_off_apps())
+app.close()
+
+# Enter picks from the open list, so the word it replaces must not go out first.
+set_setting("DirectTyping", "False")
+app = menu_app("emoji-enter")
+app.type("hahaha")
+pump(300)
+app.key(IBus.KEY_Tab)
+pump(200)
+app.key(IBus.KEY_Return)
+pump(300)
+check(
+    app.text == "😂" and app.preedit == "",
+    "emoji: Tab then Enter puts the emoji in place of the word",
+    (app.text, app.preedit),
+)
+app.close()
+set_setting("DirectTyping", "True")
+set_setting("EmojiOfferAt", "At the end of a sentence")
+
+# At the end of a sentence the emoji show in a row whose labels carry their own digits.
+horizontal = (IBus.Orientation.HORIZONTAL, False)
+app = menu_app("emoji-sentence")
+app.type("cuwowif")
+pump(300)
+check(
+    app.menu == ["😂 🤣 😄 😆 😁"] and app.row == horizontal,
+    "emoji: the sentence's emoji show in a row while typing",
+    (app.menu, app.row),
+)
+app.type(".")
+pump(300)
+check(
+    app.menu == ["1.😂", "2.🤣", "3.😄", "4.😆", "5.😁"] and app.row == horizontal,
+    "emoji: the end of the sentence numbers them in a row with none highlighted",
+    (app.menu, app.row),
+)
+app.type("1")
+pump(300)
+check(
+    app.text == "cười. 😂" and app.menu is None,
+    "emoji: a digit puts its emoji after the sentence",
+    (app.text, app.menu),
+)
+app.close()
+
 # As in fcitx5 the cycle key moves the app to the next mode in the menu's order and keeps it.
 set_setting("CycleModeKey", "Control+m")
 app = menu_app("cycle")
@@ -2189,7 +2443,26 @@ check(
     (app_mode("cycle"), app.text),
 )
 app.close()
-# With English everywhere, the shared mode would leave the app in English, so Sen is kept for it.
+# Switching every app, Sen picked while English is on means Vietnamese again everywhere.
+app = menu_app("cycle-all")
+tap_ctrl_shift(app)
+english = os.path.exists(english_mark)
+app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
+pump(300)
+app.type("vieetj ")
+check(
+    english
+    and not os.path.exists(english_mark)
+    and app_mode("cycle-all") == ""
+    and app.text == "việt ",
+    "cycle: switching every app, Sen while English is on turns Vietnamese on",
+    (english, os.path.exists(english_mark), app_mode("cycle-all"), app.text),
+)
+app.close()
+if os.path.exists(english_mark):
+    os.remove(english_mark)
+# Switching each app, the shared mode would leave the app in English, so Sen is kept for it.
+set_setting("ToggleScope", "Each app")
 app = menu_app("cycle-english")
 tap_ctrl_shift(app)
 app.key(IBus.KEY_m, IBus.ModifierType.CONTROL_MASK)
@@ -2207,11 +2480,13 @@ app = menu_app("cycle-vietnamese")
 tap_ctrl_shift(app)
 app.close()
 os.remove(os.path.join(config_dir, "ngosen-app-switch.conf"))
+set_setting("ToggleScope", "All apps")
 set_setting("CycleModeKey", "")
 os.remove(app_modes_path)
 
-# As in fcitx5 each app keeps the language the toggle key last chose in it; an app never switched
-# follows the last switch.
+# Switching each app, as in fcitx5 each app keeps the language the toggle key last chose in it; an app
+# never switched follows the last switch.
+set_setting("ToggleScope", "Each app")
 app_switches_path = os.path.join(config_dir, "ngosen-app-switch.conf")
 
 
@@ -2285,6 +2560,7 @@ if os.path.exists(english_mark):
 if os.path.exists(app_switches_path):
     os.remove(app_switches_path)
 os.remove(app_modes_path)
+set_setting("ToggleScope", "All apps")
 
 
 # Cứu chữ: English typed by mistake is retyped once Vietnamese comes back.
@@ -2339,6 +2615,7 @@ app.close()
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
         os.remove(path)
+set_setting("ToggleScope", "Each app")
 tray = panel
 first = App("tray-first")
 tap_ctrl_shift(first)
@@ -2401,6 +2678,24 @@ check(not os.path.exists(english_mark), "tray: a second click restores Vietnames
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
         os.remove(path)
+set_setting("ToggleScope", "All apps")
+# Switching every app, a click for an app set to Off has no field to open the menu in.
+off = menu_app("tray-off")
+off.key(IBus.KEY_grave)
+pump(200)
+off.key(IBus.KEY_e)
+pump(500)
+off.ic.focus_out()
+pump(300)
+tray.notices = []
+tray.property_activate("InputMode", IBus.PropState.CHECKED)
+pump(500)
+check(
+    tray.notices[-1:] == ["App này đang ở chế độ tiếng Anh"] and not os.path.exists(english_mark),
+    "tray: switching every app, a click for an app set to Off says so and switches nothing",
+    (tray.notices, os.path.exists(english_mark)),
+)
+off.close()
 bus.release_name(IBus.SERVICE_PANEL)
 pump(300)
 
@@ -2692,6 +2987,89 @@ pump(1000)
 check(symbols[-1:] == ["V"], "menu: a marker removed elsewhere switches back", symbols)
 app.type("vie65t ")
 check(app.commits[-1:] == ["việt "], "menu: Vietnamese after the marker is removed", app.commits)
+# Switching each app, this app is kept in Vietnamese while every other is English; a change of scope
+# in the middle of a word waits for its end and must still show the language it brings.
+set_setting("ToggleScope", "Each app")
+write_file(app_switches_path, "[Switches]\n[Switches/0]\nApp=menu\nVietnamese=True\n\n")
+write_file(english_mark, "")
+pump(1000)
+app.type("vie")
+set_setting("ToggleScope", "All apps")
+pump(500)
+app.type("65t a")
+pump(300)
+check(symbols[-1:] == ["E"], "menu: a new scope applied after the word shows English", symbols)
+os.remove(english_mark)
+write_file(app_switches_path, "[Switches]\n")
+pump(1000)
+# ngosen-toggle, run by a desktop shortcut, leaves a request the engine takes as the toggle key.
+toggle_request = os.path.join(os.path.dirname(english_mark), "toggle")
+write_file(toggle_request, "")
+pump(500)
+check(
+    symbols[-1:] == ["E"] and os.path.exists(english_mark) and not os.path.exists(toggle_request),
+    "toggle command: switches the field in focus and takes the request",
+    (symbols[-1:], os.path.exists(english_mark), os.path.exists(toggle_request)),
+)
+app.ic.focus_out()
+pump(300)
+# As ngosen-toggle writes it, in place rather than renamed into place.
+open(toggle_request, "w").close()
+pump(1000)
+check(
+    not os.path.exists(english_mark) and not os.path.exists(toggle_request),
+    "toggle command: with no field it switches what apps start in",
+    (os.path.exists(english_mark), os.path.exists(toggle_request)),
+)
+app.ic.focus_in()
+pump(300)
+app.type("vie65t ")
+check(
+    app.commits[-1:] == ["việt "],
+    "toggle command: the next field types Vietnamese",
+    app.commits[-1:],
+)
+toggle_dir = os.path.dirname(english_mark)
+
+
+def toggle_requests():
+    return [n for n in os.listdir(toggle_dir) if n.startswith("toggle")]
+
+
+# A check that failed must not leave English or requests behind for the next ones.
+def clean_toggle():
+    for name in toggle_requests():
+        os.remove(os.path.join(toggle_dir, name))
+    if os.path.exists(english_mark):
+        os.remove(english_mark)
+    pump(1000)
+
+
+# Two presses before the engine reads either are two switches, back where they started.
+for name in ("toggle-1", "toggle-2"):
+    open(os.path.join(toggle_dir, name), "w").close()
+pump(1000)
+check(
+    not os.path.exists(english_mark) and toggle_requests() == [],
+    "toggle command: two quick requests switch twice",
+    (os.path.exists(english_mark), toggle_requests()),
+)
+clean_toggle()
+# With another input method in use a request is dropped, not kept until Ngó Sen is back.
+bus.set_global_engine("xkb:us::eng")
+pump(500)
+open(os.path.join(toggle_dir, "toggle"), "w").close()
+pump(1000)
+check(
+    not os.path.exists(english_mark) and toggle_requests() == [],
+    "toggle command: dropped while another input method is in use",
+    (os.path.exists(english_mark), toggle_requests()),
+)
+clean_toggle()
+bus.set_global_engine("ngosen")
+app.ic.focus_out()
+app.ic.focus_in()
+pump(500)
 app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
 pump(500)
 state_dir = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen")
@@ -2704,12 +3082,268 @@ if saved_logs:
     check(modes == (0o700, 0o600), "menu: only the user can read the typing log", modes)
 app.close()
 
+
+class PrimaryOwner:
+    """Owns the X11 primary selection and hands out text, as Firefox does through Xwayland."""
+
+    class Request(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("owner", ctypes.c_ulong),
+            ("requestor", ctypes.c_ulong),
+            ("selection", ctypes.c_ulong),
+            ("target", ctypes.c_ulong),
+            ("property", ctypes.c_ulong),
+            ("time", ctypes.c_ulong),
+        ]
+
+    class Notify(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("requestor", ctypes.c_ulong),
+            ("selection", ctypes.c_ulong),
+            ("target", ctypes.c_ulong),
+            ("property", ctypes.c_ulong),
+            ("time", ctypes.c_ulong),
+        ]
+
+    class PropertyEvent(ctypes.Structure):
+        _fields_ = [
+            ("type", ctypes.c_int),
+            ("serial", ctypes.c_ulong),
+            ("send_event", ctypes.c_int),
+            ("display", ctypes.c_void_p),
+            ("window", ctypes.c_ulong),
+            ("atom", ctypes.c_ulong),
+            ("time", ctypes.c_ulong),
+            ("state", ctypes.c_int),
+        ]
+
+    def __init__(self, text, parts=None):
+        """parts, if given, are sent one by one (ICCCM INCR), as an owner sends a large selection."""
+        self.text = text.encode()
+        self.parts = [part.encode() for part in parts] if parts else None
+        self.asked = 0
+        ready = threading.Event()
+        threading.Thread(target=self.serve, args=(ready,), daemon=True).start()
+        ready.wait(5)
+
+    # Everything on its own display in this thread, since XNextEvent holds the display while it waits.
+    def serve(self, ready):
+        x = ctypes.CDLL("libX11.so.6")
+        x.XOpenDisplay.restype = ctypes.c_void_p
+        x.XOpenDisplay.argtypes = [ctypes.c_char_p]
+        x.XDefaultRootWindow.argtypes = [ctypes.c_void_p]
+        x.XDefaultRootWindow.restype = ctypes.c_ulong
+        x.XCreateSimpleWindow.argtypes = (
+            [ctypes.c_void_p, ctypes.c_ulong]
+            + [ctypes.c_int] * 2
+            + [ctypes.c_uint] * 3
+            + [ctypes.c_ulong] * 2
+        )
+        x.XCreateSimpleWindow.restype = ctypes.c_ulong
+        x.XInternAtom.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_int]
+        x.XInternAtom.restype = ctypes.c_ulong
+        x.XSetSelectionOwner.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+        ]
+        x.XNextEvent.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+        x.XChangeProperty.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_ulong,
+            ctypes.c_int,
+            ctypes.c_int,
+            ctypes.c_char_p,
+            ctypes.c_int,
+        ]
+        x.XSendEvent.argtypes = [
+            ctypes.c_void_p,
+            ctypes.c_ulong,
+            ctypes.c_int,
+            ctypes.c_long,
+            ctypes.c_void_p,
+        ]
+        x.XFlush.argtypes = [ctypes.c_void_p]
+        x.XSelectInput.argtypes = [ctypes.c_void_p, ctypes.c_ulong, ctypes.c_long]
+        # A requestor that gave up has destroyed its window; Xlib's default handler would exit the test.
+        self.on_error = ctypes.CFUNCTYPE(ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p)(
+            lambda *_: 0
+        )
+        x.XSetErrorHandler(self.on_error)
+        d = x.XOpenDisplay(None)
+        window = x.XCreateSimpleWindow(d, x.XDefaultRootWindow(d), 0, 0, 1, 1, 0, 0, 0)
+        primary, utf8 = 1, x.XInternAtom(d, b"UTF8_STRING", 0)
+        incr = x.XInternAtom(d, b"INCR", 0)
+        sending = None  # (requestor, property, parts left) while a transfer in parts runs
+        x.XSetSelectionOwner(d, primary, window, 0)
+        x.XFlush(d)
+        ready.set()
+        event = ctypes.create_string_buffer(192)
+        while True:
+            x.XNextEvent(d, event)
+            request = PrimaryOwner.Request.from_buffer(event)
+            if request.type == 28 and sending:  # PropertyNotify
+                change = PrimaryOwner.PropertyEvent.from_buffer(event)
+                requestor, prop, left = sending
+                if (change.window, change.atom, change.state) == (requestor, prop, 1):
+                    part = left.pop(0)
+                    x.XChangeProperty(d, requestor, prop, utf8, 8, 0, part, len(part))
+                    x.XFlush(d)
+                    if not left:
+                        sending = None
+                continue
+            if request.type != 30:  # SelectionRequest
+                continue
+            self.asked += 1
+            notify = PrimaryOwner.Notify(
+                31, 0, 1, d, request.requestor, request.selection, request.target, 0, request.time
+            )
+            if request.target == utf8 and self.parts:
+                # Reading the INCR property deletes it, which asks for the first part.
+                x.XSelectInput(d, request.requestor, 1 << 22)  # PropertyChangeMask
+                size = struct.pack("l", len(self.text))
+                x.XChangeProperty(d, request.requestor, request.property, incr, 32, 0, size, 1)
+                sending = (request.requestor, request.property, [*self.parts, b""])
+                notify.property = request.property
+            elif request.target == utf8:
+                x.XChangeProperty(
+                    d, request.requestor, request.property, utf8, 8, 0, self.text, len(self.text)
+                )
+                notify.property = request.property
+            x.XSendEvent(d, request.requestor, 0, 0, ctypes.byref(notify))
+            x.XFlush(d)
+
+
+def press_convert(app):
+    app.key(IBus.KEY_F6, IBus.ModifierType.CONTROL_MASK | IBus.ModifierType.SHIFT_MASK)
+    pump(800)
+
+
+# As in fcitx5 the convert key changes the selected text in place with the convert options.
+set_setting("ConvertKey", "Control+Shift+F6")
+set_setting("ConvertFrom", "Unicode")
+set_setting("ConvertTo", "Unicode")
+set_setting("ConvertCase", "UPPER CASE")
+app = menu_app("convert-gtk")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the selection the app reports is converted in place",
+    app.text,
+)
+app.select(11, 11)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM" and app.title == "Bôi đen chữ cần chuyển mã rồi bấm lại phím.",
+    "convert: with nothing selected the text stays and a notice says why",
+    (app.text, app.title),
+)
+app.close()
+if not no_x:
+    # Firefox reports no selection and keeps the cursor at its start, but puts it in the primary selection.
+    owner = PrimaryOwner("việt nam")
+    app = menu_app("convert-firefox")
+    app.reports_anchor = False
+    app.text = "về việt nam"
+    app.report()
+    app.select(11, 3)
+    press_convert(app)
+    check(
+        owner.asked > 0 and app.text == "về VIỆT NAM",
+        "convert: the primary selection is converted where the app reports none",
+        (owner.asked, app.text),
+    )
+    app.close()
+    # A large selection comes in parts; the engine collects them all.
+    owner = PrimaryOwner("việt nam", parts=["việt ", "nam"])
+    app = menu_app("convert-parts")
+    app.reports_anchor = False
+    app.text = "về việt nam"
+    app.report()
+    app.select(11, 3)
+    press_convert(app)
+    check(
+        owner.asked > 0 and app.text == "về VIỆT NAM",
+        "convert: a primary selection sent in parts is converted whole",
+        (owner.asked, app.text),
+    )
+    app.close()
+# A key that both the convert and the mode menu settings name converts, as in fcitx5.
+set_setting("ConvertKey", "grave")
+app = menu_app("convert-menu-key")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(800)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the convert key wins over the same mode menu key",
+    (app.text, app.title),
+)
+app.key(IBus.KEY_grave, IBus.ModifierType.RELEASE_MASK)
+app.close()
+set_setting("ConvertKey", "Control+Shift+F6")
+# The convert key still converts while the mode menu is open, which it closes.
+app = menu_app("convert-menu-open")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(200)
+press_convert(app)
+check(
+    app.text == "về VIỆT NAM",
+    "convert: the convert key converts while the mode menu is open",
+    (app.text, app.title),
+)
+app.close()
+# As with the menu closed, the cycle key comes before the convert key when both name the same key.
+set_setting("CycleModeKey", "Control+Shift+F6")
+app = menu_app("convert-cycle-key")
+app.text = "về việt nam"
+app.report()
+app.select(3, 11)
+app.key(IBus.KEY_grave)
+pump(200)
+press_convert(app)
+check(
+    app.text == "về việt nam",
+    "convert: the cycle key wins over the same convert key with the menu open",
+    (app.text, app.title),
+)
+app.close()
+set_setting("CycleModeKey", "")
+set_setting("ConvertKey", "")
+set_setting("ConvertCase", "Keep")
+
 # Last, since an engine that dies here fails every check after it. A restore may hide the items of
 # a menu that is open.
 app = menu_app("menu-shrinks")
 app.key(IBus.KEY_grave)
 pump(200)
-for name in ("ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"):
+for name in (
+    "ShowModeSen",
+    "ShowModePreedit",
+    "ShowModeOff",
+    "ShowModeVim",
+    "ShowModeEmoji",
+    "ShowModeTeencode",
+):
     set_setting(name, "False")
 app.key(IBus.KEY_Down)
 pump(300)

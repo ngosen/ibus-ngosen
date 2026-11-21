@@ -40,7 +40,7 @@ MANUAL_ONLY = {CLEAN_FCITX5, ONLY_NGOSEN}
 
 SEN, PREEDIT = "sen", "preedit"
 # As the engine reads ngosen-app-rules.conf (src/ngosen-ibus-app-modes.cpp).
-APP_MODE_NUMBERS = {1: SEN, 2: SEN, 3: SEN, 4: SEN, 8: SEN, 5: PREEDIT}
+APP_MODE_NUMBERS = {1: SEN, 2: SEN, 3: SEN, 4: SEN, 6: SEN, 8: SEN, 5: PREEDIT}
 NOT_APPS = ("gnome-shell", "QIBusInputContext", "xim")
 INI_SPACE = " \t\r\f\v"
 
@@ -73,6 +73,7 @@ class Facts:
     gnome_shell_version: str = ""
     # Sen, which types straight into the app; the underlined mode works around the keys GNOME drops.
     direct_typing: bool = False
+    output_charset: str = "Unicode"
     # What gnome-extensions info says; empty when GNOME Shell does not know the extension.
     forward_keys_state: str = ""
     has_gnome_portal: bool = False
@@ -146,6 +147,7 @@ def steps(facts):
     found += _engine_findings(facts)
     found += _variable_findings(facts)
     found += _shell_findings(facts)
+    found += _charset_findings(facts)
     found += leftovers
     if facts.fcitx_running and not _leftovers_start_fcitx5(facts.leftovers):
         found.append(
@@ -348,6 +350,19 @@ def drops_forwarded_keys(version):
     """GNOME 50.0 to 50.3 drop the keys an input method sends on to the app (mutter#4853)."""
     match = re.match(r"50\.(\d+)$", version)
     return match is not None and int(match.group(1)) <= 3
+
+
+# Users pick another charset by mistake and then report broken typing in terminals and browsers.
+def _charset_findings(facts):
+    if not facts.output_charset or facts.output_charset == "Unicode":
+        return []
+    title = _("Output charset is {charset}, not Unicode").format(charset=facts.output_charset)
+    fix = _(
+        "Most apps expect Unicode. With another charset, terminals and web pages can show stray "
+        "tone marks or lose letters. Keep it only for an old document or app that needs it; "
+        "otherwise choose Unicode under Typing › Output Charset."
+    )
+    return [Finding(INFO, title, fix)]
 
 
 def _shell_findings(facts):
@@ -667,6 +682,7 @@ def collect(
     direct_typing=False,
     app_modes_file=None,
     toggle_key=False,
+    output_charset="Unicode",
 ):
     env = dict(os.environ if env is None else env)
     facts = Facts(env={k: v for k, v in env.items() if k.startswith("XDG_")})
@@ -675,6 +691,7 @@ def collect(
     facts.env_from_window = not session
     facts.ngosen_version = ngosen_version
     facts.direct_typing = direct_typing
+    facts.output_charset = output_charset
     facts.distro = _distro()
     owner = session_owner(env, proc)
     facts.ibus_running = owner == "ibus"

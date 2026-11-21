@@ -127,12 +127,14 @@ class CheckPage:
         app_modes_file=None,
         toggle_key=lambda: False,
         config_dir=None,
+        output_charset=lambda: "Unicode",
     ):
         """notify(text, undo) shows a toast; on_count(n) gets the number of steps left."""
         self.sources = sources
         self.app_modes_file = app_modes_file
         self.direct_typing = direct_typing
         self.toggle_key = toggle_key
+        self.output_charset = output_charset
         self.ngosen_version = ngosen_version
         self.notify = notify
         self.on_count = on_count
@@ -195,6 +197,7 @@ class CheckPage:
             direct_typing=self.direct_typing(),
             app_modes_file=self.app_modes_file,
             toggle_key=self.toggle_key(),
+            output_charset=self.output_charset(),
         )
         self.found = system_check.steps(self.facts)
         self.findings = system_check.steps_left(self.found)

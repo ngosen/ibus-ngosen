@@ -18,6 +18,9 @@ from . import (  # noqa: E402
     backup,
     brand,
     check_page,
+    convert,
+    emoji,
+    emoji_words,
     i18n,
     ini,
     keys,
@@ -62,18 +65,36 @@ class Window(Adw.ApplicationWindow):
             backup.Paths(store).app_modes,
             self._toggle_key,
             store.folder,
+            self._output_charset,
         )
 
         self.stack = stack = Adw.ViewStack()
         self.typing = typing = pages.typing_page(self.rows, whats_new.random_tip(), self.show_tips)
+        self.teencode = pages.TeencodeGroup(store, self.teencode_off)
+        typing.add(self.teencode.group)
         typing.add(pages.fcitx5_group(self._show, self.choose_backup_file))
+        self.emoji = emoji.EmojiPage(
+            store,
+            self.rows,
+            self.save_emoji_words,
+            self.enable_emoji,
+            (self.choose_emoji_export, self.choose_emoji_import),
+        )
+        self.convert = convert.ConvertPage(self.rows, self.convert_text, self.swap_charsets)
         self.whats_new = whats_new.WhatsNewPage(
             self.open_setting,
             self.show_page,
-            {"macros": self.macros.page.get_title(), "check": self.check.page.get_title()},
+            {
+                "emoji": self.emoji.page.get_title(),
+                "convert": self.convert.page.get_title(),
+                "macros": self.macros.page.get_title(),
+                "check": self.check.page.get_title(),
+            },
         )
         self.named_pages = {
             "typing": typing,
+            "emoji": self.emoji.page,
+            "convert": self.convert.page,
             "macros": self.macros.page,
             "dictionary": self.dictionary.page,
             "keymap": self.keymap.page,
@@ -85,7 +106,14 @@ class Window(Adw.ApplicationWindow):
             if page is self.check.page:
                 self.check_tab = tab
         # The check page lists findings, not settings.
-        self.search_pages = [typing, self.macros.page, self.dictionary.page, self.keymap.page]
+        self.search_pages = [
+            typing,
+            self.emoji.page,
+            self.convert.page,
+            self.macros.page,
+            self.dictionary.page,
+            self.keymap.page,
+        ]
         # Header tabs cut the longer Vietnamese page names; a sidebar has room for them.
         self.split = Adw.NavigationSplitView(
             sidebar=self._sidebar_page(version), content=self._content_page()
@@ -99,6 +127,8 @@ class Window(Adw.ApplicationWindow):
         narrow = Adw.Breakpoint.new(Adw.BreakpointCondition.parse("max-width: 700sp"))
         narrow.add_setter(self.split, "collapsed", True)
         self.add_breakpoint(narrow)
+        # The engine's menu can switch emoji or teencode for an app while another window has the focus.
+        self.connect("notify::is-active", lambda w, _p: w.is_active() and w._refresh_apps())
         self.refresh()
 
     def _sidebar_page(self, version):
@@ -232,15 +262,61 @@ class Window(Adw.ApplicationWindow):
         self.macros.refresh()
         self.dictionary.refresh()
         self.keymap.refresh()
+        self.emoji.reload()
+        self.teencode.refresh()
+        self.convert.refresh()
+        # An undo or a restore may change the charset the Check page notes.
+        facts = getattr(self.check, "facts", None)
+        if facts is not None and facts.output_charset != self._output_charset():
+            self.check.run()
+
+    def _refresh_apps(self):
+        self.emoji.refresh_apps()
+        self.teencode.refresh()
 
     def save(self, key, value):
         self._write(lambda: self.store.set(key, value), _(options.LABELS[key]))
-        if key == "DirectTyping":
+        # The example and the hint show these settings.
+        if key == "EnglishEmojiKeywords":
+            # The English words decide which emoji have a word on.
+            self.emoji.reload()
+        elif key in (*options.EMOJI_SETTINGS, "ModeMenuKey", "ShortcutEmoji"):
+            self.emoji.refresh()
+        if key in ("ModeMenuKey", "ShortcutTeencode"):
+            self.teencode.refresh()
+        if key in ("DirectTyping", "OutputCharset"):
             self.check.run()
+        if key in convert.SETTING_KEYS:
+            self.convert.refresh()
+
+    def swap_charsets(self, values):
+        self._write(lambda: self.store.set_values(values), _("Charsets"))
+        self.refresh()
+
+    def convert_text(self, text):
+        values = self.store.values
+        try:
+            converted = self.engine.convert_text(
+                text,
+                values.get("ConvertFrom", ""),
+                values.get("ConvertTo", ""),
+                convert.case_index(values.get("ConvertCase", "")),
+                values.get("ConvertStripDiacritics") == "True",
+            )
+        except (AttributeError, OSError, subprocess.SubprocessError):
+            return None, _("Cannot run the engine to convert.")
+        if converted is None:
+            return None, _("The engine does not know one of these charsets.")
+        return converted, None
 
     def _toggle_key(self):
         # As the engine read it: keys it cannot parse are left out.
         return bool(self.store.values.get("ToggleKey", "").strip())
+
+    def _output_charset(self):
+        # The engine's menu saves the charset itself, as it does the mode.
+        saved = ini.parse(read_text(self.store.settings_file) or "")[0]
+        return saved.get("OutputCharset", self.store.values.get("OutputCharset", "Unicode"))
 
     def _direct_typing(self):
         # The engine saves the mode itself when it is picked from its menu.
@@ -261,6 +337,66 @@ class Window(Adw.ApplicationWindow):
         saved = self._write(lambda: self.store.set_keymap(entries), _("Keymap"))
         self.keymap.refresh()
         return saved
+
+    def choose_emoji_export(self):
+        dialog = self._file_dialog(_("Export Emoji Words"), _("Emoji words"))
+        dialog.set_initial_name("ngosen-emoji-words.json")
+        dialog.save(self, None, self._on_file, dialog.save_finish, self.export_emoji_words)
+
+    def choose_emoji_import(self):
+        dialog = self._file_dialog(_("Import Emoji Words"), _("Emoji words"))
+        dialog.open(self, None, self._on_file, dialog.open_finish, self.import_emoji_words)
+
+    def export_emoji_words(self, path):
+        try:
+            count = emoji_words.export_words(self.store.emoji_edits, path)
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Could not export: {}").format(reason(error)), timeout=0))
+            return
+        self._show(Adw.Toast(title=_("Saved {} words to {}.").format(count, path)))
+
+    def import_emoji_words(self, path):
+        try:
+            pairs = emoji_words.read_shared(path)
+        except (OSError, ValueError) as error:
+            self._show(Adw.Toast(title=_("Could not import: {}").format(reason(error)), timeout=0))
+            return
+        edits, added = self.emoji.words.merged(pairs)
+        if not added:
+            self._show(Adw.Toast(title=_("You already have every word in that file.")))
+            return
+        self.save_emoji_words(edits, _("{} words from the file").format(added))
+        self.emoji.reload()
+
+    def save_emoji_words(self, edits, label):
+        saved = self._write(lambda: self.store.set_emoji_edits(edits), label)
+        self.emoji.refresh()
+        return saved
+
+    def teencode_off(self, app):
+        try:
+            changed = self.store.teencode_off_in(app)
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
+            changed = False
+        self.teencode.refresh()
+        if not changed:
+            return
+        toast = Adw.Toast(title=_("Teencode is off in {}.").format(app), button_label=_("_Undo"))
+        toast.connect("button-clicked", lambda _t: self.undo())
+        self._show(toast)
+
+    def enable_emoji(self, app):
+        try:
+            if not self.store.enable_emoji_in(app):
+                return
+        except OSError as error:
+            self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
+            self.refresh()
+            return
+        toast = Adw.Toast(title=_("Emoji are back on in {}.").format(app), button_label=_("_Undo"))
+        toast.connect("button-clicked", lambda _t: self.undo())
+        self._show(toast)
 
     def _write(self, write, label):
         try:
@@ -338,8 +474,8 @@ class Window(Adw.ApplicationWindow):
         dialog = self._file_dialog(_("Restore Settings"))
         dialog.open(self, None, self._on_file, dialog.open_finish, self.restore_backup)
 
-    def _file_dialog(self, title):
-        json_files = Gtk.FileFilter(name=_("Ngó Sen backup"))
+    def _file_dialog(self, title, kind=None):
+        json_files = Gtk.FileFilter(name=kind or _("Ngó Sen backup"))
         json_files.add_suffix("json")
         filters = Gio.ListStore.new(Gtk.FileFilter)
         filters.append(json_files)

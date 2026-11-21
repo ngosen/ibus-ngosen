@@ -18,8 +18,8 @@ namespace ngosen {
         const char* const Interface = "org.freedesktop.Notifications";
 
         // Names the release, so it changes with each feature release.
-        const char* const NoticeText = "Version 1.4: extra keys after a word no longer undo its marks, and Space drops them or splits off "
-                                       "a word. See What's new for more.";
+        const char* const NoticeText = "Version 1.5: emoji while typing, one switch key for every app, drawn-out letters and "
+                                       "teencode. See What's new for more.";
 
         struct Notice {
             GDBusConnection*      bus     = nullptr;
