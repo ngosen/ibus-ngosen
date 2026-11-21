@@ -5,7 +5,6 @@
  */
 #include "ngosen-ibus-host.h"
 #include "ngosen-ibus-shell.h"
-#include "ngosen-ibus-xim-app.h"
 #include "ngosen-app-quirks.h"
 #include "ngosen-xtest.h"
 #include "ngosen-clock.h"
@@ -131,19 +130,16 @@ namespace {
         clicksWatched.store(false);
     }
 
-    // xterm takes forwarded backspaces only after a commit sent during the wait; the core erases with
-    // DEL only for an XIM field named after the app, as fcitx5 reports it.
+    // A backspace forwarded inside an XIM request comes back late; the core holds it for XIM fields.
+    // ibus-x11 drops a DEL in a commit, so the field carries no app name that would pick that.
     void testXimField() {
         IBusEngine engine{};
         IBusHost   host(&engine);
         host.setDirectTyping(true);
-        setXimFocusedAppForTest("xterm");
         host.setClient("xim");
         const Field f = host.field();
-        check(f.frontend == "xim" && f.program == "xterm", "an XIM client is reported as fcitx5 reports it");
-        check(erasesWithCommittedDel(f), "xterm over XIM erases with DEL");
-        setXimFocusedAppForTest("");
-        check(host.field().frontend == "xim" && host.field().program == "xim", "an XIM client with no name keeps IBus's");
+        check(f.frontend == "xim" && f.program == "xim", "an XIM client is reported with the XIM frontend");
+        check(!erasesWithCommittedDel(f), "an XIM client never erases with DEL");
         host.setClient("gtk3-im:gedit");
         check(host.field().frontend == "ibus" && host.field().program == "gtk3-im:gedit", "other clients stay IBus clients");
     }

@@ -9,7 +9,6 @@
 
 #include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
-#include "ngosen-ibus-xim-app.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
 #include "ngosen-xtest.h"
@@ -163,8 +162,6 @@ namespace ngosen {
     }
 
     std::string programOf(const std::string& client) {
-        if (client == "xim" && !ximFocusedApp().empty())
-            return ximFocusedApp();
         return client == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client;
     }
 

@@ -4,7 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-primary.h"
-#include "ngosen-ibus-xim-app.h"
 
 #include <arpa/inet.h>
 #include <chrono>
@@ -66,14 +65,6 @@ int main() {
         std::cout << "FAIL every read stuck on the server keeps a thread: " << threads << " threads\n";
         _exit(1);
     }
-    // An XIM focus-in asks the same server for the focused window's name.
-    const auto focusStart = std::chrono::steady_clock::now();
-    ngosen::noteXimFocus();
-    const auto focusWaited = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - focusStart).count();
-    if (!ngosen::ximFocusedApp().empty() || focusWaited > 1000) {
-        std::cout << "FAIL an X server that never answers holds an XIM focus-in for " << focusWaited << " ms\n";
-        _exit(1);
-    }
-    // The reading threads are still stuck on the silent server; leave without waiting for them.
+    // The reading thread is still stuck on the silent server; leave without waiting for it.
     _exit(0);
 }
