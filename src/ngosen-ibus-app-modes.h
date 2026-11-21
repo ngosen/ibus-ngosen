@@ -12,6 +12,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_set>
 
 namespace ngosen {
 
@@ -88,6 +89,12 @@ namespace ngosen {
     constexpr const char* TeencodeAppsHeader = "# Apps where Ngó Sen keeps teencode, one per line";
     AppNameSet            parseAppList(const std::string& text);
     std::string           appListText(const std::string& header, const AppNameSet& apps);
+
+    // Apps where the core found an xterm.js terminal. Names stay as the field reported them, since the
+    // core matches them exactly; GNOME Shell's "window:N" names last one session and are not written.
+    constexpr const char*           WebTerminalAppsHeader = "# Apps where Ngó Sen found an xterm.js terminal, one per line";
+    std::unordered_set<std::string> readWebTerminalApps(const std::string& path);
+    bool                            writeWebTerminalApps(const std::string& path, const std::unordered_set<std::string>& apps, const FileWriter& write = writeFileAtomically);
 
     // Apps picked in the mode menu for a switch kept per app, such as Vim mode.
     class AppList {
