@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: 2026 Ngó Sen contributors
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Prints the Check page as text, for a terminal or an AI assistant. It changes nothing."""
+
+import argparse
+import os
+import subprocess
+
+from . import i18n, ini, system_check
+from .gnome_sources import GnomeSources
+from .store import Engine, config_dir, read_text
+
+
+def saved_settings(engine_path, folder=None):
+    """The engine's defaults with the saved file on top, as the settings window reads them."""
+    try:
+        values = Engine(engine_path).settings()
+    except (OSError, subprocess.SubprocessError):
+        values = {}
+    folder = folder or config_dir()
+    values.update(ini.parse(read_text(os.path.join(folder, "ngosen.conf")) or "")[0])
+    return values, folder
+
+
+def check(engine_path, version, sources=None, folder=None):
+    values, folder = saved_settings(engine_path, folder)
+    facts = system_check.collect(
+        sources or GnomeSources(),
+        version,
+        direct_typing=values.get("DirectTyping") == "True",
+        app_modes_file=os.path.join(folder, "ngosen-app-rules.conf"),
+        toggle_key=bool(values.get("ToggleKey", "").strip()),
+        output_charset=values.get("OutputCharset", "Unicode"),
+    )
+    return system_check.terminal_report(facts, system_check.steps(facts))
+
+
+def main(engine_path, localedir, version, argv=None):
+    i18n.setup(localedir)
+    parser = argparse.ArgumentParser(prog="ngosen-check", description=__doc__)
+    parser.parse_args(argv)
+    print(check(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path), version))
+    return 0

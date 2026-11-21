@@ -54,6 +54,7 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %license LICENSE
 %{_libexecdir}/ibus-engine-ngosen
 %{_libexecdir}/ibus-setup-ngosen
+%{_bindir}/ngosen-check
 %{_bindir}/ngosen-toggle
 %{_datadir}/ibus/component/ngosen.xml
 %{_datadir}/ibus-ngosen/
