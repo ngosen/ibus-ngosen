@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Đổi
+
+- README giới thiệu bản này là "Ngó Sen cho IBus", đứng cạnh bản fcitx5: hai bản dùng chung lõi gõ, chọn bản nào tuỳ
+  sở thích; distro dùng IBus mặc định như Ubuntu, Fedora Workstation thì bản IBus là lựa chọn đơn giản. Bản IBus đã
+  gõ được trên KDE Plasma, Cinnamon và Xfce, không chỉ GNOME (#191).
+
 ### Bỏ
 
 - Bỏ ô "Kiểm tra chính tả" khỏi cửa sổ cài đặt và menu trên thanh trên cùng, vì nó chỉ có tác dụng khi "Tự khôi
