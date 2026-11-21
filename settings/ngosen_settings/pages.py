@@ -770,8 +770,8 @@ def show_switch_dialog(parent, show_toast, back_up=None):
     dialog = Adw.AlertDialog(
         heading=_("Switch to the fcitx5 edition"),
         body=_(
-            "Run this command in a terminal, then log out and back in. On Debian and Ubuntu it "
-            "replaces this edition. On Fedora, openSUSE and Arch, copy the command, remove "
+            "Run this command in a terminal, then log out and back in. On Debian, Ubuntu and "
+            "Fedora it replaces this edition. On openSUSE and Arch, copy the command, remove "
             "ibus-ngosen, then run it; this window goes with the package."
         )
         + "\n\n"
