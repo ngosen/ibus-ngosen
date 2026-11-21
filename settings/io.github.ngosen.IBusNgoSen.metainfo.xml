@@ -5,8 +5,8 @@
   <project_license>GPL-3.0-or-later</project_license>
   <name>Ngó Sen for IBus</name>
   <name xml:lang="vi">Ngó Sen bản IBus</name>
-  <summary>Type Vietnamese with Telex or VNI</summary>
-  <summary xml:lang="vi">Gõ tiếng Việt bằng Telex hoặc VNI</summary>
+  <summary>Type Vietnamese with Telex and VNI</summary>
+  <summary xml:lang="vi">Gõ tiếng Việt kiểu Telex và VNI</summary>
   <description>
     <p>
       A Vietnamese input method for IBus, the input method GNOME comes with. It types straight into
