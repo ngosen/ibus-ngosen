@@ -9,6 +9,7 @@
 
 #include "ngosen-app-quirks.h"
 #include "ngosen-ibus-shell.h"
+#include "ngosen-ibus-xim-app.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
 #include "ngosen-xtest.h"
@@ -162,13 +163,15 @@ namespace ngosen {
     }
 
     std::string programOf(const std::string& client) {
+        if (client == "xim" && !ximFocusedApp().empty())
+            return ximFocusedApp();
         return client == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client;
     }
 
     Field IBusHost::field() const {
         Field f;
-        // As for an IBus client of fcitx5, so the checks in ngosen-app-quirks.cpp apply as they are.
-        f.frontend = "ibus";
+        // As fcitx5 names the frontend, so the checks in ngosen-app-quirks.cpp apply as they are.
+        f.frontend = client_ == "xim" ? "xim" : "ibus";
         // The Shell names every app it relays after itself, so the rules for one app need its own name.
         f.program = programOf(client_);
         if (f.program != client_)

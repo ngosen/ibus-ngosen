@@ -16,6 +16,7 @@
 #include "ngosen-ibus-program-name.h"
 #include "ngosen-ibus-resources.h"
 #include "ngosen-ibus-shell.h"
+#include "ngosen-ibus-xim-app.h"
 #include "ngosen-ibus-typing-log.h"
 #include "ngosen-log.h"
 #include "ngosen-pointer.h"
@@ -927,6 +928,8 @@ namespace {
         const std::string name = client != nullptr ? client : "";
         if (name != ngosen::FakeClient)
             lastClient = name;
+        if (name == "xim")
+            ngosen::noteXimFocus();
         if (Session* session = sessionOf(engine))
             session->host->setClient(name);
         NGOSEN_INFO("Focus in: " + name);

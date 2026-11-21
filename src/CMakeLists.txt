@@ -12,6 +12,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-menu.cpp
     ngosen-ibus-mode-menu.cpp
     ngosen-ibus-primary.cpp
+    ngosen-ibus-xim-app.cpp
     ngosen-ibus-program-name.cpp
     ngosen-ibus-resources.cpp
     ngosen-ibus-shell.cpp
