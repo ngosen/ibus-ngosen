@@ -1777,7 +1777,7 @@ app.close()
 # Each settings change rebuilds the engine, which must keep typing English.
 app = App("toggle-settings")
 tap_ctrl_shift(app)
-set_setting("SpellCheck", "True")
+set_setting("CapitalizeMacro", "True")
 app.type("vieetj ")
 check(
     app.text == "vieetj " and app.commits == [],
@@ -2865,9 +2865,9 @@ with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
 check(
-    menu_labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    menu_labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa",
     "menu: in Vietnamese whatever the desktop language",
-    menu_labels.get("SpellCheck"),
+    menu_labels.get("CapitalizeMacro"),
 )
 check(
     bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
@@ -2882,30 +2882,30 @@ check(
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
 # GNOME Shell sends the state a plain item shows, so a click on "✔ ..." comes as checked.
-app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
-    check("SpellCheck=False" in f.read(), "menu: a click turns an on item off", settings_path)
+    check("CapitalizeMacro=False" in f.read(), "menu: a click turns an on item off", settings_path)
 check(
-    gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả",
+    gnome.labels.get("CapitalizeMacro") == "✖ Gõ tắt chữ hoa",
     "menu: GNOME shows the new setting",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 # The engine reloads settings only between words, while clicks and the menu go by the file.
 app.type("vie")
 check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
-app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.UNCHECKED)
 pump(1000)
 check(
-    gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    gnome.labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa",
     "menu: a click while a word is underlined shows the new setting",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
-app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.CHECKED)
 pump(1000)
 with open(settings_path) as f:
     check(
-        "SpellCheck=False" in f.read(),
+        "CapitalizeMacro=False" in f.read(),
         "menu: two clicks while a word is underlined put the setting back",
         settings_path,
     )
@@ -2920,25 +2920,25 @@ check(
 )
 set_setting("EnableMacro", "True")
 pump(500)
-set_setting("ShowMenuSpellCheck", "False")
+set_setting("ShowMenuCapitalizeMacro", "False")
 pump(1000)
-check("SpellCheck" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
-set_setting("ShowMenuSpellCheck", "True")
+check("CapitalizeMacro" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
+set_setting("ShowMenuCapitalizeMacro", "True")
 pump(1000)
-check("SpellCheck" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
+check("CapitalizeMacro" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
 set_setting("UiLanguage", "English")
 pump(1000)
 check(
-    (gnome.labels.get("SpellCheck") or "").endswith(" Spell Check"),
+    (gnome.labels.get("CapitalizeMacro") or "").endswith(" Capitalize Macro"),
     "menu: an English interface reaches GNOME at once",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 set_setting("UiLanguage", "Vietnamese")
 pump(1000)
 check(
-    (gnome.labels.get("SpellCheck") or "").endswith(" Kiểm tra chính tả"),
+    (gnome.labels.get("CapitalizeMacro") or "").endswith(" Gõ tắt chữ hoa"),
     "menu: and Vietnamese again",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 updates.clear()
 tap_ctrl_shift(app)
