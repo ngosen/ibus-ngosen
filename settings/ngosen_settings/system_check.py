@@ -643,9 +643,11 @@ class Fixes:
         return undo
 
 
-def report(facts, findings):
-    """Plain text for the bug report, which the user reviews before sending."""
-    marks = {OK: "OK", INFO: "i", WARN: "!", FAIL: "X"}
+MARKS = {OK: "OK", INFO: "i", WARN: "!", FAIL: "X"}
+AI_HELP_URL = "https://github.com/ngosen/ngosen/blob/main/docs/ai-help.md"
+
+
+def _report_header(facts):
     desktop = ":".join(facts.desktops) or "?"
     lines = [
         f"Ngó Sen {facts.ngosen_version or '?'}, IBus {facts.ibus_version or '?'}"
@@ -660,8 +662,24 @@ def report(facts, findings):
         line += f", portal: {'installed' if facts.has_gnome_portal else 'not installed'}"
         mode = "Sen" if facts.direct_typing else "underlined"
         lines.append(f"{line}, mode: {mode}, apps with their own mode: {facts.picked_apps}")
-    lines.append("")
-    lines += [f"[{marks[f.level]}] {f.title}" for f in findings] or ["[OK] no setup problem found"]
+    return lines
+
+
+def report(facts, findings):
+    """Plain text for the bug report, which the user reviews before sending."""
+    lines = _report_header(facts) + [""]
+    lines += [f"[{MARKS[f.level]}] {f.title}" for f in findings] or ["[OK] no setup problem found"]
+    return "\n".join(lines)
+
+
+def terminal_report(facts, found):
+    """The report with each step's fix, for a terminal or an AI assistant."""
+    lines = [f"# Ngó Sen (IBus) check. Guide for AI assistants: {AI_HELP_URL}"]
+    lines += _report_header(facts) + [""]
+    for f in found:
+        lines.append(f"[{MARKS[f.level]}] {f.title}")
+        if f.fix and f.level != OK:
+            lines.append(f"    {f.fix}")
     return "\n".join(lines)
 
 

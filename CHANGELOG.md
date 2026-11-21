@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Thêm
+
+- Lệnh `ngosen-check` in kết quả Kiểm tra máy ra terminal, kèm cách sửa từng bước, để AI chạy lệnh được đọc. Lệnh
+  không đổi gì trên máy (#188).
+
 ### Bỏ
 
 - Bỏ ô "Kiểm tra chính tả" khỏi cửa sổ cài đặt và menu trên thanh trên cùng, vì nó chỉ có tác dụng khi "Tự khôi
