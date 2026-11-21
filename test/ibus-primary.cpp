@@ -50,6 +50,8 @@ int main() {
         std::cout << "SKIP no free port for a fake X server\n";
         return 0;
     }
+    // Run from a KDE session, the compositor would answer before the silent X server is asked.
+    unsetenv("WAYLAND_DISPLAY");
     setenv("DISPLAY", ("127.0.0.1:" + std::to_string(display)).c_str(), 1);
     const auto        start  = std::chrono::steady_clock::now();
     const std::string text   = ngosen::readPrimarySelection(200);

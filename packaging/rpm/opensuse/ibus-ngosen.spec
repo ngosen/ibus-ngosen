@@ -22,6 +22,8 @@ Conflicts:      fcitx5-ngosen
 Requires:       libxcb1
 Requires:       libxcb-xtest0
 Requires:       libxcb-xinput0
+# Loaded with dlopen on Wayland to read the primary selection.
+Requires:       libwayland-client0
 Requires:       python3-gobject
 # The settings window loads these through GObject introspection, which the automatic requires miss.
 Requires:       typelib(Gtk) = 4.0

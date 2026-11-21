@@ -5,6 +5,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-announce.cpp
     ngosen-ibus-app-modes.cpp
     ngosen-ibus-config.cpp
+    ngosen-ibus-data-control.cpp
     ngosen-ibus-engine.cpp
     ngosen-ibus-host.cpp
     ngosen-ibus-i18n.cpp
@@ -17,6 +18,7 @@ add_library(ngosen_ibus STATIC
     ngosen-ibus-shell.cpp
     ngosen-ibus-sources.cpp
     ngosen-ibus-typing-log.cpp
+    ngosen-ibus-wayland-primary.cpp
 )
 target_include_directories(ngosen_ibus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_compile_definitions(ngosen_ibus PUBLIC GETTEXT_PACKAGE="ibus-ngosen" NGOSEN_IBUS_VERSION="${PROJECT_VERSION}")
