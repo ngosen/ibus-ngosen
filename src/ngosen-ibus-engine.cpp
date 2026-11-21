@@ -22,8 +22,10 @@
 #include "ngosen-state.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -173,13 +175,15 @@ namespace {
         // Vim mode and emoji suggestions for the field in focus when its app has no name to keep them under, as
         // fcitx5 keeps them for the field.
         // Between enable and disable, while Ngó Sen is the input method of this context.
-        bool  enabled      = true;
-        bool  vimHere      = false;
-        bool  emojiOffHere = false;
-        bool  teencodeHere = false;
-        guint menuCursor   = 0;
-        guint menuTimer    = 0;
-        guint clickTimer   = 0;
+        bool enabled      = true;
+        bool vimHere      = false;
+        bool emojiOffHere = false;
+        bool teencodeHere = false;
+        // The input context in focus.
+        std::string context;
+        guint       menuCursor = 0;
+        guint       menuTimer  = 0;
+        guint       clickTimer = 0;
         // The last key press or the opening of the menu, whichever came later.
         gint64 menuQuietSince = 0;
         // Clicks seen up to the opening of the menu; a click queued before it must not close it.
@@ -903,16 +907,45 @@ namespace {
         showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().savedSettings(), true);
     }
 
+    // IBus never tells an engine that a context went away; past this a choice ends with the focus.
+    constexpr size_t KeptContexts = 64;
+
+    // Shared by every engine: a context that gets focus back may be served by another app's engine.
+    std::map<std::string, std::array<bool, 3>> keptHere;
+
+    // GNOME Shell uses one input context for every app it relays, so there a choice ends with the focus.
+    void keepFieldSwitches(Session& session) {
+        const std::array<bool, 3> here = {session.vimHere, session.emojiOffHere, session.teencodeHere};
+        if (!session.context.empty() && session.host->client() != "gnome-shell") {
+            if (here == std::array<bool, 3>{})
+                keptHere.erase(session.context);
+            else if (keptHere.size() < KeptContexts || keptHere.count(session.context) > 0)
+                keptHere[session.context] = here;
+        }
+        session.context.clear();
+        session.vimHere      = false;
+        session.emojiOffHere = false;
+        session.teencodeHere = false;
+    }
+
+    void restoreFieldSwitches(Session& session, const std::string& context) {
+        session.context = context;
+        const auto kept = keptHere.find(context);
+        if (kept == keptHere.end() || session.host->client() == "gnome-shell")
+            return;
+        session.vimHere      = kept->second[0];
+        session.emojiOffHere = kept->second[1];
+        session.teencodeHere = kept->second[2];
+    }
+
     void focusOut(IBusEngine* engine) {
         if (focusedEngine == engine)
             focusedEngine = nullptr;
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->tap          = {};
-        session->vimHere      = false;
-        session->emojiOffHere = false;
-        session->teencodeHere = false;
+        session->tap = {};
+        keepFieldSwitches(*session);
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();
@@ -923,12 +956,14 @@ namespace {
         session->host->forgetReportedText();
     }
 
-    void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
+    void focusInId(IBusEngine* engine, const gchar* objectPath, const gchar* client) {
         const std::string name = client != nullptr ? client : "";
         if (name != ngosen::FakeClient)
             lastClient = name;
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
             session->host->setClient(name);
+            restoreFieldSwitches(*session, objectPath != nullptr ? objectPath : "");
+        }
         NGOSEN_INFO("Focus in: " + name);
         focusIn(engine);
     }
