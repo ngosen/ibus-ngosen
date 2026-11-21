@@ -10,7 +10,7 @@ careful human wrote it, and the person sending it must be able to explain every 
 
 ## What this repository is
 
-The IBus engine of Ngó Sen for GNOME, where IBus is the input method framework. By default it types
+The IBus engine of Ngó Sen, where IBus is the input method framework. By default it types
 with Sen, as the fcitx5 edition does: straight into fields that report the text around the cursor, and
 with an underlined preedit where a field cannot take that. That path handles how GNOME Shell passes
 deletions on and keeps the core's click check. The mode menu keeps Sen or the underline per app, and a

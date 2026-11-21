@@ -3,8 +3,8 @@
   <id>io.github.ngosen.IBusNgoSen</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
-  <name>Ngó Sen for GNOME</name>
-  <name xml:lang="vi">Ngó Sen cho GNOME</name>
+  <name>Ngó Sen for IBus</name>
+  <name xml:lang="vi">Ngó Sen bản IBus</name>
   <summary>Type Vietnamese with Telex or VNI</summary>
   <summary xml:lang="vi">Gõ tiếng Việt bằng Telex hoặc VNI</summary>
   <description>

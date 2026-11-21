@@ -686,7 +686,7 @@ def about_dialog(version):
         application_name="Ngó Sen",
         application_icon="io.github.ngosen.IBusNgoSen",
         version=version,
-        comments=_("Vietnamese input method for GNOME")
+        comments=_("Vietnamese input method for IBus")
         + "\n\n"
         + _("Based on the code of {fork} and {vmk}.").format(fork=FORK[0], vmk=VMK[0]),
         website=PROJECT_URL,

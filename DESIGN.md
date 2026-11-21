@@ -1,5 +1,5 @@
 ---
-name: Ngó Sen for GNOME settings
+name: Ngó Sen for IBus settings
 description: A plain libadwaita window with the Ngó Sen marks.
 typography:
   typed:
@@ -7,7 +7,7 @@ typography:
   everything: "system font (libadwaita default)"
 ---
 
-# Design: Ngó Sen for GNOME settings window
+# Design: Ngó Sen for IBus settings window
 
 The window is a GNOME app first: stock libadwaita widgets, the system accent colour, light and dark
 from the system. Ngó Sen shows itself in two places only: the icon, and typed text in larger text, as

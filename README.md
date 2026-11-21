@@ -2,9 +2,9 @@
 
 <img src="https://raw.githubusercontent.com/ngosen/ngosen/main/data/icons/hicolor/scalable/apps/io.github.ngosen.NgoSen.Settings.svg" alt="Logo Ngó Sen" width="128">
 
-# Ngó Sen cho GNOME
+# Ngó Sen bản IBus
 
-**Bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5.**
+**Bộ gõ tiếng Việt chạy trên IBus, không cần fcitx5.**
 
 [![Release](https://img.shields.io/github/v/release/ngosen/ibus-ngosen?label=version&color=1f6e5c)](https://github.com/ngosen/ibus-ngosen/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-1f6e5c)](LICENSE)
@@ -16,7 +16,7 @@
 
 ---
 
-Ngó Sen cho GNOME là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, không cần fcitx5. Bản IBus gần như tương đương 1:1 với [bản fcitx5](https://github.com/ngosen/ngosen), dùng chung lõi gõ; tính năng mới có thể đến bản IBus muộn hơn. Người dùng lựa chọn phiên bản tuỳ theo sở thích: bản IBus hướng đến sự đơn giản và ổn định, tận dụng những gì GNOME có sẵn và cài xong là gõ được ngay trên GNOME, không phải thiết lập gì thêm.
+Ngó Sen bản IBus là bộ gõ tiếng Việt chạy trên IBus, bộ gõ có sẵn của GNOME, và trên Cinnamon, Xfce, KDE Plasma khi dùng IBus; không cần fcitx5. Bản này dùng chung lõi gõ với [bản fcitx5](https://github.com/ngosen/ngosen) nên tính năng hiện tương đương 1:1; chọn bản nào là tuỳ thích. Tính năng mới đến bản IBus chậm hơn một chút. Trên GNOME, cài xong là gõ được ngay, không phải thiết lập gì thêm.
 
 Cửa sổ cài đặt theo giao diện sáng/tối của máy, lưu thay đổi ngay và có nút Hoàn tác.
 
@@ -198,7 +198,7 @@ Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ng�
 
 ## English
 
-Ngó Sen for GNOME (`ibus-ngosen`) is a Vietnamese input method for GNOME that integrates directly into the system's built-in IBus without requiring fcitx5. It shares the same typing core as [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen) and is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
+Ngó Sen for IBus (`ibus-ngosen`) is a Vietnamese input method for IBus, the input method GNOME comes with; it also runs on Cinnamon, Xfce and KDE Plasma set up with IBus, and needs no fcitx5. It shares the typing core of [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen), so both currently have the same features; pick whichever you prefer. New features reach the IBus edition a little later. It is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
 
 Key features include:
 - Gõ Sen (direct typing without underline) by default, with Preedit or Off configurable per app via the `` ` `` menu.

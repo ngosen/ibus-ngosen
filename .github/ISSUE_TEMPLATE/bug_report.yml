@@ -1,5 +1,5 @@
 name: Báo lỗi
-description: Báo lỗi khi gõ bằng Ngó Sen cho GNOME (ibus-ngosen).
+description: Báo lỗi khi gõ bằng Ngó Sen bản IBus (ibus-ngosen).
 labels: ['lỗi']
 body:
   - type: markdown
