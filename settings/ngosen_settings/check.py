@@ -8,7 +8,6 @@ import os
 import subprocess
 
 from . import i18n, ini, system_check
-from .gnome_sources import GnomeSources
 from .store import Engine, config_dir, read_text
 
 
@@ -24,9 +23,14 @@ def saved_settings(engine_path, folder=None):
 
 
 def check(engine_path, version, sources=None, folder=None):
+    if sources is None:
+        # Needs gi, which a package build can lack; the tests pass their own sources.
+        from .gnome_sources import GnomeSources
+
+        sources = GnomeSources()
     values, folder = saved_settings(engine_path, folder)
     facts = system_check.collect(
-        sources or GnomeSources(),
+        sources,
         version,
         direct_typing=values.get("DirectTyping") == "True",
         app_modes_file=os.path.join(folder, "ngosen-app-rules.conf"),

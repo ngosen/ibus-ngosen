@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
+import importlib.util
 import os
 import subprocess
 import sys
@@ -65,8 +66,13 @@ class CheckTest(unittest.TestCase):
         )
         self.assertTrue(text.startswith("# Ngó Sen (IBus) check."))
 
+    @unittest.skipUnless(importlib.util.find_spec("gi"), "needs gi")
     def test_needs_no_gtk(self):
-        code = "import sys; import ngosen_settings.check; print('gi.repository.Gtk' in sys.modules)"
+        code = (
+            "import sys, tempfile; from ngosen_settings import check; "
+            "check.check('/nonexistent', '1', folder=tempfile.mkdtemp()); "
+            "print('gi.repository.Gtk' in sys.modules)"
+        )
         out = subprocess.run(
             [sys.executable, "-c", code],
             capture_output=True,
