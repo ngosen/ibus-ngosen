@@ -10,6 +10,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ### Thêm
 
+- Lệnh `ngosen-check` in kết quả Kiểm tra máy ra terminal, kèm cách sửa từng bước, để AI chạy lệnh được đọc. Lệnh
+  không đổi gì trên máy (#188).
 - Lệnh `ngosen-save-log` lưu nhật ký gõ từ terminal như mục "Lưu nhật ký gõ" trong menu, rồi in đường dẫn tệp (#189).
 
 ### Bỏ
@@ -18,6 +20,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   phục từ gõ sai" đang bật: nay Tự khôi phục luôn so với từ điển, như bản fcitx5. Ai từng tắt ô này để giữ dấu cho
   chữ kiểu chat như `zậy`, `kạ`, hãy bật Teencode cho app đó (bấm `` ` `` rồi `t`), hoặc thêm chữ muốn giữ vào Từ
   điển tuỳ chỉnh (ngosen/ngosen#112) (#183).
+
+### Sửa
+
+- Trên KDE, Sway và Hyprland, bôi đen chữ trong app GTK3 hay Firefox rồi bấm phím chuyển mã nay đổi được chữ, như bản
+  fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190).
 
 ## [1.5.0-1] — 21/11/2026
 

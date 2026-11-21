@@ -20,6 +20,8 @@ Requires:       ibus >= 1.5.27
 Conflicts:      fcitx5-ngosen
 # Loaded with dlopen on X11 to watch clicks and press keys, which the automatic requires miss.
 Requires:       libxcb
+# Loaded with dlopen on Wayland to read the primary selection.
+Requires:       libwayland-client
 Requires:       python3-gobject
 Requires:       gtk4
 Requires:       libadwaita >= 1.5
@@ -49,6 +51,7 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %license LICENSE
 %{_libexecdir}/ibus-engine-ngosen
 %{_libexecdir}/ibus-setup-ngosen
+%{_bindir}/ngosen-check
 %{_bindir}/ngosen-save-log
 %{_bindir}/ngosen-toggle
 %{_datadir}/ibus/component/ngosen.xml

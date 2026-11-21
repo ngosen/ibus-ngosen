@@ -192,6 +192,9 @@ namespace ngosen {
     } // namespace
 
     std::string readPrimarySelection(int timeoutMs) {
+        // KDE does not hand what Wayland apps select to Xwayland, so ask the compositor first.
+        if (std::optional<std::string> text = readWaylandPrimarySelection(timeoutMs))
+            return *text;
         if (!xcb().usable() || std::getenv("DISPLAY") == nullptr)
             return {};
         // Connecting and every reply can stall on a busy X server, so a thread does the reading and the
