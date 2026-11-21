@@ -853,7 +853,7 @@ if no_x:
     )
     tray.notices, tray.tables = [], 0
     tray.property_activate("InputMode", IBus.PropState.CHECKED)
-    pump(500)
+    pump_until(lambda: app_switch_of("org.gnome.TextEditor") == "Vietnamese=True", 5000)
     check(
         app_switch_of("org.gnome.TextEditor") == "Vietnamese=True"
         and app_switch_of("fake") is None,
@@ -2705,7 +2705,7 @@ anonymous = App("QIBusInputContext")
 anonymous.ic.focus_out()
 pump(300)
 tray.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: os.path.exists(english_mark), 5000)
 check(
     app_switch_of("fake") is None and os.path.exists(english_mark),
     "tray: after a field with no name the click changes the shared language",
@@ -2713,7 +2713,7 @@ check(
 )
 # Back to Vietnamese: the checks below expect the shared language as they found it.
 tray.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: not os.path.exists(english_mark), 5000)
 check(not os.path.exists(english_mark), "tray: a second click restores Vietnamese", english_mark)
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
