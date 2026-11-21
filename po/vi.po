@@ -1442,8 +1442,8 @@ msgid "The selected text is the same in both charsets. Check the charsets on the
 msgstr "Chữ bôi đen giống nhau ở cả hai bảng mã. Xem lại bảng mã ở trang Chuyển mã."
 
 #: src/ngosen-ibus-engine.cpp
-msgid "Select the text to convert, then press the key again."
-msgstr "Bôi đen chữ cần chuyển mã rồi bấm lại phím."
+msgid "Select the text to convert, then press the key again. Where an app does not allow this, paste the text into the Convert page."
+msgstr "Bôi đen chữ cần chuyển mã rồi bấm lại phím. App nào không cho thì dán chữ vào trang Chuyển mã."
 
 #: src/ngosen-ibus-engine.cpp
 msgid "Finish the word being typed, then press the key again."

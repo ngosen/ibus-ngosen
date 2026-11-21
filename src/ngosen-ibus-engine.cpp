@@ -643,7 +643,9 @@ namespace {
             case ngosen::ConvertResult::Converted: break;
             case ngosen::ConvertResult::Refused: return false;
             case ngosen::ConvertResult::Unchanged: tip = _("The selected text is the same in both charsets. Check the charsets on the Convert page."); break;
-            case ngosen::ConvertResult::NoSelection: tip = _("Select the text to convert, then press the key again."); break;
+            case ngosen::ConvertResult::NoSelection:
+                tip = _("Select the text to convert, then press the key again. Where an app does not allow this, paste the text into the Convert page.");
+                break;
             case ngosen::ConvertResult::Busy: tip = _("Finish the word being typed, then press the key again."); break;
         }
         if (tip != nullptr) {
