@@ -10,6 +10,7 @@
 #include <filesystem>
 #include <iostream>
 #include <string>
+#include <unordered_set>
 
 namespace fs = std::filesystem;
 using namespace ngosen;
@@ -23,6 +24,11 @@ namespace {
             ++failures;
             std::cout << "FAIL " << what << '\n';
         }
+    }
+
+    std::string read(const std::string& path) {
+        std::string text;
+        return readFile(path, text) ? text : "<missing>";
     }
 
     void testNames() {
@@ -143,6 +149,18 @@ namespace {
         check(!failing.set("code", true) && !failing.has("code"), "a failed write changes nothing");
     }
 
+    void testWebTerminalFile(const fs::path& root) {
+        const std::string path = (root / "ngosen-web-terminal-apps.conf").string();
+        check(readWebTerminalApps(path).empty(), "no file, no learned apps");
+        check(writeWebTerminalApps(path, {"orca", "window:7", "dev.zed.Zed"}), "learned apps are written");
+        check(read(path) == std::string(WebTerminalAppsHeader) + "\ndev.zed.Zed\norca\n", "the file fcitx5 writes, without GNOME's window names: " + read(path));
+        check(readWebTerminalApps(path) == std::unordered_set<std::string>{"orca", "dev.zed.Zed"}, "learned apps are kept after a restart");
+        // The core matches the program a field reports, so names are kept as written.
+        writeFileAtomically(path, "# by fcitx5\n\norca.desktop\n");
+        check(readWebTerminalApps(path) == std::unordered_set<std::string>{"orca.desktop"}, "comments and blank lines are skipped");
+        check(!writeWebTerminalApps(path, {"orca"}, [](const std::string&, const std::string&) { return false; }), "a failed write is reported");
+    }
+
 } // namespace
 
 int main() {
@@ -157,6 +175,7 @@ int main() {
     testSwitchFormat();
     testSwitchFile(root);
     testVimFile(root);
+    testWebTerminalFile(root);
     fs::remove_all(root);
     if (failures == 0)
         std::cout << "all app mode checks passed\n";

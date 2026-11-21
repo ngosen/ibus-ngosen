@@ -81,6 +81,7 @@ namespace ngosen {
         }
 
       private:
+        void                                    webTerminalAppsChanged() override;
         void                                    load();
         uintptr_t                               openDictionary() const;
 

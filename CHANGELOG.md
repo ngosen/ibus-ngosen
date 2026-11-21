@@ -16,6 +16,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Ô "Phím tắt menu chế độ gõ" trong cửa sổ cài đặt ghi rõ "`` ` (phím trên Tab) ``" thay vì một dấu `` ` `` nhỏ tới mức trông như ô trống (#187).
 - Bản này nay tên là Ngó Sen bản IBus thay cho Ngó Sen cho GNOME, trong README, hộp Giới thiệu và mô tả gói: bản này chạy cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus, và tính năng như bản fcitx5 (#185, #186).
 - README ghi rõ "trên GNOME" ở các bước chỉ đúng với GNOME (thêm nguồn nhập, phím tắt `ngosen-toggle`, mở cửa sổ cài đặt) và chỉ người dùng Cinnamon, Xfce, KDE Plasma sang phần thiết lập riêng; distro dùng IBus mặc định như Ubuntu, Fedora Workstation thì bản IBus là lựa chọn đơn giản (#192).
+- Lên lõi ngosen-1.13.2-1: terminal của Orca IDE không còn lặp chữ, quay lại terminal của VS Code hay các IDE Electron từ cửa sổ khác không còn ra chữ sai, chuyển mã ở ô như VS Code không còn lấy chữ bôi đen ở app khác, và trang Emoji sửa vài lỗi. Terminal xterm.js trong app chưa có tên trong danh sách được tự nhận ra sau vài từ đầu và nhớ cả sau khi khởi động lại, trong `~/.config/ngosen/ngosen-web-terminal-apps.conf`, như bản fcitx5 (#193).
 
 ## [1.5.0-1] — 21/11/2026
 
