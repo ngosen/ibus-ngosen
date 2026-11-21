@@ -209,7 +209,7 @@ class WindowTest(unittest.TestCase):
 
     def test_mode_menu_key_choices(self):
         row = self.window.rows.rows["ModeMenuKey"]
-        self.assertEqual(row.get_model().get_string(row.get_selected()), "`")
+        self.assertEqual(row.get_model().get_string(row.get_selected()), "` (key above Tab)")
         row.set_selected(1)
         self.assertEqual(self.settings()["ModeMenuKey"], "Shift+asciitilde")
 

@@ -262,6 +262,10 @@ msgid "Disabled"
 msgstr "Tắt"
 
 #: settings/ngosen_settings/options.py
+msgid "` (key above Tab)"
+msgstr "` (phím trên Tab)"
+
+#: settings/ngosen_settings/options.py
 msgid "Non-Start"
 msgstr "Trong từ"
 
