@@ -8,6 +8,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+- Gõ trong xterm có bấm Backspace không còn sai dấu: bộ gõ nhận ra app XIM và tên app như bản fcitx5 (#178).
+
 ## [1.5.0-1] — 21/11/2026
 
 Gợi ý emoji khi gõ, có trang Emoji để sửa, xuất và nhập từ gợi ý; chuyển mã chữ TCVN3, VNI ngay tại chỗ. Ctrl+Shift
