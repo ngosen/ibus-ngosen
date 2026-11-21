@@ -186,7 +186,7 @@ ctest --test-dir build
 sudo cmake --install build
 ```
 
-Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" trong Cài đặt › Bàn phím › Nguồn nhập.
+Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập như ở [Thiết lập sau khi cài đặt](#thiet-lap) (trên GNOME: Cài đặt › Bàn phím › Nguồn nhập).
 
 <a id="nguon-goc"></a>
 <a id="nguồn-gốc"></a>
@@ -200,7 +200,7 @@ Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ng�
 
 ## English
 
-Ngó Sen for IBus (`ibus-ngosen`) is a Vietnamese input method on IBus. Ngó Sen comes in two editions: [fcitx5](https://github.com/ngosen/ngosen) and IBus (this one). They share the typing core and are close to 1:1; which one to use is personal taste, either is fine. On a distro that uses IBus by default, such as those shipping GNOME (Ubuntu, Fedora Workstation), the IBus edition is the simple choice: install the package and add the input source, with no other setup. It is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
+Ngó Sen for IBus (`ibus-ngosen`) is a Vietnamese input method on IBus. Ngó Sen comes in two editions: [fcitx5](https://github.com/ngosen/ngosen) and IBus (this one). They share the typing core and are close to 1:1; which one to use is personal taste, either is fine. On a distro that uses IBus by default, such as those shipping GNOME (Ubuntu, Fedora Workstation), the IBus edition is the simple choice: install the package and add the input source, with no other setup. New features may reach the IBus edition a little later. Besides GNOME, it was tested typing on Linux Mint Cinnamon (X11), Xfce (X11) and KDE Plasma (Wayland). It is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
 
 Key features include:
 - Gõ Sen (direct typing without underline) by default, with Preedit or Off configurable per app via the `` ` `` menu.
@@ -209,6 +209,6 @@ Key features include:
 - Emoji suggestions while typing and in-place charset conversion (TCVN3, VNI to Unicode).
 - Per-app Vim mode, macros, custom keymaps, and typing logs.
 
-To install, download the package for your distribution from the [latest release](https://github.com/ngosen/ibus-ngosen/releases/latest) and install it using your package manager (`apt`, `dnf`, `pacman`, or `zypper`), or install from software repositories (COPR for Fedora, AUR for Arch via `yay -S ibus-ngosen`). After installing, log out, log back in, and add "Tiếng Việt (Ngó Sen)" under Settings → Keyboard → Input Sources.
+To install, download the package for your distribution from the [latest release](https://github.com/ngosen/ibus-ngosen/releases/latest) and install it using your package manager (`apt`, `dnf`, `pacman`, or `zypper`), or install from software repositories (COPR for Fedora, AUR for Arch via `yay -S ibus-ngosen`). After installing, log out, log back in, and add "Tiếng Việt (Ngó Sen)" as an input source: on GNOME under Settings → Keyboard → Input Sources; on Cinnamon, Xfce and KDE Plasma see [the setup section](#thiet-lap).
 
 The rest of this page is in Vietnamese.
