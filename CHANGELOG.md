@@ -10,6 +10,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - Gõ trong xterm có bấm Backspace không còn sai dấu: bộ gõ nhận ra app XIM như bản fcitx5 (#178).
 - App không có tên giữ lựa chọn Vim mode, gợi ý emoji và teencode của từng ô khi đổi cửa sổ rồi quay lại, như bản fcitx5 (#179).
+- Bấm phím chuyển mã ở app không cho đọc chữ đang bôi đen (như LibreOffice Writer) thì dòng báo chỉ thêm cách dán chữ vào trang Chuyển mã (#181).
 
 ## [1.5.0-1] — 21/11/2026
 
