@@ -101,8 +101,8 @@ namespace {
         check(read.options.retypeAfterSwitch, "RetypeAfterSwitch is read");
         check(!read.options.retoneSelection, "RetoneSelection is read");
 
-        const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nSpellCheck=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
-        check(odd.options.inputMethod == "Telex" && odd.options.spellCheck && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
+        const IBusSettings odd = readSettings(parseIni("InputMethod=Nope\nModernStyle=yes\nOutputCharset=Nope\nLockWordModifier=Disabled\n"));
+        check(odd.options.inputMethod == "Telex" && odd.options.modernStyle && odd.options.outputCharset == "Unicode", "unknown values keep the defaults");
         check(odd.options.lockWordKey == LockWordKey::None, "LockWordModifier is read by name");
 
         IBusSettings changed                 = defaults;
@@ -111,7 +111,7 @@ namespace {
         changed.options.bracketTransform     = 1;
         changed.options.lockWordKey          = LockWordKey::Alt;
         changed.options.timeFormat           = "%H giờ %M";
-        changed.options.spellCheck           = false;
+        changed.options.modernStyle          = false;
         changed.options.retoneSelection      = false;
         changed.options.rawWordAfterSlash    = false;
         changed.options.retypeAfterSwitch    = false;
@@ -138,19 +138,20 @@ namespace {
         check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
         check(!readSettings(parseIni(text)).options.englishEmojiKeywords, "EnglishEmojiKeywords round trip");
         check(parseIni(text).top.at("EmojiOfferAt") == "After each word" && !readSettings(parseIni(text)).options.emojiAtSentenceEnd, "EmojiOfferAt round trip by fcitx5's label");
-        check(parseIni(text).top.size() == 62, "the file has every key");
+        check(parseIni(text).top.size() == 60, "the file has every key");
+        check(parseIni(text).top.count("SpellCheck") == 0 && parseIni(text).top.count("ShowMenuSpellCheck") == 0, "Spell Check is not a setting");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
 
     void testOneSetting() {
-        const std::string mine = "# my note\nInputMethod=Telex\nSpellCheck=True\n";
-        check(withSetting(mine, "SpellCheck", "False") == "# my note\nInputMethod=Telex\nSpellCheck=False\n", "one key changes, the rest stays");
+        const std::string mine = "# my note\nInputMethod=Telex\nModernStyle=True\n";
+        check(withSetting(mine, "ModernStyle", "False") == "# my note\nInputMethod=Telex\nModernStyle=False\n", "one key changes, the rest stays");
         check(withSetting(mine, "EnableMacro", "True") == mine + "EnableMacro=True\n", "a missing key is added");
-        check(withSetting("#SpellCheck=True\n", "SpellCheck", "False") == "#SpellCheck=True\nSpellCheck=False\n", "a commented key is left alone");
-        check(readSettings(parseIni(withSetting("SpellCheck=True\nSpellCheck=True\n", "SpellCheck", "False"))).options.spellCheck == false, "every copy of the key changes");
-        check(withSetting("A=1\n[Macro/0]\nKey=x\n", "SpellCheck", "False") == "A=1\nSpellCheck=False\n[Macro/0]\nKey=x\n", "a new key goes before the first section");
-        check(withSetting("[S]\nSpellCheck=True\n", "SpellCheck", "False") == "SpellCheck=False\n[S]\nSpellCheck=True\n", "a key inside a section is not the setting");
+        check(withSetting("#ModernStyle=True\n", "ModernStyle", "False") == "#ModernStyle=True\nModernStyle=False\n", "a commented key is left alone");
+        check(readSettings(parseIni(withSetting("ModernStyle=True\nModernStyle=True\n", "ModernStyle", "False"))).options.modernStyle == false, "every copy of the key changes");
+        check(withSetting("A=1\n[Macro/0]\nKey=x\n", "ModernStyle", "False") == "A=1\nModernStyle=False\n[Macro/0]\nKey=x\n", "a new key goes before the first section");
+        check(withSetting("[S]\nModernStyle=True\n", "ModernStyle", "False") == "ModernStyle=False\n[S]\nModernStyle=True\n", "a key inside a section is not the setting");
         check(parseIni(withSetting("", "OutputCharset", "TCVN3 (ABC)")).top.at("OutputCharset") == "TCVN3 (ABC)", "a value with spaces is quoted");
     }
 
@@ -169,7 +170,7 @@ namespace {
         check(readSettings(parseIni(settingsText(changed))).toggleKeys == changed.toggleKeys, "toggle keys round trip");
         changed.toggleKeys = {};
         check(readSettings(parseIni(settingsText(changed))).toggleKeys.empty(), "a key turned off stays off");
-        check(parseIni(settingsText(defaultSettings()) + "SpellCheck=False\n").top.at("SpellCheck") == "False", "a key appended to the file is still a setting");
+        check(parseIni(settingsText(defaultSettings()) + "ModernStyle=False\n").top.at("ModernStyle") == "False", "a key appended to the file is still a setting");
 
         const char* const fcitxKeys = "[ToggleKey]\n0=Alt+z\n2=Control+space\n";
         check(readSettings(parseIni(std::string(FcitxSettings) + fcitxKeys)).toggleKeys == std::vector<std::string>{"Alt+z"},
@@ -358,22 +359,23 @@ namespace {
     void testMenu() {
         IBusSettings settings                           = defaultSettings();
         settings.options.inputMethod                    = "VNI";
-        settings.options.spellCheck                     = false;
+        settings.options.capitalizeMacro                = false;
         settings.options.capitalizeStartOfText          = true;
         settings.options.autoCapitalizeAfterPunctuation = false;
         IBusPropList* menu                              = newSettingsMenu(settings);
         g_object_ref_sink(menu);
         check(isChecked(menu, "InputMethod/VNI") && !isChecked(menu, "InputMethod/Telex"), "the menu checks the input method in use");
         check(isChecked(menu, "OutputCharset/Unicode"), "the menu checks the charset in use");
-        check(!isChecked(menu, "SpellCheck") && findItem(menu, "SpellCheck") != nullptr, "the menu shows spell check off");
+        check(!isChecked(menu, "CapitalizeMacro") && findItem(menu, "CapitalizeMacro") != nullptr, "the menu shows capitalized macros off");
         check(isChecked(menu, "CapitalizeStartOfText") && !isChecked(menu, "AutoCapitalizeAfterPunctuation"), "the capitalize items show their own settings");
         check(findItem(menu, SettingsWindowItem) != nullptr, "the menu opens the settings window");
+        check(findItem(menu, "SpellCheck") == nullptr, "the menu has no Spell Check item");
         // GNOME Shell closes the menu on some switch clicks and not others; plain items always close it.
-        IBusProperty* spellCheck  = findItem(menu, "SpellCheck");
+        IBusProperty* capitalize  = findItem(menu, "CapitalizeMacro");
         IBusProperty* startOfText = findItem(menu, "CapitalizeStartOfText");
-        check(ibus_property_get_prop_type(spellCheck) == PROP_TYPE_NORMAL && ibus_property_get_prop_type(startOfText) == PROP_TYPE_NORMAL,
+        check(ibus_property_get_prop_type(capitalize) == PROP_TYPE_NORMAL && ibus_property_get_prop_type(startOfText) == PROP_TYPE_NORMAL,
               "on/off settings are plain items, not switches");
-        check(g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(spellCheck)), "✖ ") && g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(startOfText)), "✔ "),
+        check(g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(capitalize)), "✖ ") && g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(startOfText)), "✔ "),
               "a plain item shows its setting with ✔ or ✖");
         IBusProperty* vietnamese = findItem(menu, InputModeItem);
         check(ibus_property_get_prop_type(vietnamese) == PROP_TYPE_NORMAL && g_str_has_prefix(ibus_text_get_text(ibus_property_get_label(vietnamese)), "✔ ") &&
@@ -393,7 +395,7 @@ namespace {
         IBusPropList* hidden                                   = newSettingsMenu(hiding);
         g_object_ref_sink(hidden);
         check(!ibus_property_get_visible(findItem(hidden, "OutputCharset")) && !ibus_property_get_visible(findItem(hidden, "AutoCapitalize")) &&
-                  ibus_property_get_visible(findItem(hidden, "SpellCheck")),
+                  ibus_property_get_visible(findItem(hidden, "CapitalizeMacro")),
               "a hidden item stays in the menu, marked hidden, since GNOME Shell updates items only by key");
         g_object_unref(hidden);
         const IBusSettings read = readSettings(parseIni("ShowMenuMacro=False\n"));
@@ -407,7 +409,7 @@ namespace {
         check(settingForClick("OutputCharset/TCVN3 (ABC)", true, settings, key, value) && key == "OutputCharset" && value == "TCVN3 (ABC)", "choosing a charset");
         check(!settingForClick("OutputCharset/Nope", true, settings, key, value), "an unknown charset");
         // The state sent with a plain item is whatever the panel showed, so the saved setting decides.
-        check(settingForClick("SpellCheck", false, settings, key, value) && key == "SpellCheck" && value == "True", "turning spell check on");
+        check(settingForClick("CapitalizeMacro", false, settings, key, value) && key == "CapitalizeMacro" && value == "True", "turning capitalized macros on");
         check(settingForClick("CapitalizeStartOfText", true, settings, key, value) && value == "False", "turning start-of-text capitals off");
         settings.enableDictionary = false;
         check(settingForClick("EnableDictionary", false, settings, key, value) && value == "True", "turning the dictionary on");
@@ -532,7 +534,7 @@ namespace {
         check(prepareSettings(paths), "mode menu settings added after the import are carried over");
         const IBusSettings menu = readSettings(parseIni(read(paths.settingsFile())));
         check(!menu.showModeOff && menu.modeOrder == "Off,Sen" && menu.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the mode menu set up in fcitx5 comes over");
-        check(!menu.showMenuCharset && menu.showMenuSpellCheck, "items hidden from the fcitx5 tray menu stay hidden");
+        check(!menu.showMenuCharset && menu.showMenuCapitalizeMacro, "items hidden from the fcitx5 tray menu stay hidden");
         check(menu.uiLanguage == "English", "the interface language picked in fcitx5 comes over");
 
         paths = pathsIn(root / "toggle-scope");
