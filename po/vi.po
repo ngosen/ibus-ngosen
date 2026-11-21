@@ -1025,8 +1025,8 @@ msgid "Check"
 msgstr "Kiểm tra"
 
 #: settings/ngosen_settings/pages.py
-msgid "Run this command in a terminal, then log out and back in. On Debian and Ubuntu it replaces this edition. On Fedora, openSUSE and Arch, copy the command, remove ibus-ngosen, then run it; this window goes with the package."
-msgstr "Chạy lệnh này trong terminal rồi đăng xuất và đăng nhập lại. Trên Debian và Ubuntu lệnh tự thay bản này. Trên Fedora, openSUSE và Arch, chép lệnh, gỡ ibus-ngosen rồi mới chạy; cửa sổ này mất cùng gói."
+msgid "Run this command in a terminal, then log out and back in. On Debian, Ubuntu and Fedora it replaces this edition. On openSUSE and Arch, copy the command, remove ibus-ngosen, then run it; this window goes with the package."
+msgstr "Chạy lệnh này trong terminal rồi đăng xuất và đăng nhập lại. Trên Debian, Ubuntu và Fedora lệnh tự thay bản này. Trên openSUSE và Arch, chép lệnh, gỡ ibus-ngosen rồi mới chạy; cửa sổ này mất cùng gói."
 
 #: settings/ngosen_settings/pages.py
 msgid "Settings made here are not copied over. Back them up, then restore the file in the fcitx5 edition."

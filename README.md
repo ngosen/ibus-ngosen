@@ -122,7 +122,7 @@ Mở cửa sổ cài đặt từ **Cài đặt** › **Bàn phím** › **"Tiế
 ## 🔄 Chuyển qua lại với bản fcitx5
 
 - **Từ bản fcitx5 sang bản này:** gỡ bản fcitx5 bằng `install.sh --uninstall` như hướng dẫn của nó, rồi cài bản này. Nếu đã gỡ bằng trình quản lý gói, lệnh cài fcitx5 có thể còn để lại biến môi trường hay mục tự chạy làm app vẫn đi qua fcitx5: mở tab "Kiểm tra" trong cửa sổ cài đặt, bấm "Xoá" ở bước "Tài khoản này còn cài đặt của bản fcitx5" rồi đăng xuất và đăng nhập lại. Nút chỉ xoá những tệp còn y nguyên như lệnh cài đã ghi; tệp đã sửa tay thì bước kế bên chỉ ra đường dẫn để tự sửa.
-- **Từ bản này sang bản fcitx5:** trong cửa sổ cài đặt, mục "Có ở bản fcitx5" có lệnh cài để chép. Trên Debian và Ubuntu lệnh tự thay bản này; trên Fedora, openSUSE và Arch, chép lệnh, gỡ `ibus-ngosen` rồi mới chạy.
+- **Từ bản này sang bản fcitx5:** trong cửa sổ cài đặt, mục "Có ở bản fcitx5" có lệnh cài để chép. Trên Debian, Ubuntu và Fedora lệnh tự thay bản này; trên openSUSE và Arch, chép lệnh, gỡ `ibus-ngosen` rồi mới chạy.
 - **Đồng bộ cài đặt:** cài đặt chỉ được chép một lần, lúc bản này chạy lần đầu trên máy đã có bản fcitx5 (kiểu gõ, gõ tắt, bảng phím riêng và từ điển riêng được chép sang, từ điển vào `~/.local/share/ngosen/`; file của fcitx5 giữ nguyên). Sau đó hai bản không đồng bộ với nhau; muốn mang thay đổi sang bản kia thì sao lưu ở bản này rồi khôi phục ở bản kia. Trước khi khôi phục một bản sao lưu của bản này vào bản fcitx5, hãy sao lưu cài đặt của bản fcitx5: bản fcitx5 cũ hơn [ngosen/ngosen#648](https://github.com/ngosen/ngosen/pull/648) xoá các app đã chọn riêng tiếng Việt hay tiếng Anh.
 
 <a id="khac-phuc-su-co"></a>
