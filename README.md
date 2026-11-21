@@ -4,7 +4,7 @@
 
 # Ngó Sen bản IBus
 
-**Bộ gõ tiếng Việt chạy trên IBus, không cần fcitx5.**
+**Bộ gõ tiếng Việt chạy trên IBus, không cần cài fcitx5.**
 
 [![Release](https://img.shields.io/github/v/release/ngosen/ibus-ngosen?label=version&color=1f6e5c)](https://github.com/ngosen/ibus-ngosen/releases/latest)
 [![License](https://img.shields.io/badge/license-GPL--3.0--or--later-1f6e5c)](LICENSE)
@@ -16,7 +16,7 @@
 
 ---
 
-Ngó Sen bản IBus là bộ gõ tiếng Việt chạy trên IBus, bộ gõ có sẵn của GNOME, và trên Cinnamon, Xfce, KDE Plasma khi dùng IBus; không cần fcitx5. Bản này dùng chung lõi gõ với [bản fcitx5](https://github.com/ngosen/ngosen) nên tính năng hiện tương đương 1:1; chọn bản nào là tuỳ thích. Tính năng mới đến bản IBus chậm hơn một chút. Trên GNOME, cài xong là gõ được ngay, không phải thiết lập gì thêm.
+Ngó Sen bản IBus là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, và cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus; không cần cài fcitx5. Bản này dùng chung lõi gõ với [bản fcitx5](https://github.com/ngosen/ngosen) nên tính năng hiện tương đương 1:1, chọn bản nào là tuỳ sở thích của bạn. Tính năng mới sẽ đến bản IBus chậm hơn một chút. Riêng trên GNOME, cài xong là gõ được ngay, không phải thiết lập gì thêm.
 
 Cửa sổ cài đặt theo giao diện sáng/tối của máy, lưu thay đổi ngay và có nút Hoàn tác.
 
