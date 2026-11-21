@@ -22,7 +22,20 @@ def saved_settings(engine_path, folder=None):
     return values, folder
 
 
+NOT_RUNNING, NOT_LOADED = 2, 3
+
+
+def exit_code(facts):
+    """Codes as in the fcitx5 edition's ngosen-check; the report is printed either way."""
+    if not facts.ibus_running:
+        return NOT_RUNNING
+    if not facts.engine_known:
+        return NOT_LOADED
+    return 0
+
+
 def check(engine_path, version, sources=None, folder=None):
+    """Returns the report and the exit code."""
     if sources is None:
         # Needs gi, which a package build can lack; the tests pass their own sources.
         from .gnome_sources import GnomeSources
@@ -37,12 +50,13 @@ def check(engine_path, version, sources=None, folder=None):
         toggle_key=bool(values.get("ToggleKey", "").strip()),
         output_charset=values.get("OutputCharset", "Unicode"),
     )
-    return system_check.terminal_report(facts, system_check.steps(facts))
+    return system_check.terminal_report(facts, system_check.steps(facts)), exit_code(facts)
 
 
 def main(engine_path, localedir, version, argv=None):
     i18n.setup(localedir)
     parser = argparse.ArgumentParser(prog="ngosen-check", description=__doc__)
     parser.parse_args(argv)
-    print(check(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path), version))
-    return 0
+    report, code = check(os.environ.get("NGOSEN_IBUS_ENGINE", engine_path), version)
+    print(report)
+    return code

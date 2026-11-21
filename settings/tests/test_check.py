@@ -57,7 +57,7 @@ class CheckTest(unittest.TestCase):
         with open(os.path.join(self.folder, "ngosen.conf"), "w", encoding="utf-8") as f:
             f.write("DirectTyping=True\nToggleKey=Alt+z\n")
         with mock.patch.object(sc, "collect", wraps=sc.collect) as collect:
-            text = check.check("/nonexistent", "1.3.0", NoGnome(), self.folder)
+            text, _code = check.check("/nonexistent", "1.3.0", NoGnome(), self.folder)
         kwargs = collect.call_args.kwargs
         self.assertTrue(kwargs["direct_typing"])
         self.assertTrue(kwargs["toggle_key"])
@@ -65,6 +65,12 @@ class CheckTest(unittest.TestCase):
             kwargs["app_modes_file"], os.path.join(self.folder, "ngosen-app-rules.conf")
         )
         self.assertTrue(text.startswith("# Ngó Sen (IBus) check."))
+
+    def test_exit_codes(self):
+        self.assertEqual(check.exit_code(sc.Facts(env={}, ibus_running=True)), 0)
+        self.assertEqual(check.exit_code(sc.Facts(env={})), check.NOT_RUNNING)
+        not_known = sc.Facts(env={}, ibus_running=True, engine_known=False)
+        self.assertEqual(check.exit_code(not_known), check.NOT_LOADED)
 
     @unittest.skipUnless(importlib.util.find_spec("gi"), "needs gi")
     def test_needs_no_gtk(self):
