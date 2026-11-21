@@ -2265,6 +2265,37 @@ check(
 )
 app.key(IBus.KEY_Escape)
 app.close()
+# As in fcitx5, each field keeps its choice until it goes away, not only while it has focus.
+first = menu_app("xim")
+first.key(IBus.KEY_grave)
+pump(200)
+first.key(IBus.KEY_v)
+pump(300)
+first.ic.focus_out()
+pump(200)
+second = menu_app("xim")
+second.key(IBus.KEY_grave)
+pump(200)
+check(
+    (second.menu or [""])[-1] == "Vim mode: tắt",
+    "menu: another field without a name starts without Vim mode",
+    second.menu,
+)
+second.key(IBus.KEY_Escape)
+second.ic.focus_out()
+pump(200)
+first.ic.focus_in()
+pump(200)
+first.key(IBus.KEY_grave)
+pump(200)
+check(
+    (first.menu or [""])[-1] == "Vim mode: bật",
+    "menu: a field without a name keeps Vim mode when it gets focus back",
+    first.menu,
+)
+first.key(IBus.KEY_Escape)
+first.close()
+second.close()
 
 # Teencode is switched for the app in use and kept in the file the fcitx5 edition uses.
 teencode_apps_path = os.path.join(config_dir, "ngosen-teencode-apps.conf")
