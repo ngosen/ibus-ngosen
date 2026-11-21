@@ -59,11 +59,12 @@ namespace ngosen {
 
     } // namespace
 
-    void saveTypingLog(const Recorder& recorder) {
+    std::string saveTypingLog(const Recorder& recorder) {
         const std::string path    = writeTypingLog(recorder);
         const std::string message = !path.empty() ? _("Typing log saved: ") + path : _("Could not save the typing log to ") + typingLogDir();
         NGOSEN_INFO(message);
         notify(message);
+        return path;
     }
 
 } // namespace ngosen

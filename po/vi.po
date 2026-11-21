@@ -1621,6 +1621,10 @@ msgstr "Ngó Sen không phải nguồn nhập đang dùng. Chuyển sang Ngó Se
 msgid "Could not switch English/Vietnamese"
 msgstr "Không chuyển được Anh/Việt"
 
+#: settings/ngosen_settings/save_log.py
+msgid "Ngó Sen did not answer. Type a few letters with it in any app, then try again."
+msgstr "Ngó Sen không trả lời. Gõ vài chữ bằng Ngó Sen trong một app bất kỳ rồi thử lại."
+
 #: ngosen/src/core/ngosen-state-emoji-offer.cpp
 msgid "pick, or arrows then Enter, Esc: keep the word"
 msgstr "chọn · hoặc mũi tên rồi Enter · Esc: giữ chữ"
