@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.5.0
+Version:        1.5.1
 Release:        1
 Summary:        Ngó Sen, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -66,6 +66,12 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Sun Nov 22 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.5.1-1
+- xterm types right with Backspace on Wayland and X11; learned xterm.js terminals are
+  remembered across restarts; fields of apps without a name keep
+  their per-field choices; the convert key points to the Convert page when an app gives no
+  selected text; the edition is named Ngó Sen for IBus; core ngosen-1.13.2-1.
+
 * Sat Nov 21 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.5.0-1
 - Emoji while typing, with an Emoji page to edit, export and import keywords; convert
   selected text from TCVN3, VNI and other charsets in place; the switch key changes every
