@@ -2,7 +2,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Ghi app gõ tốt với Ngó Sen cho GNOME và hệ thống bạn đang dùng để bổ sung vào danh sách tương thích.
+        Ghi app gõ tốt với Ngó Sen bản IBus và hệ thống bạn đang dùng để bổ sung vào danh sách tương thích.
         Nếu gặp lỗi, mở [issue](https://github.com/ngosen/ibus-ngosen/issues/new/choose).
 
   - type: input

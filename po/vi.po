@@ -359,8 +359,8 @@ msgid "Remove"
 msgstr "Xoá"
 
 #: settings/ngosen_settings/pages.py
-msgid "Vietnamese input method for GNOME"
-msgstr "Bộ gõ tiếng Việt cho GNOME"
+msgid "Vietnamese input method for IBus"
+msgstr "Bộ gõ tiếng Việt cho IBus"
 
 #: settings/ngosen_settings/pages.py
 msgid "Try it"

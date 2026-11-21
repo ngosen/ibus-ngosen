@@ -34,7 +34,7 @@ namespace ngosen {
             const std::string path  = dir + "/typing-" + stamp + ".log";
             g_free(stamp);
             g_date_time_unref(now);
-            const std::string text = std::string("# Ngó Sen for GNOME ") + NGOSEN_IBUS_VERSION +
+            const std::string text = std::string("# Ngó Sen for IBus ") + NGOSEN_IBUS_VERSION +
                 " typing log. It holds what you typed just before saving; read it before sharing.\n# desktop=" + env("XDG_CURRENT_DESKTOP") +
                 " session=" + env("XDG_SESSION_TYPE") + " wayland=" + env("WAYLAND_DISPLAY") + "\n" + recorder.dump();
             GError* error = nullptr;

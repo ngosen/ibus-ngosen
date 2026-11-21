@@ -69,5 +69,5 @@ jobs:
           version=${GITHUB_REF_NAME#ibus-ngosen-}
           gh release create "$GITHUB_REF_NAME" dist/* \
             --draft \
-            --title "Ngó Sen for GNOME ${version%-*}" \
+            --title "Ngó Sen for IBus ${version%-*}" \
             --notes "See CHANGELOG.md."
