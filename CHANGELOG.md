@@ -15,6 +15,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   chữ kiểu chat như `zậy`, `kạ`, hãy bật Teencode cho app đó (bấm `` ` `` rồi `t`), hoặc thêm chữ muốn giữ vào Từ
   điển tuỳ chỉnh (ngosen/ngosen#112) (#183).
 
+### Sửa
+
+- Trên KDE, Sway và Hyprland, bôi đen chữ trong app GTK3 hay Firefox rồi bấm phím chuyển mã nay đổi được chữ, như bản
+  fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190).
+
 ## [1.5.0-1] — 21/11/2026
 
 Gợi ý emoji khi gõ, có trang Emoji để sửa, xuất và nhập từ gợi ý; chuyển mã chữ TCVN3, VNI ngay tại chỗ. Ctrl+Shift
