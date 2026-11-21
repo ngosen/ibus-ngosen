@@ -8,6 +8,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Bỏ
+
+- Bỏ ô "Kiểm tra chính tả" khỏi cửa sổ cài đặt và menu trên thanh trên cùng, vì nó chỉ có tác dụng khi "Tự khôi
+  phục từ gõ sai" đang bật: nay Tự khôi phục luôn so với từ điển, như bản fcitx5. Ai từng tắt ô này để giữ dấu cho
+  chữ kiểu chat như `zậy`, `kạ`, hãy bật Teencode cho app đó (bấm `` ` `` rồi `t`), hoặc thêm chữ muốn giữ vào Từ
+  điển tuỳ chỉnh (ngosen/ngosen#112).
+
 ## [1.5.0-1] — 21/11/2026
 
 Gợi ý emoji khi gõ, có trang Emoji để sửa, xuất và nhập từ gợi ý; chuyển mã chữ TCVN3, VNI ngay tại chỗ. Ctrl+Shift

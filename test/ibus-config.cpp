@@ -138,7 +138,8 @@ namespace {
         check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
         check(!readSettings(parseIni(text)).options.englishEmojiKeywords, "EnglishEmojiKeywords round trip");
         check(parseIni(text).top.at("EmojiOfferAt") == "After each word" && !readSettings(parseIni(text)).options.emojiAtSentenceEnd, "EmojiOfferAt round trip by fcitx5's label");
-        check(parseIni(text).top.size() == 62, "the file has every key");
+        check(parseIni(text).top.size() == 60, "the file has every key");
+        check(parseIni(text).top.count("SpellCheck") == 0 && parseIni(text).top.count("ShowMenuSpellCheck") == 0, "Spell Check is not a setting");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -368,6 +369,7 @@ namespace {
         check(!isChecked(menu, "CapitalizeMacro") && findItem(menu, "CapitalizeMacro") != nullptr, "the menu shows capitalized macros off");
         check(isChecked(menu, "CapitalizeStartOfText") && !isChecked(menu, "AutoCapitalizeAfterPunctuation"), "the capitalize items show their own settings");
         check(findItem(menu, SettingsWindowItem) != nullptr, "the menu opens the settings window");
+        check(findItem(menu, "SpellCheck") == nullptr, "the menu has no Spell Check item");
         // GNOME Shell closes the menu on some switch clicks and not others; plain items always close it.
         IBusProperty* capitalize  = findItem(menu, "CapitalizeMacro");
         IBusProperty* startOfText = findItem(menu, "CapitalizeStartOfText");

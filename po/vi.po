@@ -94,10 +94,6 @@ msgid "Custom Keymap"
 msgstr "Keymap tuỳ chỉnh"
 
 #: settings/ngosen_settings/options.py
-msgid "Enable Spell Check Using Dictionary"
-msgstr "Kiểm tra chính tả"
-
-#: settings/ngosen_settings/options.py
 msgid "Custom Dictionary"
 msgstr "Từ điển tuỳ chỉnh"
 
@@ -200,10 +196,6 @@ msgstr "Cứ để Unicode, trừ khi văn bản hay app cũ cần bảng mã kh
 #: settings/ngosen_settings/options.py
 msgid "The keys below, used when the input method is Custom."
 msgstr "Các phím bên dưới, dùng khi kiểu gõ là Custom."
-
-#: settings/ngosen_settings/options.py
-msgid "Words that are not Vietnamese get no tone marks."
-msgstr "Từ không phải tiếng Việt thì không thêm dấu."
 
 #: settings/ngosen_settings/options.py
 msgid "Check spelling against the list below. Off: the list that comes with Ngó Sen."
@@ -395,10 +387,6 @@ msgstr "Bộ gõ tiếng Việt"
 #: src/ngosen-ibus-menu.cpp
 msgid "Charset"
 msgstr "Bảng mã"
-
-#: src/ngosen-ibus-menu.cpp
-msgid "Spell Check"
-msgstr "Kiểm tra chính tả"
 
 #: src/ngosen-ibus-menu.cpp
 msgid "Auto Capitalize"
