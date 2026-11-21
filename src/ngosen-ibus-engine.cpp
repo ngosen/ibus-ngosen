@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -179,7 +180,7 @@ namespace {
         bool vimHere      = false;
         bool emojiOffHere = false;
         bool teencodeHere = false;
-        // The input context in focus.
+        // Where this field's choices are kept when it loses focus.
         std::string context;
         guint       menuCursor = 0;
         guint       menuTimer  = 0;
@@ -907,11 +908,25 @@ namespace {
         showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().savedSettings(), true);
     }
 
-    // IBus never tells an engine that a context went away; past this a choice ends with the focus.
+    // IBus never tells an engine that a context went away, so the longest unused one makes room.
     constexpr size_t KeptContexts = 64;
 
+    struct KeptSwitches {
+        std::array<bool, 3> here{};
+        uint64_t            lastUse = 0;
+    };
+
     // Shared by every engine: a context that gets focus back may be served by another app's engine.
-    std::map<std::string, std::array<bool, 3>> keptHere;
+    std::map<std::string, KeptSwitches> keptHere;
+    uint64_t                            keptUses = 0;
+
+    void                                keepFor(const std::string& context, const std::array<bool, 3>& here) {
+        if (keptHere.count(context) == 0 && keptHere.size() >= KeptContexts) {
+            const auto oldest = std::min_element(keptHere.begin(), keptHere.end(), [](const auto& a, const auto& b) { return a.second.lastUse < b.second.lastUse; });
+            keptHere.erase(oldest);
+        }
+        keptHere[context] = {here, ++keptUses};
+    }
 
     // GNOME Shell uses one input context for every app it relays, so there a choice ends with the focus.
     void keepFieldSwitches(Session& session) {
@@ -919,8 +934,8 @@ namespace {
         if (!session.context.empty() && session.host->client() != "gnome-shell") {
             if (here == std::array<bool, 3>{})
                 keptHere.erase(session.context);
-            else if (keptHere.size() < KeptContexts || keptHere.count(session.context) > 0)
-                keptHere[session.context] = here;
+            else
+                keepFor(session.context, here);
         }
         session.context.clear();
         session.vimHere      = false;
@@ -933,9 +948,9 @@ namespace {
         const auto kept = keptHere.find(context);
         if (kept == keptHere.end() || session.host->client() == "gnome-shell")
             return;
-        session.vimHere      = kept->second[0];
-        session.emojiOffHere = kept->second[1];
-        session.teencodeHere = kept->second[2];
+        session.vimHere      = kept->second.here[0];
+        session.emojiOffHere = kept->second.here[1];
+        session.teencodeHere = kept->second.here[2];
     }
 
     void focusOut(IBusEngine* engine) {
