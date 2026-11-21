@@ -16,7 +16,7 @@
 
 ---
 
-Ngó Sen bản IBus là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, và cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus; không cần cài fcitx5. Bản này dùng chung lõi gõ với [bản fcitx5](https://github.com/ngosen/ngosen) nên tính năng hiện tương đương 1:1, chọn bản nào là tuỳ sở thích của bạn. Tính năng mới sẽ đến bản IBus chậm hơn một chút. Riêng trên GNOME, cài xong là gõ được ngay, không phải thiết lập gì thêm.
+Ngó Sen bản IBus là bộ gõ tiếng Việt chạy trên IBus có sẵn của GNOME, và cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus; không cần cài fcitx5. Bản này dùng chung lõi gõ với [bản fcitx5](https://github.com/ngosen/ngosen) nên tính năng hiện tương đương 1:1, chọn bản nào là tuỳ sở thích của bạn. Trên distro dùng IBus mặc định, như các distro dùng GNOME (Ubuntu, Fedora Workstation), bản IBus là lựa chọn đơn giản. Tính năng mới sẽ đến bản IBus chậm hơn một chút. Riêng trên GNOME, cài xong là gõ được ngay, không phải thiết lập gì thêm.
 
 Cửa sổ cài đặt theo giao diện sáng/tối của máy, lưu thay đổi ngay và có nút Hoàn tác.
 
@@ -198,7 +198,7 @@ Sau đó đăng xuất rồi đăng nhập lại, và thêm "Tiếng Việt (Ng�
 
 ## English
 
-Ngó Sen for IBus (`ibus-ngosen`) is a Vietnamese input method for IBus, the input method GNOME comes with; it also runs on Cinnamon, Xfce and KDE Plasma set up with IBus, and needs no fcitx5. It shares the typing core of [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen), so both currently have the same features; pick whichever you prefer. New features reach the IBus edition a little later. It is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
+Ngó Sen for IBus (`ibus-ngosen`) is a Vietnamese input method for IBus, the input method GNOME comes with; it also runs on Cinnamon, Xfce and KDE Plasma set up with IBus, and needs no fcitx5. It shares the typing core of [Ngó Sen for fcitx5](https://github.com/ngosen/ngosen), so both currently have the same features; pick whichever you prefer. On a distro that uses IBus by default, such as those shipping GNOME (Ubuntu, Fedora Workstation), the IBus edition is the simple choice. New features reach the IBus edition a little later. It is licensed under GPL-3.0-or-later. The maintainer only **vibecodes** this project: an AI coding agent writes the code, then the maintainer measures and uses it daily.
 
 Key features include:
 - Gõ Sen (direct typing without underline) by default, with Preedit or Off configurable per app via the `` ` `` menu.

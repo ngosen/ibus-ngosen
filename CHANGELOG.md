@@ -15,7 +15,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Lời dặn chuyển sang bản fcitx5 (README và cửa sổ cài đặt) nay ghi đúng: trên Fedora lệnh cài cũng tự thay bản này, chỉ openSUSE và Arch phải gỡ `ibus-ngosen` trước (#184).
 - Ô "Phím tắt menu chế độ gõ" trong cửa sổ cài đặt ghi rõ "`` ` (phím trên Tab) ``" thay vì một dấu `` ` `` nhỏ tới mức trông như ô trống (#187).
 - Bản này nay tên là Ngó Sen bản IBus thay cho Ngó Sen cho GNOME, trong README, hộp Giới thiệu và mô tả gói: bản này chạy cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus, và tính năng như bản fcitx5 (#185, #186).
-- README ghi rõ "trên GNOME" ở các bước chỉ đúng với GNOME (thêm nguồn nhập, phím tắt `ngosen-toggle`, mở cửa sổ cài đặt) và chỉ người dùng Cinnamon, Xfce, KDE Plasma sang phần thiết lập riêng (#192).
+- README ghi rõ "trên GNOME" ở các bước chỉ đúng với GNOME (thêm nguồn nhập, phím tắt `ngosen-toggle`, mở cửa sổ cài đặt) và chỉ người dùng Cinnamon, Xfce, KDE Plasma sang phần thiết lập riêng; distro dùng IBus mặc định như Ubuntu, Fedora Workstation thì bản IBus là lựa chọn đơn giản (#192).
 
 ## [1.5.0-1] — 21/11/2026
 
