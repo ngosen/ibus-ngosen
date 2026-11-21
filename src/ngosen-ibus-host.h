@@ -5,6 +5,7 @@
  */
 #pragma once
 
+#include "ngosen-clock.h"
 #include "ngosen-host.h"
 #include "ngosen-key.h"
 
@@ -36,6 +37,8 @@ namespace ngosen {
 
         void setFocus(bool focus) {
             focus_ = focus;
+            if (focus)
+                focus_in_us_ = monotonicUs();
         }
         void setDirectTyping(bool on) {
             direct_ = on;
@@ -64,6 +67,10 @@ namespace ngosen {
         bool hasPreedit() const {
             return !preedit_.empty();
         }
+        // The core shows a status line only while it tells the user what keys such as Enter do.
+        bool showsStatus() const {
+            return !status_.empty();
+        }
         void                         setReportedText(const gchar* text, guint cursor, guint anchor);
 
         void                         commitText(const std::string& text) override;
@@ -80,11 +87,12 @@ namespace ngosen {
 
         void                         showPreedit(const std::string& text, bool underline) override;
         void                         clearPreedit() override;
+        void                         showHint(const std::string& text) override;
         void                         resetPanel() override;
         void                         refreshPreedit() override;
         void                         refreshPanel() override;
 
-        void                         showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick) override;
+        void                         showCandidates(const std::vector<std::string>& labels, int pageSize, std::function<void(size_t)> onPick, CandidateLayout layout) override;
         void                         hideCandidates() override;
         std::optional<CandidatePage> candidates() const override;
         void                         highlightCandidate(int index) override;
@@ -98,8 +106,9 @@ namespace ngosen {
 
         std::string                  keyText(uint32_t sym) const override;
 
-        // The mode menu shares the lookup table; while it is open the candidates wait behind it.
-        void setMenuOpen(bool open);
+        // The mode menu shares the lookup table; while it is open the candidates wait behind it, and its
+        // title takes the line under the preedit.
+        void setMenuOpen(bool open, const std::string& title = {});
         // A short notice on the line under the preedit, which a status line from the core takes over.
         void showNotice(const std::string& text);
         void hideNotice();
@@ -118,6 +127,7 @@ namespace ngosen {
             int                         pageSize = 1;
             int                         cursor   = 0;
             std::function<void(size_t)> onPick;
+            CandidateLayout             layout = CandidateLayout::Column;
         };
 
         bool                         reportsText() const;
@@ -125,15 +135,17 @@ namespace ngosen {
         void                         showAuxiliary();
 
         IBusEngine*                  engine_;
-        bool                         focus_   = false;
-        bool                         direct_  = false;
-        guint                        purpose_ = IBUS_INPUT_PURPOSE_FREE_FORM;
-        guint                        hints_   = IBUS_INPUT_HINT_NONE;
+        bool                         focus_       = false;
+        uint64_t                     focus_in_us_ = 0;
+        bool                         direct_      = false;
+        guint                        purpose_     = IBUS_INPUT_PURPOSE_FREE_FORM;
+        guint                        hints_       = IBUS_INPUT_HINT_NONE;
         std::string                  client_;
         Surrounding                  reported_;
         std::string                  preedit_;
         std::string                  status_;
         std::string                  notice_;
+        std::string                  menuTitle_;
         std::optional<CandidateList> list_;
         bool                         tableShown_ = false;
         bool                         tableDirty_ = false;

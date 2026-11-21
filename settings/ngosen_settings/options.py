@@ -27,15 +27,39 @@ CYCLE_MODE_KEYS = [
     ("", N_("Disabled")),
     ("Control+grave", "Ctrl+`"),
 ]
+# Off by default, as in fcitx5; a key saved there stays offered.
+CONVERT_KEYS = [
+    ("", N_("Disabled")),
+    ("Control+Shift+F6", "Ctrl+Shift+F6"),
+]
+# Stored by their English labels, in the order of the core's letter case.
+CONVERT_CASES = [
+    ("Keep", N_("Keep")),
+    ("UPPER CASE", N_("UPPER CASE")),
+    ("lower case", N_("lower case")),
+    ("Sentence case", N_("Sentence case")),
+    ("Title Case", N_("Title Case")),
+]
+# Settings that offer the charsets the engine knows.
+CHARSET_KEYS = ("OutputCharset", "ConvertFrom", "ConvertTo")
 # fcitx5 drags the modes into any order; these are the common ones, and a saved order stays offered.
 MODE_ORDERS = [
-    ("Sen,Preedit,Emoji,Off,Vim", N_("Sen, Preedit, OFF")),
-    ("Preedit,Sen,Emoji,Off,Vim", N_("Preedit, Sen, OFF")),
-    ("Off,Sen,Preedit,Emoji,Vim", N_("OFF, Sen, Preedit")),
+    ("Sen,Preedit,Emoji,Teencode,Off,Vim", N_("Sen, Preedit, OFF")),
+    ("Preedit,Sen,Emoji,Teencode,Off,Vim", N_("Preedit, Sen, OFF")),
+    ("Off,Sen,Preedit,Emoji,Teencode,Vim", N_("OFF, Sen, Preedit")),
 ]
+# The labels above name only these, the order of the switches around them aside.
+ORDERED_MODES = ("Sen", "Preedit", "Off")
 # Named in their own language, as in fcitx5.
 UI_LANGUAGES = [("Vietnamese", "Tiếng Việt"), ("English", "English")]
-SHOW_MODES = ["ShowModeSen", "ShowModePreedit", "ShowModeOff", "ShowModeVim"]
+SHOW_MODES = [
+    "ShowModeSen",
+    "ShowModePreedit",
+    "ShowModeEmoji",
+    "ShowModeTeencode",
+    "ShowModeOff",
+    "ShowModeVim",
+]
 SHOW_MENUS = [
     "ShowMenuInputMethod",
     "ShowMenuCharset",
@@ -47,7 +71,24 @@ SHOW_MENUS = [
     "ShowMenuDictionary",
 ]
 # The keys that pick a mode in the menu, each one letter or digit.
-SHORTCUTS = ["ShortcutSen", "ShortcutPreedit", "ShortcutOff", "ShortcutVim"]
+SHORTCUTS = [
+    "ShortcutSen",
+    "ShortcutPreedit",
+    "ShortcutEmoji",
+    "ShortcutTeencode",
+    "ShortcutOff",
+    "ShortcutVim",
+]
+# Stored by their English labels, as fcitx5 stores the enum.
+TOGGLE_SCOPES = [("All apps", N_("All apps")), ("Each app", N_("Each app"))]
+EMOJI_OFFER_AT = [
+    ("At the end of a sentence", N_("At the end of a sentence")),
+    ("After each word", N_("After each word")),
+]
+EMOJI_PLACEMENTS = [
+    ("After the word", N_("After the word")),
+    ("Instead of the word", N_("Instead of the word")),
+]
 LOCK_KEYS = [("Disabled", N_("Disabled")), ("Shift", "Shift"), ("Ctrl", "Ctrl"), ("Alt", "Alt")]
 TIME_FORMATS = [
     ("%H:%M", "15:04 (24h)"),
@@ -68,6 +109,7 @@ DATE_FORMATS = [
 LABELS = {
     "InputMethod": N_("Input Method"),
     "ToggleKey": N_("Switch Between English and Vietnamese"),
+    "ToggleScope": N_("Switch Applies To"),
     "ModeMenuKey": N_("Mode Menu Hotkey"),
     "CycleModeKey": N_("Cycle Mode Hotkey"),
     "ModeOrder": N_("Mode Order"),
@@ -75,6 +117,8 @@ LABELS = {
     "ShowModePreedit": N_("Show Preedit"),
     "ShowModeOff": N_("Show OFF"),
     "ShowModeVim": N_("Show Vim mode"),
+    "ShowModeEmoji": N_("Show emoji suggestions"),
+    "ShowModeTeencode": N_("Show teencode"),
     "UiLanguage": N_("Interface Language"),
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
@@ -89,6 +133,18 @@ LABELS = {
     "ShortcutPreedit": N_("Shortcut for Preedit"),
     "ShortcutOff": N_("Shortcut for OFF"),
     "ShortcutVim": N_("Shortcut for Vim mode"),
+    "ShortcutEmoji": N_("Shortcut for emoji suggestions"),
+    "ShortcutTeencode": N_("Shortcut for teencode"),
+    "EmojiSuggestions": N_("Suggest emoji while typing"),
+    "EmojiPlacement": N_("Put a picked emoji"),
+    "EmojiOfferAt": N_("Offer emoji"),
+    "EnglishEmojiKeywords": N_("English keywords"),
+    "ConvertKey": N_("Convert Selected Text Hotkey"),
+    "ConvertFrom": N_("Convert From"),
+    "ConvertTo": N_("Convert To"),
+    "ConvertCase": N_("Letter Case"),
+    "ConvertStripDiacritics": N_("Remove Diacritics"),
+    "YahooEmoticons": N_("Yahoo Messenger emoticons"),
     "DirectTyping": N_("Mode"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
@@ -119,8 +175,16 @@ LABELS = {
 }
 
 HINTS = {
+    "ConvertKey": N_(
+        "Select text in an app, then press this key. The text changes in place; Ctrl+Z brings it back."
+    ),
+    "ConvertFrom": N_("Old documents are often TCVN3."),
+    "ConvertStripDiacritics": N_("Tiếng Việt becomes Tieng Viet."),
     "ToggleKey": N_(
         "Tap the keys together and let go; the top bar shows V or E. Super+Space still switches input sources."
+    ),
+    "ToggleScope": N_(
+        "All apps switches English/Vietnamese everywhere except apps set to OFF; Each app remembers a separate choice for each app."
     ),
     "ModeMenuKey": N_(
         "Opens a menu to pick Sen, underlined typing or Off for the app in use. Press it twice to type the key itself; while typing English it types as usual."
@@ -133,7 +197,9 @@ HINTS = {
         "With the mode menu open, press a mode's key to pick it for the app in use. Pick the app's usual mode again to make it follow the global setting."
     ),
     "OutputCharset": N_(
-        "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC)."
+        "Keep Unicode unless an old document or app needs another one, such as TCVN3 (ABC). "
+        "Unicode tổ hợp sends tone marks apart from their letters, which terminals and many apps "
+        "handle badly. Cứu dấu works only with Unicode."
     ),
     "EnableCustomKeymap": N_("The keys below, used when the input method is Custom."),
     "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
@@ -173,6 +239,25 @@ HINTS = {
         "With Enable Macro on, a macro such as ko → không expands even in English."
     ),
     "TimeFormat": N_("Macros support dynamic placeholders: $TIME and $DATE."),
+    "EmojiSuggestions": N_(
+        "cười shows Tab: 😂 … next to the cursor. Tab numbers them: 1–5 picks one, Tab, Space or Enter the first, Esc keeps the word. haha and :) are replaced. Only where the hint is known to show."
+    ),
+    "YahooEmoticons": N_(
+        "=)) and :x offer 🤣 and 😍, like on Yahoo Messenger; Tab swaps the code for the emoji."
+    ),
+    "EmojiPlacement": N_(
+        "After the word: cười 😂. Instead of the word: 😂. haha and :) are always replaced."
+    ),
+    "EnglishEmojiKeywords": N_(
+        "cat and thumbs up also offer 🐈 and 👍, from the Unicode list of English words. Words that"
+        " are also Vietnamese, like can, are left out."
+    ),
+    "EmojiOfferAt": N_(
+        "At the end of a sentence: the emoji of the sentence show while you type. After . ! ? or a"
+        " short pause, 1–9 picks one, or Tab first where digits type tones, as in VNI; it goes at the"
+        " cursor. Esc hides them until the next sentence."
+        " After each word: the list shows as soon as a keyword is typed."
+    ),
 }
 
 # What a word looks like while typing it, shown under the input method.
@@ -191,6 +276,7 @@ TYPING_GROUPS = [
         [
             "InputMethod",
             "ToggleKey",
+            "ToggleScope",
             "ModeMenuKey",
             "CycleModeKey",
             "DirectTyping",
@@ -227,6 +313,21 @@ TYPING_GROUPS = [
     (N_("Show in the top bar menu"), SHOW_MENUS),
     (N_("Language"), ["UiLanguage"]),
 ]
+# The Convert page, as in fcitx5.
+CONVERT_CHARSETS = N_("Charsets")
+CONVERT_GROUPS = [
+    (N_("Hotkey"), ["ConvertKey"]),
+    (CONVERT_CHARSETS, ["ConvertFrom", "ConvertTo"]),
+    (N_("After converting"), ["ConvertStripDiacritics", "ConvertCase"]),
+]
+# The Emoji page, as in fcitx5.
+EMOJI_SETTINGS = [
+    "EmojiSuggestions",
+    "EmojiOfferAt",
+    "EmojiPlacement",
+    "YahooEmoticons",
+    "EnglishEmojiKeywords",
+]
 MACRO_SWITCHES = ["EnableMacro", "CapitalizeMacro", "EnableMacroInOffMode"]
 # The mode of apps not set on their own, shown as the fcitx5 edition shows its Mode: (saved value, label, hint).
 TYPING_MODES = [
@@ -242,6 +343,7 @@ TYPING_MODES = [
 
 CHOICES = {
     "ToggleKey": TOGGLE_KEYS,
+    "ToggleScope": TOGGLE_SCOPES,
     "ModeMenuKey": MODE_MENU_KEYS,
     "CycleModeKey": CYCLE_MODE_KEYS,
     "ModeOrder": MODE_ORDERS,
@@ -251,13 +353,15 @@ CHOICES = {
     "LockWordModifier": LOCK_KEYS,
     "TimeFormat": TIME_FORMATS,
     "DateFormat": DATE_FORMATS,
+    "EmojiPlacement": EMOJI_PLACEMENTS,
+    "EmojiOfferAt": EMOJI_OFFER_AT,
+    "ConvertKey": CONVERT_KEYS,
+    "ConvertCase": CONVERT_CASES,
 }
 
 
 def is_switch(key):
-    return (
-        key not in CHOICES and key not in SHORTCUTS and key not in ("InputMethod", "OutputCharset")
-    )
+    return key not in CHOICES and key not in SHORTCUTS and key not in ("InputMethod", *CHARSET_KEYS)
 
 
 def shortcut_problem(key, value, values):

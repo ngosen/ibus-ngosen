@@ -8,19 +8,30 @@ import os
 import tempfile
 from datetime import datetime
 
-from . import ini, keys
+from . import emoji_words, ini, keys
 from .i18n import N_, _
 from .store import KEYMAP_LIST, MACRO_LIST, read_words
 
-COMPONENTS = ("config", "macros", "keymaps", "rules", "switches", "dictionary")
+COMPONENTS = (
+    "config",
+    "macros",
+    "keymaps",
+    "rules",
+    "switches",
+    "emoji_words",
+    "emoji_off_apps",
+    "teencode_apps",
+    "dictionary",
+)
 # The fcitx5 edition keeps these as Mode, VietnameseOn and indexed key lists.
 # Key lists fcitx5 writes as {"0": …}; the engine keeps them as one line split at spaces.
-KEY_LISTS = ("ModeMenuKey", "CycleModeKey")
+KEY_LISTS = ("ModeMenuKey", "CycleModeKey", "ConvertKey")
 IBUS_ONLY = ("DirectTyping", "ToggleKey", *KEY_LISTS)
 # fcitx5 names its modes OFF, Sen, Preedit and Emoji Picker; OFF types with Sen when Vietnamese is on.
-DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "False"}
-# The engine types English for 0, with Sen for 1, 2, 3, 4 and 8 and underlined for 5, as fcitx5 reads them.
-APP_MODES = {"0", "1", "2", "3", "4", "5", "8"}
+# fcitx5 reads its former Emoji Picker mode as Sen, where emoji are offered as you type.
+DIRECT_TYPING = {"off": "True", "sen": "True", "preedit": "False", "emoji picker": "True"}
+# The engine types English for 0, with Sen for 1, 2, 3, 4, 6 and 8 and underlined for 5, as fcitx5 reads them.
+APP_MODES = {"0", "1", "2", "3", "4", "5", "6", "8"}
 APP_MODES_HEADER = "# The typing mode picked for each app: 0 = Off, 2 = Sen, 5 = Preedit\n"
 SWITCHES = "Switches"
 NEEDS_MODIFIER = N_("A switch key here needs Ctrl, Alt, Shift or Super with another key.")
@@ -51,6 +62,9 @@ class Paths:
         folder = os.path.dirname(store.settings_file)
         self.app_modes = os.path.join(folder, "ngosen-app-rules.conf")
         self.app_switches = os.path.join(folder, "ngosen-app-switch.conf")
+        self.emoji_words = store.emoji_words_file
+        self.emoji_off_apps = store.emoji_off_apps_file
+        self.teencode_apps = store.teencode_apps_file
         self.english = english_mark()
 
 
@@ -167,6 +181,16 @@ def export(engine, paths, target):
         backup["rules"] = _app_rules(paths.app_modes)
     # Always, as fcitx5 does, so a restore there drops the switches its rules would lose to.
     backup["switches"] = _app_switches(paths.app_switches)
+    # As fcitx5 lists them, so either edition restores the other's.
+    edits = emoji_words.parse_edits(_current(paths.emoji_words))
+    backup["emoji_words"] = [
+        {"Keyword": word, "Emoji": emoji, "On": "True" if on else "False"}
+        for (emoji, word), on in edits.items()
+    ]
+    apps = emoji_words.parse_apps(_current(paths.emoji_off_apps))
+    backup["emoji_off_apps"] = [{"App": app} for app in apps]
+    apps = emoji_words.parse_apps(_current(paths.teencode_apps))
+    backup["teencode_apps"] = [{"App": app} for app in apps]
     # The list in effect, so restoring brings back the packaged one over a later own list.
     dictionary = read_bytes(paths.dictionary)
     if dictionary is None:
@@ -188,9 +212,21 @@ def load(path):
         backup = json.load(f)
     if not isinstance(backup, dict) or not any(k in backup for k in COMPONENTS):
         raise ValueError(_("No settings found in the file."))
+    # Restoring it would replace all of the user's emoji words with the shared ones.
+    meta = backup.get("meta")
+    if isinstance(meta, dict) and meta.get("kind") == emoji_words.SHARE_KIND:
+        raise ValueError(_("This file holds emoji words; import it on the Emoji page."))
     if not isinstance(backup.get("config", {}), dict):
         raise ValueError(_("The settings in the file are damaged."))
-    for name in ("macros", "keymaps", "rules", "switches"):
+    for name in (
+        "macros",
+        "keymaps",
+        "rules",
+        "switches",
+        "emoji_words",
+        "emoji_off_apps",
+        "teencode_apps",
+    ):
         items = backup.get(name, [])
         if not isinstance(items, list) or not all(isinstance(item, dict) for item in items):
             raise ValueError(_("The lists in the file are damaged."))
@@ -199,6 +235,9 @@ def load(path):
         ("keymaps", ("Key", "Value")),
         ("rules", ("App", "Mode")),
         ("switches", ("App",)),
+        ("emoji_words", ("Keyword", "Emoji")),
+        ("emoji_off_apps", ("App",)),
+        ("teencode_apps", ("App",)),
     ):
         for item in backup.get(name, []):
             if not all(isinstance(item.get(k, ""), str) for k in fields):
@@ -282,8 +321,6 @@ def _direct_typing(mode, notes):
                 "The backup types in a mode this edition does not know ({}), so the current one stays."
             ).format(name)
         )
-    elif name.lower() == "emoji picker":
-        notes.append(_("This edition has no emoji picker, so words are underlined instead."))
     return value
 
 
@@ -343,7 +380,9 @@ def _app_modes_file(current, rules, notes):
         if app and not any(c in app + mode for c in "=\n\r") and not app.startswith("#"):
             lines.append(f"{app}={mode}\n")
     if any(line.rstrip("\n").partition("=")[2] not in APP_MODES for line in lines):
-        notes.append(_("Rules that pick emoji for an app are kept but do nothing here."))
+        notes.append(
+            _("Rules with a mode this edition does not know are kept but do nothing here.")
+        )
     if current is None and not lines:
         return None
     return (APP_MODES_HEADER + "".join(lines)).encode("utf-8", "surrogateescape")
@@ -362,6 +401,33 @@ def _app_switches_file(current, switches):
         return None
     sections = "".join(f"[{SWITCHES}/{i}]\n{entry}\n" for i, entry in enumerate(kept))
     return f"[{SWITCHES}]\n{sections}".encode("utf-8", "surrogateescape")
+
+
+def _emoji_words_file(items):
+    """The word changes as the engine reads them; none at all needs no file."""
+    edits = {}
+    for item in items:
+        on = item.get("On", "True")
+        key = (item.get("Emoji", ""), item.get("Keyword", ""))
+        if all(key) and not any(c in key[0] for c in "\n\r[]"):
+            on = _text(on) != "False" if isinstance(on, (str, bool)) else True
+            emoji_words.add_edit(edits, key, on)
+    return emoji_words.edits_text(edits).encode("utf-8") if edits else None
+
+
+def _apps_file(current, items, header=emoji_words.OFF_APPS_HEADER):
+    """The apps file as the engine writes it; a name that would read as a comment is left out."""
+    apps = []
+    for item in items:
+        app = item.get("App", "")
+        if app.lstrip().startswith("#") or any(c in app for c in "\n\r"):
+            continue
+        app = emoji_words.app_name(app)
+        if app and app not in apps:
+            apps.append(app)
+    if current is None and not apps:
+        return None
+    return emoji_words.apps_text(apps, header).encode("utf-8", "surrogateescape")
 
 
 def _keymap_file(text, items):
@@ -414,6 +480,18 @@ def plan(backup, paths, engine, taken=frozenset()):
     switches = backup.get("switches", [] if "rules" in backup else None)
     if switches is not None:
         changes[paths.app_switches] = _app_switches_file(_current(paths.app_switches), switches)
+    if "emoji_words" in backup:
+        changes[paths.emoji_words] = _emoji_words_file(backup["emoji_words"])
+    if "emoji_off_apps" in backup:
+        changes[paths.emoji_off_apps] = _apps_file(
+            _current(paths.emoji_off_apps), backup["emoji_off_apps"]
+        )
+    if "teencode_apps" in backup:
+        changes[paths.teencode_apps] = _apps_file(
+            _current(paths.teencode_apps),
+            backup["teencode_apps"],
+            emoji_words.TEENCODE_APPS_HEADER,
+        )
     # Last, so the running engine switches language only once the rest is written.
     if "VietnameseOn" in config:
         changes[paths.english] = _english(config, paths, notes)

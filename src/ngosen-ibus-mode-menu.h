@@ -16,29 +16,40 @@ typedef struct _IBusLookupTable IBusLookupTable;
 
 namespace ngosen {
 
-    // The modes the menu offers, kept for the app in use. Vim is no mode but switches Vim mode for the
-    // app, as in fcitx5.
+    // The modes the menu offers, kept for the app in use. Vim, Emoji and Teencode are no modes but switch
+    // Vim mode, emoji suggestions and teencode for the app, as in fcitx5.
     enum class MenuMode {
         Sen,
         Preedit,
         Off,
-        Vim
+        Vim,
+        Emoji,
+        Teencode
     };
 
     struct MenuItem {
         MenuMode    mode;
         std::string label;
         guint       key = 0;
+        // The mode the app types in now, which the menu marks; the cursor may move away from it.
+        bool current = false;
     };
 
     // The shown modes in ModeOrder, then the ones it leaves out; a key an earlier item has picks nothing.
-    // vimOn: whether the app in use has Vim mode, which its item says.
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn = false);
+    // What the app in use has switched on, which the items of its switches say.
+    struct MenuSwitches {
+        bool vim      = false;
+        bool emoji    = true;
+        bool teencode = false;
+    };
 
-    // As in fcitx5 the cycle key goes through only the modes ModeOrder names, Vim mode left out.
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, const MenuSwitches& switches = {});
+
+    // As in fcitx5 the cycle key goes through only the modes ModeOrder names, the switches left out.
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings);
 
     bool                  cyclesMode(const IBusSettings& settings, guint keyval, guint state);
+    bool                  convertsSelection(const IBusSettings& settings, guint keyval, guint state);
 
     // keymap is the custom keymap in use, if any.
     bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state);
@@ -46,14 +57,15 @@ namespace ngosen {
     // What a key pressed while the menu is open does.
     struct MenuKey {
         enum Kind {
-            TypeOn,
+            // Closes the menu and lets the key type as if the menu was never opened.
+            Pass,
             Close,
             Up,
             Down,
             PickCursor,
             Pick,
             TypeMenuKey
-        } kind        = TypeOn;
+        } kind        = Pass;
         MenuMode mode = MenuMode::Sen;
     };
 

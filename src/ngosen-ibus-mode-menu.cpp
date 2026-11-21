@@ -42,18 +42,27 @@ namespace ngosen {
             return false;
         }
 
-        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, bool vimOn) {
+        std::vector<MenuItem> shownModes(const IBusSettings& settings, bool withUnlisted, const MenuSwitches& on) {
             struct Known {
                 const char* name;
                 MenuItem    item;
                 bool        shown;
             };
-            const auto  key     = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
+            const auto key = [](const std::string& name) { return ibus_keyval_from_name(name.c_str()); };
+            // In fcitx5's default order, which the modes a saved order leaves out follow.
             const Known known[] = {
                 {"Sen", {MenuMode::Sen, _("Sen"), key(settings.shortcutSen)}, settings.showModeSen},
                 {"Preedit", {MenuMode::Preedit, _("Preedit"), key(settings.shortcutPreedit)}, settings.showModePreedit},
+                // Turning suggestions off in the settings takes the item away, as in fcitx5.
+                {"Emoji",
+                 {MenuMode::Emoji, on.emoji ? _("Emoji suggestions: on") : _("Emoji suggestions: off"), key(settings.shortcutEmoji)},
+                 settings.showModeEmoji && settings.options.emojiSuggestions},
+                // Teencode only changes which words go back to their keys, so it needs that setting on.
+                {"Teencode",
+                 {MenuMode::Teencode, on.teencode ? _("Teencode: on") : _("Teencode: off"), key(settings.shortcutTeencode)},
+                 settings.showModeTeencode && settings.options.autoNonVnRestore},
                 {"Off", {MenuMode::Off, _("OFF"), key(settings.shortcutOff)}, settings.showModeOff},
-                {"Vim", {MenuMode::Vim, vimOn ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
+                {"Vim", {MenuMode::Vim, on.vim ? _("Vim mode: on") : _("Vim mode: off"), key(settings.shortcutVim)}, settings.showModeVim},
             };
             std::vector<const Known*> ordered;
             const auto                add = [&ordered](const Known& entry) {
@@ -81,8 +90,8 @@ namespace ngosen {
 
     } // namespace
 
-    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, bool vimOn) {
-        std::vector<MenuItem> items = shownModes(settings, true, vimOn);
+    std::vector<MenuItem> modeMenuItems(const IBusSettings& settings, const MenuSwitches& switches) {
+        std::vector<MenuItem> items = shownModes(settings, true, switches);
         for (auto item = items.begin(); item != items.end(); ++item) {
             if (std::any_of(items.begin(), item, [&](const MenuItem& other) { return other.key == item->key; }))
                 item->key = IBUS_KEY_VoidSymbol;
@@ -92,8 +101,8 @@ namespace ngosen {
 
     std::vector<MenuMode> cycleMenuModes(const IBusSettings& settings) {
         std::vector<MenuMode> modes;
-        for (const auto& item : shownModes(settings, false, false)) {
-            if (item.mode != MenuMode::Vim)
+        for (const auto& item : shownModes(settings, false, {})) {
+            if (item.mode != MenuMode::Vim && item.mode != MenuMode::Emoji && item.mode != MenuMode::Teencode)
                 modes.push_back(item.mode);
         }
         return modes;
@@ -101,6 +110,10 @@ namespace ngosen {
 
     bool cyclesMode(const IBusSettings& settings, guint keyval, guint state) {
         return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.cycleModeKeys, keyval, state);
+    }
+
+    bool convertsSelection(const IBusSettings& settings, guint keyval, guint state) {
+        return (state & IBUS_RELEASE_MASK) == 0 && matchesAny(settings.convertKeys, keyval, state);
     }
 
     bool opensModeMenu(const IBusSettings& settings, const std::vector<KeymapEntry>& keymap, guint keyval, guint state) {
@@ -128,14 +141,15 @@ namespace ngosen {
         // As in the fcitx5 edition: the menu key again types itself, since ` is common in code.
         if (matchesAny(settings.modeMenuKeys, keyval, state))
             return {MenuKey::TypeMenuKey};
-        return {MenuKey::TypeOn};
+        return {MenuKey::Pass};
     }
 
     IBusLookupTable* newModeMenuTable(const std::vector<MenuItem>& items, guint cursor) {
         IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(items.size()), cursor, TRUE, TRUE);
         ibus_lookup_table_set_orientation(table, IBUS_ORIENTATION_VERTICAL);
         for (guint i = 0; i < items.size(); ++i) {
-            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(items[i].label.c_str()));
+            const std::string text = items[i].current ? items[i].label + "  \u2713" : items[i].label;
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(text.c_str()));
             // A key an earlier item took shows no label, as in fcitx5.
             gchar* label = items[i].key == IBUS_KEY_VoidSymbol ? g_strdup("") : g_strdup_printf("%s.", ibus_keyval_name(items[i].key));
             ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label));

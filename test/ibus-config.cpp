@@ -51,7 +51,7 @@ namespace {
     // As the fcitx5 edition writes them: defaults are commented out.
     const char* const FcitxSettings = "# Mode\n# Mode=Sen\nMode=Preedit\nInputMethod=VNI\nSettingsVersion=3\n"
                                       "DoubleSpaceToPeriod=True\nVietnameseOn=True\n# W2U=Non-Start\nW2U=Everywhere\nRetoneSelection=False\n"
-                                      "RetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\nEnableMacroInOffMode=True\n";
+                                      "RetypeAfterSwitch=True\nDoubleHyphenToEmDash=True\nEnableMacroInOffMode=True\nToggleScope=Each app\n";
     const char* const FcitxMacros   = "[Macro]\n[Macro/0]\nKey=ko\nValue=không\n[Macro/1]\nKey=vn\nValue=\"Việt Nam\"\n";
 
     void              testValues() {
@@ -63,6 +63,14 @@ namespace {
         check(parseIni("Key=\"a\\qb\"\n").top.count("Key") == 0, "an unknown escape drops the value, as in fcitx5");
         check(parseIni("Key=a\\nb\n").top.at("Key") == "a\\nb", "an unquoted value has no escapes, as in fcitx5");
         check(parseIni("Key=  spaced  \n").top.at("Key") == "  spaced", "spaces at the ends of a line are dropped");
+    }
+
+    void testEmojiWords() {
+        const auto edits = emojiWordEdits(parseIni("[Words]\n[Words/0]\nKeyword=mèo\nEmoji=🐱\nOn=False\n[Words/1]\nKeyword=cơm\nEmoji=🍜\n"
+                                                   "[Words/2]\nKeyword=\nEmoji=🍚\n[Words/4]\nKeyword=xa\nEmoji=🚗\n"));
+        check(edits.size() == 2, "emoji words stop at the first missing index and skip an empty keyword");
+        check(edits.size() == 2 && edits[0].keyword == "mèo" && edits[0].emoji == "🐱" && !edits[0].on, "an emoji word turned off");
+        check(edits.size() == 2 && edits[1].keyword == "cơm" && edits[1].on, "On defaults to true, as in fcitx5");
     }
 
     void testLists() {
@@ -77,6 +85,8 @@ namespace {
         check(sameOptions(readSettings(parseIni("")), defaults), "an empty file reads as the defaults");
         IBusSettings expected = defaults;
         expected.options      = defaultOptions;
+        // fcitx5's own setting defaults to the end of a sentence; the core's is for tests.
+        expected.options.emojiAtSentenceEnd = true;
         check(sameOptions(defaults, expected), "the defaults are the fcitx5 edition's");
         check(defaults.options.retypeAfterSwitch, "Cứu chữ is on by default, as in fcitx5");
         check(defaults.options.retoneSelection, "RetoneSelection is on by default, as in fcitx5");
@@ -111,13 +121,24 @@ namespace {
         changed.enableDictionary             = true;
         changed.enableCustomKeymap           = true;
         changed.directTyping                 = true;
+        changed.options.emojiSuggestions     = false;
+        changed.options.yahooEmoticons       = false;
+        changed.options.emojiReplacesWord    = true;
+        changed.options.englishEmojiKeywords = false;
+        changed.options.emojiAtSentenceEnd   = false;
+        changed.shortcutEmoji                = "m";
+        changed.showModeEmoji                = false;
         const std::string text               = settingsText(changed);
         check(sameOptions(readSettings(parseIni(text)), changed), "settings round trip");
         check(!readSettings(parseIni(text)).options.retoneSelection, "RetoneSelection round trip");
         check(!readSettings(parseIni(text)).options.rawWordAfterSlash, "RawWordAfterSlash round trip");
         check(!readSettings(parseIni(text)).options.retypeAfterSwitch, "RetypeAfterSwitch round trip");
         check(readSettings(parseIni(text)).options.enableMacroInOffMode, "EnableMacroInOffMode round trip");
-        check(parseIni(text).top.size() == 47, "the file has every key");
+        check(parseIni(text).top.at("EmojiPlacement") == "Instead of the word", "EmojiPlacement is written by fcitx5's label");
+        check(readSettings(parseIni(text)).options.emojiReplacesWord && !readSettings(parseIni(text)).options.emojiSuggestions, "emoji options round trip");
+        check(!readSettings(parseIni(text)).options.englishEmojiKeywords, "EnglishEmojiKeywords round trip");
+        check(parseIni(text).top.at("EmojiOfferAt") == "After each word" && !readSettings(parseIni(text)).options.emojiAtSentenceEnd, "EmojiOfferAt round trip by fcitx5's label");
+        check(parseIni(text).top.size() == 62, "the file has every key");
         // fcitx5 reads SettingsVersion as the version of its own upgrades.
         check(parseIni(text).top.count("SettingsVersion") == 0, "no SettingsVersion");
     }
@@ -169,14 +190,20 @@ namespace {
         const IBusSettings shortcuts = readSettings(parseIni("ShortcutSen=a\nShortcutPreedit=semicolon\nShortcutOff=\n"));
         check(shortcuts.shortcutSen == "a" && shortcuts.shortcutPreedit == "q" && shortcuts.shortcutOff == "e", "a shortcut is one letter or digit");
         check(readSettings(parseIni("ShortcutOff=X\n")).shortcutOff == "x", "a shortcut written in capitals is read in lowercase");
-        IBusSettings changed  = defaults;
-        changed.modeMenuKeys  = {};
-        changed.shortcutOff   = "x";
-        changed.shortcutVim   = "m";
-        changed.showModeVim   = false;
-        const IBusSettings rt = readSettings(parseIni(settingsText(changed)));
+        IBusSettings changed     = defaults;
+        changed.modeMenuKeys     = {};
+        changed.shortcutOff      = "x";
+        changed.shortcutVim      = "m";
+        changed.showModeVim      = false;
+        changed.toggleEachApp    = true;
+        changed.shortcutTeencode = "k";
+        changed.showModeTeencode = false;
+        const IBusSettings rt    = readSettings(parseIni(settingsText(changed)));
         check(rt.modeMenuKeys.empty() && rt.shortcutOff == "x", "menu settings round trip");
         check(rt.shortcutVim == "m" && !rt.showModeVim, "the Vim item's settings round trip");
+        check(rt.shortcutTeencode == "k" && !rt.showModeTeencode, "the teencode item's settings round trip");
+        check(rt.toggleEachApp && parseIni(settingsText(changed)).top.at("ToggleScope") == "Each app", "ToggleScope round trip by fcitx5's label");
+        check(!defaultSettings().toggleEachApp, "the toggle key switches every app by default, as in fcitx5");
         check(defaults.shortcutVim == "v" && defaults.showModeVim, "Vim mode is in the menu on v by default, as in fcitx5");
         const IBusSettings old = readSettings(parseIni("ShortcutDefault=r\nShowModeDefault=False\nModeOrder=Sen,Preedit,Emoji,Off,Default\n"));
         check(old.modeOrder == "Sen,Preedit,Emoji,Off" && old.showModeSen && old.shortcutSen == "1", "a config saved with Default Typing still reads");
@@ -192,27 +219,48 @@ namespace {
 
     void testModeMenuOrder() {
         IBusSettings settings = defaultSettings();
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Off, MenuMode::Vim}, "the menu lists the modes in fcitx5's order");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Preedit, MenuMode::Emoji, MenuMode::Teencode, MenuMode::Off, MenuMode::Vim},
+              "the menu lists the modes in fcitx5's order");
         settings.modeOrder = "Off,Default,Sen,Emoji,Nope";
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Preedit, MenuMode::Vim},
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Emoji, MenuMode::Preedit, MenuMode::Teencode, MenuMode::Vim},
               "ModeOrder sorts the menu, the modes it leaves out come last");
         settings.modeOrder       = "Sen,Preedit,Emoji,Off";
         settings.showModePreedit = false;
-        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Off, MenuMode::Vim}, "a hidden mode is left out");
-        check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::TypeOn, "the key of a hidden mode picks nothing");
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Sen, MenuMode::Emoji, MenuMode::Off, MenuMode::Teencode, MenuMode::Vim}, "a hidden mode is left out");
+        check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Pass, "the key of a hidden mode closes the menu and types");
+        check(menuKey(settings, IBUS_KEY_d, 0).kind == MenuKey::Pass, "a key no item takes closes the menu and types");
         settings.modeOrder = "Off,Sen";
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key skips the modes ModeOrder leaves out");
         settings.modeOrder = "Vim,Off,Sen";
         check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "the cycle key never switches Vim mode");
-        check(modeMenuItems(settings, false).front().label == "Vim mode: off" && modeMenuItems(settings, true).front().label == "Vim mode: on",
+        settings.modeOrder = "Emoji,Off,Sen";
+        check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "nor emoji suggestions");
+        settings.modeOrder = "Teencode,Off,Sen";
+        check(cycleMenuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen}, "nor teencode");
+        check(modeMenuItems(settings, {false, true, true}).front().label == "Teencode: on" && modeMenuItems(settings, {}).front().label == "Teencode: off",
+              "the teencode item says whether the app keeps teencode");
+        check(menuKey(settings, IBUS_KEY_t, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_t, 0).mode == MenuMode::Teencode, "t picks the teencode item, as in fcitx5");
+        settings.options.autoNonVnRestore = false;
+        check(menuModes(settings).front() == MenuMode::Off, "teencode needs words to go back to their keys, so it leaves the menu without it");
+        settings.options.autoNonVnRestore = true;
+        settings.modeOrder                = "Emoji,Off,Sen";
+        check(modeMenuItems(settings, {false, true}).front().label == "Emoji suggestions: on" && modeMenuItems(settings, {false, false}).front().label == "Emoji suggestions: off",
+              "the emoji item says whether the app has emoji suggestions");
+        check(menuKey(settings, IBUS_KEY_w, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_w, 0).mode == MenuMode::Emoji, "w picks the emoji item, as in fcitx5");
+        settings.options.emojiSuggestions = false;
+        check(menuModes(settings) == std::vector<MenuMode>{MenuMode::Off, MenuMode::Sen, MenuMode::Teencode, MenuMode::Vim},
+              "with emoji suggestions off in the settings, the menu has no emoji item");
+        settings.options.emojiSuggestions = true;
+        settings.modeOrder                = "Vim,Off,Sen";
+        check(modeMenuItems(settings, {false}).front().label == "Vim mode: off" && modeMenuItems(settings, {true}).front().label == "Vim mode: on",
               "the Vim item says whether the app has Vim mode");
         settings.modeOrder     = "Sen,Preedit,Emoji,Off";
         settings.shortcutOff   = settings.shortcutSen;
         IBusLookupTable* table = newModeMenuTable(modeMenuItems(settings), 0);
-        check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 1))).empty(), "an item whose key an earlier one took shows no key");
+        check(std::string(ibus_text_get_text(ibus_lookup_table_get_label(table, 2))).empty(), "an item whose key an earlier one took shows no key");
         g_object_unref(g_object_ref_sink(table));
         settings.shortcutOff = defaultSettings().shortcutOff;
-        settings.showModeSen = settings.showModeOff = settings.showModeVim = false;
+        settings.showModeSen = settings.showModeOff = settings.showModeVim = settings.showModeEmoji = settings.showModeTeencode = false;
         check(modeMenuItems(settings).empty(), "every mode can be hidden");
 
         const IBusSettings read = readSettings(parseIni("ShowModeOff=False\nModeOrder=Default,Off\nCycleModeKey=Control+grave Shift_L\n"));
@@ -224,6 +272,23 @@ namespace {
         check(!again.showModeOff && again.modeOrder == "Off" && again.cycleModeKeys == read.cycleModeKeys, "they round trip");
     }
 
+    void testConvertSettings() {
+        const IBusSettings defaults = defaultSettings();
+        check(defaults.convertKeys.empty() && defaults.options.convertFrom == "TCVN3 (ABC)" && defaults.options.convertTo == "Unicode",
+              "the convert key is off by default and converts TCVN3 to Unicode, as in fcitx5");
+        const IBusSettings read =
+            readSettings(parseIni("ConvertFrom=VNI Windows\nConvertTo=Unicode\nConvertCase=Title Case\nConvertStripDiacritics=True\n[ConvertKey]\n0=Control+Shift+F6\n"));
+        check(read.convertKeys == std::vector<std::string>{"Control+Shift+F6"}, "fcitx5's convert key list is read");
+        check(read.options.convertFrom == "VNI Windows" && read.options.convertCase == 4 && read.options.convertStripDiacritics,
+              "the charsets, the letter case by fcitx5's name and the diacritics are read");
+        check(readSettings(parseIni("ConvertFrom=Klingon\nConvertCase=Shouting\n")).options.convertFrom == "TCVN3 (ABC)", "an unknown charset keeps the default");
+        const IBusSettings again = readSettings(parseIni(settingsText(read)));
+        check(again.convertKeys == read.convertKeys && again.options.convertFrom == "VNI Windows" && again.options.convertCase == 4 && again.options.convertStripDiacritics,
+              "they round trip");
+        check(convertsSelection(read, IBUS_KEY_F6, IBUS_CONTROL_MASK | IBUS_SHIFT_MASK) && !convertsSelection(read, IBUS_KEY_F6, IBUS_CONTROL_MASK),
+              "the key converts only with its modifiers");
+    }
+
     void testModeMenuKeys() {
         IBusSettings settings = defaultSettings();
         check(opensModeMenu(settings, {}, IBUS_KEY_grave, 0), "` opens the menu");
@@ -231,20 +296,20 @@ namespace {
         check(!opensModeMenu(settings, {}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "~ does not open the default menu");
         check(menuKey(settings, IBUS_KEY_q, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_q, 0).mode == MenuMode::Preedit, "q picks underlined typing");
         check(menuKey(settings, IBUS_KEY_e, 0).mode == MenuMode::Off && menuKey(settings, IBUS_KEY_1, 0).mode == MenuMode::Sen, "e and 1 pick their modes");
-        check(menuKey(settings, IBUS_KEY_q, IBUS_CONTROL_MASK).kind == MenuKey::TypeOn, "Ctrl+q picks nothing");
+        check(menuKey(settings, IBUS_KEY_q, IBUS_CONTROL_MASK).kind == MenuKey::Pass, "Ctrl+q picks nothing and goes to the app");
         check(menuKey(settings, IBUS_KEY_grave, 0).kind == MenuKey::TypeMenuKey, "` again types itself");
         check(menuKey(settings, IBUS_KEY_Escape, 0).kind == MenuKey::Close && menuKey(settings, IBUS_KEY_Return, 0).kind == MenuKey::PickCursor, "Esc closes, Enter picks");
         settings.modeMenuKeys = {"Shift+asciitilde"};
         settings.shortcutOff  = "x";
         check(opensModeMenu(settings, {}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK) && !opensModeMenu(settings, {}, IBUS_KEY_grave, 0), "Shift+~ opens the menu instead of `");
-        check(menuKey(settings, IBUS_KEY_x, 0).mode == MenuMode::Off && menuKey(settings, IBUS_KEY_e, 0).kind == MenuKey::TypeOn, "a changed shortcut picks its mode");
+        check(menuKey(settings, IBUS_KEY_x, 0).mode == MenuMode::Off && menuKey(settings, IBUS_KEY_e, 0).kind == MenuKey::Pass, "a changed shortcut picks its mode");
         check(menuKey(settings, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK).kind == MenuKey::TypeMenuKey, "Shift+~ again types ~");
         settings.options.inputMethod = "VIQR";
         check(!opensModeMenu(settings, {}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "VIQR keeps ~ for its tone");
         settings.options.inputMethod = "Telex";
         check(!opensModeMenu(settings, {{"~", "DauNga"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "a custom keymap keeps its keys");
         check(opensModeMenu(settings, {{"s", "DauSac"}}, IBUS_KEY_asciitilde, IBUS_SHIFT_MASK), "other keymap keys leave the menu alone");
-        check(menuKey(settings, IBUS_KEY_r, 0).kind == MenuKey::TypeOn, "r picks nothing, since Default Typing is gone");
+        check(menuKey(settings, IBUS_KEY_r, 0).kind == MenuKey::Pass, "r picks nothing, since Default Typing is gone");
         check(menuKey(settings, IBUS_KEY_v, 0).kind == MenuKey::Pick && menuKey(settings, IBUS_KEY_v, 0).mode == MenuMode::Vim, "v switches Vim mode, as in fcitx5");
     }
 
@@ -366,10 +431,12 @@ namespace {
         write(paths.fcitxConfigDir + "/ngosen-app-rules.conf", "firefox=5\ncode=0\n");
         write(paths.fcitxConfigDir + "/ngosen-app-switch.conf", FcitxSwitches);
         write(paths.fcitxConfigDir + "/ngosen-vim-apps.conf", "kitty\n");
+        write(paths.fcitxConfigDir + "/ngosen-teencode-apps.conf", "discord\n");
         check(prepareSettings(paths), "import succeeds");
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
         check(settings.top.count("Mode") == 0, "Mode not imported");
+        check(readSettings(settings).toggleEachApp, "switching each app imported");
         check(settings.top.count("SettingsVersion") == 0, "the fcitx5 SettingsVersion not imported");
         check(read(paths.macroFile()) == FcitxMacros, "macros copied as they are");
         check(read(paths.dictionaryFile()) == "người dùng\n", "the user's dictionary copied");
@@ -377,6 +444,7 @@ namespace {
         check(read(paths.appModesFile()) == "firefox=5\ncode=0\n", "the modes picked for each app copied as they are");
         check(read(paths.appSwitchesFile()) == FcitxSwitches, "the language each app was switched to copied as it is");
         check(read(paths.vimAppsFile()) == "kitty\n", "the apps with Vim mode copied as they are");
+        check(read(paths.teencodeAppsFile()) == "discord\n", "the apps with teencode copied as they are");
 
         write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
         check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");
@@ -466,6 +534,14 @@ namespace {
         check(!menu.showModeOff && menu.modeOrder == "Off,Sen" && menu.cycleModeKeys == std::vector<std::string>{"Control+grave"}, "the mode menu set up in fcitx5 comes over");
         check(!menu.showMenuCharset && menu.showMenuSpellCheck, "items hidden from the fcitx5 tray menu stay hidden");
         check(menu.uiLanguage == "English", "the interface language picked in fcitx5 comes over");
+
+        paths = pathsIn(root / "toggle-scope");
+        earlier(paths, "InputMethod=VNI\n");
+        write(paths.fcitxConfigDir + "/ngosen.conf", "ToggleScope=Each app\n");
+        check(prepareSettings(paths) && readSettings(parseIni(read(paths.settingsFile()))).toggleEachApp, "switching each app, as set in fcitx5, comes over");
+        paths = pathsIn(root / "toggle-scope-update");
+        earlier(paths, "InputMethod=VNI\n");
+        check(prepareSettings(paths) && !readSettings(parseIni(read(paths.settingsFile()))).toggleEachApp, "an update without fcitx5 switches every app");
 
         paths = pathsIn(root / "macro-chosen-here");
         earlier(paths, "EnableMacroInOffMode=False\n");
@@ -588,10 +664,12 @@ int main() {
     const fs::path root(dir);
     testValues();
     testLists();
+    testEmojiWords();
     testSettings();
     testOneSetting();
     testToggleKeys();
     testModeMenuSettings();
+    testConvertSettings();
     testModeMenuKeys();
     testModeMenuOrder();
     testKeyMatching();
