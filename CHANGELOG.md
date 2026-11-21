@@ -13,6 +13,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Bấm phím chuyển mã ở app không cho đọc chữ đang bôi đen (như LibreOffice Writer) thì dòng báo chỉ thêm cách dán chữ vào trang Chuyển mã (#181).
 - xterm trên X11 không còn thừa chữ khi đổi dấu: bộ gõ chờ phím Backspace mà xterm trả lại thay vì tưởng là người dùng bấm (#182).
 - Lời dặn chuyển sang bản fcitx5 (README và cửa sổ cài đặt) nay ghi đúng: trên Fedora lệnh cài cũng tự thay bản này, chỉ openSUSE và Arch phải gỡ `ibus-ngosen` trước (#184).
+- Ô "Phím tắt menu chế độ gõ" trong cửa sổ cài đặt ghi rõ "`` ` (phím trên Tab) ``" thay vì một dấu `` ` `` nhỏ tới mức trông như ô trống (#187).
 - Bản này nay tên là Ngó Sen bản IBus thay cho Ngó Sen cho GNOME, trong README, hộp Giới thiệu và mô tả gói: bản này chạy cả trên Cinnamon, Xfce, KDE Plasma khi dùng IBus, và tính năng như bản fcitx5 (#185, #186).
 
 ## [1.5.0-1] — 21/11/2026
