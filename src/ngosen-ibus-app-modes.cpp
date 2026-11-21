@@ -241,6 +241,29 @@ namespace ngosen {
         return text;
     }
 
+    std::unordered_set<std::string> readWebTerminalApps(const std::string& path) {
+        std::unordered_set<std::string> apps;
+        std::string                     text;
+        if (!readFile(path, text))
+            return apps;
+        std::istringstream lines(text);
+        for (std::string line; std::getline(lines, line);) {
+            if (!line.empty() && line[0] != '#')
+                apps.insert(line);
+        }
+        return apps;
+    }
+
+    bool writeWebTerminalApps(const std::string& path, const std::unordered_set<std::string>& apps, const FileWriter& write) {
+        // Sorted, so the file does not reorder itself on every write.
+        AppNameSet kept;
+        for (const auto& app : apps) {
+            if (!isStartsWith(app, "window:"))
+                kept.insert(app);
+        }
+        return write(path, appListText(WebTerminalAppsHeader, kept));
+    }
+
     AppList::AppList(std::string path, std::string header, FileWriter write) : path_(std::move(path)), header_(std::move(header)), write_(std::move(write)) {}
 
     void AppList::reloadIfChanged() {

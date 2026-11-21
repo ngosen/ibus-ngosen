@@ -22,8 +22,11 @@
 #include "ngosen-state.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
+#include <cstdint>
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
@@ -173,13 +176,15 @@ namespace {
         // Vim mode and emoji suggestions for the field in focus when its app has no name to keep them under, as
         // fcitx5 keeps them for the field.
         // Between enable and disable, while Ngó Sen is the input method of this context.
-        bool  enabled      = true;
-        bool  vimHere      = false;
-        bool  emojiOffHere = false;
-        bool  teencodeHere = false;
-        guint menuCursor   = 0;
-        guint menuTimer    = 0;
-        guint clickTimer   = 0;
+        bool enabled      = true;
+        bool vimHere      = false;
+        bool emojiOffHere = false;
+        bool teencodeHere = false;
+        // Where this field's choices are kept when it loses focus.
+        std::string context;
+        guint       menuCursor = 0;
+        guint       menuTimer  = 0;
+        guint       clickTimer = 0;
         // The last key press or the opening of the menu, whichever came later.
         gint64 menuQuietSince = 0;
         // Clicks seen up to the opening of the menu; a click queued before it must not close it.
@@ -638,7 +643,9 @@ namespace {
             case ngosen::ConvertResult::Converted: break;
             case ngosen::ConvertResult::Refused: return false;
             case ngosen::ConvertResult::Unchanged: tip = _("The selected text is the same in both charsets. Check the charsets on the Convert page."); break;
-            case ngosen::ConvertResult::NoSelection: tip = _("Select the text to convert, then press the key again."); break;
+            case ngosen::ConvertResult::NoSelection:
+                tip = _("Select the text to convert, then press the key again. Where an app does not allow this, paste the text into the Convert page.");
+                break;
             case ngosen::ConvertResult::Busy: tip = _("Finish the word being typed, then press the key again."); break;
         }
         if (tip != nullptr) {
@@ -921,16 +928,59 @@ namespace {
         showMenu(engine, resources().saveSetting(key, value, saved) ? saved : resources().savedSettings(), true);
     }
 
+    // IBus never tells an engine that a context went away, so the longest unused one makes room.
+    constexpr size_t KeptContexts = 64;
+
+    struct KeptSwitches {
+        std::array<bool, 3> here{};
+        uint64_t            lastUse = 0;
+    };
+
+    // Shared by every engine: a context that gets focus back may be served by another app's engine.
+    std::map<std::string, KeptSwitches> keptHere;
+    uint64_t                            keptUses = 0;
+
+    void                                keepFor(const std::string& context, const std::array<bool, 3>& here) {
+        if (keptHere.count(context) == 0 && keptHere.size() >= KeptContexts) {
+            const auto oldest = std::min_element(keptHere.begin(), keptHere.end(), [](const auto& a, const auto& b) { return a.second.lastUse < b.second.lastUse; });
+            keptHere.erase(oldest);
+        }
+        keptHere[context] = {here, ++keptUses};
+    }
+
+    // GNOME Shell uses one input context for every app it relays, so there a choice ends with the focus.
+    void keepFieldSwitches(Session& session) {
+        const std::array<bool, 3> here = {session.vimHere, session.emojiOffHere, session.teencodeHere};
+        if (!session.context.empty() && session.host->client() != "gnome-shell") {
+            if (here == std::array<bool, 3>{})
+                keptHere.erase(session.context);
+            else
+                keepFor(session.context, here);
+        }
+        session.context.clear();
+        session.vimHere      = false;
+        session.emojiOffHere = false;
+        session.teencodeHere = false;
+    }
+
+    void restoreFieldSwitches(Session& session, const std::string& context) {
+        session.context = context;
+        const auto kept = keptHere.find(context);
+        if (kept == keptHere.end() || session.host->client() == "gnome-shell")
+            return;
+        session.vimHere      = kept->second.here[0];
+        session.emojiOffHere = kept->second.here[1];
+        session.teencodeHere = kept->second.here[2];
+    }
+
     void focusOut(IBusEngine* engine) {
         if (focusedEngine == engine)
             focusedEngine = nullptr;
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
-        session->tap          = {};
-        session->vimHere      = false;
-        session->emojiOffHere = false;
-        session->teencodeHere = false;
+        session->tap = {};
+        keepFieldSwitches(*session);
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();
@@ -941,12 +991,14 @@ namespace {
         session->host->forgetReportedText();
     }
 
-    void focusInId(IBusEngine* engine, const gchar* /*objectPath*/, const gchar* client) {
+    void focusInId(IBusEngine* engine, const gchar* objectPath, const gchar* client) {
         const std::string name = client != nullptr ? client : "";
         if (name != ngosen::FakeClient)
             lastClient = name;
-        if (Session* session = sessionOf(engine))
+        if (Session* session = sessionOf(engine)) {
             session->host->setClient(name);
+            restoreFieldSwitches(*session, objectPath != nullptr ? objectPath : "");
+        }
         NGOSEN_INFO("Focus in: " + name);
         focusIn(engine);
     }

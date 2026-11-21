@@ -106,6 +106,7 @@ namespace ngosen {
         std::string          emojiWordsFile() const;
         std::string          emojiOffAppsFile() const;
         std::string          teencodeAppsFile() const;
+        std::string          webTerminalAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.
         std::string importedMark() const;
         // Marks Sen as switched on once, so turning it off afterwards sticks.

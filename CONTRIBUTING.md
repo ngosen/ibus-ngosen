@@ -1,6 +1,6 @@
 [English](CONTRIBUTING.en.md) | [Tiếng Việt](CONTRIBUTING.md)
 
-# Đóng góp cho Ngó Sen cho GNOME
+# Đóng góp cho Ngó Sen bản IBus
 
 Cảm ơn bạn quan tâm đến `ibus-ngosen`! Kho này là phần vỏ IBus của Ngó Sen: nó nối IBus với lõi gõ chữ trong
 submodule `ngosen` ([ngosen/ngosen](https://github.com/ngosen/ngosen)). Quy tắc chi tiết cho người sửa code nằm

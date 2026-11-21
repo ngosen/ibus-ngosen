@@ -501,6 +501,9 @@ namespace ngosen {
     std::string SettingsPaths::teencodeAppsFile() const {
         return configDir + "/ngosen-teencode-apps.conf";
     }
+    std::string SettingsPaths::webTerminalAppsFile() const {
+        return configDir + "/ngosen-web-terminal-apps.conf";
+    }
     std::string SettingsPaths::importedMark() const {
         return configDir + "/.fcitx5-imported";
     }
@@ -652,6 +655,7 @@ namespace ngosen {
                 {paths.fcitxConfigDir + "/ngosen-emoji-words.conf", paths.emojiWordsFile()},
                 {paths.fcitxConfigDir + "/ngosen-emoji-off-apps.conf", paths.emojiOffAppsFile()},
                 {paths.fcitxConfigDir + "/ngosen-teencode-apps.conf", paths.teencodeAppsFile()},
+                {paths.fcitxConfigDir + "/ngosen-web-terminal-apps.conf", paths.webTerminalAppsFile()},
             };
             for (const auto& [from, to] : copies) {
                 if (!fileExists(to) && readFile(from, content) && !write(to, content))
