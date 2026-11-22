@@ -42,7 +42,7 @@ FEATURES = [
         "how": N_(
             "When typing goes wrong, the ngosen-check command prints Check my machine in a "
             "terminal and ngosen-save-log saves the typing log, so an AI assistant can read them "
-            "with you. Neither changes anything on your machine."
+            "with you. Neither changes your settings."
         ),
         "example": "",
         "target": ("page", "check"),
