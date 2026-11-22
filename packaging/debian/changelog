@@ -1,3 +1,16 @@
+ibus-ngosen (1.6.0-1) unstable; urgency=medium
+
+  * In the underline mode, a selected word takes a new tone mark in GTK 4
+    apps and Chrome, as in Sen.
+  * No emoji suggestions for single letters, digits and chat shorthand.
+  * The convert key changes selected text on KDE, Sway and Hyprland.
+  * KDE Plasma shows the emoji row's numbers once.
+  * ngosen-check and ngosen-save-log commands for asking an AI for help.
+  * Spell Check is gone; Auto Restore always checks the dictionary.
+  * Core ngosen-1.14.0-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Sun, 22 Nov 2026 18:00:00 +0700
+
 ibus-ngosen (1.5.1-1) unstable; urgency=medium
 
   * xterm types right with Backspace on Wayland and X11.

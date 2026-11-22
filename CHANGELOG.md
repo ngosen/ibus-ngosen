@@ -8,12 +8,18 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.6.0-1] — 22/11/2026
+
+Ở chế độ gạch chân, bôi đen một từ rồi gõ phím dấu để đổi dấu; phím chuyển mã chạy trên KDE, Sway và Hyprland;
+hàng emoji trên KDE hiện số một lần; có lệnh để nhờ AI giúp. Dùng lõi Ngó Sen `ngosen-1.14.0-1`. Tải gói ở
+[release ibus-ngosen-1.6.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.0-1).
+
 ### Thêm
 
 - Lệnh `ngosen-check` in kết quả Kiểm tra máy ra terminal, kèm cách sửa từng bước, để AI chạy lệnh được đọc. Lệnh
   không đổi gì trên máy (#188).
 - Lệnh `ngosen-save-log` lưu nhật ký gõ từ terminal như mục "Lưu nhật ký gõ" trong menu, rồi in đường dẫn tệp (#189).
-- Nhận lõi next: ở chế độ gạch chân, bôi đen một từ đã gõ rồi gõ phím dấu thì từ hiện lại với dấu mới (bôi đen
+- Lên lõi ngosen-1.14.0-1: ở chế độ gạch chân, bôi đen một từ đã gõ rồi gõ phím dấu thì từ hiện lại với dấu mới (bôi đen
   "tiềng", gõ `s` ra "tiếng") ở app GTK 4 và Chrome, như Gõ Sen đã làm; gõ lại phím dấu đó để giữ phím. App khác vẫn
   thay từ bằng phím như trước. Gợi ý emoji không còn hiện cho chữ cái đơn, con số và chữ tắt khi chat, như `t` ra 🦖
   hay `ng` ra 🆖 (#199).
