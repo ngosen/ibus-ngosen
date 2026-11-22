@@ -8,6 +8,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+- Trên KDE Plasma, hàng emoji không còn hiện số hai lần kiểu "1. 1.😂": bộ gõ gửi số làm nhãn riêng thay vì ghép vào emoji. Trên GNOME, số trong hàng emoji nay có màu nhạt và cách emoji một khoảng (#198).
+
 ## [1.5.1-1] — 22/11/2026
 
 xterm gõ đúng khi bấm Backspace, cả trên Wayland lẫn X11; terminal xterm.js trong app chưa có tên được tự nhận ra

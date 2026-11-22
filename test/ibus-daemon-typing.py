@@ -2390,8 +2390,8 @@ check(
 app.key(IBus.KEY_Tab)
 pump(200)
 check(
-    app.menu == ["1. 😂", "2. 🤣", "3. 😄", "4. 😆", "5. 😁"] and all(app.labels),
-    "emoji: the list is numbered once, with labels that keep GNOME Shell from adding its own",
+    app.menu == ["😂", "🤣", "😄", "😆", "😁"] and app.labels == ["1.", "2.", "3.", "4.", "5."],
+    "emoji: the list is numbered once, by labels every panel shows as they are",
     (app.menu, app.labels),
 )
 app.key(IBus.KEY_Tab)
@@ -2451,9 +2451,11 @@ check(
 app.type(".")
 pump(300)
 check(
-    app.menu == ["1.😂", "2.🤣", "3.😄", "4.😆", "5.😁"] and app.row == horizontal,
+    app.menu == ["😂", "🤣", "😄", "😆", "😁"]
+    and app.labels == ["1.", "2.", "3.", "4.", "5."]
+    and app.row == horizontal,
     "emoji: the end of the sentence numbers them in a row with none highlighted",
-    (app.menu, app.row),
+    (app.menu, app.labels, app.row),
 )
 app.type("1")
 pump(300)
