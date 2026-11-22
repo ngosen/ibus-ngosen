@@ -14,6 +14,7 @@
 #include "ngosen-xtest.h"
 
 #include <algorithm>
+#include <cctype>
 
 namespace ngosen {
 
@@ -165,6 +166,19 @@ namespace ngosen {
         return client == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client;
     }
 
+    std::pair<std::string, std::string> splitCandidateNumber(const std::string& candidate) {
+        size_t digits = 0;
+        while (digits < candidate.size() && std::isdigit(static_cast<unsigned char>(candidate[digits])))
+            ++digits;
+        if (digits == 0 || digits + 1 >= candidate.size() || candidate[digits] != '.')
+            return {"", candidate};
+        const size_t text = candidate[digits + 1] == ' ' ? digits + 2 : digits + 1;
+        // "1.5 kg" is a decimal, not a number label.
+        if (text >= candidate.size() || std::isdigit(static_cast<unsigned char>(candidate[text])))
+            return {"", candidate};
+        return {candidate.substr(0, digits + 1), candidate.substr(text)};
+    }
+
     Field IBusHost::field() const {
         Field f;
         // As fcitx5 names the frontend, so the checks in ngosen-app-quirks.cpp apply as they are.
@@ -266,10 +280,12 @@ namespace ngosen {
         const bool       row   = list_->layout == CandidateLayout::Row;
         IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), !row, FALSE);
         ibus_lookup_table_set_orientation(table, row ? IBUS_ORIENTATION_HORIZONTAL : IBUS_ORIENTATION_VERTICAL);
-        // The core numbers the candidates itself; GNOME Shell numbers any whose label is empty.
+        // The core numbers the candidates itself. GNOME Shell shows a label as given and numbers an empty
+        // one, while Plasma's panel numbers every candidate, so a number goes out as the label.
         for (guint i = 0; i < list_->labels.size(); ++i) {
-            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(list_->labels[i].c_str()));
-            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string("\u200b"));
+            const auto [label, text] = splitCandidateNumber(list_->labels[i]);
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(text.c_str()));
+            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label.empty() ? "\u200b" : label.c_str()));
         }
         ibus_engine_update_lookup_table(engine_, table, TRUE);
         tableShown_ = true;
