@@ -9,6 +9,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ## [Chưa phát hành]
 
 - Trên KDE Plasma, hàng emoji không còn hiện số hai lần kiểu "1. 1.😂": bộ gõ gửi số làm nhãn riêng thay vì ghép vào emoji. Trên GNOME, số trong hàng emoji nay có màu nhạt và cách emoji một khoảng (#198).
+- README ghi lệnh cài một dòng `install.sh --ibus` của Ngó Sen ở đầu phần Cài đặt, và `--uninstall` để gỡ; tải gói
+  cài bằng tay thành mục riêng (#200).
 
 ## [1.5.1-1] — 22/11/2026
 
