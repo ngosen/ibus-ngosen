@@ -28,7 +28,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Sửa
 
 - Trên KDE, Sway và Hyprland, bôi đen chữ trong app GTK3 hay Firefox rồi bấm phím chuyển mã nay đổi được chữ, như bản
-  fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190).
+  fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190, #202).
 
 ## [1.5.1-1] — 22/11/2026
 

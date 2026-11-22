@@ -282,8 +282,10 @@ namespace ngosen {
         auto       text     = result->get_future();
         try {
             std::thread([result, deadline] {
-                result->set_value(readPrimary(deadline));
+                auto value = readPrimary(deadline);
+                // Before the answer, so a read that starts as soon as this one returns is not refused.
                 reading = false;
+                result->set_value(std::move(value));
             }).detach();
         } catch (const std::system_error&) {
             reading = false;
