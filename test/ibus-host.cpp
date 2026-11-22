@@ -189,6 +189,18 @@ namespace {
         check(host.candidates() && host.candidates()->cursor == -1, "a row highlights none, as its labels carry their keys");
     }
 
+    // The panel on KDE Plasma numbers candidates with a blank label, so the core's numbers travel as labels.
+    void testCandidateNumbers() {
+        using Split = std::vector<std::pair<std::string, std::string>>;
+        check(splitCandidateNumbers({"1.😂", "2.🤣"}) == Split{{"1.", "😂"}, {"2.", "🤣"}}, "a row's numbers become the labels");
+        check(splitCandidateNumbers({"1. 😂", "2. 🤣"}) == Split{{"1.", "😂"}, {"2.", "🤣"}}, "a column's numbers and their space too");
+        check(splitCandidateNumbers({"1.#️⃣", "2.0️⃣"}) == Split{{"1.", "#️⃣"}, {"2.", "0️⃣"}}, "an emoji that starts with a digit keeps it");
+        check(splitCandidateNumbers({"Tab: 😂 🤣"}) == Split{{"", "Tab: 😂 🤣"}}, "text without a number keeps no label");
+        check(splitCandidateNumbers({"2. xin chaof → 2. xin chào"}) == Split{{"", "2. xin chaof → 2. xin chào"}}, "a number the user typed is not a label");
+        check(splitCandidateNumbers({"1.5 xin chaof → 1.5 xin chào"}) == Split{{"", "1.5 xin chaof → 1.5 xin chào"}}, "a typed number that reads like the first label is not one");
+        check(splitCandidateNumbers({"1.a", "3.b"}) == Split{{"", "1.a"}, {"", "3.b"}}, "nor are numbers out of order");
+    }
+
     void testWaylandSession() {
         const auto session = [](const char* type, const char* display) {
             type != nullptr ? setenv("XDG_SESSION_TYPE", type, 1) : unsetenv("XDG_SESSION_TYPE");
@@ -230,6 +242,7 @@ int main() {
     testCursorMoves();
     testXimField();
     testCandidates();
+    testCandidateNumbers();
     testWaylandSession();
     testShiftForCharacters();
     if (failures == 0)

@@ -65,13 +65,13 @@ namespace ngosen {
             return g_strcmp0(name, "toggle") == 0 || g_str_has_prefix(name, "toggle-");
         }
 
-        bool isToggleRequest(GFile* file) {
-            if (file == nullptr)
-                return false;
-            gchar*     name    = g_file_get_basename(file);
-            const bool request = isToggleName(name);
-            g_free(name);
-            return request;
+        // One file per run of ngosen-save-log; the engine answers in a saved-log- file with the same suffix.
+        bool isSaveLogName(const char* name) {
+            return g_str_has_prefix(name, "save-log-");
+        }
+
+        bool isSaveLogReply(const char* name) {
+            return g_str_has_prefix(name, "saved-log-");
         }
 
         void onDirChanged(GFileMonitor* /*monitor*/, GFile* file, GFile* other, GFileMonitorEvent /*event*/, gpointer resources) {
@@ -85,11 +85,16 @@ namespace ngosen {
                 self->noticeEnglishChange();
             // Created in place, or renamed into place from a temporary name.
             for (GFile* named : {file, other}) {
-                if (isToggleRequest(named)) {
-                    gchar* path = g_file_get_path(named);
+                if (named == nullptr)
+                    continue;
+                gchar* name = g_file_get_basename(named);
+                gchar* path = g_file_get_path(named);
+                if (isToggleName(name))
                     self->noticeToggleRequest(path);
-                    g_free(path);
-                }
+                else if (isSaveLogName(name))
+                    self->noticeSaveLogRequest(path);
+                g_free(path);
+                g_free(name);
             }
         }
 
@@ -127,10 +132,11 @@ namespace ngosen {
         dataMonitor_ = watchDirectory(paths_.dataDir, G_CALLBACK(onDirChanged), this);
         // The settings window restores the language by writing the marker.
         g_mkdir_with_parents(paths_.stateDir.c_str(), 0700);
-        // A request left while the engine was not running is not a press of the shortcut now.
+        // Requests and answers left while the engine was not running are stale.
         std::error_code error;
         for (const auto& entry : std::filesystem::directory_iterator(paths_.stateDir, error)) {
-            if (isToggleName(entry.path().filename().c_str()))
+            const std::string name = entry.path().filename().string();
+            if (isToggleName(name.c_str()) || isSaveLogName(name.c_str()) || isSaveLogReply(name.c_str()))
                 std::filesystem::remove(entry.path(), error);
         }
         stateMonitor_ = watchDirectory(paths_.stateDir, G_CALLBACK(onStateChanged), this);
@@ -162,6 +168,11 @@ namespace ngosen {
     void IBusResources::noticeToggleRequest(const std::string& path) {
         if (onToggleRequest_)
             onToggleRequest_(path);
+    }
+
+    void IBusResources::noticeSaveLogRequest(const std::string& path) {
+        if (onSaveLogRequest_)
+            onSaveLogRequest_(path);
     }
 
     bool IBusResources::takeEnglishChange() {
@@ -233,7 +244,7 @@ namespace ngosen {
     }
 
     // The user's dictionary only with the custom dictionary on, as the fcitx5 edition does. The
-    // spell check reads the packaged one otherwise.
+    // restore of invalid words reads the packaged one otherwise.
     uintptr_t IBusResources::openDictionary() const {
         if (settings_.enableDictionary) {
             if (const uintptr_t dictionary = openDictionaryAt(paths_.dictionaryFile())) {

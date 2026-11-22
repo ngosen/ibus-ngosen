@@ -19,6 +19,16 @@ add_test(NAME ibus_primary COMMAND ibus-primary-test)
 # Without the deadline the test hangs on the silent server; the timeout turns that into a failure.
 set_tests_properties(ibus_primary PROPERTIES LABELS "unit;ibus" TIMEOUT 10)
 
+# A fake compositor needs libwayland-server; the engine itself only loads libwayland-client at run time.
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(WaylandServer IMPORTED_TARGET wayland-server)
+if (WaylandServer_FOUND)
+    add_executable(ibus-wayland-primary-test ibus-wayland-primary.cpp)
+    target_link_libraries(ibus-wayland-primary-test PRIVATE ngosen_ibus PkgConfig::WaylandServer)
+    add_test(NAME ibus_wayland_primary COMMAND ibus-wayland-primary-test)
+    set_tests_properties(ibus_wayland_primary PROPERTIES LABELS "unit;ibus" TIMEOUT 60)
+endif()
+
 add_executable(ibus-program-name-test ibus-program-name.cpp)
 target_link_libraries(ibus-program-name-test PRIVATE ngosen_ibus)
 add_test(NAME ibus_program_name COMMAND ibus-program-name-test)

@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-host.h"
+
 #include "ngosen-ibus-i18n.h"
 #include "ngosen-ibus-primary.h"
 
@@ -11,6 +12,7 @@
 #include "ngosen-ibus-shell.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
+#include "ngosen-strings.h"
 #include "ngosen-xtest.h"
 
 #include <algorithm>
@@ -165,6 +167,27 @@ namespace ngosen {
         return client == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client;
     }
 
+    std::vector<std::pair<std::string, std::string>> splitCandidateNumbers(const std::vector<std::string>& candidates) {
+        std::vector<std::pair<std::string, std::string>> split;
+        for (size_t i = 0; i < candidates.size(); ++i) {
+            const std::string number = std::to_string(i + 1) + ".";
+            if (!isStartsWith(candidates[i], number))
+                break;
+            const size_t text = candidates[i].compare(number.size(), 1, " ") == 0 ? number.size() + 1 : number.size();
+            // An emoji has no space, while a retype offer such as "1.5 xin chaof → …" always does.
+            if (candidates[i].find(' ', text) != std::string::npos)
+                break;
+            split.emplace_back(number, candidates[i].substr(text));
+        }
+        // Only a list the core numbered in order, so "2. xin chaof" offered alone keeps its text.
+        if (split.size() == candidates.size())
+            return split;
+        split.clear();
+        for (const auto& candidate : candidates)
+            split.emplace_back("", candidate);
+        return split;
+    }
+
     Field IBusHost::field() const {
         Field f;
         // As fcitx5 names the frontend, so the checks in ngosen-app-quirks.cpp apply as they are.
@@ -266,10 +289,13 @@ namespace ngosen {
         const bool       row   = list_->layout == CandidateLayout::Row;
         IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), !row, FALSE);
         ibus_lookup_table_set_orientation(table, row ? IBUS_ORIENTATION_HORIZONTAL : IBUS_ORIENTATION_VERTICAL);
-        // The core numbers the candidates itself; GNOME Shell numbers any whose label is empty.
-        for (guint i = 0; i < list_->labels.size(); ++i) {
-            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(list_->labels[i].c_str()));
-            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string("\u200b"));
+        // The core numbers the candidates itself. A blank label keeps GNOME Shell from adding a number, but
+        // the panel on KDE Plasma still adds one, so the core's number goes out as the label instead.
+        const auto split = splitCandidateNumbers(list_->labels);
+        for (guint i = 0; i < split.size(); ++i) {
+            const auto& [label, text] = split[i];
+            ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(text.c_str()));
+            ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label.empty() ? "\u200b" : label.c_str()));
         }
         ibus_engine_update_lookup_table(engine_, table, TRUE);
         tableShown_ = true;

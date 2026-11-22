@@ -94,7 +94,6 @@ namespace ngosen {
             {"ShowModeTeencode", &IBusSettings::showModeTeencode},
             {"ShowMenuInputMethod", &IBusSettings::showMenuInputMethod},
             {"ShowMenuCharset", &IBusSettings::showMenuCharset},
-            {"ShowMenuSpellCheck", &IBusSettings::showMenuSpellCheck},
             {"ShowMenuMacro", &IBusSettings::showMenuMacro},
             {"ShowMenuCapitalizeMacro", &IBusSettings::showMenuCapitalizeMacro},
             {"ShowMenuAutoCapitalize", &IBusSettings::showMenuAutoCapitalize},
@@ -321,7 +320,6 @@ namespace ngosen {
         const Reader read{ini.top};
         read.choice("InputMethod", o.inputMethod, inputMethodNames());
         read.choice("OutputCharset", o.outputCharset, charsetNames());
-        read.boolean("SpellCheck", o.spellCheck);
         read.boolean("ModernStyle", o.modernStyle);
         read.boolean("FreeMarking", o.freeMarking);
         read.index("W2U", o.w2u, ModeNames);
@@ -387,7 +385,6 @@ namespace ngosen {
         const auto         line = [&out](const char* key, const std::string& value) { out << key << '=' << escapeIniValue(value) << '\n'; };
         line("InputMethod", o.inputMethod);
         line("OutputCharset", o.outputCharset);
-        line("SpellCheck", boolText(o.spellCheck));
         line("ModernStyle", boolText(o.modernStyle));
         line("FreeMarking", boolText(o.freeMarking));
         line("W2U", ModeNames[o.w2u]);

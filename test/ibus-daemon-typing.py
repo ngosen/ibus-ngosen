@@ -55,6 +55,14 @@ def pump_until(done, ms):
         time.sleep(0.001)
 
 
+def file_has(path, text):
+    try:
+        with open(path) as f:
+            return text in f.read()
+    except FileNotFoundError:
+        return False
+
+
 def connect():
     IBus.init()
     end = time.monotonic() + 10
@@ -853,7 +861,7 @@ if no_x:
     )
     tray.notices, tray.tables = [], 0
     tray.property_activate("InputMode", IBus.PropState.CHECKED)
-    pump(500)
+    pump_until(lambda: app_switch_of("org.gnome.TextEditor") == "Vietnamese=True", 5000)
     check(
         app_switch_of("org.gnome.TextEditor") == "Vietnamese=True"
         and app_switch_of("fake") is None,
@@ -871,7 +879,7 @@ if no_x:
     portal.focus()
     tray.notices, tray.tables = [], 0
     tray.property_activate("InputMode", IBus.PropState.CHECKED)
-    pump(500)
+    pump_until(lambda: not os.path.exists(english_mark_path), 5000)
     check(
         app_switch_of("org.gnome.TextEditor") == "Vietnamese=False"
         and app_switch_of("fake") is None
@@ -1786,7 +1794,7 @@ app.close()
 # Each settings change rebuilds the engine, which must keep typing English.
 app = App("toggle-settings")
 tap_ctrl_shift(app)
-set_setting("SpellCheck", "True")
+set_setting("CapitalizeMacro", "True")
 app.type("vieetj ")
 check(
     app.text == "vieetj " and app.commits == [],
@@ -2382,8 +2390,8 @@ check(
 app.key(IBus.KEY_Tab)
 pump(200)
 check(
-    app.menu == ["1. 😂", "2. 🤣", "3. 😄", "4. 😆", "5. 😁"] and all(app.labels),
-    "emoji: the list is numbered once, with labels that keep GNOME Shell from adding its own",
+    app.menu == ["😂", "🤣", "😄", "😆", "😁"] and app.labels == ["1.", "2.", "3.", "4.", "5."],
+    "emoji: the list is numbered once, by labels every panel shows as they are",
     (app.menu, app.labels),
 )
 app.key(IBus.KEY_Tab)
@@ -2443,9 +2451,11 @@ check(
 app.type(".")
 pump(300)
 check(
-    app.menu == ["1.😂", "2.🤣", "3.😄", "4.😆", "5.😁"] and app.row == horizontal,
+    app.menu == ["😂", "🤣", "😄", "😆", "😁"]
+    and app.labels == ["1.", "2.", "3.", "4.", "5."]
+    and app.row == horizontal,
     "emoji: the end of the sentence numbers them in a row with none highlighted",
-    (app.menu, app.row),
+    (app.menu, app.labels, app.row),
 )
 app.type("1")
 pump(300)
@@ -2705,7 +2715,7 @@ anonymous = App("QIBusInputContext")
 anonymous.ic.focus_out()
 pump(300)
 tray.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: os.path.exists(english_mark), 5000)
 check(
     app_switch_of("fake") is None and os.path.exists(english_mark),
     "tray: after a field with no name the click changes the shared language",
@@ -2713,7 +2723,7 @@ check(
 )
 # Back to Vietnamese: the checks below expect the shared language as they found it.
 tray.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: not os.path.exists(english_mark), 5000)
 check(not os.path.exists(english_mark), "tray: a second click restores Vietnamese", english_mark)
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
@@ -2900,14 +2910,17 @@ for _ in range(3):
     pump(100)
 check(updates == [], "menu: a focus change resends no unchanged item", len(updates))
 app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
-pump(1000)
+pump_until(
+    lambda: file_has(settings_path, "InputMethod=VNI") and "InputMethod/VNI" in gnome.checked(),
+    5000,
+)
 with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
 check(
-    menu_labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    menu_labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa",
     "menu: in Vietnamese whatever the desktop language",
-    menu_labels.get("SpellCheck"),
+    menu_labels.get("CapitalizeMacro"),
 )
 check(
     bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
@@ -2922,30 +2935,36 @@ check(
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
 # GNOME Shell sends the state a plain item shows, so a click on "✔ ..." comes as checked.
-app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
-pump(1000)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.CHECKED)
+pump_until(
+    lambda: (
+        file_has(settings_path, "CapitalizeMacro=False")
+        and gnome.labels.get("CapitalizeMacro") == "✖ Gõ tắt chữ hoa"
+    ),
+    5000,
+)
 with open(settings_path) as f:
-    check("SpellCheck=False" in f.read(), "menu: a click turns an on item off", settings_path)
+    check("CapitalizeMacro=False" in f.read(), "menu: a click turns an on item off", settings_path)
 check(
-    gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả",
+    gnome.labels.get("CapitalizeMacro") == "✖ Gõ tắt chữ hoa",
     "menu: GNOME shows the new setting",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 # The engine reloads settings only between words, while clicks and the menu go by the file.
 app.type("vie")
 check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
-app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
-pump_until(lambda: gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả", 5000)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.UNCHECKED)
+pump_until(lambda: gnome.labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa", 5000)
 check(
-    gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    gnome.labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa",
     "menu: a click while a word is underlined shows the new setting",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
-app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
-pump(1000)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.CHECKED)
+pump_until(lambda: file_has(settings_path, "CapitalizeMacro=False"), 5000)
 with open(settings_path) as f:
     check(
-        "SpellCheck=False" in f.read(),
+        "CapitalizeMacro=False" in f.read(),
         "menu: two clicks while a word is underlined put the setting back",
         settings_path,
     )
@@ -2960,25 +2979,25 @@ check(
 )
 set_setting("EnableMacro", "True")
 pump(500)
-set_setting("ShowMenuSpellCheck", "False")
+set_setting("ShowMenuCapitalizeMacro", "False")
 pump(1000)
-check("SpellCheck" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
-set_setting("ShowMenuSpellCheck", "True")
+check("CapitalizeMacro" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
+set_setting("ShowMenuCapitalizeMacro", "True")
 pump(1000)
-check("SpellCheck" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
+check("CapitalizeMacro" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
 set_setting("UiLanguage", "English")
 pump(1000)
 check(
-    (gnome.labels.get("SpellCheck") or "").endswith(" Spell Check"),
+    (gnome.labels.get("CapitalizeMacro") or "").endswith(" Capitalize Macro"),
     "menu: an English interface reaches GNOME at once",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 set_setting("UiLanguage", "Vietnamese")
 pump(1000)
 check(
-    (gnome.labels.get("SpellCheck") or "").endswith(" Kiểm tra chính tả"),
+    (gnome.labels.get("CapitalizeMacro") or "").endswith(" Gõ tắt chữ hoa"),
     "menu: and Vietnamese again",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 updates.clear()
 tap_ctrl_shift(app)
@@ -2993,7 +3012,14 @@ check(
     gnome.labels.get("InputMode"),
 )
 app.ic.property_activate("InputMode", IBus.PropState.UNCHECKED)
-pump(500)
+pump_until(
+    lambda: (
+        symbols[-1:] == ["V"]
+        and not os.path.exists(english_mark)
+        and gnome.labels.get("InputMode") == "✔ Tiếng Việt"
+    ),
+    5000,
+)
 check(symbols[-1:] == ["V"], "menu: clicking the item switches back", symbols)
 check(
     gnome.labels.get("InputMode") == "✔ Tiếng Việt",
@@ -3004,7 +3030,7 @@ check(not os.path.exists(english_mark), "menu: the click is remembered", english
 before = len(app.commits)
 app.type("vie65t")
 app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: len(app.commits) > before, 5000)
 check(
     app.commits[before:] == ["việt"],
     "menu: the click commits the word being typed once",
@@ -3069,6 +3095,22 @@ check(
     "toggle command: the next field types Vietnamese",
     app.commits[-1:],
 )
+# ngosen-save-log leaves a request; the engine saves the log and names the file in its answer.
+save_request = os.path.join(os.path.dirname(english_mark), "save-log-1")
+save_reply = os.path.join(os.path.dirname(english_mark), "saved-log-1")
+open(save_request, "w").close()
+pump(1000)
+saved = open(save_reply).read() if os.path.exists(save_reply) else ""
+check(
+    not os.path.exists(save_request)
+    and os.path.basename(saved).startswith("typing-")
+    and "việt" in (open(saved).read() if os.path.exists(saved) else ""),
+    "save-log command: saves the log and answers with its path",
+    (os.path.exists(save_request), saved),
+)
+for leftover in (save_reply, saved):
+    if leftover and os.path.exists(leftover):
+        os.remove(leftover)
 toggle_dir = os.path.dirname(english_mark)
 
 
@@ -3110,9 +3152,9 @@ bus.set_global_engine("ngosen")
 app.ic.focus_out()
 app.ic.focus_in()
 pump(500)
-app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
-pump(500)
 state_dir = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen")
+app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
+pump_until(lambda: bool(glob.glob(os.path.join(state_dir, "typing-*.log"))), 5000)
 saved_logs = sorted(glob.glob(os.path.join(state_dir, "typing-*.log")))
 check(len(saved_logs) == 1, "menu: saves a typing log", saved_logs)
 if saved_logs:

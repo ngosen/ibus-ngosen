@@ -844,6 +844,23 @@ namespace {
         toggleLanguage(focusedEngine, *session, false);
     }
 
+    void saveLogFromCommand(const std::string& request) {
+        std::error_code error;
+        // Each request is a file; later events for the same one find it gone.
+        if (!std::filesystem::remove(request, error))
+            return;
+        const std::string           saved = ngosen::saveTypingLog(resources().recorder());
+        const std::filesystem::path path(request);
+        const std::string           suffix = path.filename().string().substr(sizeof("save-log-") - 1);
+        const std::filesystem::path reply  = path.parent_path() / ("saved-log-" + suffix);
+        GError*                     write  = nullptr;
+        // Empty when the log could not be written; the command then says so.
+        if (!g_file_set_contents_full(reply.c_str(), saved.data(), static_cast<gssize>(saved.size()), G_FILE_SET_CONTENTS_CONSISTENT, 0600, &write)) {
+            NGOSEN_WARN(std::string("Cannot answer ngosen-save-log: ") + write->message);
+            g_error_free(write);
+        }
+    }
+
     void showNewSettings() {
         if (focusedEngine == nullptr)
             return;
@@ -861,6 +878,7 @@ namespace {
         if (!watching) {
             resources().onChange(showNewSettings);
             resources().onToggleRequest(toggleFromCommand);
+            resources().onSaveLogRequest(saveLogFromCommand);
             useUiLanguage(resources().savedSettings());
             // After the language, which the notice is written in.
             ngosen::announceRelease(ngosen::releaseToAnnounce(resources().paths(), NGOSEN_IBUS_VERSION));

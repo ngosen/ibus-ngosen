@@ -63,7 +63,6 @@ SHOW_MODES = [
 SHOW_MENUS = [
     "ShowMenuInputMethod",
     "ShowMenuCharset",
-    "ShowMenuSpellCheck",
     "ShowMenuMacro",
     "ShowMenuCapitalizeMacro",
     "ShowMenuAutoCapitalize",
@@ -123,7 +122,6 @@ LABELS = {
     # Under a group title that says where they show, so each is named as in the menu.
     "ShowMenuInputMethod": N_("Input Method"),
     "ShowMenuCharset": N_("Charset"),
-    "ShowMenuSpellCheck": N_("Spell Check"),
     "ShowMenuMacro": N_("Macro"),
     "ShowMenuCapitalizeMacro": N_("Capitalize Macro"),
     "ShowMenuAutoCapitalize": N_("Auto Capitalize"),
@@ -148,7 +146,6 @@ LABELS = {
     "DirectTyping": N_("Mode"),
     "OutputCharset": N_("Output Charset"),
     "EnableCustomKeymap": N_("Custom Keymap"),
-    "SpellCheck": N_("Enable Spell Check Using Dictionary"),
     "EnableDictionary": N_("Custom Dictionary"),
     "AutoNonVnRestore": N_("Auto Restore Invalid Words"),
     "LockWordModifier": N_("Key to Keep the Word as Typed"),
@@ -202,7 +199,6 @@ HINTS = {
         "handle badly. Cứu dấu works only with Unicode."
     ),
     "EnableCustomKeymap": N_("The keys below, used when the input method is Custom."),
-    "SpellCheck": N_("Words that are not Vietnamese get no tone marks."),
     "EnableDictionary": N_(
         "Check spelling against the list below. Off: the list that comes with Ngó Sen."
     ),
@@ -220,7 +216,8 @@ HINTS = {
         "/cost and /usr/share stay as typed, at the start of a line or after a space, so chat commands and file paths work. và/hoặc and @tên still get tones."
     ),
     "RetoneSelection": N_(
-        "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
+        "Click right after chao, or select it in an X11 app, and type f to get chào; Tab or Esc puts the key back. "
+        "In the underline mode, select chao in a GTK 4 app or Chrome and type f; f again puts the key back."
     ),
     "RetypeAfterSwitch": N_(
         "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
@@ -286,7 +283,6 @@ TYPING_GROUPS = [
     (
         N_("Tone marks"),
         [
-            "SpellCheck",
             "AutoNonVnRestore",
             "LockWordModifier",
             "DdFreeStyle",

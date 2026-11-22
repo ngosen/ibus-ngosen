@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.5.1
+Version:        1.6.0
 Release:        1%{?dist}
 Summary:        Ngó Sen, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -20,6 +20,8 @@ Requires:       ibus >= 1.5.27
 Conflicts:      fcitx5-ngosen
 # Loaded with dlopen on X11 to watch clicks and press keys, which the automatic requires miss.
 Requires:       libxcb
+# Loaded with dlopen on Wayland to read the primary selection.
+Requires:       libwayland-client
 Requires:       python3-gobject
 Requires:       gtk4
 Requires:       libadwaita >= 1.5
@@ -49,6 +51,8 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %license LICENSE
 %{_libexecdir}/ibus-engine-ngosen
 %{_libexecdir}/ibus-setup-ngosen
+%{_bindir}/ngosen-check
+%{_bindir}/ngosen-save-log
 %{_bindir}/ngosen-toggle
 %{_datadir}/ibus/component/ngosen.xml
 %{_datadir}/ibus-ngosen/
@@ -61,6 +65,13 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Sun Nov 22 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.0-1
+- In the underline mode, a selected word takes a new tone mark in GTK 4 apps and Chrome;
+  no emoji suggestions for single letters, digits and chat shorthand; the convert key
+  changes selected text on KDE, Sway and Hyprland; KDE Plasma shows the emoji row's
+  numbers once; ngosen-check and ngosen-save-log commands; Spell Check is gone.
+- Core ngosen-1.14.0-1.
+
 * Sun Nov 22 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.5.1-1
 - xterm types right with Backspace on Wayland and X11; learned xterm.js terminals are
   remembered across restarts; fields of apps without a name keep
