@@ -891,6 +891,9 @@ msgstr "VNI bàn phím tiếng Pháp"
 msgid "Tab or Esc: put back the key"
 msgstr "Cứu dấu: Tab hoặc Esc để trả lại phím vừa gõ"
 
+msgid "The tone key again: put back the key"
+msgstr "Cứu dấu: gõ lại phím dấu để trả lại phím vừa gõ"
+
 msgid "Tab or Esc: put back what was typed"
 msgstr "Cứu chữ: Tab hoặc Esc để trả lại chữ đã gõ"
 
