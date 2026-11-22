@@ -189,7 +189,7 @@ namespace {
         check(host.candidates() && host.candidates()->cursor == -1, "a row highlights none, as its labels carry their keys");
     }
 
-    // Plasma's panel numbers every candidate itself, so the core's numbers travel as labels.
+    // The panel on KDE Plasma numbers candidates with a blank label, so the core's numbers travel as labels.
     void testCandidateNumbers() {
         using Split = std::vector<std::pair<std::string, std::string>>;
         check(splitCandidateNumbers({"1.😂", "2.🤣"}) == Split{{"1.", "😂"}, {"2.", "🤣"}}, "a row's numbers become the labels");

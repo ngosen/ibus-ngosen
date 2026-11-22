@@ -2391,7 +2391,7 @@ app.key(IBus.KEY_Tab)
 pump(200)
 check(
     app.menu == ["😂", "🤣", "😄", "😆", "😁"] and app.labels == ["1.", "2.", "3.", "4.", "5."],
-    "emoji: the list is numbered once, by labels that Plasma's panel replaces with its own",
+    "emoji: the list is numbered once, by labels every panel shows as they are",
     (app.menu, app.labels),
 )
 app.key(IBus.KEY_Tab)

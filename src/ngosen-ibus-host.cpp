@@ -286,8 +286,8 @@ namespace ngosen {
         const bool       row   = list_->layout == CandidateLayout::Row;
         IBusLookupTable* table = ibus_lookup_table_new(static_cast<guint>(list_->pageSize), static_cast<guint>(list_->cursor), !row, FALSE);
         ibus_lookup_table_set_orientation(table, row ? IBUS_ORIENTATION_HORIZONTAL : IBUS_ORIENTATION_VERTICAL);
-        // The core numbers the candidates itself. GNOME Shell shows a label as given and numbers an empty
-        // one, while Plasma's panel numbers every candidate, so a number goes out as the label.
+        // The core numbers the candidates itself. A blank label keeps GNOME Shell from adding a number, but
+        // the panel on KDE Plasma still adds one, so the core's number goes out as the label instead.
         const auto split = splitCandidateNumbers(list_->labels);
         for (guint i = 0; i < split.size(); ++i) {
             const auto& [label, text] = split[i];
