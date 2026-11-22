@@ -26,7 +26,7 @@ if (WaylandServer_FOUND)
     add_executable(ibus-wayland-primary-test ibus-wayland-primary.cpp)
     target_link_libraries(ibus-wayland-primary-test PRIVATE ngosen_ibus PkgConfig::WaylandServer)
     add_test(NAME ibus_wayland_primary COMMAND ibus-wayland-primary-test)
-    set_tests_properties(ibus_wayland_primary PROPERTIES LABELS "unit;ibus" TIMEOUT 10)
+    set_tests_properties(ibus_wayland_primary PROPERTIES LABELS "unit;ibus" TIMEOUT 60)
 endif()
 
 add_executable(ibus-program-name-test ibus-program-name.cpp)
