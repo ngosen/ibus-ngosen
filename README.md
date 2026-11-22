@@ -73,11 +73,18 @@ Cách nhanh nhất là lệnh cài của Ngó Sen, chạy trong terminal (không
 curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --ibus
 ```
 
-Lệnh nhận ra distro, cài package của bản này và thêm kho của Ngó Sen để cập nhật hệ thống tự lên version mới (bỏ qua
-bằng `--no-repo`). Trên GNOME, lệnh thêm luôn "Tiếng Việt (Ngó Sen)" vào nguồn nhập; trên Xfce, Cinnamon, MATE dùng
-X11 ở Debian, Ubuntu, Linux Mint, lệnh đặt IBus và Ngó Sen làm bộ gõ. Desktop khác, như KDE Plasma, thì làm thêm
-[bước thiết lập](#thiet-lap) sau khi cài. Nếu máy đang có bản fcitx5, lệnh thay nó bằng bản này. Trước khi đổi gì,
-lệnh liệt kê những việc sẽ làm và chờ bạn đồng ý. Cài xong, đăng xuất rồi đăng nhập lại.
+Lệnh nhận ra distro và cài package của bản này. Trước khi đổi gì, lệnh liệt kê những việc sẽ làm và chờ bạn đồng ý.
+Ngoài việc cài package:
+
+- Trên Debian, Ubuntu, Linux Mint, lệnh thêm kho APT của Ngó Sen để `apt upgrade` tự lên version mới (bỏ qua bằng
+  `--no-repo`). Distro khác muốn tự cập nhật thì thêm kho như ở [Cài qua kho phần mềm](#cai-qua-kho).
+- Trên GNOME, lệnh thêm "Tiếng Việt (Ngó Sen)" vào nguồn nhập của tài khoản đang chạy lệnh. Trên Xfce, Cinnamon,
+  MATE dùng X11 ở máy có `im-config` (Debian, Ubuntu, Linux Mint), lệnh đặt IBus và Ngó Sen làm bộ gõ. Desktop khác,
+  như KDE Plasma, thì làm [bước thiết lập](#thiet-lap) sau khi cài.
+- Nếu máy đang có bản fcitx5, trên Debian, Ubuntu và Fedora lệnh thay nó bằng bản này; trên Arch và openSUSE, gỡ
+  `fcitx5-ngosen` trước rồi mới chạy lệnh.
+
+Cài xong, đăng xuất rồi đăng nhập lại.
 
 ### Cài bằng tay
 
@@ -93,6 +100,8 @@ sudo zypper install ./ibus-ngosen-*.rpm      # openSUSE Tumbleweed
 Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch, CachyOS và openSUSE Tumbleweed. Linux Mint 22 dùng package của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch và openSUSE chỉ có x86_64. Không có package cho Debian 12 và Ubuntu 22.04.
 
 Hai bản không chạy cùng lúc trong một tài khoản; nếu đang dùng [bản fcitx5](https://github.com/ngosen/ngosen), xem [Chuyển qua lại với bản fcitx5](#chuyen-ban).
+
+<a id="cai-qua-kho"></a>
 
 ### Cài qua kho phần mềm
 
@@ -170,7 +179,8 @@ Báo lỗi tại [Issues](https://github.com/ngosen/ibus-ngosen/issues).
 
 ## 🗑️ Gỡ cài đặt
 
-Nếu đã cài bằng lệnh cài, gỡ bằng chính lệnh đó; nó trả lại những gì lệnh cài đã đổi:
+Nếu đã cài bằng lệnh cài, gỡ bằng chính lệnh đó; nó gỡ package, bỏ nguồn nhập và kho Ngó Sen mà lệnh cài đã thêm.
+Bản fcitx5 mà lệnh cài đã thay không được cài lại.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --uninstall
@@ -227,6 +237,6 @@ Key features include:
 - Emoji suggestions while typing and in-place charset conversion (TCVN3, VNI to Unicode).
 - Per-app Vim mode, macros, custom keymaps, and typing logs.
 
-To install, run `curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --ibus`: it installs this edition's package, adds the Ngó Sen repository for updates and, on GNOME, adds the input source (`--uninstall` undoes it). Or download the package for your distribution from the [latest release](https://github.com/ngosen/ibus-ngosen/releases/latest) and install it using your package manager (`apt`, `dnf`, `pacman`, or `zypper`), or install from software repositories (COPR for Fedora, AUR for Arch via `yay -S ibus-ngosen`). After a manual install, log out, log back in, and add "Tiếng Việt (Ngó Sen)" as an input source: on GNOME under Settings → Keyboard → Input Sources; on Cinnamon, Xfce and KDE Plasma see [the setup section](#thiet-lap).
+To install, run `curl -fsSL https://raw.githubusercontent.com/ngosen/ngosen/main/install.sh | bash -s -- --ibus`. It installs this edition's package, adds the Ngó Sen APT repository on Debian and Ubuntu, and adds the input source on GNOME; `--uninstall` removes what it added. Or download the package for your distribution from the [latest release](https://github.com/ngosen/ibus-ngosen/releases/latest) and install it using your package manager (`apt`, `dnf`, `pacman`, or `zypper`), or install from software repositories (COPR for Fedora, AUR for Arch via `yay -S ibus-ngosen`). Either way, log out and log back in. If the input source was not added for you, add "Tiếng Việt (Ngó Sen)": on GNOME under Settings → Keyboard → Input Sources; on Cinnamon, Xfce and KDE Plasma see [the setup section](#thiet-lap).
 
 The rest of this page is in Vietnamese.
