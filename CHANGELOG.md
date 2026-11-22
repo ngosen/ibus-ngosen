@@ -29,6 +29,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - Trên KDE, Sway và Hyprland, bôi đen chữ trong app GTK3 hay Firefox rồi bấm phím chuyển mã nay đổi được chữ, như bản
   fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190).
+- Trên KDE Plasma, hàng emoji không còn hiện số hai lần kiểu "1. 1.😂": bộ gõ gửi số làm nhãn riêng thay vì ghép vào emoji. Trên GNOME, số trong hàng emoji nay có màu nhạt và cách emoji một khoảng (#198).
+
+### Thay đổi
+
+- README ghi lệnh cài một dòng `install.sh --ibus` của Ngó Sen ở đầu phần Cài đặt, và `--uninstall` để gỡ; tải gói
+  cài bằng tay thành mục riêng (#200).
 
 ## [1.5.1-1] — 22/11/2026
 
