@@ -174,6 +174,9 @@ namespace ngosen {
             if (!isStartsWith(candidates[i], number))
                 break;
             const size_t text = candidates[i].compare(number.size(), 1, " ") == 0 ? number.size() + 1 : number.size();
+            // An emoji has no space, while a retype offer such as "1.5 xin chaof → …" always does.
+            if (candidates[i].find(' ', text) != std::string::npos)
+                break;
             split.emplace_back(number, candidates[i].substr(text));
         }
         // Only a list the core numbered in order, so "2. xin chaof" offered alone keeps its text.

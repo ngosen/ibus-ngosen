@@ -197,6 +197,7 @@ namespace {
         check(splitCandidateNumbers({"1.#️⃣", "2.0️⃣"}) == Split{{"1.", "#️⃣"}, {"2.", "0️⃣"}}, "an emoji that starts with a digit keeps it");
         check(splitCandidateNumbers({"Tab: 😂 🤣"}) == Split{{"", "Tab: 😂 🤣"}}, "text without a number keeps no label");
         check(splitCandidateNumbers({"2. xin chaof → 2. xin chào"}) == Split{{"", "2. xin chaof → 2. xin chào"}}, "a number the user typed is not a label");
+        check(splitCandidateNumbers({"1.5 xin chaof → 1.5 xin chào"}) == Split{{"", "1.5 xin chaof → 1.5 xin chào"}}, "a typed number that reads like the first label is not one");
         check(splitCandidateNumbers({"1.a", "3.b"}) == Split{{"", "1.a"}, {"", "3.b"}}, "nor are numbers out of order");
     }
 
