@@ -141,6 +141,11 @@ int main() {
         setenv("WAYLAND_DISPLAY", "wayland-ext", 1);
         const std::string got = read(500);
         check(got == "việt", "reads the primary selection over ext-data-control", got);
+        // A read that starts as the last one returns must not take it for one still running.
+        int empty = 0;
+        for (int i = 0; i < 10000; ++i)
+            empty += read(500).empty();
+        check(empty == 0, "reads one right after another", std::to_string(empty) + " of 10000 empty");
     }
     {
         FakeCompositor sway(&ngosen::wayland::wlrDataControl, "việt", App::Sends, "wayland-wlr");
