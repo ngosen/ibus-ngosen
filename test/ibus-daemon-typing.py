@@ -55,6 +55,14 @@ def pump_until(done, ms):
         time.sleep(0.001)
 
 
+def file_has(path, text):
+    try:
+        with open(path) as f:
+            return text in f.read()
+    except FileNotFoundError:
+        return False
+
+
 def connect():
     IBus.init()
     end = time.monotonic() + 10
@@ -853,7 +861,7 @@ if no_x:
     )
     tray.notices, tray.tables = [], 0
     tray.property_activate("InputMode", IBus.PropState.CHECKED)
-    pump(500)
+    pump_until(lambda: app_switch_of("org.gnome.TextEditor") == "Vietnamese=True", 5000)
     check(
         app_switch_of("org.gnome.TextEditor") == "Vietnamese=True"
         and app_switch_of("fake") is None,
@@ -871,7 +879,7 @@ if no_x:
     portal.focus()
     tray.notices, tray.tables = [], 0
     tray.property_activate("InputMode", IBus.PropState.CHECKED)
-    pump(500)
+    pump_until(lambda: not os.path.exists(english_mark_path), 5000)
     check(
         app_switch_of("org.gnome.TextEditor") == "Vietnamese=False"
         and app_switch_of("fake") is None
@@ -2705,7 +2713,7 @@ anonymous = App("QIBusInputContext")
 anonymous.ic.focus_out()
 pump(300)
 tray.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: os.path.exists(english_mark), 5000)
 check(
     app_switch_of("fake") is None and os.path.exists(english_mark),
     "tray: after a field with no name the click changes the shared language",
@@ -2713,7 +2721,7 @@ check(
 )
 # Back to Vietnamese: the checks below expect the shared language as they found it.
 tray.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: not os.path.exists(english_mark), 5000)
 check(not os.path.exists(english_mark), "tray: a second click restores Vietnamese", english_mark)
 for path in (os.path.join(config_dir, "ngosen-app-switch.conf"), english_mark):
     if os.path.exists(path):
@@ -2900,7 +2908,10 @@ for _ in range(3):
     pump(100)
 check(updates == [], "menu: a focus change resends no unchanged item", len(updates))
 app.ic.property_activate("InputMethod/VNI", IBus.PropState.CHECKED)
-pump(1000)
+pump_until(
+    lambda: file_has(settings_path, "InputMethod=VNI") and "InputMethod/VNI" in gnome.checked(),
+    5000,
+)
 with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
@@ -2923,7 +2934,13 @@ app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
 # GNOME Shell sends the state a plain item shows, so a click on "✔ ..." comes as checked.
 app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
-pump(1000)
+pump_until(
+    lambda: (
+        file_has(settings_path, "SpellCheck=False")
+        and gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả"
+    ),
+    5000,
+)
 with open(settings_path) as f:
     check("SpellCheck=False" in f.read(), "menu: a click turns an on item off", settings_path)
 check(
@@ -2942,7 +2959,7 @@ check(
     gnome.labels.get("SpellCheck"),
 )
 app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
-pump(1000)
+pump_until(lambda: file_has(settings_path, "SpellCheck=False"), 5000)
 with open(settings_path) as f:
     check(
         "SpellCheck=False" in f.read(),
@@ -2993,7 +3010,14 @@ check(
     gnome.labels.get("InputMode"),
 )
 app.ic.property_activate("InputMode", IBus.PropState.UNCHECKED)
-pump(500)
+pump_until(
+    lambda: (
+        symbols[-1:] == ["V"]
+        and not os.path.exists(english_mark)
+        and gnome.labels.get("InputMode") == "✔ Tiếng Việt"
+    ),
+    5000,
+)
 check(symbols[-1:] == ["V"], "menu: clicking the item switches back", symbols)
 check(
     gnome.labels.get("InputMode") == "✔ Tiếng Việt",
@@ -3004,7 +3028,7 @@ check(not os.path.exists(english_mark), "menu: the click is remembered", english
 before = len(app.commits)
 app.type("vie65t")
 app.ic.property_activate("InputMode", IBus.PropState.CHECKED)
-pump(500)
+pump_until(lambda: len(app.commits) > before, 5000)
 check(
     app.commits[before:] == ["việt"],
     "menu: the click commits the word being typed once",
@@ -3110,9 +3134,9 @@ bus.set_global_engine("ngosen")
 app.ic.focus_out()
 app.ic.focus_in()
 pump(500)
-app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
-pump(500)
 state_dir = os.path.join(os.environ["XDG_STATE_HOME"], "ngosen")
+app.ic.property_activate("SaveTypingLog", IBus.PropState.UNCHECKED)
+pump_until(lambda: bool(glob.glob(os.path.join(state_dir, "typing-*.log"))), 5000)
 saved_logs = sorted(glob.glob(os.path.join(state_dir, "typing-*.log")))
 check(len(saved_logs) == 1, "menu: saves a typing log", saved_logs)
 if saved_logs:
