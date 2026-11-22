@@ -216,7 +216,8 @@ HINTS = {
         "/cost and /usr/share stay as typed, at the start of a line or after a space, so chat commands and file paths work. và/hoặc and @tên still get tones."
     ),
     "RetoneSelection": N_(
-        "Click right after chao, or select it in an X11 app, and type f to get chào. Only when typing with Sen; Tab or Esc puts the key back."
+        "Click right after chao, or select it in an X11 app, and type f to get chào; Tab or Esc puts the key back. "
+        "In the underline mode, select chao in a GTK 4 app or Chrome and type f; f again puts the key back."
     ),
     "RetypeAfterSwitch": N_(
         "Typed vieetj in English? Switch to Vietnamese and it becomes việt; Tab or Esc puts it back. Where a word may be English on purpose, Enter retypes and Tab or Esc keeps it."
