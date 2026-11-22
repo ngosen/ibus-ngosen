@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace ngosen {
@@ -28,6 +29,8 @@ namespace ngosen {
 
     // The program a client types for: GNOME Shell relays every app under its own name.
     std::string programOf(const std::string& client);
+    // Label and text of each candidate: the "1.", "2."... the core numbers a list with, or no label.
+    std::vector<std::pair<std::string, std::string>> splitCandidateNumbers(const std::vector<std::string>& candidates);
 
     // The field as the IBus engine sees it. IBus tells the engine about the field piece by piece;
     // the engine passes each piece on.
