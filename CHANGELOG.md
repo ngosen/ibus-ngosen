@@ -13,6 +13,10 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Lệnh `ngosen-check` in kết quả Kiểm tra máy ra terminal, kèm cách sửa từng bước, để AI chạy lệnh được đọc. Lệnh
   không đổi gì trên máy (#188).
 - Lệnh `ngosen-save-log` lưu nhật ký gõ từ terminal như mục "Lưu nhật ký gõ" trong menu, rồi in đường dẫn tệp (#189).
+- Nhận lõi next: ở chế độ gạch chân, bôi đen một từ đã gõ rồi gõ phím dấu thì từ hiện lại với dấu mới (bôi đen
+  "tiềng", gõ `s` ra "tiếng") ở app GTK 4 và Chrome, như Gõ Sen đã làm; gõ lại phím dấu đó để giữ phím. App khác vẫn
+  thay từ bằng phím như trước. Gợi ý emoji không còn hiện cho chữ cái đơn, con số và chữ tắt khi chat, như `t` ra 🦖
+  hay `ng` ra 🆖 (#199).
 
 ### Bỏ
 
