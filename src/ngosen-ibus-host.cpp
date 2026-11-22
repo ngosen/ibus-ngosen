@@ -4,6 +4,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #include "ngosen-ibus-host.h"
+
 #include "ngosen-ibus-i18n.h"
 #include "ngosen-ibus-primary.h"
 
@@ -11,10 +12,10 @@
 #include "ngosen-ibus-shell.h"
 #include "ngosen-keysym.h"
 #include "ngosen-log.h"
+#include "ngosen-strings.h"
 #include "ngosen-xtest.h"
 
 #include <algorithm>
-#include <cctype>
 
 namespace ngosen {
 
@@ -166,17 +167,22 @@ namespace ngosen {
         return client == "gnome-shell" && !shellFocusedApp().empty() ? shellFocusedApp() : client;
     }
 
-    std::pair<std::string, std::string> splitCandidateNumber(const std::string& candidate) {
-        size_t digits = 0;
-        while (digits < candidate.size() && std::isdigit(static_cast<unsigned char>(candidate[digits])))
-            ++digits;
-        if (digits == 0 || digits + 1 >= candidate.size() || candidate[digits] != '.')
-            return {"", candidate};
-        const size_t text = candidate[digits + 1] == ' ' ? digits + 2 : digits + 1;
-        // "1.5 kg" is a decimal, not a number label.
-        if (text >= candidate.size() || std::isdigit(static_cast<unsigned char>(candidate[text])))
-            return {"", candidate};
-        return {candidate.substr(0, digits + 1), candidate.substr(text)};
+    std::vector<std::pair<std::string, std::string>> splitCandidateNumbers(const std::vector<std::string>& candidates) {
+        std::vector<std::pair<std::string, std::string>> split;
+        for (size_t i = 0; i < candidates.size(); ++i) {
+            const std::string number = std::to_string(i + 1) + ".";
+            if (!isStartsWith(candidates[i], number))
+                break;
+            const size_t text = candidates[i].compare(number.size(), 1, " ") == 0 ? number.size() + 1 : number.size();
+            split.emplace_back(number, candidates[i].substr(text));
+        }
+        // Only a list the core numbered in order, so "2. xin chaof" offered alone keeps its text.
+        if (split.size() == candidates.size())
+            return split;
+        split.clear();
+        for (const auto& candidate : candidates)
+            split.emplace_back("", candidate);
+        return split;
     }
 
     Field IBusHost::field() const {
@@ -282,8 +288,9 @@ namespace ngosen {
         ibus_lookup_table_set_orientation(table, row ? IBUS_ORIENTATION_HORIZONTAL : IBUS_ORIENTATION_VERTICAL);
         // The core numbers the candidates itself. GNOME Shell shows a label as given and numbers an empty
         // one, while Plasma's panel numbers every candidate, so a number goes out as the label.
-        for (guint i = 0; i < list_->labels.size(); ++i) {
-            const auto [label, text] = splitCandidateNumber(list_->labels[i]);
+        const auto split = splitCandidateNumbers(list_->labels);
+        for (guint i = 0; i < split.size(); ++i) {
+            const auto& [label, text] = split[i];
             ibus_lookup_table_append_candidate(table, ibus_text_new_from_string(text.c_str()));
             ibus_lookup_table_set_label(table, i, ibus_text_new_from_string(label.empty() ? "\u200b" : label.c_str()));
         }

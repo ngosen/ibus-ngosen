@@ -191,13 +191,13 @@ namespace {
 
     // Plasma's panel numbers every candidate itself, so the core's numbers travel as labels.
     void testCandidateNumbers() {
-        using Split = std::pair<std::string, std::string>;
-        check(splitCandidateNumber("1.😂") == Split{"1.", "😂"}, "a row's number becomes the label");
-        check(splitCandidateNumber("12. 😂") == Split{"12.", "😂"}, "a column's number and its space too");
-        check(splitCandidateNumber("Tab: 😂 🤣") == Split{"", "Tab: 😂 🤣"}, "text without a number keeps no label");
-        check(splitCandidateNumber("xin chaof → xin chào") == Split{"", "xin chaof → xin chào"}, "nor does an offer to retype");
-        check(splitCandidateNumber("3.") == Split{"", "3."}, "a number alone stays the candidate");
-        check(splitCandidateNumber("1.5 kg") == Split{"", "1.5 kg"}, "a decimal is not a number label");
+        using Split = std::vector<std::pair<std::string, std::string>>;
+        check(splitCandidateNumbers({"1.😂", "2.🤣"}) == Split{{"1.", "😂"}, {"2.", "🤣"}}, "a row's numbers become the labels");
+        check(splitCandidateNumbers({"1. 😂", "2. 🤣"}) == Split{{"1.", "😂"}, {"2.", "🤣"}}, "a column's numbers and their space too");
+        check(splitCandidateNumbers({"1.#️⃣", "2.0️⃣"}) == Split{{"1.", "#️⃣"}, {"2.", "0️⃣"}}, "an emoji that starts with a digit keeps it");
+        check(splitCandidateNumbers({"Tab: 😂 🤣"}) == Split{{"", "Tab: 😂 🤣"}}, "text without a number keeps no label");
+        check(splitCandidateNumbers({"2. xin chaof → 2. xin chào"}) == Split{{"", "2. xin chaof → 2. xin chào"}}, "a number the user typed is not a label");
+        check(splitCandidateNumbers({"1.a", "3.b"}) == Split{{"", "1.a"}, {"", "3.b"}}, "nor are numbers out of order");
     }
 
     void testWaylandSession() {
