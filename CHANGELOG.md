@@ -17,6 +17,13 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   "tiềng", gõ `s` ra "tiếng") ở app GTK 4 và Chrome, như Gõ Sen đã làm; gõ lại phím dấu đó để giữ phím. App khác vẫn
   thay từ bằng phím như trước. Gợi ý emoji không còn hiện cho chữ cái đơn, con số và chữ tắt khi chat, như `t` ra 🦖
   hay `ng` ra 🆖 (#199).
+- Nhận lõi `ngosen-1.14.1-1`: Firefox không còn mất chữ khi gõ ngay trước một link, và bản Flatpak không còn mất
+  dấu thanh khi gõ nhanh sau một lần sửa ("được" ra "đưc"). Với bảng mã Unicode tổ hợp, terminal chạy bash hay fish
+  không còn mất chữ trước dấu thanh ("nhiều" ra "nhều"). Telex gõ "booots" ra "boots"; gõ kéo dài chỉ giữ dấu ở chữ
+  đầu, như "afaaa" ra "àaaa", giống UniKey. Danh sách emoji tự ẩn sau 4 giây để yên; ở cuối câu, bấm `Tab` rồi mới
+  chọn emoji bằng số, còn số gõ khi danh sách vừa hiện được nhập như thường. "Lưu nhật ký gõ" giữ khoảng nửa phút
+  gõ gần nhất trong trình duyệt thay vì 7 giây (ngosen/ngosen#970, ngosen/ngosen#975, ngosen/ngosen#952,
+  ngosen/ngosen#976, ngosen/ngosen#980, ngosen/ngosen#973, ngosen/ngosen#968, ngosen/ngosen#953) (#205).
 
 ### Bỏ
 
