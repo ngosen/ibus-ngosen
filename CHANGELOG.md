@@ -37,6 +37,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Trên KDE, Sway và Hyprland, bôi đen chữ trong app GTK3 hay Firefox rồi bấm phím chuyển mã nay đổi được chữ, như bản
   fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190, #202).
 - Trên KDE Plasma, hàng emoji không còn hiện số hai lần kiểu "1. 1.😂": bộ gõ gửi số làm nhãn riêng thay vì ghép vào emoji. Trên GNOME, số trong hàng emoji nay có màu nhạt và cách emoji một khoảng (#198).
+- Bấm Ctrl+Shift chậm vẫn đổi được Anh/Việt: giữ tới một giây vẫn tính, như bản fcitx5; trước đây quá nửa giây là
+  không có tác dụng. Trang "Có gì mới" trong cửa sổ cài đặt nay hướng dẫn đúng cách bật và chọn emoji, và ví dụ gõ
+  kéo dài ra "àaaa" như bản lõi mới (#206).
 
 ### Thay đổi
 

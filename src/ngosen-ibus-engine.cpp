@@ -152,8 +152,8 @@ namespace {
         bool     chordHeld    = false;
     };
 
-    // Longer than this is a hold, such as Ctrl+Shift with a click.
-    constexpr gint64 TapMicroseconds = 500000;
+    // Longer than this is a hold, such as Ctrl+Shift with a click. As long as in fcitx5, so a slow tap still counts.
+    constexpr gint64 TapMicroseconds = 1000000;
 
     // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
     std::atomic<unsigned> clicksSeen{0};

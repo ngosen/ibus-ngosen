@@ -1695,6 +1695,10 @@ app.ic.process_key_event(
 pump(200)
 check(not os.path.exists(english_mark), "toggle: Ctrl+Shift+T is not a tap", english_mark)
 tap_ctrl_shift(app, hold_ms=800)
+check(os.path.exists(english_mark), "toggle: a slow tap still switches, as in fcitx5", english_mark)
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+tap_ctrl_shift(app, hold_ms=1300)
 check(not os.path.exists(english_mark), "toggle: a long hold is not a tap", english_mark)
 app.close()
 
@@ -1745,7 +1749,7 @@ app = App("toggle-ctrl-held")
 app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
-pump(700)
+pump(1300)
 app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
 pump(200)
 check(
