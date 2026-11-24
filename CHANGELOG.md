@@ -44,7 +44,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   cài bằng tay thành mục riêng (#200).
 - Gợi ý emoji nay tắt sẵn ở mọi app, như bản fcitx5; bấm `` ` `` rồi `w` để bật cho từng app muốn dùng. Danh sách app
   đã tắt emoji trước đây không còn dùng; trang **Emoji** trong cửa sổ cài đặt nay liệt kê "App đã bật emoji", và sao
-  lưu trao đổi danh sách này với bản fcitx5 (#PR).
+  lưu trao đổi danh sách này với bản fcitx5 (#206).
 
 ## [1.5.1-1] — 22/11/2026
 
