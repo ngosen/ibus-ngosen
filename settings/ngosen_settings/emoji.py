@@ -145,28 +145,28 @@ def _wrap_insert_before(box, child, sibling, index):
 
 
 def toggle_hint(menu_key, emoji_key):
-    """How to turn emoji off for one app, with the keys the user set (ModeMenuKey, ShortcutEmoji)."""
+    """How to turn emoji on for one app, with the keys the user set (ModeMenuKey, ShortcutEmoji)."""
     entries = (menu_key or "").split()
     if not entries or not emoji_key:
         return _(
-            "Set a mode menu key and an emoji key on the Keys page to turn suggestions off"
+            "Set a mode menu key and an emoji key on the Keys page to turn suggestions on"
             " for one app."
         )
     return _(
-        "In the app you are typing in, press {menu} then {key} to turn suggestions off or back"
-        " on for that app. The app keeps its typing mode."
+        "Suggestions are off until you turn them on. In the app you are typing in, press {menu}"
+        " then {key} to turn them on or off for that app. The app keeps its typing mode."
     ).format(menu=keys.label(entries[0]), key=emoji_key)
 
 
 class EmojiPage:
-    """on_save(edits, label) saves the words with Undo; on_enable(app) offers emoji in app again."""
+    """on_save(edits, label) saves the words with Undo; on_disable(app) stops offering emoji in app."""
 
-    def __init__(self, store, rows, on_save, on_enable, on_share=(None, None)):
+    def __init__(self, store, rows, on_save, on_disable, on_share=(None, None)):
         self.config = store
         self.on_export, self.on_import = on_share
         self.words = EmojiWords(store)
         self.on_save = on_save
-        self.on_enable = on_enable
+        self.on_disable = on_disable
         self._bound = {}
         self._drafts = {}
         self.editor = _NewWord(self)
@@ -211,8 +211,8 @@ class EmojiPage:
         self.refilter(scroll=False)
 
     def refresh_apps(self):
-        """Shows the apps turned off from the keyboard while the window was open."""
-        self.config.reload_emoji_off_apps()
+        """Shows the apps turned on from the keyboard while the window was open."""
+        self.config.reload_app_lists()
         self._show_apps()
 
     def _example(self):
@@ -268,7 +268,7 @@ class EmojiPage:
         return self.example
 
     def _apps_group(self):
-        group = Adw.PreferencesGroup(title=_("Apps without emoji"))
+        group = Adw.PreferencesGroup(title=_("Apps with emoji"))
         self.apps_group = group
         self.apps = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
         # App names are the user's own entries, not settings to find.
@@ -278,22 +278,22 @@ class EmojiPage:
 
     def _show_apps(self):
         self.apps.remove_all()
-        for app in self.words.off_apps:
+        for app in self.words.on_apps:
             row = Adw.ActionRow(title=app, use_markup=False)
-            button = Gtk.Button(label=_("Turn back on"), valign=Gtk.Align.CENTER)
+            button = Gtk.Button(label=_("Turn off"), valign=Gtk.Align.CENTER)
             button.update_property(
-                [Gtk.AccessibleProperty.LABEL], [_("Turn emoji back on in {}").format(app)]
+                [Gtk.AccessibleProperty.LABEL], [_("Turn emoji off in {}").format(app)]
             )
-            button.connect("clicked", lambda _b, app=app: self.enable_app(app))
+            button.connect("clicked", lambda _b, app=app: self.disable_app(app))
             row.add_suffix(button)
             self.apps.append(row)
-        if not self.words.off_apps:
-            empty = Adw.ActionRow(title=_("Not turned off in any app."), css_classes=["dim-label"])
+        if not self.words.on_apps:
+            empty = Adw.ActionRow(title=_("Not on in any app."), css_classes=["dim-label"])
             empty.set_activatable(False)
             self.apps.append(empty)
 
-    def enable_app(self, app):
-        self.on_enable(app)
+    def disable_app(self, app):
+        self.on_disable(app)
         self._show_apps()
 
     def _words_group(self):

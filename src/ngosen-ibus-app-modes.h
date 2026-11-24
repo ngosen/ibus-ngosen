@@ -85,7 +85,7 @@ namespace ngosen {
     using AppNameSet = std::set<std::string>;
     // The first lines fcitx5 writes, so the files look the same from either edition.
     constexpr const char* VimAppsHeader      = "# Apps where Ngó Sen follows Vim's normal-mode keys, one per line";
-    constexpr const char* EmojiOffAppsHeader = "# Apps where Ngó Sen offers no emoji, one per line";
+    constexpr const char* EmojiAppsHeader    = "# Apps where Ngó Sen offers emoji, one per line";
     constexpr const char* TeencodeAppsHeader = "# Apps where Ngó Sen keeps teencode, one per line";
     AppNameSet            parseAppList(const std::string& text);
     std::string           appListText(const std::string& header, const AppNameSet& apps);

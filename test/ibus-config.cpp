@@ -435,6 +435,8 @@ namespace {
         write(paths.fcitxConfigDir + "/ngosen-vim-apps.conf", "kitty\n");
         write(paths.fcitxConfigDir + "/ngosen-teencode-apps.conf", "discord\n");
         write(paths.fcitxConfigDir + "/ngosen-web-terminal-apps.conf", "orca\n");
+        write(paths.fcitxConfigDir + "/ngosen-emoji-apps.conf", "telegram\n");
+        write(paths.fcitxConfigDir + "/ngosen-emoji-off-apps.conf", "kate\n");
         check(prepareSettings(paths), "import succeeds");
         const IniFile settings = parseIni(read(paths.settingsFile()));
         check(settings.top.count("InputMethod") == 1 && settings.top.at("InputMethod") == "VNI", "InputMethod imported");
@@ -449,6 +451,9 @@ namespace {
         check(read(paths.vimAppsFile()) == "kitty\n", "the apps with Vim mode copied as they are");
         check(read(paths.teencodeAppsFile()) == "discord\n", "the apps with teencode copied as they are");
         check(read(paths.webTerminalAppsFile()) == "orca\n", "the apps with an xterm.js terminal copied as they are");
+        check(read(paths.emojiAppsFile()) == "telegram\n", "the apps with emoji copied as they are");
+        // fcitx5 no longer reads its list of apps with emoji turned off, so neither does this edition.
+        check(!fs::exists(paths.configDir + "/ngosen-emoji-off-apps.conf"), "the old list of apps without emoji not copied");
 
         write(paths.fcitxConfigDir + "/ngosen.conf", "InputMethod=Telex\n");
         check(prepareSettings(paths) && parseIni(read(paths.settingsFile())).top.at("InputMethod") == "VNI", "a later run imports nothing");
