@@ -2292,14 +2292,23 @@ first.key(IBus.KEY_grave)
 pump(200)
 first.key(IBus.KEY_v)
 pump(300)
+first.key(IBus.KEY_grave)
+pump(200)
+first.key(IBus.KEY_w)
+pump(300)
+check(
+    not os.path.exists(os.path.join(config_dir, "ngosen-emoji-apps.conf")),
+    "menu: a field without a name keeps emoji suggestions out of the file",
+    config_dir,
+)
 first.ic.focus_out()
 pump(200)
 second = menu_app("xim")
 second.key(IBus.KEY_grave)
 pump(200)
 check(
-    (second.menu or [""])[-1] == "Vim mode: tắt",
-    "menu: another field without a name starts without Vim mode",
+    (second.menu or [""])[-1] == "Vim mode: tắt" and "Gợi ý emoji: tắt" in (second.menu or []),
+    "menu: another field without a name starts without Vim mode or emoji",
     second.menu,
 )
 second.key(IBus.KEY_Escape)
@@ -2310,8 +2319,8 @@ pump(200)
 first.key(IBus.KEY_grave)
 pump(200)
 check(
-    (first.menu or [""])[-1] == "Vim mode: bật",
-    "menu: a field without a name keeps Vim mode when it gets focus back",
+    (first.menu or [""])[-1] == "Vim mode: bật" and "Gợi ý emoji: bật" in (first.menu or []),
+    "menu: a field without a name keeps Vim mode and emoji when it gets focus back",
     first.menu,
 )
 first.key(IBus.KEY_Escape)

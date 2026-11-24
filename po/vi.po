@@ -1565,8 +1565,8 @@ msgid "Converting selected text in LibreOffice"
 msgstr "Chuyển mã chữ bôi đen trong LibreOffice"
 
 #: settings/ngosen_settings/whats_new.py
-msgid "Emoji for the words of a sentence show in a row as you type. After . ! ? or a pause, press a number to pick one, or Tab first in VNI. English words such as cat or thumbs up count too. The Emoji page lists every emoji with its words, which you can change, export and import."
-msgstr "Emoji của các từ trong câu hiện thành một hàng ngay khi gõ. Sau . ! ? hoặc khi dừng tay, bấm số để chọn, gõ VNI thì bấm Tab trước. Từ tiếng Anh như cat hay thumbs up cũng có emoji. Trang Emoji liệt kê mọi emoji kèm từ gợi ý; bạn đổi, xuất và nhập được các từ đó."
+msgid "Turn emoji on for an app with w in the ` menu. Emoji for the words of a sentence then show in a row as you type; after . ! ? or a pause, press Tab, then a number to pick one. English words such as cat or thumbs up count too. The Emoji page lists every emoji with its words, which you can change, export and import."
+msgstr "Bật emoji cho từng app bằng phím w trong menu `. Khi đó emoji của các từ trong câu hiện thành một hàng ngay khi gõ; sau . ! ? hoặc khi dừng tay, bấm Tab rồi bấm số để chọn. Từ tiếng Anh như cat hay thumbs up cũng có emoji. Trang Emoji liệt kê mọi emoji kèm từ gợi ý; bạn đổi, xuất và nhập được các từ đó."
 
 #: settings/ngosen_settings/whats_new.py
 msgid "One switch for every app"
@@ -1581,8 +1581,8 @@ msgid "Drawn-out letters"
 msgstr "Gõ kéo dài chữ"
 
 #: settings/ngosen_settings/whats_new.py
-msgid "Repeat the last letter of a marked word and it repeats with its mark, instead of bringing back the keys you typed. English words such as besttt stay as typed."
-msgstr "Gõ lặp chữ cái cuối của một từ có dấu thì chữ đó lặp lại cùng dấu, thay vì hiện lại các phím đã gõ. Từ tiếng Anh như besttt vẫn giữ nguyên."
+msgid "Repeat the last letter of a marked word and it repeats plain, instead of bringing back the keys you typed; the mark stays on the first one. English words such as besttt stay as typed."
+msgstr "Gõ lặp chữ cái cuối của một từ có dấu thì chữ đó lặp lại không dấu, thay vì hiện lại các phím đã gõ; dấu chỉ nằm ở chữ đầu. Từ tiếng Anh như besttt vẫn giữ nguyên."
 
 #: settings/ngosen_settings/whats_new.py
 msgid "Teencode for chosen apps"
