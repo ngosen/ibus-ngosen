@@ -23,7 +23,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
   đầu, như "afaaa" ra "àaaa", giống UniKey. Danh sách emoji tự ẩn sau 4 giây để yên; ở cuối câu, bấm `Tab` rồi mới
   chọn emoji bằng số, còn số gõ khi danh sách vừa hiện được nhập như thường. "Lưu nhật ký gõ" giữ khoảng nửa phút
   gõ gần nhất trong trình duyệt thay vì 7 giây (ngosen/ngosen#970, ngosen/ngosen#975, ngosen/ngosen#952,
-  ngosen/ngosen#976, ngosen/ngosen#980, ngosen/ngosen#973, ngosen/ngosen#968, ngosen/ngosen#953) (#PR).
+  ngosen/ngosen#976, ngosen/ngosen#980, ngosen/ngosen#973, ngosen/ngosen#968, ngosen/ngosen#953) (#205).
 
 ### Bỏ
 
