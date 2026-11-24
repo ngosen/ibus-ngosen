@@ -104,7 +104,7 @@ namespace ngosen {
         std::string          appSwitchesFile() const;
         std::string          vimAppsFile() const;
         std::string          emojiWordsFile() const;
-        std::string          emojiOffAppsFile() const;
+        std::string          emojiAppsFile() const;
         std::string          teencodeAppsFile() const;
         std::string          webTerminalAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.

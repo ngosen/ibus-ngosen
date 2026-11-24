@@ -339,12 +339,12 @@ class WindowTest(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
         self.assertTrue(dict(page.words.chips("😂"))["cười"])
 
-    def test_emoji_back_on_in_an_app_and_undo(self):
-        path = os.path.join(self.folder, "ngosen-emoji-off-apps.conf")
-        write_text(path, "# Apps where Ngó Sen offers no emoji, one per line\nfirefox\n")
+    def test_emoji_off_in_an_app_and_undo(self):
+        path = os.path.join(self.folder, "ngosen-emoji-apps.conf")
+        write_text(path, "# Apps where Ngó Sen offers emoji, one per line\nfirefox\n")
         self.window.emoji.refresh_apps()
         self.assertEqual(self.window.emoji.apps.get_row_at_index(0).get_title(), "firefox")
-        self.window.emoji.enable_app("firefox")
+        self.window.emoji.disable_app("firefox")
         self.assertNotIn("firefox", read_text(path))
         self.assertIsNotNone(self.window.toast)
         self.window.undo()

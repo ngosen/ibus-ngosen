@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ngó Sen contributors
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""The Emoji page's lists: which words offer which emoji, and the apps that offer none.
+"""The Emoji page's lists: which words offer which emoji, and the apps that offer them.
 
 Only the user's changes to the default words are kept, as in fcitx5, so words added to a later
 version still reach the user.
@@ -15,7 +15,7 @@ from .emoji_table import EMOJI, GROUPS
 
 WORDS = "Words"
 # The engine writes the same line when it switches an app from its menu.
-OFF_APPS_HEADER = "# Apps where Ngó Sen offers no emoji, one per line"
+ON_APPS_HEADER = "# Apps where Ngó Sen offers emoji, one per line"
 TEENCODE_APPS_HEADER = "# Apps where Ngó Sen keeps teencode, one per line"
 _BY_EMOJI = {row[0]: row for row in EMOJI}
 # The fcitx5 edition's file of shared words, so either edition imports the other's.
@@ -131,7 +131,7 @@ def parse_apps(text):
     return apps
 
 
-def apps_text(apps, header=OFF_APPS_HEADER):
+def apps_text(apps, header=ON_APPS_HEADER):
     return header + "\n" + "".join(app + "\n" for app in apps)
 
 
@@ -146,8 +146,8 @@ class EmojiWords:
         return self.store.emoji_edits
 
     @property
-    def off_apps(self):
-        return self.store.emoji_off_apps
+    def on_apps(self):
+        return self.store.emoji_apps
 
     @property
     def english(self):

@@ -1918,7 +1918,7 @@ check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
     items
-    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: tắt", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: ` shows the three modes and the switches, with a mark on the mode in use",
     items,
 )
@@ -1959,7 +1959,7 @@ app.key(IBus.KEY_grave)
 pump(200)
 check(
     app.menu
-    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: tắt", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: the mark follows the mode kept for the app",
     app.menu,
 )
@@ -2193,7 +2193,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: tắt", "Teencode: tắt", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -2366,21 +2366,33 @@ pump(300)
 check(app.text == "zậy  zaajy ", "teencode: off again, the word goes back to its keys", app.text)
 app.close()
 
-# Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.
-emoji_off_path = os.path.join(config_dir, "ngosen-emoji-off-apps.conf")
+# Emoji suggestions show in the lookup table and are switched on for the app in use, as Vim mode is.
+emoji_apps_path = os.path.join(config_dir, "ngosen-emoji-apps.conf")
 
 
-def emoji_off_apps():
-    if not os.path.exists(emoji_off_path):
+def emoji_apps():
+    if not os.path.exists(emoji_apps_path):
         return []
-    with open(emoji_off_path) as f:
+    with open(emoji_apps_path) as f:
         return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+def switch_emoji(app):
+    app.key(IBus.KEY_grave)
+    pump(200)
+    app.key(IBus.KEY_w)
+    pump(300)
 
 
 # The list after each word, which users can still pick; the end of a sentence is the default.
 set_setting("EmojiOfferAt", "After each word")
 app = menu_app("emoji")
 app.type("cuwowif")
+pump(300)
+check(app.menu is None, "emoji: no offer in an app that has not turned them on", app.menu)
+switch_emoji(app)
+check(emoji_apps() == ["emoji"], "menu: w switches emoji suggestions on for this app", emoji_apps())
+app.type(" cuwowif")
 pump(300)
 check(
     app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
@@ -2397,32 +2409,21 @@ check(
 app.key(IBus.KEY_Tab)
 pump(300)
 check(
-    app.text == "cười 😂" and app.menu is None,
+    app.text == "cười cười 😂" and app.menu is None,
     "emoji: Tab twice adds the first emoji",
     (app.text, app.menu),
 )
-app.key(IBus.KEY_grave)
-pump(200)
-app.key(IBus.KEY_w)
-pump(300)
-check(
-    emoji_off_apps() == ["emoji"],
-    "menu: w switches emoji suggestions off for this app",
-    emoji_off_apps(),
-)
+switch_emoji(app)
+check(emoji_apps() == [], "menu: w again switches them off", emoji_apps())
 app.type(" cuwowif")
 pump(300)
 check(app.menu is None, "emoji: no offer once they are off", app.menu)
-app.key(IBus.KEY_grave)
-pump(200)
-app.key(IBus.KEY_w)
-pump(300)
-check(emoji_off_apps() == [], "menu: w again switches them back on", emoji_off_apps())
 app.close()
 
 # Enter picks from the open list, so the word it replaces must not go out first.
 set_setting("DirectTyping", "False")
 app = menu_app("emoji-enter")
+switch_emoji(app)
 app.type("hahaha")
 pump(300)
 app.key(IBus.KEY_Tab)
@@ -2441,6 +2442,7 @@ set_setting("EmojiOfferAt", "At the end of a sentence")
 # At the end of a sentence the emoji show in a row while typing; Tab numbers them for a digit.
 horizontal = (IBus.Orientation.HORIZONTAL, False)
 app = menu_app("emoji-sentence")
+switch_emoji(app)
 app.type("cuwowif")
 pump(300)
 check(

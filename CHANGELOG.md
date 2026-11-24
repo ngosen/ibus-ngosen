@@ -42,6 +42,9 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 - README ghi lệnh cài một dòng `install.sh --ibus` của Ngó Sen ở đầu phần Cài đặt, và `--uninstall` để gỡ; tải gói
   cài bằng tay thành mục riêng (#200).
+- Gợi ý emoji nay tắt sẵn ở mọi app, như bản fcitx5; bấm `` ` `` rồi `w` để bật cho từng app muốn dùng. Danh sách app
+  đã tắt emoji trước đây không còn dùng; trang **Emoji** trong cửa sổ cài đặt nay liệt kê "App đã bật emoji", và sao
+  lưu trao đổi danh sách này với bản fcitx5 (#PR).
 
 ## [1.5.1-1] — 22/11/2026
 

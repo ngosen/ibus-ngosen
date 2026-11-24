@@ -169,61 +169,61 @@ class FilterTest(Folder):
         self.assertIn("📱", [e for e, *_ in words.rows(only_on=True)])
 
 
-class OffAppsTest(Folder):
+class OnAppsTest(Folder):
     def apps_file(self, *apps):
-        write_text(self.path("ngosen-emoji-off-apps.conf"), emoji_words.apps_text(apps))
+        write_text(self.path("ngosen-emoji-apps.conf"), emoji_words.apps_text(apps))
 
     def saved_apps(self):
-        return emoji_words.parse_apps(read_text(self.path("ngosen-emoji-off-apps.conf")))
+        return emoji_words.parse_apps(read_text(self.path("ngosen-emoji-apps.conf")))
 
-    def test_turning_emoji_back_on_and_undo(self):
+    def test_turning_emoji_off_and_undo(self):
         self.apps_file("firefox", "kate")
         store = self.store()
-        self.assertEqual(store.emoji_off_apps, ["firefox", "kate"])
-        self.assertTrue(store.enable_emoji_in("firefox"))
+        self.assertEqual(store.emoji_apps, ["firefox", "kate"])
+        self.assertTrue(store.disable_emoji_in("firefox"))
         self.assertEqual(self.saved_apps(), ["kate"])
         store.undo()
         self.assertEqual(self.saved_apps(), ["firefox", "kate"])
-        self.assertEqual(store.emoji_off_apps, ["firefox", "kate"])
+        self.assertEqual(store.emoji_apps, ["firefox", "kate"])
 
-    def test_turning_back_on_keeps_an_app_turned_off_since(self):
+    def test_turning_off_keeps_an_app_turned_on_since(self):
         self.apps_file("firefox")
         store = self.store()
         self.apps_file("firefox", "kate")
-        store.enable_emoji_in("firefox")
+        store.disable_emoji_in("firefox")
         self.assertEqual(self.saved_apps(), ["kate"])
-        self.assertEqual(store.emoji_off_apps, ["kate"])
+        self.assertEqual(store.emoji_apps, ["kate"])
 
-    def test_undo_keeps_an_app_turned_off_since(self):
+    def test_undo_keeps_an_app_turned_on_since(self):
         self.apps_file("firefox")
         store = self.store()
-        store.enable_emoji_in("firefox")
+        store.disable_emoji_in("firefox")
         self.apps_file("kate")
         store.undo()
         self.assertEqual(self.saved_apps(), ["firefox", "kate"])
 
-    def test_turning_back_on_drops_every_name_of_the_app(self):
+    def test_turning_off_drops_every_name_of_the_app(self):
         # fcitx5 may have saved the names the engine shortens to "firefox".
         self.apps_file("firefox.desktop", "firefox_firefox", "kate")
         store = self.store()
-        self.assertEqual(store.emoji_off_apps, ["firefox", "kate"])
-        self.assertTrue(store.enable_emoji_in("firefox"))
+        self.assertEqual(store.emoji_apps, ["firefox", "kate"])
+        self.assertTrue(store.disable_emoji_in("firefox"))
         self.assertEqual(self.saved_apps(), ["kate"])
 
     def test_undo_after_the_engine_saved_the_app_again_adds_no_second_name(self):
         self.apps_file("firefox.desktop")
         store = self.store()
-        store.enable_emoji_in("firefox")
+        store.disable_emoji_in("firefox")
         self.apps_file("firefox")
         store.undo()
         self.assertEqual(self.saved_apps(), ["firefox"])
 
     def test_the_file_keeps_the_engines_header(self):
         self.apps_file("firefox", "kate")
-        self.store().enable_emoji_in("kate")
+        self.store().disable_emoji_in("kate")
         self.assertEqual(
-            read_text(self.path("ngosen-emoji-off-apps.conf")),
-            "# Apps where Ngó Sen offers no emoji, one per line\nfirefox\n",
+            read_text(self.path("ngosen-emoji-apps.conf")),
+            "# Apps where Ngó Sen offers emoji, one per line\nfirefox\n",
         )
 
 

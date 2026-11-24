@@ -19,7 +19,7 @@ COMPONENTS = (
     "rules",
     "switches",
     "emoji_words",
-    "emoji_off_apps",
+    "emoji_apps",
     "teencode_apps",
     "dictionary",
 )
@@ -63,7 +63,7 @@ class Paths:
         self.app_modes = os.path.join(folder, "ngosen-app-rules.conf")
         self.app_switches = os.path.join(folder, "ngosen-app-switch.conf")
         self.emoji_words = store.emoji_words_file
-        self.emoji_off_apps = store.emoji_off_apps_file
+        self.emoji_apps = store.emoji_apps_file
         self.teencode_apps = store.teencode_apps_file
         self.english = english_mark()
 
@@ -187,8 +187,8 @@ def export(engine, paths, target):
         {"Keyword": word, "Emoji": emoji, "On": "True" if on else "False"}
         for (emoji, word), on in edits.items()
     ]
-    apps = emoji_words.parse_apps(_current(paths.emoji_off_apps))
-    backup["emoji_off_apps"] = [{"App": app} for app in apps]
+    apps = emoji_words.parse_apps(_current(paths.emoji_apps))
+    backup["emoji_apps"] = [{"App": app} for app in apps]
     apps = emoji_words.parse_apps(_current(paths.teencode_apps))
     backup["teencode_apps"] = [{"App": app} for app in apps]
     # The list in effect, so restoring brings back the packaged one over a later own list.
@@ -224,7 +224,7 @@ def load(path):
         "rules",
         "switches",
         "emoji_words",
-        "emoji_off_apps",
+        "emoji_apps",
         "teencode_apps",
     ):
         items = backup.get(name, [])
@@ -236,7 +236,7 @@ def load(path):
         ("rules", ("App", "Mode")),
         ("switches", ("App",)),
         ("emoji_words", ("Keyword", "Emoji")),
-        ("emoji_off_apps", ("App",)),
+        ("emoji_apps", ("App",)),
         ("teencode_apps", ("App",)),
     ):
         for item in backup.get(name, []):
@@ -415,7 +415,7 @@ def _emoji_words_file(items):
     return emoji_words.edits_text(edits).encode("utf-8") if edits else None
 
 
-def _apps_file(current, items, header=emoji_words.OFF_APPS_HEADER):
+def _apps_file(current, items, header=emoji_words.ON_APPS_HEADER):
     """The apps file as the engine writes it; a name that would read as a comment is left out."""
     apps = []
     for item in items:
@@ -482,10 +482,8 @@ def plan(backup, paths, engine, taken=frozenset()):
         changes[paths.app_switches] = _app_switches_file(_current(paths.app_switches), switches)
     if "emoji_words" in backup:
         changes[paths.emoji_words] = _emoji_words_file(backup["emoji_words"])
-    if "emoji_off_apps" in backup:
-        changes[paths.emoji_off_apps] = _apps_file(
-            _current(paths.emoji_off_apps), backup["emoji_off_apps"]
-        )
+    if "emoji_apps" in backup:
+        changes[paths.emoji_apps] = _apps_file(_current(paths.emoji_apps), backup["emoji_apps"])
     if "teencode_apps" in backup:
         changes[paths.teencode_apps] = _apps_file(
             _current(paths.teencode_apps),

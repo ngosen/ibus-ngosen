@@ -39,7 +39,7 @@ namespace ngosen {
     // What the app in use has switched on, which the items of its switches say.
     struct MenuSwitches {
         bool vim      = false;
-        bool emoji    = true;
+        bool emoji    = false;
         bool teencode = false;
     };
 

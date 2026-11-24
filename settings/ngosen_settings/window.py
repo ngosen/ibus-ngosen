@@ -77,7 +77,7 @@ class Window(Adw.ApplicationWindow):
             store,
             self.rows,
             self.save_emoji_words,
-            self.enable_emoji,
+            self.disable_emoji,
             (self.choose_emoji_export, self.choose_emoji_import),
         )
         self.convert = convert.ConvertPage(self.rows, self.convert_text, self.swap_charsets)
@@ -386,15 +386,15 @@ class Window(Adw.ApplicationWindow):
         toast.connect("button-clicked", lambda _t: self.undo())
         self._show(toast)
 
-    def enable_emoji(self, app):
+    def disable_emoji(self, app):
         try:
-            if not self.store.enable_emoji_in(app):
+            if not self.store.disable_emoji_in(app):
                 return
         except OSError as error:
             self._show(Adw.Toast(title=_("Cannot save: {}").format(error.strerror), timeout=0))
             self.refresh()
             return
-        toast = Adw.Toast(title=_("Emoji are back on in {}.").format(app), button_label=_("_Undo"))
+        toast = Adw.Toast(title=_("Emoji are off in {}.").format(app), button_label=_("_Undo"))
         toast.connect("button-clicked", lambda _t: self.undo())
         self._show(toast)
 
