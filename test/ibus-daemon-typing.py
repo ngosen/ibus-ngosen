@@ -2438,7 +2438,7 @@ app.close()
 set_setting("DirectTyping", "True")
 set_setting("EmojiOfferAt", "At the end of a sentence")
 
-# At the end of a sentence the emoji show in a row whose labels carry their own digits.
+# At the end of a sentence the emoji show in a row while typing; Tab numbers them for a digit.
 horizontal = (IBus.Orientation.HORIZONTAL, False)
 app = menu_app("emoji-sentence")
 app.type("cuwowif")
@@ -2451,10 +2451,17 @@ check(
 app.type(".")
 pump(300)
 check(
+    app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
+    "emoji: the end of the sentence asks for Tab before a digit picks",
+    app.menu,
+)
+app.key(IBus.KEY_Tab)
+pump(200)
+check(
     app.menu == ["😂", "🤣", "😄", "😆", "😁"]
     and app.labels == ["1.", "2.", "3.", "4.", "5."]
-    and app.row == horizontal,
-    "emoji: the end of the sentence numbers them in a row with none highlighted",
+    and app.row == (IBus.Orientation.VERTICAL, True),
+    "emoji: Tab numbers them in a list, as after each word",
     (app.menu, app.labels, app.row),
 )
 app.type("1")
