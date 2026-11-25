@@ -185,6 +185,7 @@ namespace {
         guint       menuCursor = 0;
         guint       menuTimer  = 0;
         guint       clickTimer = 0;
+        guint       resetTimer = 0;
         // The last key press or the opening of the menu, whichever came later.
         gint64 menuQuietSince = 0;
         // Clicks seen up to the opening of the menu; a click queued before it must not close it.
@@ -274,6 +275,8 @@ namespace {
     constexpr guint MenuTimeoutMs = 5000;
     // The panel picks an item on button press, so a click on the menu itself is handled first.
     constexpr guint MenuClickDelayMs = 100;
+    // How long a reset waits for the focus out that may follow it.
+    constexpr guint ResetBeforeFocusOutMs = 20;
     // A report this soon after the menu opens or a key answers the commit or the key, not a click.
     constexpr gint64 MenuEchoUs = 250000;
 
@@ -281,6 +284,30 @@ namespace {
         if (id != 0)
             g_source_remove(id);
         id = 0;
+    }
+
+    // A click in the field or a change the app made itself; the app has committed the preedit. A
+    // sentence begun with Enter, which also resets GTK fields, still capitalizes.
+    void applyReset(Session& session) {
+        stopTimer(session.resetTimer);
+        // Firefox and Chromium on X11 reset after keys they are let through. As in the fcitx5 edition, a word
+        // typed straight in survives that while the engine sees clicks itself.
+        const ngosen::IBusHost& host = *session.host;
+        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeys() && !host.hasPreedit() && !session.state->isEmptyHistory())
+            return;
+        session.state->resetAfterAppCommit(false);
+    }
+
+    void applyPendingReset(Session& session) {
+        if (session.resetTimer != 0)
+            applyReset(session);
+    }
+
+    gboolean resetNow(gpointer data) {
+        Session* session    = sessionOf(static_cast<IBusEngine*>(data));
+        session->resetTimer = 0;
+        applyReset(*session);
+        return G_SOURCE_REMOVE;
     }
 
     void closeModeMenu(IBusEngine* engine, Session& session) {
@@ -707,6 +734,7 @@ namespace {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return FALSE;
+        applyPendingReset(*session);
         if (session->applyNewSettings())
             showLanguageItem(engine);
         if ((state & IBUS_RELEASE_MASK) == 0 && !ngosen::IBusKeyPress(keyval, keycode, state).isModifier() && session->followApp())
@@ -894,6 +922,8 @@ namespace {
             // The per-field checks of Sen start over, as the fcitx5 frontend does on focus-in.
             if (realMode == ngosen::Mode::Sen)
                 session->state->activate(ngosen::Mode::Sen, true);
+            else
+                session->state->resetAfterAppCommit(true); // the word a Sen field kept at focus out ends here
         }
         showMenu(engine, resources().settings());
     }
@@ -980,15 +1010,17 @@ namespace {
         if (session == nullptr)
             return;
         session->tap = {};
+        stopTimer(session->resetTimer);
         keepFieldSwitches(*session);
         closeModeMenu(engine, *session);
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();
         session->showsNotice = false;
-        // Lets the next focus in tell a bounce, which keeps the finished word, as the fcitx5 frontend does.
+        // As in fcitx5, Sen keeps the word until focus in tells a bounce: Chrome refocuses some fields after each edit.
         if (realMode == ngosen::Mode::Sen)
             session->state->deactivate(true);
-        session->state->resetAfterAppCommit(true);
+        else
+            session->state->resetAfterAppCommit(true);
         session->state->forgetKeysWhileOff();
         session->host->setFocus(false);
         session->host->forgetReportedText();
@@ -1010,20 +1042,15 @@ namespace {
         focusOut(engine);
     }
 
-    // A click in the field or a change the app made itself; the app has committed the preedit. A
-    // sentence begun with Enter, which also resets GTK fields, still capitalizes.
     void reset(IBusEngine* engine) {
         Session* session = sessionOf(engine);
         if (session == nullptr)
             return;
         closeModeMenu(engine, *session);
         session->state->fieldResetWhileOff();
-        // Firefox and Chromium on X11 reset after keys they are let through. As in the fcitx5 edition, a word
-        // typed straight in survives that while the engine sees clicks itself.
-        const ngosen::IBusHost& host = *session->host;
-        if (ngosen::clicksWatched.load(std::memory_order_acquire) && host.typesWithKeys() && !host.hasPreedit() && !session->state->isEmptyHistory())
-            return;
-        session->state->resetAfterAppCommit(false);
+        // GNOME Shell resets right before each focus out, which then decides on the word instead.
+        stopTimer(session->resetTimer);
+        session->resetTimer = g_timeout_add(ResetBeforeFocusOutMs, resetNow, engine);
     }
 
     void enable(IBusEngine* engine) {
@@ -1074,6 +1101,7 @@ namespace {
                 --enabledEngines;
             stopTimer(self->session->menuTimer);
             stopTimer(self->session->clickTimer);
+            stopTimer(self->session->resetTimer);
         }
         delete self->session;
         self->session = nullptr;
