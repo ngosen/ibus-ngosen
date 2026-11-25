@@ -11,7 +11,7 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 ### Sửa
 
 - Trong ô soạn thảo của Chrome trên GNOME (như ô trả lời của diễn đàn), gõ xong một chữ rồi bấm Backspace để thêm dấu
-  không còn ra "banf" thay vì "bàn": focus nảy ra rồi vào lại ngay sau dấu cách không làm mất chữ vừa gõ nữa.
+  không còn ra "banf" thay vì "bàn": focus nảy ra rồi vào lại ngay sau dấu cách không làm mất chữ vừa gõ nữa (#211).
 
 ## [1.6.1-1] — 25/11/2026
 
