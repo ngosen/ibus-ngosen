@@ -102,7 +102,7 @@ class UserFiles:
             paths.app_modes,
             paths.app_switches,
             paths.emoji_words,
-            paths.emoji_off_apps,
+            paths.emoji_apps,
             paths.teencode_apps,
             paths.english,
         )
@@ -440,7 +440,7 @@ class BackupTest(UserFiles, unittest.TestCase):
             "[Words/0]\nKeyword=cười\nEmoji=😂\nOn=False\n\n"
             "[Words/1]\nKeyword=sếp\nEmoji=👔\nOn=True\n\n",
         )
-        write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
+        write_text(self.paths.emoji_apps, emoji_words.apps_text(["kate"]))
         backup.put(self.paths.english, b"")
         before = self.files()
         target = os.path.join(self.home, "out.json")
@@ -457,7 +457,7 @@ class BackupTest(UserFiles, unittest.TestCase):
                 {"Keyword": "sếp", "Emoji": "👔", "On": "True"},
             ],
         )
-        self.assertEqual(exported["emoji_off_apps"], [{"App": "kate"}])
+        self.assertEqual(exported["emoji_apps"], [{"App": "kate"}])
         self.assertEqual(exported["config"]["Mode"], "Sen")
         self.assertEqual(exported["config"]["ToggleKey"], {"0": "Alt+z"})
         self.assertEqual(exported["config"]["ModeMenuKey"], {"0": "Shift+asciitilde"})
@@ -481,11 +481,11 @@ class BackupTest(UserFiles, unittest.TestCase):
             {"Keyword": "Cười", "Emoji": "😂", "On": "False"},
             {"Keyword": "", "Emoji": "😂", "On": "True"},
         ]
-        data["emoji_off_apps"] = [{"App": "firefox"}, {"App": "# not an app"}, {"App": "firefox"}]
+        data["emoji_apps"] = [{"App": "firefox"}, {"App": "# not an app"}, {"App": "firefox"}]
         self.restore(data)
         self.store.reload(self.engine)
         self.assertEqual(self.store.emoji_edits, {("😂", "Cười"): False})
-        self.assertEqual(self.store.emoji_off_apps, ["firefox"])
+        self.assertEqual(self.store.emoji_apps, ["firefox"])
 
     def test_restored_emoji_words_keep_what_the_engine_reads(self):
         data = fcitx5_backup()
@@ -500,13 +500,13 @@ class BackupTest(UserFiles, unittest.TestCase):
 
     def test_empty_emoji_lists_clear_them(self):
         write_text(self.paths.emoji_words, "[Words/0]\nKeyword=sếp\nEmoji=👔\nOn=True\n")
-        write_text(self.paths.emoji_off_apps, emoji_words.apps_text(["kate"]))
+        write_text(self.paths.emoji_apps, emoji_words.apps_text(["kate"]))
         data = fcitx5_backup()
         data["emoji_words"] = []
-        data["emoji_off_apps"] = []
+        data["emoji_apps"] = []
         self.restore(data)
         self.assertFalse(os.path.exists(self.paths.emoji_words))
-        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.emoji_off_apps)), [])
+        self.assertEqual(emoji_words.parse_apps(read_text(self.paths.emoji_apps)), [])
 
     def test_shared_emoji_words_are_not_a_backup(self):
         path = os.path.join(self.home, "shared.json")
@@ -529,7 +529,7 @@ class BackupTest(UserFiles, unittest.TestCase):
     def test_damaged_emoji_lists_are_refused(self):
         for name, items in (
             ("emoji_words", [{"Keyword": 1, "Emoji": "😂"}]),
-            ("emoji_off_apps", ["kate"]),
+            ("emoji_apps", ["kate"]),
             ("teencode_apps", [{"App": 1}]),
         ):
             with self.subTest(name=name):
@@ -556,7 +556,7 @@ class BackupTest(UserFiles, unittest.TestCase):
                 "keymaps",
                 "switches",
                 "emoji_words",
-                "emoji_off_apps",
+                "emoji_apps",
                 "teencode_apps",
                 "dictionary",
             ],

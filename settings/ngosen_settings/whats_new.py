@@ -62,10 +62,10 @@ FEATURES = [
         "version": "1.5",
         "title": N_("Emoji while typing"),
         "how": N_(
-            "Emoji for the words of a sentence show in a row as you type. After . ! ? or a pause, "
-            "press a number to pick one, or Tab first in VNI. English words such as cat or thumbs up "
-            "count too. The Emoji page lists every emoji with its words, which you can change, "
-            "export and import."
+            "Turn emoji on for an app with w in the ` menu. Emoji for the words of a sentence then "
+            "show in a row as you type; after . ! ? or a pause, press Tab, then a number to pick "
+            "one. English words such as cat or thumbs up count too. The Emoji page lists every "
+            "emoji with its words, which you can change, export and import."
         ),
         "example": "",
         "target": ("page", "emoji"),
@@ -85,10 +85,11 @@ FEATURES = [
         "version": "1.5",
         "title": N_("Drawn-out letters"),
         "how": N_(
-            "Repeat the last letter of a marked word and it repeats with its mark, instead of "
-            "bringing back the keys you typed. English words such as besttt stay as typed."
+            "Repeat the last letter of a marked word and it repeats plain, instead of bringing back "
+            "the keys you typed; the mark stays on the first one. English words such as besttt stay "
+            "as typed."
         ),
-        "example": "afaaa → àààà, ddusngggg → đúngggg",
+        "example": "afaaa → àaaa, ddusngggg → đúngggg",
         "target": None,
     },
     {

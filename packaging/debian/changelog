@@ -1,3 +1,13 @@
+ibus-ngosen (1.6.1-1) unstable; urgency=medium
+
+  * Emoji suggestions are off by default; turn them on per app with w in
+    the ` menu.
+  * A slow Ctrl+Shift tap, held up to a second, still switches the mode.
+  * Packages for Fedora 45.
+  * Core ngosen-1.14.1-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Wed, 25 Nov 2026 18:00:00 +0700
+
 ibus-ngosen (1.6.0-1) unstable; urgency=medium
 
   * In the underline mode, a selected word takes a new tone mark in GTK 4

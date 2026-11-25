@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.6.0
+Version:        1.6.1
 Release:        1%{?dist}
 Summary:        Ngó Sen, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -65,6 +65,12 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Wed Nov 25 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.1-1
+- Emoji suggestions are off by default; turn them on per app with w in the ` menu;
+  a slow Ctrl+Shift tap, held up to a second, still switches the mode; packages for
+  Fedora 45.
+- Core ngosen-1.14.1-1.
+
 * Sun Nov 22 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.0-1
 - In the underline mode, a selected word takes a new tone mark in GTK 4 apps and Chrome;
   no emoji suggestions for single letters, digits and chat shorthand; the convert key

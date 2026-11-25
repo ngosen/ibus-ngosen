@@ -1695,6 +1695,10 @@ app.ic.process_key_event(
 pump(200)
 check(not os.path.exists(english_mark), "toggle: Ctrl+Shift+T is not a tap", english_mark)
 tap_ctrl_shift(app, hold_ms=800)
+check(os.path.exists(english_mark), "toggle: a slow tap still switches, as in fcitx5", english_mark)
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+tap_ctrl_shift(app, hold_ms=1300)
 check(not os.path.exists(english_mark), "toggle: a long hold is not a tap", english_mark)
 app.close()
 
@@ -1745,7 +1749,7 @@ app = App("toggle-ctrl-held")
 app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
-pump(700)
+pump(1300)
 app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
 pump(200)
 check(
@@ -1918,7 +1922,7 @@ check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
     items
-    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: tắt", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: ` shows the three modes and the switches, with a mark on the mode in use",
     items,
 )
@@ -1959,7 +1963,7 @@ app.key(IBus.KEY_grave)
 pump(200)
 check(
     app.menu
-    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: tắt", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: the mark follows the mode kept for the app",
     app.menu,
 )
@@ -2193,7 +2197,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: tắt", "Teencode: tắt", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -2288,14 +2292,23 @@ first.key(IBus.KEY_grave)
 pump(200)
 first.key(IBus.KEY_v)
 pump(300)
+first.key(IBus.KEY_grave)
+pump(200)
+first.key(IBus.KEY_w)
+pump(300)
+check(
+    not os.path.exists(os.path.join(config_dir, "ngosen-emoji-apps.conf")),
+    "menu: a field without a name keeps emoji suggestions out of the file",
+    config_dir,
+)
 first.ic.focus_out()
 pump(200)
 second = menu_app("xim")
 second.key(IBus.KEY_grave)
 pump(200)
 check(
-    (second.menu or [""])[-1] == "Vim mode: tắt",
-    "menu: another field without a name starts without Vim mode",
+    (second.menu or [""])[-1] == "Vim mode: tắt" and "Gợi ý emoji: tắt" in (second.menu or []),
+    "menu: another field without a name starts without Vim mode or emoji",
     second.menu,
 )
 second.key(IBus.KEY_Escape)
@@ -2306,8 +2319,8 @@ pump(200)
 first.key(IBus.KEY_grave)
 pump(200)
 check(
-    (first.menu or [""])[-1] == "Vim mode: bật",
-    "menu: a field without a name keeps Vim mode when it gets focus back",
+    (first.menu or [""])[-1] == "Vim mode: bật" and "Gợi ý emoji: bật" in (first.menu or []),
+    "menu: a field without a name keeps Vim mode and emoji when it gets focus back",
     first.menu,
 )
 first.key(IBus.KEY_Escape)
@@ -2366,21 +2379,33 @@ pump(300)
 check(app.text == "zậy  zaajy ", "teencode: off again, the word goes back to its keys", app.text)
 app.close()
 
-# Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.
-emoji_off_path = os.path.join(config_dir, "ngosen-emoji-off-apps.conf")
+# Emoji suggestions show in the lookup table and are switched on for the app in use, as Vim mode is.
+emoji_apps_path = os.path.join(config_dir, "ngosen-emoji-apps.conf")
 
 
-def emoji_off_apps():
-    if not os.path.exists(emoji_off_path):
+def emoji_apps():
+    if not os.path.exists(emoji_apps_path):
         return []
-    with open(emoji_off_path) as f:
+    with open(emoji_apps_path) as f:
         return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+def switch_emoji(app):
+    app.key(IBus.KEY_grave)
+    pump(200)
+    app.key(IBus.KEY_w)
+    pump(300)
 
 
 # The list after each word, which users can still pick; the end of a sentence is the default.
 set_setting("EmojiOfferAt", "After each word")
 app = menu_app("emoji")
 app.type("cuwowif")
+pump(300)
+check(app.menu is None, "emoji: no offer in an app that has not turned them on", app.menu)
+switch_emoji(app)
+check(emoji_apps() == ["emoji"], "menu: w switches emoji suggestions on for this app", emoji_apps())
+app.type(" cuwowif")
 pump(300)
 check(
     app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
@@ -2397,32 +2422,21 @@ check(
 app.key(IBus.KEY_Tab)
 pump(300)
 check(
-    app.text == "cười 😂" and app.menu is None,
+    app.text == "cười cười 😂" and app.menu is None,
     "emoji: Tab twice adds the first emoji",
     (app.text, app.menu),
 )
-app.key(IBus.KEY_grave)
-pump(200)
-app.key(IBus.KEY_w)
-pump(300)
-check(
-    emoji_off_apps() == ["emoji"],
-    "menu: w switches emoji suggestions off for this app",
-    emoji_off_apps(),
-)
+switch_emoji(app)
+check(emoji_apps() == [], "menu: w again switches them off", emoji_apps())
 app.type(" cuwowif")
 pump(300)
 check(app.menu is None, "emoji: no offer once they are off", app.menu)
-app.key(IBus.KEY_grave)
-pump(200)
-app.key(IBus.KEY_w)
-pump(300)
-check(emoji_off_apps() == [], "menu: w again switches them back on", emoji_off_apps())
 app.close()
 
 # Enter picks from the open list, so the word it replaces must not go out first.
 set_setting("DirectTyping", "False")
 app = menu_app("emoji-enter")
+switch_emoji(app)
 app.type("hahaha")
 pump(300)
 app.key(IBus.KEY_Tab)
@@ -2438,9 +2452,10 @@ app.close()
 set_setting("DirectTyping", "True")
 set_setting("EmojiOfferAt", "At the end of a sentence")
 
-# At the end of a sentence the emoji show in a row whose labels carry their own digits.
+# At the end of a sentence the emoji show in a row while typing; Tab numbers them for a digit.
 horizontal = (IBus.Orientation.HORIZONTAL, False)
 app = menu_app("emoji-sentence")
+switch_emoji(app)
 app.type("cuwowif")
 pump(300)
 check(
@@ -2451,10 +2466,17 @@ check(
 app.type(".")
 pump(300)
 check(
+    app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
+    "emoji: the end of the sentence asks for Tab before a digit picks",
+    app.menu,
+)
+app.key(IBus.KEY_Tab)
+pump(200)
+check(
     app.menu == ["😂", "🤣", "😄", "😆", "😁"]
     and app.labels == ["1.", "2.", "3.", "4.", "5."]
-    and app.row == horizontal,
-    "emoji: the end of the sentence numbers them in a row with none highlighted",
+    and app.row == (IBus.Orientation.VERTICAL, True),
+    "emoji: Tab numbers them in a list, as after each word",
     (app.menu, app.labels, app.row),
 )
 app.type("1")
