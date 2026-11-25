@@ -1,0 +1,8 @@
+#!/usr/bin/python3
+import sys
+
+sys.path.insert(0, "@NGOSEN_SETTINGS_DIR@")
+
+from ngosen_settings.save_log import main  # noqa: E402
+
+sys.exit(main("@NGOSEN_LOCALEDIR@"))

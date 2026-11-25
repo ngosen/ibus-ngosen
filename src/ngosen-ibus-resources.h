@@ -79,6 +79,11 @@ namespace ngosen {
         void onToggleRequest(std::function<void(const std::string&)> callback) {
             onToggleRequest_ = std::move(callback);
         }
+        // ngosen-save-log left its request; the engine saves the typing log and answers.
+        void noticeSaveLogRequest(const std::string& path);
+        void onSaveLogRequest(std::function<void(const std::string&)> callback) {
+            onSaveLogRequest_ = std::move(callback);
+        }
 
       private:
         void                                    webTerminalAppsChanged() override;
@@ -101,6 +106,7 @@ namespace ngosen {
         Recorder                                recorder_;
         std::function<void()>                   onChange_;
         std::function<void(const std::string&)> onToggleRequest_;
+        std::function<void(const std::string&)> onSaveLogRequest_;
     };
 
 } // namespace ngosen

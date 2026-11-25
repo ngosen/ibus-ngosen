@@ -61,8 +61,8 @@ namespace {
         return apps;
     }
 
-    ngosen::AppList& emojiOffApps() {
-        static ngosen::AppList apps(resources().paths().emojiOffAppsFile(), ngosen::EmojiOffAppsHeader);
+    ngosen::AppList& emojiApps() {
+        static ngosen::AppList apps(resources().paths().emojiAppsFile(), ngosen::EmojiAppsHeader);
         return apps;
     }
 
@@ -152,8 +152,8 @@ namespace {
         bool     chordHeld    = false;
     };
 
-    // Longer than this is a hold, such as Ctrl+Shift with a click.
-    constexpr gint64 TapMicroseconds = 500000;
+    // Longer than this is a hold, such as Ctrl+Shift with a click. As long as in fcitx5, so a slow tap still counts.
+    constexpr gint64 TapMicroseconds = 1000000;
 
     // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
     std::atomic<unsigned> clicksSeen{0};
@@ -178,7 +178,7 @@ namespace {
         // Between enable and disable, while Ngó Sen is the input method of this context.
         bool enabled      = true;
         bool vimHere      = false;
-        bool emojiOffHere = false;
+        bool emojiOnHere  = false;
         bool teencodeHere = false;
         // Where this field's choices are kept when it loses focus.
         std::string context;
@@ -388,7 +388,7 @@ namespace {
 
     bool emojiHere(const Session& session) {
         const std::string app = currentApp(*session.host);
-        return app.empty() ? !session.emojiOffHere : !emojiOffApps().has(app);
+        return app.empty() ? session.emojiOnHere : emojiApps().has(app);
     }
 
     bool teencodeHere(const Session& session) {
@@ -548,8 +548,8 @@ namespace {
         const bool        on  = !emojiHere(session);
         const std::string app = currentApp(*session.host);
         if (app.empty())
-            session.emojiOffHere = !on;
-        else if (!emojiOffApps().set(app, !on))
+            session.emojiOnHere = on;
+        else if (!emojiApps().set(app, on))
             NGOSEN_WARN("Cannot save emoji suggestions for " + app);
         session.state->setEmojiOn(on);
         const char* label = on ? _("Emoji suggestions: on") : _("Emoji suggestions: off");
@@ -844,6 +844,23 @@ namespace {
         toggleLanguage(focusedEngine, *session, false);
     }
 
+    void saveLogFromCommand(const std::string& request) {
+        std::error_code error;
+        // Each request is a file; later events for the same one find it gone.
+        if (!std::filesystem::remove(request, error))
+            return;
+        const std::string           saved = ngosen::saveTypingLog(resources().recorder());
+        const std::filesystem::path path(request);
+        const std::string           suffix = path.filename().string().substr(sizeof("save-log-") - 1);
+        const std::filesystem::path reply  = path.parent_path() / ("saved-log-" + suffix);
+        GError*                     write  = nullptr;
+        // Empty when the log could not be written; the command then says so.
+        if (!g_file_set_contents_full(reply.c_str(), saved.data(), static_cast<gssize>(saved.size()), G_FILE_SET_CONTENTS_CONSISTENT, 0600, &write)) {
+            NGOSEN_WARN(std::string("Cannot answer ngosen-save-log: ") + write->message);
+            g_error_free(write);
+        }
+    }
+
     void showNewSettings() {
         if (focusedEngine == nullptr)
             return;
@@ -861,6 +878,7 @@ namespace {
         if (!watching) {
             resources().onChange(showNewSettings);
             resources().onToggleRequest(toggleFromCommand);
+            resources().onSaveLogRequest(saveLogFromCommand);
             useUiLanguage(resources().savedSettings());
             // After the language, which the notice is written in.
             ngosen::announceRelease(ngosen::releaseToAnnounce(resources().paths(), NGOSEN_IBUS_VERSION));
@@ -932,7 +950,7 @@ namespace {
 
     // GNOME Shell uses one input context for every app it relays, so there a choice ends with the focus.
     void keepFieldSwitches(Session& session) {
-        const std::array<bool, 3> here = {session.vimHere, session.emojiOffHere, session.teencodeHere};
+        const std::array<bool, 3> here = {session.vimHere, session.emojiOnHere, session.teencodeHere};
         if (!session.context.empty() && session.host->client() != "gnome-shell") {
             if (here == std::array<bool, 3>{})
                 keptHere.erase(session.context);
@@ -941,7 +959,7 @@ namespace {
         }
         session.context.clear();
         session.vimHere      = false;
-        session.emojiOffHere = false;
+        session.emojiOnHere  = false;
         session.teencodeHere = false;
     }
 
@@ -951,7 +969,7 @@ namespace {
         if (kept == keptHere.end() || session.host->client() == "gnome-shell")
             return;
         session.vimHere      = kept->second.here[0];
-        session.emojiOffHere = kept->second.here[1];
+        session.emojiOnHere  = kept->second.here[1];
         session.teencodeHere = kept->second.here[2];
     }
 

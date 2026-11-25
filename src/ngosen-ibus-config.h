@@ -66,7 +66,6 @@ namespace ngosen {
         // Which items the top bar menu shows, as fcitx5 hides items of its tray menu.
         bool showMenuInputMethod     = true;
         bool showMenuCharset         = true;
-        bool showMenuSpellCheck      = true;
         bool showMenuMacro           = true;
         bool showMenuCapitalizeMacro = true;
         bool showMenuAutoCapitalize  = true;
@@ -105,7 +104,7 @@ namespace ngosen {
         std::string          appSwitchesFile() const;
         std::string          vimAppsFile() const;
         std::string          emojiWordsFile() const;
-        std::string          emojiOffAppsFile() const;
+        std::string          emojiAppsFile() const;
         std::string          teencodeAppsFile() const;
         std::string          webTerminalAppsFile() const;
         // Marks the import as done, so deleting ngosen.conf brings back the defaults.

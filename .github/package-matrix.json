@@ -15,8 +15,10 @@
   "fedora": [
     { "distro": "fedora:43", "releasever": "43" },
     { "distro": "fedora:44", "releasever": "44", "pr": true },
+    { "distro": "fedora:45", "releasever": "45" },
     { "distro": "fedora:rawhide", "releasever": "rawhide" },
     { "distro": "fedora:43", "releasever": "43", "arch": "arm64" },
-    { "distro": "fedora:44", "releasever": "44", "arch": "arm64" }
+    { "distro": "fedora:44", "releasever": "44", "arch": "arm64" },
+    { "distro": "fedora:45", "releasever": "45", "arch": "arm64" }
   ]
 }

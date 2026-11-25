@@ -8,7 +8,67 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.6.1-1] — 25/11/2026
+
+Gợi ý emoji tắt sẵn, bật cho từng app; bấm Ctrl+Shift chậm vẫn đổi Anh/Việt; cài được trên Fedora 45. Dùng lõi Ngó Sen
+`ngosen-1.14.1-1`. Tải gói ở
+[release ibus-ngosen-1.6.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.1-1).
+
+### Thêm
+
+- Nhận lõi `ngosen-1.14.1-1`: Firefox không còn mất chữ khi gõ ngay trước một link, và bản Flatpak không còn mất
+  dấu thanh khi gõ nhanh sau một lần sửa ("được" ra "đưc"). Với bảng mã Unicode tổ hợp, terminal chạy bash hay fish
+  không còn mất chữ trước dấu thanh ("nhiều" ra "nhều"). Telex gõ "booots" ra "boots"; gõ kéo dài chỉ giữ dấu ở chữ
+  đầu, như "afaaa" ra "àaaa", giống UniKey. Danh sách emoji tự ẩn sau 4 giây để yên; ở cuối câu, bấm `Tab` rồi mới
+  chọn emoji bằng số, còn số gõ khi danh sách vừa hiện được nhập như thường. "Lưu nhật ký gõ" giữ khoảng nửa phút
+  gõ gần nhất trong trình duyệt thay vì 7 giây (ngosen/ngosen#970, ngosen/ngosen#975, ngosen/ngosen#952,
+  ngosen/ngosen#976, ngosen/ngosen#980, ngosen/ngosen#973, ngosen/ngosen#968, ngosen/ngosen#953) (#205).
+
+### Sửa
+
+- Cài được bằng lệnh một dòng `install.sh --ibus` trên Fedora 45; release có thêm gói cho x86_64 và aarch64. Trước
+  đây lệnh báo không có gói dựng sẵn (#207).
+- Bấm Ctrl+Shift chậm vẫn đổi được Anh/Việt: giữ tới một giây vẫn tính, như bản fcitx5; trước đây quá nửa giây là
+  không có tác dụng. Trang "Có gì mới" trong cửa sổ cài đặt nay hướng dẫn đúng cách bật và chọn emoji, và ví dụ gõ
+  kéo dài ra "àaaa" như bản lõi mới (#206).
+
+### Thay đổi
+
+- Gợi ý emoji nay tắt sẵn ở mọi app, như bản fcitx5; bấm `` ` `` rồi `w` để bật cho từng app muốn dùng. Danh sách app
+  đã tắt emoji trước đây không còn dùng; trang **Emoji** trong cửa sổ cài đặt nay liệt kê "App đã bật emoji", và sao
+  lưu trao đổi danh sách này với bản fcitx5 (#206).
+
+## [1.6.0-1] — 22/11/2026
+
+Ở chế độ gạch chân, bôi đen một từ rồi gõ phím dấu để đổi dấu; phím chuyển mã chạy trên KDE, Sway và Hyprland;
+hàng emoji trên KDE hiện số một lần; có lệnh để nhờ AI giúp. Dùng lõi Ngó Sen `ngosen-1.14.0-1`. Tải gói ở
+[release ibus-ngosen-1.6.0-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.0-1).
+
+### Thêm
+
+- Lệnh `ngosen-check` in kết quả Kiểm tra máy ra terminal, kèm cách sửa từng bước, để AI chạy lệnh được đọc. Lệnh
+  không đổi gì trên máy (#188).
+- Lệnh `ngosen-save-log` lưu nhật ký gõ từ terminal như mục "Lưu nhật ký gõ" trong menu, rồi in đường dẫn tệp (#189).
+- Lên lõi ngosen-1.14.0-1: ở chế độ gạch chân, bôi đen một từ đã gõ rồi gõ phím dấu thì từ hiện lại với dấu mới (bôi đen
+  "tiềng", gõ `s` ra "tiếng") ở app GTK 4 và Chrome, như Gõ Sen đã làm; gõ lại phím dấu đó để giữ phím. App khác vẫn
+  thay từ bằng phím như trước. Gợi ý emoji không còn hiện cho chữ cái đơn, con số và chữ tắt khi chat, như `t` ra 🦖
+  hay `ng` ra 🆖 (#199).
+
+### Bỏ
+
+- Bỏ ô "Kiểm tra chính tả" khỏi cửa sổ cài đặt và menu trên thanh trên cùng, vì nó chỉ có tác dụng khi "Tự khôi
+  phục từ gõ sai" đang bật: nay Tự khôi phục luôn so với từ điển, như bản fcitx5. Ai từng tắt ô này để giữ dấu cho
+  chữ kiểu chat như `zậy`, `kạ`, hãy bật Teencode cho app đó (bấm `` ` `` rồi `t`), hoặc thêm chữ muốn giữ vào Từ
+  điển tuỳ chỉnh (ngosen/ngosen#112) (#183).
+
+### Sửa
+
+- Trên KDE, Sway và Hyprland, bôi đen chữ trong app GTK3 hay Firefox rồi bấm phím chuyển mã nay đổi được chữ, như bản
+  fcitx5; trước đây phím không làm gì. Gói cần thêm `libwayland-client`, thường đã có sẵn (#190, #202).
 - Trên KDE Plasma, hàng emoji không còn hiện số hai lần kiểu "1. 1.😂": bộ gõ gửi số làm nhãn riêng thay vì ghép vào emoji. Trên GNOME, số trong hàng emoji nay có màu nhạt và cách emoji một khoảng (#198).
+
+### Thay đổi
+
 - README ghi lệnh cài một dòng `install.sh --ibus` của Ngó Sen ở đầu phần Cài đặt, và `--uninstall` để gỡ; tải gói
   cài bằng tay thành mục riêng (#200).
 

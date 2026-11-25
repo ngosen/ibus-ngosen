@@ -1695,6 +1695,10 @@ app.ic.process_key_event(
 pump(200)
 check(not os.path.exists(english_mark), "toggle: Ctrl+Shift+T is not a tap", english_mark)
 tap_ctrl_shift(app, hold_ms=800)
+check(os.path.exists(english_mark), "toggle: a slow tap still switches, as in fcitx5", english_mark)
+if os.path.exists(english_mark):
+    tap_ctrl_shift(app)
+tap_ctrl_shift(app, hold_ms=1300)
 check(not os.path.exists(english_mark), "toggle: a long hold is not a tap", english_mark)
 app.close()
 
@@ -1745,7 +1749,7 @@ app = App("toggle-ctrl-held")
 app.ic.process_key_event(IBus.KEY_Control_L, 0, 0)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl)
 app.ic.process_key_event(IBus.KEY_Shift_L, 0, ctrl | shift | release)
-pump(700)
+pump(1300)
 app.ic.process_key_event(IBus.KEY_Control_L, 0, ctrl | release)
 pump(200)
 check(
@@ -1794,7 +1798,7 @@ app.close()
 # Each settings change rebuilds the engine, which must keep typing English.
 app = App("toggle-settings")
 tap_ctrl_shift(app)
-set_setting("SpellCheck", "True")
+set_setting("CapitalizeMacro", "True")
 app.type("vieetj ")
 check(
     app.text == "vieetj " and app.commits == [],
@@ -1918,7 +1922,7 @@ check(app.text == "việt", "menu: its key ends the word", app.text)
 items = app.menu or []
 check(
     items
-    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    == ["Gõ Sen  ✓", "Gạch chân", "Gợi ý emoji: tắt", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: ` shows the three modes and the switches, with a mark on the mode in use",
     items,
 )
@@ -1959,7 +1963,7 @@ app.key(IBus.KEY_grave)
 pump(200)
 check(
     app.menu
-    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
+    == ["Gõ Sen", "Gạch chân  ✓", "Gợi ý emoji: tắt", "Teencode: tắt", "Tắt", "Vim mode: tắt"],
     "menu: the mark follows the mode kept for the app",
     app.menu,
 )
@@ -2193,7 +2197,7 @@ app = menu_app("menu-order")
 app.key(IBus.KEY_grave)
 pump(200)
 check(
-    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: bật", "Teencode: tắt", "Vim mode: tắt"],
+    app.menu == ["Tắt", "Gõ Sen  ✓", "Gợi ý emoji: tắt", "Teencode: tắt", "Vim mode: tắt"],
     "menu: ModeOrder sorts it and ShowModePreedit hides the underline",
     app.menu,
 )
@@ -2288,14 +2292,23 @@ first.key(IBus.KEY_grave)
 pump(200)
 first.key(IBus.KEY_v)
 pump(300)
+first.key(IBus.KEY_grave)
+pump(200)
+first.key(IBus.KEY_w)
+pump(300)
+check(
+    not os.path.exists(os.path.join(config_dir, "ngosen-emoji-apps.conf")),
+    "menu: a field without a name keeps emoji suggestions out of the file",
+    config_dir,
+)
 first.ic.focus_out()
 pump(200)
 second = menu_app("xim")
 second.key(IBus.KEY_grave)
 pump(200)
 check(
-    (second.menu or [""])[-1] == "Vim mode: tắt",
-    "menu: another field without a name starts without Vim mode",
+    (second.menu or [""])[-1] == "Vim mode: tắt" and "Gợi ý emoji: tắt" in (second.menu or []),
+    "menu: another field without a name starts without Vim mode or emoji",
     second.menu,
 )
 second.key(IBus.KEY_Escape)
@@ -2306,8 +2319,8 @@ pump(200)
 first.key(IBus.KEY_grave)
 pump(200)
 check(
-    (first.menu or [""])[-1] == "Vim mode: bật",
-    "menu: a field without a name keeps Vim mode when it gets focus back",
+    (first.menu or [""])[-1] == "Vim mode: bật" and "Gợi ý emoji: bật" in (first.menu or []),
+    "menu: a field without a name keeps Vim mode and emoji when it gets focus back",
     first.menu,
 )
 first.key(IBus.KEY_Escape)
@@ -2366,21 +2379,33 @@ pump(300)
 check(app.text == "zậy  zaajy ", "teencode: off again, the word goes back to its keys", app.text)
 app.close()
 
-# Emoji suggestions show in the lookup table and are switched for the app in use, as Vim mode is.
-emoji_off_path = os.path.join(config_dir, "ngosen-emoji-off-apps.conf")
+# Emoji suggestions show in the lookup table and are switched on for the app in use, as Vim mode is.
+emoji_apps_path = os.path.join(config_dir, "ngosen-emoji-apps.conf")
 
 
-def emoji_off_apps():
-    if not os.path.exists(emoji_off_path):
+def emoji_apps():
+    if not os.path.exists(emoji_apps_path):
         return []
-    with open(emoji_off_path) as f:
+    with open(emoji_apps_path) as f:
         return [line for line in f.read().splitlines() if line and not line.startswith("#")]
+
+
+def switch_emoji(app):
+    app.key(IBus.KEY_grave)
+    pump(200)
+    app.key(IBus.KEY_w)
+    pump(300)
 
 
 # The list after each word, which users can still pick; the end of a sentence is the default.
 set_setting("EmojiOfferAt", "After each word")
 app = menu_app("emoji")
 app.type("cuwowif")
+pump(300)
+check(app.menu is None, "emoji: no offer in an app that has not turned them on", app.menu)
+switch_emoji(app)
+check(emoji_apps() == ["emoji"], "menu: w switches emoji suggestions on for this app", emoji_apps())
+app.type(" cuwowif")
 pump(300)
 check(
     app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
@@ -2397,32 +2422,21 @@ check(
 app.key(IBus.KEY_Tab)
 pump(300)
 check(
-    app.text == "cười 😂" and app.menu is None,
+    app.text == "cười cười 😂" and app.menu is None,
     "emoji: Tab twice adds the first emoji",
     (app.text, app.menu),
 )
-app.key(IBus.KEY_grave)
-pump(200)
-app.key(IBus.KEY_w)
-pump(300)
-check(
-    emoji_off_apps() == ["emoji"],
-    "menu: w switches emoji suggestions off for this app",
-    emoji_off_apps(),
-)
+switch_emoji(app)
+check(emoji_apps() == [], "menu: w again switches them off", emoji_apps())
 app.type(" cuwowif")
 pump(300)
 check(app.menu is None, "emoji: no offer once they are off", app.menu)
-app.key(IBus.KEY_grave)
-pump(200)
-app.key(IBus.KEY_w)
-pump(300)
-check(emoji_off_apps() == [], "menu: w again switches them back on", emoji_off_apps())
 app.close()
 
 # Enter picks from the open list, so the word it replaces must not go out first.
 set_setting("DirectTyping", "False")
 app = menu_app("emoji-enter")
+switch_emoji(app)
 app.type("hahaha")
 pump(300)
 app.key(IBus.KEY_Tab)
@@ -2438,9 +2452,10 @@ app.close()
 set_setting("DirectTyping", "True")
 set_setting("EmojiOfferAt", "At the end of a sentence")
 
-# At the end of a sentence the emoji show in a row whose labels carry their own digits.
+# At the end of a sentence the emoji show in a row while typing; Tab numbers them for a digit.
 horizontal = (IBus.Orientation.HORIZONTAL, False)
 app = menu_app("emoji-sentence")
+switch_emoji(app)
 app.type("cuwowif")
 pump(300)
 check(
@@ -2451,10 +2466,17 @@ check(
 app.type(".")
 pump(300)
 check(
+    app.menu == ["Tab: 😂 🤣 😄 😆 😁"],
+    "emoji: the end of the sentence asks for Tab before a digit picks",
+    app.menu,
+)
+app.key(IBus.KEY_Tab)
+pump(200)
+check(
     app.menu == ["😂", "🤣", "😄", "😆", "😁"]
     and app.labels == ["1.", "2.", "3.", "4.", "5."]
-    and app.row == horizontal,
-    "emoji: the end of the sentence numbers them in a row with none highlighted",
+    and app.row == (IBus.Orientation.VERTICAL, True),
+    "emoji: Tab numbers them in a list, as after each word",
     (app.menu, app.labels, app.row),
 )
 app.type("1")
@@ -2918,9 +2940,9 @@ with open(settings_path) as f:
     saved = f.read()
 check("InputMethod=VNI" in saved, "menu: the choice is saved", saved)
 check(
-    menu_labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    menu_labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa",
     "menu: in Vietnamese whatever the desktop language",
-    menu_labels.get("SpellCheck"),
+    menu_labels.get("CapitalizeMacro"),
 )
 check(
     bool(menus) and "InputMethod/VNI" in menus[-1] and "InputMethod/Telex" not in menus[-1],
@@ -2935,36 +2957,36 @@ check(
 app.type("vie65t ")
 check(app.commits == ["việt "], "menu: the next word uses the new choice", app.commits)
 # GNOME Shell sends the state a plain item shows, so a click on "✔ ..." comes as checked.
-app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.CHECKED)
 pump_until(
     lambda: (
-        file_has(settings_path, "SpellCheck=False")
-        and gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả"
+        file_has(settings_path, "CapitalizeMacro=False")
+        and gnome.labels.get("CapitalizeMacro") == "✖ Gõ tắt chữ hoa"
     ),
     5000,
 )
 with open(settings_path) as f:
-    check("SpellCheck=False" in f.read(), "menu: a click turns an on item off", settings_path)
+    check("CapitalizeMacro=False" in f.read(), "menu: a click turns an on item off", settings_path)
 check(
-    gnome.labels.get("SpellCheck") == "✖ Kiểm tra chính tả",
+    gnome.labels.get("CapitalizeMacro") == "✖ Gõ tắt chữ hoa",
     "menu: GNOME shows the new setting",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 # The engine reloads settings only between words, while clicks and the menu go by the file.
 app.type("vie")
 check(app.preedit == "vie", "menu: a word is underlined before the click", app.preedit)
-app.ic.property_activate("SpellCheck", IBus.PropState.UNCHECKED)
-pump_until(lambda: gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả", 5000)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.UNCHECKED)
+pump_until(lambda: gnome.labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa", 5000)
 check(
-    gnome.labels.get("SpellCheck") == "✔ Kiểm tra chính tả",
+    gnome.labels.get("CapitalizeMacro") == "✔ Gõ tắt chữ hoa",
     "menu: a click while a word is underlined shows the new setting",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
-app.ic.property_activate("SpellCheck", IBus.PropState.CHECKED)
-pump_until(lambda: file_has(settings_path, "SpellCheck=False"), 5000)
+app.ic.property_activate("CapitalizeMacro", IBus.PropState.CHECKED)
+pump_until(lambda: file_has(settings_path, "CapitalizeMacro=False"), 5000)
 with open(settings_path) as f:
     check(
-        "SpellCheck=False" in f.read(),
+        "CapitalizeMacro=False" in f.read(),
         "menu: two clicks while a word is underlined put the setting back",
         settings_path,
     )
@@ -2979,25 +3001,25 @@ check(
 )
 set_setting("EnableMacro", "True")
 pump(500)
-set_setting("ShowMenuSpellCheck", "False")
+set_setting("ShowMenuCapitalizeMacro", "False")
 pump(1000)
-check("SpellCheck" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
-set_setting("ShowMenuSpellCheck", "True")
+check("CapitalizeMacro" in gnome.hidden, "menu: hiding an item reaches GNOME at once", gnome.hidden)
+set_setting("ShowMenuCapitalizeMacro", "True")
 pump(1000)
-check("SpellCheck" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
+check("CapitalizeMacro" not in gnome.hidden, "menu: showing it again reaches GNOME", gnome.hidden)
 set_setting("UiLanguage", "English")
 pump(1000)
 check(
-    (gnome.labels.get("SpellCheck") or "").endswith(" Spell Check"),
+    (gnome.labels.get("CapitalizeMacro") or "").endswith(" Capitalize Macro"),
     "menu: an English interface reaches GNOME at once",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 set_setting("UiLanguage", "Vietnamese")
 pump(1000)
 check(
-    (gnome.labels.get("SpellCheck") or "").endswith(" Kiểm tra chính tả"),
+    (gnome.labels.get("CapitalizeMacro") or "").endswith(" Gõ tắt chữ hoa"),
     "menu: and Vietnamese again",
-    gnome.labels.get("SpellCheck"),
+    gnome.labels.get("CapitalizeMacro"),
 )
 updates.clear()
 tap_ctrl_shift(app)
@@ -3095,6 +3117,22 @@ check(
     "toggle command: the next field types Vietnamese",
     app.commits[-1:],
 )
+# ngosen-save-log leaves a request; the engine saves the log and names the file in its answer.
+save_request = os.path.join(os.path.dirname(english_mark), "save-log-1")
+save_reply = os.path.join(os.path.dirname(english_mark), "saved-log-1")
+open(save_request, "w").close()
+pump(1000)
+saved = open(save_reply).read() if os.path.exists(save_reply) else ""
+check(
+    not os.path.exists(save_request)
+    and os.path.basename(saved).startswith("typing-")
+    and "việt" in (open(saved).read() if os.path.exists(saved) else ""),
+    "save-log command: saves the log and answers with its path",
+    (os.path.exists(save_request), saved),
+)
+for leftover in (save_reply, saved):
+    if leftover and os.path.exists(leftover):
+        os.remove(leftover)
 toggle_dir = os.path.dirname(english_mark)
 
 
