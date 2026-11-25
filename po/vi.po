@@ -1230,8 +1230,8 @@ msgid "What's new in Ngó Sen?"
 msgstr "Ngó Sen có gì mới?"
 
 #: src/ngosen-ibus-announce.cpp
-msgid "Version 1.5: emoji while typing, one switch key for every app, drawn-out letters and teencode. See What's new for more."
-msgstr "Version 1.5: gợi ý emoji khi gõ, một phím chuyển cho mọi app, gõ kéo dài chữ và teencode. Xem thêm ở trang Có gì mới."
+msgid "Version 1.6: change a tone in Preedit by selecting the word, convert selected text on KDE, and commands for asking an AI for help. See What's new for more."
+msgstr "Version 1.6: bôi đen chữ để đổi dấu ở chế độ Gạch chân, chuyển mã chữ bôi đen trên KDE, và lệnh để nhờ AI giúp. Xem thêm ở trang Có gì mới."
 
 #: src/ngosen-ibus-engine.cpp
 msgid "Vim mode: on"
@@ -1771,3 +1771,27 @@ msgstr "Từng app"
 #: src/ngosen-ibus-engine.cpp
 msgid "This app is set to English"
 msgstr "App này đang ở chế độ tiếng Anh"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Change a tone in Preedit"
+msgstr "Đổi dấu trong Gạch chân"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "In Preedit, select a typed word and press a tone key: the word comes back underlined with the new tone, as in Sen. Press the key again to keep it as typed. This works in GTK 4 apps and Chrome."
+msgstr "Ở chế độ Gạch chân, bôi đen một từ đã gõ rồi gõ phím dấu: từ hiện lại có gạch chân với dấu mới, như Gõ Sen. Gõ lại phím đó để giữ như đã gõ. Chạy ở app GTK 4 và Chrome."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Convert selected text on KDE"
+msgstr "Chuyển mã chữ bôi đen trên KDE"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "On KDE Plasma, Sway and Hyprland, select text in a GTK 3 app or Firefox and press the convert hotkey to change its charset, as on GNOME."
+msgstr "Trên KDE Plasma, Sway và Hyprland, bôi đen chữ trong app GTK 3 hay Firefox rồi bấm phím chuyển mã để đổi bảng mã, như trên GNOME."
+
+#: settings/ngosen_settings/whats_new.py
+msgid "Help from an AI assistant"
+msgstr "Nhờ AI giúp"
+
+#: settings/ngosen_settings/whats_new.py
+msgid "When typing goes wrong, the ngosen-check command prints Check my machine in a terminal and ngosen-save-log saves the typing log, so an AI assistant can read them with you. Neither changes your settings."
+msgstr "Khi gõ sai, lệnh ngosen-check in kết quả Kiểm tra máy ra terminal, còn ngosen-save-log lưu nhật ký gõ, để AI đọc cùng bạn. Hai lệnh không đổi cài đặt của bạn."

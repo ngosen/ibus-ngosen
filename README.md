@@ -97,7 +97,7 @@ sudo pacman -U ./ibus-ngosen-*.pkg.tar.zst   # Arch, CachyOS
 sudo zypper install ./ibus-ngosen-*.rpm      # openSUSE Tumbleweed
 ```
 
-Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43 và 44, Arch, CachyOS và openSUSE Tumbleweed. Linux Mint 22 dùng package của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch và openSUSE chỉ có x86_64. Không có package cho Debian 12 và Ubuntu 22.04.
+Có package cho Debian 13, Kali, Ubuntu 24.04 trở lên, Fedora 43, 44 và 45, Arch, CachyOS và openSUSE Tumbleweed. Linux Mint 22 dùng package của Ubuntu 24.04. Có package ARM 64-bit cho Debian, Ubuntu và Fedora; Arch và openSUSE chỉ có x86_64. Không có package cho Debian 12 và Ubuntu 22.04.
 
 Hai bản không chạy cùng lúc trong một tài khoản; nếu đang dùng [bản fcitx5](https://github.com/ngosen/ngosen), xem [Chuyển qua lại với bản fcitx5](#chuyen-ban).
 

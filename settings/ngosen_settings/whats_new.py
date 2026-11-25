@@ -16,6 +16,38 @@ from .i18n import N_, _
 # Newest release first. A release with no entry gets no section.
 FEATURES = [
     {
+        "version": "1.6",
+        "title": N_("Change a tone in Preedit"),
+        "how": N_(
+            "In Preedit, select a typed word and press a tone key: the word comes back underlined "
+            "with the new tone, as in Sen. Press the key again to keep it as typed. This works in "
+            "GTK 4 apps and Chrome."
+        ),
+        "example": "tiềng + s → tiếng",
+        "target": ("setting", "RetoneSelection"),
+    },
+    {
+        "version": "1.6",
+        "title": N_("Convert selected text on KDE"),
+        "how": N_(
+            "On KDE Plasma, Sway and Hyprland, select text in a GTK 3 app or Firefox and press the "
+            "convert hotkey to change its charset, as on GNOME."
+        ),
+        "example": "",
+        "target": ("page", "convert"),
+    },
+    {
+        "version": "1.6",
+        "title": N_("Help from an AI assistant"),
+        "how": N_(
+            "When typing goes wrong, the ngosen-check command prints Check my machine in a "
+            "terminal and ngosen-save-log saves the typing log, so an AI assistant can read them "
+            "with you. Neither changes your settings."
+        ),
+        "example": "",
+        "target": ("page", "check"),
+    },
+    {
         "version": "1.5",
         "title": N_("One switch for every app"),
         "how": N_(
