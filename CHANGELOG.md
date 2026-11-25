@@ -8,6 +8,11 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Cài được bản IBus bằng lệnh một dòng trên Fedora 45; release có thêm gói cho x86_64 và aarch64. Trước đó lệnh báo
+  không có gói dựng sẵn, dù COPR đã có gói Fedora 45.
+
 ## [1.6.0-1] — 22/11/2026
 
 Ở chế độ gạch chân, bôi đen một từ rồi gõ phím dấu để đổi dấu; phím chuyển mã chạy trên KDE, Sway và Hyprland;
