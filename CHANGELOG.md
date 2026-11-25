@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.6.1-1] — 25/11/2026
+
+Gợi ý emoji tắt sẵn, bật cho từng app; bấm Ctrl+Shift chậm vẫn đổi Anh/Việt; cài được trên Fedora 45. Dùng lõi Ngó Sen
+`ngosen-1.14.1-1`. Tải gói ở
+[release ibus-ngosen-1.6.1-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.1-1).
+
 ### Thêm
 
 - Nhận lõi `ngosen-1.14.1-1`: Firefox không còn mất chữ khi gõ ngay trước một link, và bản Flatpak không còn mất
