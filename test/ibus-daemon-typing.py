@@ -1246,6 +1246,23 @@ check(
 )
 app.close()
 
+# A rich text editor in Chrome keeps the space as U+00A0, and GNOME Shell refocuses the field right after.
+# Retoning would mend the word from the field's text, so it is off to check the reopened word alone.
+set_setting("RetoneSelection", "False")
+app = field_with_text()
+app.type("ban ")
+app.text = app.text[:-1] + "\u00a0"
+app.report()
+pump(100)
+app.ic.focus_out()
+app.ic.focus_in()
+pump(200)
+app.key(IBus.KEY_BackSpace)
+app.type("f ")
+check(app.text == "xin bàn ", "focus bounce after a space: Backspace reopens the word", app.text)
+app.close()
+set_setting("RetoneSelection", "True")
+
 app = App("gnome-shell", qt_through_shell=True)
 app.type("nam tieesng")
 app.key(IBus.KEY_BackSpace)

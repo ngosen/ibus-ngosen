@@ -985,6 +985,9 @@ namespace {
         // ibus-daemon keeps the last line it got and shows it again in the next field.
         session->host->hideNotice();
         session->showsNotice = false;
+        // Lets the next focus in tell a bounce, which keeps the finished word, as the fcitx5 frontend does.
+        if (realMode == ngosen::Mode::Sen)
+            session->state->deactivate(true);
         session->state->resetAfterAppCommit(true);
         session->state->forgetKeysWhileOff();
         session->host->setFocus(false);
