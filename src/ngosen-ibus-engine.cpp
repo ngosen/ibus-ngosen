@@ -61,8 +61,8 @@ namespace {
         return apps;
     }
 
-    ngosen::AppList& emojiOffApps() {
-        static ngosen::AppList apps(resources().paths().emojiOffAppsFile(), ngosen::EmojiOffAppsHeader);
+    ngosen::AppList& emojiApps() {
+        static ngosen::AppList apps(resources().paths().emojiAppsFile(), ngosen::EmojiAppsHeader);
         return apps;
     }
 
@@ -152,8 +152,8 @@ namespace {
         bool     chordHeld    = false;
     };
 
-    // Longer than this is a hold, such as Ctrl+Shift with a click.
-    constexpr gint64 TapMicroseconds = 500000;
+    // Longer than this is a hold, such as Ctrl+Shift with a click. As long as in fcitx5, so a slow tap still counts.
+    constexpr gint64 TapMicroseconds = 1000000;
 
     // Counted by the X11 click watcher, so a click between the keys of a tap cancels it.
     std::atomic<unsigned> clicksSeen{0};
@@ -178,7 +178,7 @@ namespace {
         // Between enable and disable, while Ngó Sen is the input method of this context.
         bool enabled      = true;
         bool vimHere      = false;
-        bool emojiOffHere = false;
+        bool emojiOnHere  = false;
         bool teencodeHere = false;
         // Where this field's choices are kept when it loses focus.
         std::string context;
@@ -388,7 +388,7 @@ namespace {
 
     bool emojiHere(const Session& session) {
         const std::string app = currentApp(*session.host);
-        return app.empty() ? !session.emojiOffHere : !emojiOffApps().has(app);
+        return app.empty() ? session.emojiOnHere : emojiApps().has(app);
     }
 
     bool teencodeHere(const Session& session) {
@@ -548,8 +548,8 @@ namespace {
         const bool        on  = !emojiHere(session);
         const std::string app = currentApp(*session.host);
         if (app.empty())
-            session.emojiOffHere = !on;
-        else if (!emojiOffApps().set(app, !on))
+            session.emojiOnHere = on;
+        else if (!emojiApps().set(app, on))
             NGOSEN_WARN("Cannot save emoji suggestions for " + app);
         session.state->setEmojiOn(on);
         const char* label = on ? _("Emoji suggestions: on") : _("Emoji suggestions: off");
@@ -950,7 +950,7 @@ namespace {
 
     // GNOME Shell uses one input context for every app it relays, so there a choice ends with the focus.
     void keepFieldSwitches(Session& session) {
-        const std::array<bool, 3> here = {session.vimHere, session.emojiOffHere, session.teencodeHere};
+        const std::array<bool, 3> here = {session.vimHere, session.emojiOnHere, session.teencodeHere};
         if (!session.context.empty() && session.host->client() != "gnome-shell") {
             if (here == std::array<bool, 3>{})
                 keptHere.erase(session.context);
@@ -959,7 +959,7 @@ namespace {
         }
         session.context.clear();
         session.vimHere      = false;
-        session.emojiOffHere = false;
+        session.emojiOnHere  = false;
         session.teencodeHere = false;
     }
 
@@ -969,7 +969,7 @@ namespace {
         if (kept == keptHere.end() || session.host->client() == "gnome-shell")
             return;
         session.vimHere      = kept->second.here[0];
-        session.emojiOffHere = kept->second.here[1];
+        session.emojiOnHere  = kept->second.here[1];
         session.teencodeHere = kept->second.here[2];
     }
 

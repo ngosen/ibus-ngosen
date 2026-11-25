@@ -118,8 +118,8 @@ class Store:
         self.keymap = ini.read_list(ini.parse(read_text(self.keymap_file) or "")[1], KEYMAP_LIST)
         self.emoji_words_file = os.path.join(self.folder, "ngosen-emoji-words.conf")
         self.emoji_edits = emoji_words.parse_edits(read_text(self.emoji_words_file))
-        self.emoji_off_apps_file = os.path.join(self.folder, "ngosen-emoji-off-apps.conf")
-        self.emoji_off_apps = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+        self.emoji_apps_file = os.path.join(self.folder, "ngosen-emoji-apps.conf")
+        self.emoji_apps = emoji_words.parse_apps(read_text(self.emoji_apps_file))
         self.teencode_apps_file = os.path.join(self.folder, "ngosen-teencode-apps.conf")
         self.teencode_apps = emoji_words.parse_apps(read_text(self.teencode_apps_file))
         self._undo = None
@@ -186,9 +186,9 @@ class Store:
         self.emoji_edits = dict(edits)
         return True
 
-    def enable_emoji_in(self, app):
-        """Offers emoji in app again, starting from the file the engine may have changed since."""
-        return self._drop_app("emoji_off_apps", emoji_words.OFF_APPS_HEADER, app)
+    def disable_emoji_in(self, app):
+        """Stops offering emoji in app, starting from the file the engine may have changed since."""
+        return self._drop_app("emoji_apps", emoji_words.ON_APPS_HEADER, app)
 
     def teencode_off_in(self, app):
         """Restores the keys of teencode words in app again."""
@@ -217,9 +217,9 @@ class Store:
         setattr(self, field, apps)
         return True
 
-    def reload_emoji_off_apps(self):
+    def reload_app_lists(self):
         """The apps the engine switched from its menu while the window was open."""
-        self.emoji_off_apps = emoji_words.parse_apps(read_text(self.emoji_off_apps_file))
+        self.emoji_apps = emoji_words.parse_apps(read_text(self.emoji_apps_file))
         self.teencode_apps = emoji_words.parse_apps(read_text(self.teencode_apps_file))
 
     def can_undo(self):

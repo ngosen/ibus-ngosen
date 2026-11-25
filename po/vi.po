@@ -1342,12 +1342,12 @@ msgid "Flags"
 msgstr "Cờ"
 
 #: settings/ngosen_settings/emoji.py
-msgid "Set a mode menu key and an emoji key on the Keys page to turn suggestions off for one app."
-msgstr "Đặt phím mở menu chế độ và phím emoji ở trang Phím để tắt gợi ý cho riêng một app."
+msgid "Set a mode menu key and an emoji key on the Keys page to turn suggestions on for one app."
+msgstr "Đặt phím mở menu chế độ và phím emoji ở trang Phím để bật gợi ý cho riêng một app."
 
 #: settings/ngosen_settings/emoji.py
-msgid "In the app you are typing in, press {menu} then {key} to turn suggestions off or back on for that app. The app keeps its typing mode."
-msgstr "Ở app đang gõ, bấm {menu} rồi {key} để tắt hay bật lại gợi ý cho riêng app đó. Kiểu gõ của app vẫn giữ nguyên."
+msgid "Suggestions are off until you turn them on. In the app you are typing in, press {menu} then {key} to turn them on or off for that app. The app keeps its typing mode."
+msgstr "Gợi ý tắt sẵn cho tới khi bạn bật. Ở app đang gõ, bấm {menu} rồi {key} để bật hay tắt gợi ý cho riêng app đó. Kiểu gõ của app vẫn giữ nguyên."
 
 #: settings/ngosen_settings/emoji.py
 msgid "1. Type a word"
@@ -1362,8 +1362,8 @@ msgid "3. Press 2"
 msgstr "3. Bấm 2"
 
 #: settings/ngosen_settings/emoji.py
-msgid "Apps without emoji"
-msgstr "App đã tắt emoji"
+msgid "Apps with emoji"
+msgstr "App đã bật emoji"
 
 #: settings/ngosen_settings/emoji.py
 msgid "Emoji and their words"
@@ -1406,14 +1406,6 @@ msgid "Turn on {word} for {emoji}"
 msgstr "Bật từ {word} cho {emoji}"
 
 #: settings/ngosen_settings/emoji.py
-msgid "Turn back on"
-msgstr "Bật lại"
-
-#: settings/ngosen_settings/emoji.py
-msgid "Not turned off in any app."
-msgstr "Chưa tắt ở app nào."
-
-#: settings/ngosen_settings/emoji.py
 msgid "{} emoji"
 msgstr "{} emoji"
 
@@ -1422,12 +1414,12 @@ msgid "Add a word for {}"
 msgstr "Thêm từ cho {}"
 
 #: settings/ngosen_settings/emoji.py
-msgid "Turn emoji back on in {}"
-msgstr "Bật lại emoji trong {}"
+msgid "Turn emoji off in {}"
+msgstr "Tắt emoji trong {}"
 
 #: settings/ngosen_settings/window.py
-msgid "Emoji are back on in {}."
-msgstr "Đã bật lại emoji trong {}."
+msgid "Emoji are off in {}."
+msgstr "Đã tắt emoji trong {}."
 
 msgid "Teencode is off in {}."
 msgstr "Đã tắt teencode trong {}."
@@ -1573,8 +1565,8 @@ msgid "Converting selected text in LibreOffice"
 msgstr "Chuyển mã chữ bôi đen trong LibreOffice"
 
 #: settings/ngosen_settings/whats_new.py
-msgid "Emoji for the words of a sentence show in a row as you type. After . ! ? or a pause, press a number to pick one, or Tab first in VNI. English words such as cat or thumbs up count too. The Emoji page lists every emoji with its words, which you can change, export and import."
-msgstr "Emoji của các từ trong câu hiện thành một hàng ngay khi gõ. Sau . ! ? hoặc khi dừng tay, bấm số để chọn, gõ VNI thì bấm Tab trước. Từ tiếng Anh như cat hay thumbs up cũng có emoji. Trang Emoji liệt kê mọi emoji kèm từ gợi ý; bạn đổi, xuất và nhập được các từ đó."
+msgid "Turn emoji on for an app with w in the ` menu. Emoji for the words of a sentence then show in a row as you type; after . ! ? or a pause, press Tab, then a number to pick one. English words such as cat or thumbs up count too. The Emoji page lists every emoji with its words, which you can change, export and import."
+msgstr "Bật emoji cho từng app bằng phím w trong menu `. Khi đó emoji của các từ trong câu hiện thành một hàng ngay khi gõ; sau . ! ? hoặc khi dừng tay, bấm Tab rồi bấm số để chọn. Từ tiếng Anh như cat hay thumbs up cũng có emoji. Trang Emoji liệt kê mọi emoji kèm từ gợi ý; bạn đổi, xuất và nhập được các từ đó."
 
 #: settings/ngosen_settings/whats_new.py
 msgid "One switch for every app"
@@ -1589,8 +1581,8 @@ msgid "Drawn-out letters"
 msgstr "Gõ kéo dài chữ"
 
 #: settings/ngosen_settings/whats_new.py
-msgid "Repeat the last letter of a marked word and it repeats with its mark, instead of bringing back the keys you typed. English words such as besttt stay as typed."
-msgstr "Gõ lặp chữ cái cuối của một từ có dấu thì chữ đó lặp lại cùng dấu, thay vì hiện lại các phím đã gõ. Từ tiếng Anh như besttt vẫn giữ nguyên."
+msgid "Repeat the last letter of a marked word and it repeats plain, instead of bringing back the keys you typed; the mark stays on the first one. English words such as besttt stay as typed."
+msgstr "Gõ lặp chữ cái cuối của một từ có dấu thì chữ đó lặp lại không dấu, thay vì hiện lại các phím đã gõ; dấu chỉ nằm ở chữ đầu. Từ tiếng Anh như besttt vẫn giữ nguyên."
 
 #: settings/ngosen_settings/whats_new.py
 msgid "Teencode for chosen apps"
@@ -1649,8 +1641,8 @@ msgid "cat and thumbs up also offer 🐈 and 👍, from the Unicode list of Engl
 msgstr "Gõ cat hay thumbs up cũng gợi ý 🐈 hay 👍, theo danh sách từ tiếng Anh của Unicode. Từ trùng chữ Việt như can thì bỏ qua."
 
 #: settings/ngosen_settings/options.py
-msgid "At the end of a sentence: the emoji of the sentence show while you type. After . ! ? or a short pause, 1–9 picks one, or Tab first where digits type tones, as in VNI; it goes at the cursor. Esc hides them until the next sentence. After each word: the list shows as soon as a keyword is typed."
-msgstr "Cuối câu: emoji của câu hiện suốt lúc gõ. Sau dấu . ! ? hoặc khi dừng tay một chút, bấm 1–9 để chọn, hoặc bấm Tab trước nếu phím số dùng để bỏ dấu như VNI; emoji thêm vào chỗ con trỏ. Esc ẩn chúng tới hết câu. Sau mỗi từ: danh sách hiện ngay khi gõ xong một từ khoá."
+msgid "At the end of a sentence: the emoji of the sentence show while you type. After . ! ? or a short pause, press Tab, then 1–9 to pick one; it goes at the cursor. Esc hides them until the next sentence. After each word: the list shows as soon as a keyword is typed."
+msgstr "Cuối câu: emoji của câu hiện suốt lúc gõ. Sau dấu . ! ? hoặc khi dừng tay một chút, bấm Tab rồi 1–9 để chọn; emoji thêm vào chỗ con trỏ. Esc ẩn chúng tới hết câu. Sau mỗi từ: danh sách hiện ngay khi gõ xong một từ khoá."
 
 #: settings/ngosen_settings/options.py
 msgid "At the end of a sentence"
@@ -1748,11 +1740,11 @@ msgstr "Teencode giữ các chữ như zậy, đag, nhữg thay vì trả về p
 msgid "Teencode"
 msgstr "Teencode"
 
-#: settings/ngosen_settings/pages.py
+#: settings/ngosen_settings/pages.py settings/ngosen_settings/emoji.py
 msgid "Turn off"
 msgstr "Tắt"
 
-#: settings/ngosen_settings/pages.py
+#: settings/ngosen_settings/pages.py settings/ngosen_settings/emoji.py
 msgid "Not on in any app."
 msgstr "Chưa bật ở app nào."
 

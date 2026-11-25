@@ -494,8 +494,8 @@ namespace ngosen {
     std::string SettingsPaths::emojiWordsFile() const {
         return configDir + "/ngosen-emoji-words.conf";
     }
-    std::string SettingsPaths::emojiOffAppsFile() const {
-        return configDir + "/ngosen-emoji-off-apps.conf";
+    std::string SettingsPaths::emojiAppsFile() const {
+        return configDir + "/ngosen-emoji-apps.conf";
     }
 
     std::string SettingsPaths::teencodeAppsFile() const {
@@ -653,7 +653,7 @@ namespace ngosen {
                 {paths.fcitxConfigDir + "/ngosen-app-switch.conf", paths.appSwitchesFile()},
                 {paths.fcitxConfigDir + "/ngosen-vim-apps.conf", paths.vimAppsFile()},
                 {paths.fcitxConfigDir + "/ngosen-emoji-words.conf", paths.emojiWordsFile()},
-                {paths.fcitxConfigDir + "/ngosen-emoji-off-apps.conf", paths.emojiOffAppsFile()},
+                {paths.fcitxConfigDir + "/ngosen-emoji-apps.conf", paths.emojiAppsFile()},
                 {paths.fcitxConfigDir + "/ngosen-teencode-apps.conf", paths.teencodeAppsFile()},
                 {paths.fcitxConfigDir + "/ngosen-web-terminal-apps.conf", paths.webTerminalAppsFile()},
             };
