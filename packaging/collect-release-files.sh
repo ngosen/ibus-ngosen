@@ -31,7 +31,7 @@ for codename in trixie forky noble resolute stonking; do
     done
 done
 
-for release in 43 44; do
+for release in 43 44 45; do
     cp "$(only "$src/rpm-fedora-$release" 'ibus-ngosen-[0-9]*.x86_64.rpm')" "$out/"
     cp "$(only "$src/rpm-fedora-$release-arm64" 'ibus-ngosen-[0-9]*.aarch64.rpm')" "$out/"
 done
