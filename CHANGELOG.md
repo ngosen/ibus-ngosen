@@ -13,6 +13,8 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 - Trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz), chữ vừa sửa dấu không còn thỉnh thoảng mất ("người" ra
   "ời"): ô rời focus vài lần sau mỗi lần xoá, có lúc quay lại chỉ vài ms, và chữ gửi đúng lúc đó bị mất. Bộ gõ nay chờ
   ô ở yên rồi mới gửi (ngosen/ngosen#1025) (#215).
+- Gõ trong WPS Office 12 không còn giữ lại chữ cũ khi thêm dấu ("tiếng" ra "tieêngếng"), và trong bảng tính dấu vừa
+  thêm không còn hay mất ("thử" ra "thu"): bộ gõ nay nhận ra WPS theo tên cửa sổ (ngosen/ngosen#1027) (#216).
 
 ## [1.6.2-1] — 26/11/2026
 

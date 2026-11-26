@@ -188,12 +188,18 @@ namespace ngosen {
         return split;
     }
 
+    void IBusHost::setClient(std::string client) {
+        client_ = std::move(client);
+        // Qt's IBus module names every app after itself, while WPS needs its own rule.
+        windowClass_ = client_ == "QIBusInputContext" ? xFocusedWindowClass() : std::string();
+    }
+
     Field IBusHost::field() const {
         Field f;
         // As fcitx5 names the frontend, so the checks in ngosen-app-quirks.cpp apply as they are.
         f.frontend = client_ == "xim" ? "xim" : "ibus";
         // The Shell names every app it relays after itself, so the rules for one app need its own name.
-        f.program = programOf(client_);
+        f.program = windowClass_.empty() ? programOf(client_) : windowClass_;
         if (f.program != client_)
             f.reportedProgram = client_;
         f.appNameCurrent  = focus_ && monotonicUs() > focus_in_us_ + AppNameDelayUs;
