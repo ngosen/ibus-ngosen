@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.6.1
+Version:        1.6.2
 Release:        1%{?dist}
 Summary:        Ngó Sen, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -65,6 +65,11 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Thu Nov 26 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.2-1
+- In Chrome's rich text editors on GNOME, such as a forum reply box, a finished word
+  keeps its tone mark after a Backspace, and fast typing no longer loses letters while
+  the editor drops and retakes focus.
+- Core ngosen-1.14.2-1.
 * Wed Nov 25 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.1-1
 - Emoji suggestions are off by default; turn them on per app with w in the ` menu;
   a slow Ctrl+Shift tap, held up to a second, still switches the mode; packages for

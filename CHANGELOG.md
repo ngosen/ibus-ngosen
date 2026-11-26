@@ -8,6 +8,27 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.6.2-1] — 26/11/2026
+
+Gõ trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz) không còn mất dấu sau Backspace hay mất chữ khi gõ
+nhanh. Dùng lõi Ngó Sen `ngosen-1.14.2-1`. Tải gói ở
+[release ibus-ngosen-1.6.2-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.2-1).
+
+### Thêm
+
+- Nhận lõi `ngosen-1.14.2-1`: trong editor của Antigravity, chữ không còn bị dính phần cũ lẫn phần mới
+  ("tiêngếng") hay để nguyên phím thô ("ddaay") khi máy đang bận; ở ô viết bài voz và các ô soạn thảo trên web, chữ có
+  dấu hiện sớm hơn khoảng 40–60 ms; gõ `tieesng` hiện "tiế" ngay thay vì thoáng hiện "tíê", `cuow` ra "cươ"
+  (ngosen/ngosen#987, ngosen/ngosen#990, ngosen/ngosen#995, ngosen/ngosen#999, ngosen/ngosen#1004,
+  ngosen/ngosen#1009) (#212).
+
+### Sửa
+
+- Trong ô soạn thảo của Chrome trên GNOME (như ô trả lời của diễn đàn), gõ xong một chữ rồi bấm Backspace để thêm dấu
+  không còn ra "banf" thay vì "bàn": focus nảy ra rồi vào lại ngay sau dấu cách không làm mất chữ vừa gõ nữa (#211).
+- Gõ nhanh trong ô soạn thảo đó không còn mất chữ hay ra "trươngf", "vieetj": ô rời focus một lúc sau mỗi lần xoá và
+  xoá từng ký tự rất chậm, nay bộ gõ chờ ô quay lại và xoá xong rồi mới gửi chữ (#211).
+
 ## [1.6.1-1] — 25/11/2026
 
 Gợi ý emoji tắt sẵn, bật cho từng app; bấm Ctrl+Shift chậm vẫn đổi Anh/Việt; cài được trên Fedora 45. Dùng lõi Ngó Sen
