@@ -1246,6 +1246,87 @@ check(
 )
 app.close()
 
+
+def shell_bounce(app):
+    # GNOME Shell resets the context right before each focus out; the field sends its text on focus in.
+    app.ic.reset()
+    app.ic.focus_out()
+    app.ic.focus_in()
+    app.report()
+    pump(200)
+
+
+# A rich text editor in Chrome keeps the space as U+00A0, and GNOME Shell refocuses the field right after.
+# Retoning would mend the word from the field's text, so it is off to check the reopened word alone.
+set_setting("RetoneSelection", "False")
+app = field_with_text()
+app.type("ban ")
+app.text = app.text[:-1] + "\u00a0"
+app.report()
+pump(100)
+shell_bounce(app)
+app.key(IBus.KEY_BackSpace)
+app.type("f ")
+check(app.text == "xin bàn ", "focus bounce after a space: Backspace reopens the word", app.text)
+app.close()
+set_setting("RetoneSelection", "True")
+
+# The same editor refocuses after each edit, in the middle of a word too.
+app = field_with_text()
+app.type("truow")
+pump(200)
+shell_bounce(app)
+app.type("ngf ")
+check(app.text == "xin trường ", "focus bounce after an edit: the word goes on", app.text)
+app.close()
+
+
+class RefocusingEditor(App):
+    # Chrome's rich text editors on GNOME leave focus for a moment a few times after each deletion, so a
+    # commit that goes out before focus comes back lands in the daemon's fake context.
+    refocused = 0
+    leaves = 0
+
+    def on_forward(self, ic, keyval, keycode, state):
+        super().on_forward(ic, keyval, keycode, state)
+        if keyval == IBus.KEY_BackSpace and not state & IBus.ModifierType.RELEASE_MASK:
+            self.leave()
+
+    def on_delete(self, ic, offset, count):
+        super().on_delete(ic, offset, count)
+        self.leave()
+
+    def leave(self):
+        if self.leaves == 0:
+            self.leaves = 4
+            self.away()
+
+    def away(self):
+        self.ic.reset()
+        self.ic.focus_out()
+        GLib.timeout_add(20, self.refocus)
+        return GLib.SOURCE_REMOVE
+
+    def refocus(self):
+        self.refocused += 1
+        self.ic.focus_in()
+        self.report()
+        self.leaves -= 1
+        if self.leaves > 0:
+            GLib.timeout_add(5, self.away)
+        return GLib.SOURCE_REMOVE
+
+
+app = RefocusingEditor("gtk3-im:chromium")
+app.type("xin nguowif ")
+pump(500)
+check(
+    app.refocused > 0 and app.text == "xin người ",
+    "refocusing editor: no commit is lost",
+    (app.refocused, app.text, app.events),
+)
+app.close()
+
 app = App("gnome-shell", qt_through_shell=True)
 app.type("nam tieesng")
 app.key(IBus.KEY_BackSpace)

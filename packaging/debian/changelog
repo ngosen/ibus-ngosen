@@ -1,3 +1,12 @@
+ibus-ngosen (1.6.2-1) unstable; urgency=medium
+
+  * In Chrome's rich text editors on GNOME, such as a forum reply box, a
+    finished word keeps its tone mark after a Backspace, and fast typing no
+    longer loses letters while the editor drops and retakes focus.
+  * Core ngosen-1.14.2-1.
+
+ -- Nguyen Phi <nguyenphidt@gmail.com>  Thu, 26 Nov 2026 18:00:00 +0700
+
 ibus-ngosen (1.6.1-1) unstable; urgency=medium
 
   * Emoji suggestions are off by default; turn them on per app with w in
