@@ -53,6 +53,16 @@ namespace {
         host.setClient("qt5-im:wps");
         check(host.pressSystemKeys(3) && sent == std::vector<int>{3}, "an app that takes sent keys gets them under Xwayland");
         sent.clear();
+        // Qt's IBus module names every app QIBusInputContext; the focused X window tells WPS 12 apart.
+        std::string windowClass = "wpsoffice";
+        setXFocusedClassForTest([&windowClass] { return windowClass; });
+        host.setClient("QIBusInputContext");
+        check(host.pressSystemKeys(3) && sent == std::vector<int>{3}, "WPS 12 over Qt's IBus module gets sent keys");
+        sent.clear();
+        windowClass = "telegram-desktop";
+        host.setClient("QIBusInputContext");
+        check(!host.pressSystemKeys(3) && sent.empty(), "other Qt apps get no sent keys");
+        setXFocusedClassForTest({});
         host.setClient("gtk3-im:gedit");
         check(!host.pressSystemKeys(3) && sent.empty(), "other apps under Xwayland get no sent keys");
         setXSendSenderForTest({});
