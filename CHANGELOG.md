@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+### Sửa
+
+- Trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz), chữ vừa sửa dấu không còn thỉnh thoảng mất ("người" ra
+  "ời"): ô rời focus vài lần sau mỗi lần xoá, có lúc quay lại chỉ vài ms, và chữ gửi đúng lúc đó bị mất. Bộ gõ nay chờ
+  ô ở yên rồi mới gửi (ngosen/ngosen#1025) (#215).
+
 ## [1.6.2-1] — 26/11/2026
 
 Gõ trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz) không còn mất dấu sau Backspace hay mất chữ khi gõ
