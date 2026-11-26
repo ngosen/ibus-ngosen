@@ -75,7 +75,7 @@ namespace {
     std::string currentApp(const ngosen::IBusHost& host) {
         if (host.inFakeContext())
             return ngosen::modeAppName(ngosen::programOf(lastClient));
-        return ngosen::modeAppName(host.field().program);
+        return ngosen::modeAppName(ngosen::programOf(host.client()));
     }
 
     // In Preedit every word goes into the preedit; in Sen the core picks for each word whether it goes
