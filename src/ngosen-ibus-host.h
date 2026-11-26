@@ -50,9 +50,7 @@ namespace ngosen {
         void forgetReportedText() {
             reported_ = Surrounding();
         }
-        void setClient(std::string client) {
-            client_ = std::move(client);
-        }
+        void               setClient(std::string client);
         const std::string& client() const {
             return client_;
         }
@@ -144,6 +142,7 @@ namespace ngosen {
         guint                        purpose_     = IBUS_INPUT_PURPOSE_FREE_FORM;
         guint                        hints_       = IBUS_INPUT_HINT_NONE;
         std::string                  client_;
+        std::string                  windowClass_;
         Surrounding                  reported_;
         std::string                  preedit_;
         std::string                  status_;
