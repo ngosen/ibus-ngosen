@@ -1,5 +1,5 @@
 Name:           ibus-ngosen
-Version:        1.6.2
+Version:        1.6.3
 Release:        1
 Summary:        Ngó Sen, a Vietnamese input method for IBus
 License:        GPL-3.0-or-later AND LGPL-2.1-or-later AND MIT AND GPL-2.0-or-later
@@ -70,6 +70,13 @@ each app. A tap of Ctrl+Shift switches between English and Vietnamese.
 %config(noreplace) %{_sysconfdir}/profile.d/ibus-ngosen.sh
 
 %changelog
+* Thu Nov 26 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.3-1
+- In Chrome's rich text editors on GNOME, such as a forum reply box, a corrected word
+  is no longer lost now and then when the editor comes back to focus only briefly. In
+  WPS Office 12, adding a mark no longer keeps the old letters, and spreadsheet cells
+  keep it.
+- Core ngosen-1.14.3-1.
+
 * Thu Nov 26 2026 Nguyen Phi <nguyenphidt@gmail.com> - 1.6.2-1
 - In Chrome's rich text editors on GNOME, such as a forum reply box, a finished word
   keeps its tone mark after a Backspace, and fast typing no longer loses letters while

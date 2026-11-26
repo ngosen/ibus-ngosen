@@ -8,6 +8,12 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.6.3-1] — 26/11/2026
+
+Trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz), chữ vừa sửa dấu không còn thỉnh thoảng mất; trong WPS
+Office 12, thêm dấu không còn giữ lại chữ cũ. Dùng lõi Ngó Sen `ngosen-1.14.3-1`. Tải gói ở
+[release ibus-ngosen-1.6.3-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.3-1).
+
 ### Sửa
 
 - Trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz), chữ vừa sửa dấu không còn thỉnh thoảng mất ("người" ra
