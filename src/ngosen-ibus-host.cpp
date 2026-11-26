@@ -220,7 +220,8 @@ namespace ngosen {
     }
 
     bool IBusHost::hasFocus() const {
-        return focus_;
+        // A commit to the daemon's fake context reaches no field.
+        return focus_ && !inFakeContext();
     }
 
     // IBus gives an engine no access to the X11 selection.
