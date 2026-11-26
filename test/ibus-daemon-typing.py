@@ -1283,7 +1283,8 @@ app.close()
 
 class RefocusingEditor(App):
     # Chrome's rich text editors on GNOME leave focus for a moment a few times after each deletion, so a
-    # commit that goes out before focus comes back lands in the daemon's fake context.
+    # commit that goes out before focus comes back, or while it is back only briefly, lands in the
+    # daemon's fake context.
     refocused = 0
     leaves = 0
 
@@ -1317,15 +1318,16 @@ class RefocusingEditor(App):
         return GLib.SOURCE_REMOVE
 
 
-app = RefocusingEditor("gtk3-im:chromium")
-app.type("xin nguowif ")
-pump(500)
-check(
-    app.refocused > 0 and app.text == "xin người ",
-    "refocusing editor: no commit is lost",
-    (app.refocused, app.text, app.events),
-)
-app.close()
+# A commit lost in a short return between departures depends on timing, so the case runs a few times.
+lost = []
+for _ in range(10):
+    app = RefocusingEditor("gtk3-im:chromium")
+    app.type("xin nguowif ")
+    pump(500)
+    if not (app.refocused > 0 and app.text == "xin người "):
+        lost.append((app.refocused, app.text, app.events))
+    app.close()
+check(lost == [], "refocusing editor: no commit is lost", (len(lost), lost[:1]))
 
 app = App("gnome-shell", qt_through_shell=True)
 app.type("nam tieesng")
