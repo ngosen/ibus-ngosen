@@ -8,6 +8,20 @@ tag `ibus-ngosen-<version>` và ghi tag lõi Ngó Sen đang dùng.
 
 ## [Chưa phát hành]
 
+## [1.6.2-1] — 26/11/2026
+
+Gõ trong ô soạn thảo của Chrome trên GNOME (như ô viết bài voz) không còn mất dấu sau Backspace hay mất chữ khi gõ
+nhanh. Dùng lõi Ngó Sen `ngosen-1.14.2-1`. Tải gói ở
+[release ibus-ngosen-1.6.2-1](https://github.com/ngosen/ibus-ngosen/releases/tag/ibus-ngosen-1.6.2-1).
+
+### Thêm
+
+- Nhận lõi `ngosen-1.14.2-1`: trong editor của Antigravity, chữ không còn bị dính phần cũ lẫn phần mới
+  ("tiêngếng") hay để nguyên phím thô ("ddaay") khi máy đang bận; ở ô viết bài voz và các ô soạn thảo trên web, chữ có
+  dấu hiện sớm hơn khoảng 40–60 ms; gõ `tieesng` hiện "tiế" ngay thay vì thoáng hiện "tíê", `cuow` ra "cươ"
+  (ngosen/ngosen#987, ngosen/ngosen#990, ngosen/ngosen#995, ngosen/ngosen#999, ngosen/ngosen#1004,
+  ngosen/ngosen#1009) (#212).
+
 ### Sửa
 
 - Trong ô soạn thảo của Chrome trên GNOME (như ô trả lời của diễn đàn), gõ xong một chữ rồi bấm Backspace để thêm dấu
